@@ -3,19 +3,17 @@ import privateRoutes from "./routes";
 import './App.css'
 import Login from "./pages/Login";
 import PrivateRoute from "./components/privateRoute";
+import Dashboard from "./pages/dashboard/Dashboard";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* <Route element={<PrivateRoute />}> */}
-          {privateRoutes.map((route) => (
             <Route
-              key={route.path}
-              path={route.path}
-              element={route.element}
+              path="/dashboard"
+              element={<Dashboard/>}
             ></Route>
-          ))}
         {/* </Route> */}
         <Route path="/login" element={<Login />}></Route>
         <Route path="/" element={<Navigate to={"/login"} />}></Route>

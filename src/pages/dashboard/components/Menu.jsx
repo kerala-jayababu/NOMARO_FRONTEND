@@ -12,7 +12,7 @@ function Menu() {
   useEffect(() => {
     dispatch(getAllPayrollScreensAction());
   }, [dispatch]);
-  console.log(payrollScreen);
+
   return (
     <aside
       id="layout-menu"
