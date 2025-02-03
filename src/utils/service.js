@@ -260,3 +260,37 @@ export const updateSalaryHead = async (data) => {
     return error;
   }
 };
+
+
+export const getVacationModeList = async () => {
+  try {
+    const response = await axios.get(
+      `http://46.250.230.34:8081/api/v1/MasterData/GetAllVacationModes`
+    );
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getEmployeeDetailsById = async (id) => {
+  try {
+    const response = await axios.get(
+      `http://46.250.230.34:8081/api/v1/Employee/GetEmployeeDetailsByID?Id=${id}`
+    );
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getEmployeeProfileById = async (id) => {
+  try {
+    const response = await axios.get(
+      `http://46.250.230.34:8081/api/v1/Employee/GetEmployeeProfileByID?Id=${id}`
+    );
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+};

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   getSalaryHeadList,
   getSalaryHeadById,
@@ -21,6 +20,7 @@ function SalaryHeads() {
     percentageValue: "",
     customFormula: "",
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchSalaryHeads();
@@ -82,26 +82,60 @@ function SalaryHeads() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-  
+
     setFormData((prevState) => ({
       ...prevState,
-      [name]: type === "checkbox" ? checked : name === "isTaxable" ? value === "true" : value, 
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "isTaxable"
+          ? value === "true"
+          : value,
     }));
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let validationErrors = {};
+
+    // Check required fields
+    if (!formData.salaryHeadCode.trim()) {
+      validationErrors.salaryHeadCode = "Salary Head Code is required.";
+    }
+    if (!formData.salaryHeadName.trim()) {
+      validationErrors.salaryHeadName = "Salary Head Name is required.";
+    }
+    if (!formData.headType) {
+      validationErrors.headType = "Salary Head Type is required.";
+    }
+    if (formData.isTaxable === "") {
+      validationErrors.isTaxable = "Please select taxability.";
+    }
+    if (!formData.calculationMethod) {
+      validationErrors.calculationMethod = "Calculation Method is required.";
+    }
+    if (formData.customFormula === "") {
+      validationErrors.customFormula = "Custom Formula is required.";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     try {
-      if (!selectedSalaryHead) {
-        // Add new salary head
+      if (selectedSalaryHead) {
+        formData.idSalaryHead = selectedSalaryHead;
+        const response = await updateSalaryHead(formData);
+        if (response.success) {
+          setShowModal(false);
+          fetchSalaryHeads();
+        }
+      } else {
         const response = await addSalaryHead(formData);
         if (response.success) {
           setShowModal(false);
-          fetchSalaryHeads(); // Refresh the salary head list
-        } else {
-          console.error("Error adding salary head:", response.message);
+          fetchSalaryHeads();
         }
       }
     } catch (error) {
@@ -197,11 +231,13 @@ function SalaryHeads() {
             className="modal-content"
             style={{
               maxWidth: "600px",
+              maxHeight: "80vh",
               margin: "auto",
               backgroundColor: "white",
               padding: "20px",
               borderRadius: "8px",
               zIndex: "1000",
+              overflowY: "auto", 
             }}
           >
             <div className="card">
@@ -228,6 +264,9 @@ function SalaryHeads() {
                       value={formData.salaryHeadCode}
                       onChange={handleInputChange}
                     />
+                    {errors.salaryHeadCode && (
+                      <div className="text-danger">{errors.salaryHeadCode}</div>
+                    )}
                   </div>
                   <div className="mb-2">
                     <label className="form-label mb-1">Salary Head Name</label>
@@ -239,6 +278,7 @@ function SalaryHeads() {
                       value={formData.salaryHeadName}
                       onChange={handleInputChange}
                     />
+                    <div className="text-danger">{errors.salaryHeadName}</div>
                   </div>
                   <div className="mb-2">
                     <label className="form-label mb-1">
@@ -313,16 +353,21 @@ function SalaryHeads() {
                       Calculation Method
                     </label>
                     <select
-                      className="form-select"
+                      className={`form-select ${
+                        errors.calculationMethod ? "is-invalid" : ""
+                      }`}
                       name="calculationMethod"
                       value={formData.calculationMethod}
                       onChange={handleInputChange}
                     >
+                      <option value="">Select Calculation Method</option>
                       <option value="PERCENTAGE">Percentage of</option>
                       <option value="FORMULA">Custom Formula</option>
                       <option value="FIXEDAMOUNT">Fixed Amount</option>
-
                     </select>
+                    <div className="text-danger">
+                      {errors.calculationMethod}
+                    </div>
                   </div>
                   <div className="row mb-0">
                     <div className="col-md-8 mb-2">
@@ -343,6 +388,7 @@ function SalaryHeads() {
                           </option>
                         ))}
                       </select>
+                      <div className="text-danger">{errors.salaryHeadName}</div>
                     </div>
                     <div className="col-md-4 mb-2">
                       <label className="form-label mb-1">Value</label>
@@ -367,6 +413,7 @@ function SalaryHeads() {
                       name="customFormula"
                       onChange={handleInputChange}
                     />
+                    <div className="text-danger">{errors.customFormula}</div>
                   </div>
                   <div className="mb-3 pt-2">
                     <div className="form-check form-switch">
