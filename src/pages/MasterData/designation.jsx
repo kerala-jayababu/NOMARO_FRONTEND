@@ -5,6 +5,8 @@ import {
   addDesignation,
   updateDesignation,
 } from "../../utils/service";
+import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 function Designations() {
   const [designations, setDesignations] = useState([]);
@@ -16,10 +18,13 @@ function Designations() {
   });
   const [editId, setEditId] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [originalDesignationCode, setOriginalDesignationCode] = useState("");
+
 
   useEffect(() => {
     fetchDesignations();
   }, []);
+
 
   const fetchDesignations = async () => {
     const response = await getDesignationList();
@@ -46,9 +51,11 @@ function Designations() {
         isOvertimeAllowanceAllowed: data.data.isOvertimeAllowanceAllowed,
       });
       setEditId(id);
+      setOriginalDesignationCode(data.data.designationCode);  // Save the original designation code
       setShowModal(true);
     }
   };
+  
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -90,10 +97,10 @@ function Designations() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "radio" ? checked : value,
+      [name]: type === "radio" ? value === "true" : value,
     });
 
     validateInput(name, value);
@@ -103,15 +110,34 @@ function Designations() {
     e.preventDefault();
     setValidationErrors({});
 
+    // Check if the form data is the same as the original data (i.e., no changes)
+    if (
+      formData.designationCode === originalDesignationCode &&
+      formData.designationName === formData.designationName &&
+      formData.isOvertimeAllowanceAllowed ===
+        formData.isOvertimeAllowanceAllowed
+    ) {
+      // If no changes, close the modal without submitting
+      handleCloseModal();
+      return;
+    }
 
-    const isDuplicate = designations?.some(
-      (des) =>
-        des.designationCode.toLowerCase() === formData.designationCode.toLowerCase() &&
-      des.idDesignation !== editId 
-    );
-  
+    // Only check for duplicate if the designationCode has changed
+    let isDuplicate = false;
+    if (formData.designationCode !== originalDesignationCode) {
+      isDuplicate = designations?.some(
+        (des) =>
+          des.designationCode.toLowerCase() ===
+            formData.designationCode.toLowerCase() &&
+          des.idDesignation !== editId // Exclude the current designation being edited
+      );
+    }
+
+    // If duplicate found, show error only for the code
     if (isDuplicate) {
-      setValidationErrors({ designationCode: "Designation code already exists." });
+      setValidationErrors({
+        designationCode: "Designation code already exists.",
+      });
       return;
     }
 
@@ -139,15 +165,19 @@ function Designations() {
       }
 
       if (response.success) {
-        fetchDesignations(); 
+        fetchDesignations();
         handleCloseModal();
       } else {
+        if (response.message) {
+          toast.error(response.message);
+        }
         setValidationErrors(response.errors);
       }
     } catch (error) {
       console.error("Error submitting designation:", error);
     }
   };
+  
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -333,6 +363,7 @@ function Designations() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }

@@ -83,6 +83,12 @@ function SalaryHeads() {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
 
+    // Clear the specific error when the user starts typing valid input
+    setErrors((prevState) => ({
+      ...prevState,
+      [name]: "",
+    }));
+
     setFormData((prevState) => ({
       ...prevState,
       [name]:
@@ -114,9 +120,7 @@ function SalaryHeads() {
     if (!formData.calculationMethod) {
       validationErrors.calculationMethod = "Calculation Method is required.";
     }
-    if (formData.customFormula === "") {
-      validationErrors.customFormula = "Custom Formula is required.";
-    }
+
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -402,19 +406,22 @@ function SalaryHeads() {
                       />
                     </div>
                   </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1"> Custom Formula </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      maxLength="100"
-                      placeholder="(BP + DA) / 10"
-                      value={formData.customFormula}
-                      name="customFormula"
-                      onChange={handleInputChange}
-                    />
-                    <div className="text-danger">{errors.customFormula}</div>
-                  </div>
+                  {formData.calculationMethod === "FORMULA" && (
+                    <div className="mb-2">
+                      <label className="form-label mb-1">Custom Formula</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        maxLength="100"
+                        placeholder="(BP + DA) / 10"
+                        value={formData.customFormula}
+                        name="customFormula"
+                        onChange={handleInputChange}
+                        disabled={formData.calculationMethod === "PERCENTAGE"}  
+                      />
+                      <div className="text-danger">{errors.customFormula}</div>
+                    </div>
+                  )}
                   <div className="mb-3 pt-2">
                     <div className="form-check form-switch">
                       <label

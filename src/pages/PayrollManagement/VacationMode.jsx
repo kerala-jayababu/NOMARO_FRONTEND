@@ -182,7 +182,13 @@ function VacationModes() {
                     <input
                       type="date"
                       className="form-control"
-                      maxLength="20"
+                      defaultValue={
+                        selectedVacation?.vacationFrom
+                          ? new Date(selectedVacation.vacationFrom)
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
+                      }
                     />
                   </div>
                   <div className="mb-2">
@@ -190,7 +196,13 @@ function VacationModes() {
                     <input
                       type="date"
                       className="form-control"
-                      maxLength="20"
+                      defaultValue={
+                        selectedVacation?.vacationTo
+                          ? new Date(selectedVacation.vacationTo)
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
+                      }
                     />
                   </div>
                   <div className="mb-2">
