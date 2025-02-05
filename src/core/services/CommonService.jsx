@@ -1,0 +1,41 @@
+import { API } from "../../redux/api/utils";
+
+export default class CommonService {
+
+  static getEmployeeList = async () => {
+    try {
+      const res = await API.get("/api/v1/Employee/GetEmployeeList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+  static getDepartmentsList = async () => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetDepartmentList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+  static getDesignationsList = async () => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetDesignationList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+  static getSalaryHeadList = async () => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetSalaryHeadList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+}
