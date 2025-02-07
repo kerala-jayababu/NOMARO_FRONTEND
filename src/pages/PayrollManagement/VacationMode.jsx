@@ -1,335 +1,292 @@
-import React, { useEffect, useState } from "react";
-import {
-  getEmployeeDetailsById,
-  getVacationModeList,
-  getEmployeeProfileById,
-} from "../../utils/service";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchVacationMode } from "../../redux/reducers/vacationMode";
+import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
+import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
+import Button from "../../components/button";
+import Card from "../../components/card";
+import DatePicker from "../../components/datePicker";
+import Dropdown from "../../components/dropdown";
+import Table from "../../components/table";
+import Input from "../../components/input";
+import { useState } from "react";
+import { addVacationMode } from "../../redux/reducers/vacationMode";
+import { getVacationModeById } from "../../redux/reducers/vacationMode";
+import { updateVacationMode } from "../../redux/reducers/vacationMode";
 
-function VacationModes() {
-  const [vacationModes, setVacationModes] = useState([]);
-  const [employeeDetails, setEmployeeDetails] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(""); // "add" or "edit"
-  const [selectedVacation, setSelectedVacation] = useState(null);
+const VacationMode = () => {
+  const dispatch = useDispatch();
+
+  const vacationModeState = useSelector(
+    (state) => state.vacationMode.vacationModeList
+  );
+  const employeeDetailsState = useSelector((state) => state.getEmployeeDetails);
+  const getAllEmployeesState = useSelector(
+    (state) => state.getAllEmployeeDetails
+  );
+  console.log("getAllEmployeesState", getAllEmployeesState);
+  console.log("vacationModeState.data", vacationModeState.data);
+  console.log("employeeDetailsState.options", employeeDetailsState.options);
+  const [formData, setFormData] = useState({
+    employeeName: "",
+    vacationFrom: "",
+    vacationTo: "",
+    approvalAuthoritySubstitute: "",
+    reasonForVacation: "",
+  });
+  const [editingVacationMode, setEditingVacationMode] = useState(null);
+
+  console.log("editingVacationMode", editingVacationMode);
+
+  console.log("formData", formData);
+  const [errors, setErrors] = useState({
+    reasonForVacation: "",
+  });
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const vacationData = await getVacationModeList();
-        if (vacationData.success) {
-          const employees = {};
-          for (let item of vacationData.data) {
-            if (!employees[item.idEmployee]) {
-              const employeeData = await getEmployeeProfileById(
-                item.idEmployee
-              );
-              if (employeeData.success && employeeData.data.length > 0) {
-                employees[item.idEmployee] = employeeData.data[0];
-              }
-            }
-          }
-          setEmployeeDetails(employees);
-          setVacationModes(vacationData.data);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
+    if (
+      getAllEmployeesState.options.length === 0 &&
+      !getAllEmployeesState.loading
+    ) {
+      dispatch(getAllEmployeeDetails());
     }
-    fetchData();
-  }, []);
+  }, [
+    dispatch,
+    getAllEmployeesState.options.length,
+    getAllEmployeesState.loading,
+  ]);
 
-  // Open Modal for Add/Edit
-  const handleOpenModal = (type, vacation = null) => {
-    setModalType(type);
-    setSelectedVacation(vacation);
-    setShowModal(true);
+  useEffect(() => {
+    dispatch(fetchVacationMode());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (vacationModeState.data && vacationModeState.data.length > 0) {
+      vacationModeState.data.forEach((vacation) => {
+        dispatch(getEmployeeDetailsByID(vacation.idEmployee));
+      });
+    }
+  }, [vacationModeState.data, dispatch]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    console.log(`Changing ${name} to ${value}`);
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    console.log("Updated formData:", formData);
+    if (name === "reasonForVacation" && value.trim() !== "") {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        reasonForVacation: "",
+      }));
+    }
   };
 
-  // Close Modal
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedVacation(null);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    let newErrors = {};
+
+    if (!formData.reasonForVacation) {
+      setErrors({
+        ...errors,
+        reasonForVacation: "Reason for vacation is required.",
+      });
+      return;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const data = {
+      idEmployee: formData.employeeName,
+      vacationFrom: formData.vacationFrom,
+      vacationTo: formData.vacationTo,
+      idSubstitueEmployee: formData.approvalAuthoritySubstitute,
+    };
+
+    if (editingVacationMode) {
+      // Update existing vacation mode
+      dispatch(
+        updateVacationMode({
+          idVacationMode: editingVacationMode.idVacationMode,
+          ...data,
+        })
+      ).then((action) => {
+        if (action.payload && action.payload.success) {
+          resetForm();
+          dispatch(fetchVacationMode());
+        }
+      });
+    } else {
+      // Add new vacation mode
+      dispatch(addVacationMode(data)).then((action) => {
+        if (action.payload && action.payload.success) {
+          resetForm();
+          dispatch(fetchVacationMode());
+        }
+      });
+    }
   };
+
+  const resetForm = () => {
+    setFormData({
+      employeeName: "",
+      vacationFrom: "",
+      vacationTo: "",
+      approvalAuthoritySubstitute: "",
+      reasonForVacation: "",
+    });
+    setEditingVacationMode(null);
+  };
+
+  const handleEditClick = (idVacationMode) => {
+    dispatch(getVacationModeById(idVacationMode)).then((action) => {
+      if (action.payload && action.payload.success) {
+        const vacationData = action.payload.data;
+        console.log("vacationData", vacationData);
+        setEditingVacationMode(vacationData);
+        setFormData({
+          employeeName: vacationData.idEmployee.toString(),
+          vacationFrom: new Date(vacationData.vacationFrom)
+            .toISOString()
+            .split("T")[0],
+          vacationTo: new Date(vacationData.vacationTo)
+            .toISOString()
+            .split("T")[0],
+          approvalAuthoritySubstitute:
+            vacationData.idSubstitueEmployee.toString(),
+          reasonForVacation: vacationData.reasonForVacation || "",
+        });
+      }
+    });
+  };
+
+  const vacationList = React.useMemo(() => {
+    return Array.isArray(vacationModeState.data)
+      ? vacationModeState.data.map((vacation) => {
+          console.log("vacation", vacation);
+
+          const empCode = vacation ? vacation.employeeCode : "N/A";
+          const employeeName = vacation ? vacation.employeeName : "N/A";
+          const substitute = vacation ? vacation.substituteEmployeeName : "N/A";
+          return {
+            empCode,
+            employeeName,
+            dateFrom: vacation.vacationFrom
+              ? new Date(vacation.vacationFrom).toISOString().slice(0, 10)
+              : "N/A",
+            dateTo: vacation.vacationTo
+              ? new Date(vacation.vacationTo).toISOString().slice(0, 10)
+              : "N/A",
+            substitute,
+            id: vacation.idVacationMode,
+          };
+        })
+      : [];
+  }, [vacationModeState.data, employeeDetailsState.options]);
+
+  if (!vacationModeState.data || vacationModeState.data.length === 0) {
+    return <div>No vacation data available.</div>;
+  }
+
+  if (vacationModeState.loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (vacationModeState.error) {
+    return <div>Error: {vacationModeState.error}</div>;
+  }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
-        <div className="col-lg-12">
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Employees on Vacation Mode</h5>
-              <button
-                className="btn btn-primary btn-sm px-4"
-                onClick={() => handleOpenModal("add")}
-              >
-                Add
-              </button>
-            </div>
-            <div className="card-body">
-              {loading ? (
-                <p>Loading...</p>
-              ) : (
-                <div className="table-responsive text-nowrap">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Emp. Code</th>
-                        <th>Employee Name</th>
-                        <th>Date From</th>
-                        <th>Date To</th>
-                        <th>Substitute</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody className="table-border-bottom-0">
-                      {vacationModes.map((item) => (
-                        <tr key={item.idVacationMode}>
-                          <td>
-                            {employeeDetails[item.idEmployee]?.employeeCode ||
-                              "N/A"}
-                          </td>
-                          <td>
-                            {employeeDetails[item.idEmployee]?.fullName ||
-                              "N/A"}
-                          </td>
-                          <td>
-                            {new Date(item.vacationFrom).toLocaleDateString()}
-                          </td>
-                          <td>
-                            {new Date(item.vacationTo).toLocaleDateString()}
-                          </td>
-                          <td>
-                            {employeeDetails[item.idSubstitueEmployee]
-                              ?.fullName || "N/A"}
-                          </td>
-                          <td className="text-end">
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                              onClick={() => handleOpenModal("edit", item)}
-                            >
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="col-lg-8">
+          <Card title="List of Employees on Vacation Mode">
+            <Table
+              columns={[
+                { key: "empCode", label: "Emp. Code" },
+                { key: "employeeName", label: "Employee Name" },
+                { key: "dateFrom", label: "Date From" },
+                { key: "dateTo", label: "Date To" },
+                { key: "substitute", label: "Substitute" },
+                { key: "actions", label: "Actions" },
+              ]}
+              data={vacationList}
+              onEditClick={handleEditClick}
+              idKey="id"
+            />
+          </Card>
+        </div>
+        <div className="col-lg-4">
+          <Card title="Add/Update Vacation Mode">
+            <form onSubmit={handleSubmit}>
+              <Dropdown
+                label="Employee Name"
+                name="employeeName"
+                options={getAllEmployeesState.options.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                value={formData.employeeName}
+                onChange={handleInputChange}
+              />
+
+              <DatePicker
+                label="Vacation From"
+                name="vacationFrom"
+                value={formData.vacationFrom}
+                onChange={handleInputChange}
+              />
+              <DatePicker
+                label="Vacation To"
+                name="vacationTo"
+                value={formData.vacationTo}
+                onChange={handleInputChange}
+              />
+              <Dropdown
+                label="Approval Authority Substituted to"
+                name="approvalAuthoritySubstitute"
+                options={getAllEmployeesState.options.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                value={formData.approvalAuthoritySubstitute}
+                onChange={handleInputChange}
+              />
+              {/* <div className="mb-2"> */}
+              {/* <label className="form-label mb-1">Reason for Vacation</label> */}
+              <Input
+                label="Reason for Vacation"
+                name="reasonForVacation"
+                value={formData.reasonForVacation}
+                onChange={handleInputChange}
+                maxLength="150"
+                error={errors.reasonForVacation}
+              />
+              {/* </div> */}
+              <div className="text-center">
+                <Button type="submit" className="btn btn-primary px-4 me-2">
+                  {editingVacationMode ? "Update" : "Submit"}
+                </Button>
+                <Button
+                  type="button"
+                  className="btn btn-outline-secondary px-4"
+                  onClick={resetForm}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
       </div>
-
-      {showModal && (
-        <div
-          className="modal-overlay"
-          style={{
-            position: "fixed",
-            top: "0",
-            left: "0",
-            right: "0",
-            bottom: "0",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            zIndex: "999",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            className="modal-content"
-            style={{
-              maxWidth: "600px",
-              maxHeight: "80vh",
-              margin: "auto",
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              zIndex: "1000",
-              overflowY: "auto",
-            }}
-          >
-            <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  {modalType === "add"
-                    ? "Add Vacation Mode"
-                    : "Edit Vacation Mode"}
-                </h5>
-                <button
-                  className="btn-close"
-                  onClick={handleCloseModal}
-                ></button>
-              </div>
-              <div className="card-body">
-                <form>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Employee Name</label>
-                    <select className="form-select">
-                      <option>Select Employee</option>
-                      <option>johnny</option>
-                      <option>John</option>
-                      <option>William</option>
-                    </select>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Vacation From</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      defaultValue={
-                        selectedVacation?.vacationFrom
-                          ? new Date(selectedVacation.vacationFrom)
-                              .toISOString()
-                              .split("T")[0]
-                          : ""
-                      }
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Vacation To</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      defaultValue={
-                        selectedVacation?.vacationTo
-                          ? new Date(selectedVacation.vacationTo)
-                              .toISOString()
-                              .split("T")[0]
-                          : ""
-                      }
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">
-                      Approval Authority Substituted to
-                    </label>
-                    <select className="form-select">
-                      <option>Select</option>
-                      <option>johnny</option>
-                      <option>John</option>
-                      <option>William</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-2">
-                    <label className="form-label mb-1">
-                      Reason for Vacation
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      maxLength="15"
-                    />
-                  </div>
-
-                  <div className="text-center">
-                    <button type="submit" className="btn btn-primary px-4 me-2">
-                      {" "}
-                      {modalType === "add" ? "Add" : "Save Changes"}
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-outline-secondary px-4"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
 
-export default VacationModes;
-{
-  /* <div
-className="modal fade show d-block"
-style={{ background: "rgba(0,0,0,0.5)" }}
->
-<div className="modal-dialog">
-  <div className="modal-content">
-    <div className="modal-header">
-      <h5 className="modal-title">
-        {modalType === "add"
-          ? "Add Vacation Mode"
-          : "Edit Vacation Mode"}
-      </h5>
-      <button
-        className="btn-close"
-        onClick={handleCloseModal}
-      ></button>
-    </div>
-    <div className="modal-body">
-      {/* Form Fields */
-}
-//       <form>
-//         <div className="mb-3">
-//           <label className="form-label">Employee Name</label>
-//           <input
-//             type="text"
-//             className="form-control"
-//             defaultValue={selectedVacation?.fullName || ""}
-//           />
-//         </div>
-//         <div className="mb-3">
-//           <label className="form-label">Date From</label>
-//           <input
-//             type="date"
-//             className="form-control"
-//             defaultValue={
-//               selectedVacation?.vacationFrom
-//                 ? new Date(selectedVacation.vacationFrom)
-//                     .toISOString()
-//                     .split("T")[0]
-//                 : ""
-//             }
-//           />
-//         </div>
-//         <div className="mb-3">
-//           <label className="form-label">Date To</label>
-//           <input
-//             type="date"
-//             className="form-control"
-//             defaultValue={
-//               selectedVacation?.vacationTo
-//                 ? new Date(selectedVacation.vacationTo)
-//                     .toISOString()
-//                     .split("T")[0]
-//                 : ""
-//             }
-//           />
-//         </div>
-//         <div className="mb-3">
-//           <label className="form-label">Substitute</label>
-//           <input
-//             type="text"
-//             className="form-control"
-//             defaultValue={selectedVacation?.substitute || ""}
-//           />
-//         </div>
-//       </form>
-//     </div>
-//     <div className="modal-footer">
-//       <button
-//         className="btn btn-secondary"
-//         onClick={handleCloseModal}
-//       >
-//         Cancel
-//       </button>
-//       <button className="btn btn-primary">
-//         {modalType === "add" ? "Add" : "Save Changes"}
-//       </button>
-//     </div>
-//   </div>
-// </div>
-// </div> */}
+export default VacationMode;

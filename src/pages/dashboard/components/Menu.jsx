@@ -26,7 +26,7 @@ function Menu() {
       <div className="app-brand demo">
         <a href="/" className="app-brand-link">
           <span className="app-brand-logo demo">
-            <img src="assets/logo.png" />
+            <img src="/assets/logo.png" />
           </span>
         </a>
         <a

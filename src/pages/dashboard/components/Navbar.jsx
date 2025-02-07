@@ -226,7 +226,7 @@ function Navbar() {
             >
               <div className="avatar avatar-online">
                 <img
-                  src="assets/img/avatars/1.png"
+                  src="/assets/img/avatars/1.png"
                   alt=""
                   className="w-px-40 h-auto rounded-circle"
                 />
@@ -239,7 +239,7 @@ function Navbar() {
                     <div className="flex-shrink-0 me-3">
                       <div className="avatar avatar-online">
                         <img
-                          src="assets/img/avatars/1.png"
+                          src="/assets/img/avatars/1.png"
                           alt=""
                           className="w-px-40 h-auto rounded-circle"
                         />

@@ -99,7 +99,7 @@ function Content() {
 
 export default Content;
 
-const ComingSoon = () => {
+export const ComingSoon = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 m-4">
       <div className="text-center bg-white rounded-lg shadow-lg max-w-lg w-full p-10">

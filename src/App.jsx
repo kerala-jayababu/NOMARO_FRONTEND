@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import privateRoutes from "./routes";
+// import privateRoutes from "./routes";
 import "./App.css";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/privateRoute";
@@ -8,6 +8,9 @@ import BudgetCode from "./pages/MasterData/budgetCode";
 import Departments from "./pages/MasterData/departments";
 import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
+import VacationMode from "./pages/PayrollManagement/VacationMode";
+import ComingSoon from "./pages/dashboard/components/Content";
+
 
 function App() {
   return (
@@ -15,6 +18,8 @@ function App() {
       <Routes>
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />}>
+          <Route index element={<ComingSoon />} /> {/* This will show ComingSoon for /dashboard */}
+           <Route path="/dashboard/vacation-mode" element={< VacationMode/>} /> 
           <Route path="/dashboard/budget-codes" element={<BudgetCode />} />
           <Route path="/dashboard/departments" element={<Departments />} />
           <Route path="/dashboard/designations" element={<Designations />} />
@@ -32,3 +37,4 @@ function App() {
 }
 
 export default App;
+

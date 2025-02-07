@@ -172,7 +172,7 @@ export const updateBudgetCode = async (data) => {
 export const getDesignationList = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetDesignationList`
+      `http://46.250.230.34:8081/api/v1/MasterData/getMasterDesignationListById`
     );
     return response.data;
   } catch (error) {

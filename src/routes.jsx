@@ -3,6 +3,7 @@ import BudgetCode from "./pages/MasterData/budgetCode";
 import Departments from "./pages/MasterData/departments";
 import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
+import VacationMode from "./pages/PayrollManagement/VacationMode";
 
 export const privateRoutes = [
   {
@@ -25,6 +26,10 @@ export const privateRoutes = [
     path: "/dashboard/salary-heads", 
     element: <SalaryHeads />,
   },
+  {
+    path:"/dashboard/vacation-mode",
+    element:<VacationMode/>
+  }
 ];
 
 export default privateRoutes

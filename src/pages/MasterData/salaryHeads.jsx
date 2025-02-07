@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getSalaryHeadList,
   getSalaryHeadById,
@@ -99,6 +99,7 @@ function SalaryHeads() {
           : value,
     }));
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -241,7 +242,7 @@ function SalaryHeads() {
               padding: "20px",
               borderRadius: "8px",
               zIndex: "1000",
-              overflowY: "auto", 
+              overflowY: "auto",
             }}
           >
             <div className="card">
@@ -422,6 +423,7 @@ function SalaryHeads() {
                       <div className="text-danger">{errors.customFormula}</div>
                     </div>
                   )}
+
                   <div className="mb-3 pt-2">
                     <div className="form-check form-switch">
                       <label

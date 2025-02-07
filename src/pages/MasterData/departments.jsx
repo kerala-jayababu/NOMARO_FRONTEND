@@ -1,255 +1,225 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Card from "../../components/card";
+import Table from "../../components/table";
+import Input from "../../components/input";
+import Button from "../../components/button";
 import {
-  getMasterDepartmentList,
-  getMasterDepartmentByID,
-  updateMasterDepartment,
+  fetchDepartments,
   addMasterDepartment,
-} from "../../utils/service";
+  getMasterDepartmentListById,
+  updateDepartments,
+} from "../../redux/reducers/department"; // Updated with correct import
 
-function Departments() {
-  const [departments, setDepartments] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    departmentCode: "",
-    departmentName: "",
-  });
-  const [editId, setEditId] = useState(null);
-  const [validationErrors, setValidationErrors] = useState({});
+const Departments = () => {
+  const dispatch = useDispatch();
+  const { departments, loading, error } = useSelector(
+    (state) => state.department
+  );
+
+  const [deptCode, setDeptCode] = useState("");
+  const [deptName, setDeptName] = useState("");
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingDepartmentId, setEditingDepartmentId] = useState(null);
 
   useEffect(() => {
-    fetchDepartments();
-  }, []);
+    // Dispatch the fetchDepartments action when the component mounts
+    dispatch(fetchDepartments());
+  }, [dispatch]);
 
-  const fetchDepartments = async () => {
-    const data = await getMasterDepartmentList();
-    setDepartments(data);
-  };
+  const columns = [
+    { key: "departmentCode", label: "Dept. Code" },
+    { key: "departmentName", label: "Department Name" },
+    { key: "actions", label: "" },
+  ];
 
-  const handleAddClick = () => {
-    setFormData({ departmentCode: "", departmentName: "" });
-    setEditId(null); 
-    setValidationErrors({});
-    setShowModal(true);
-  };
-  
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setFormData({ departmentCode: "", departmentName: "" }); 
-    setValidationErrors({});
-    setEditId(null); 
-  };
+  // Function to validate the input fields
+  // Function to validate the input fields
+  const validateInputs = (field, value) => {
+    const validationErrors = {};
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
-  const handleEditClick = async (id) => {
-    const data = await getMasterDepartmentByID(id);
-    if (data.success) {
-      setFormData({
-        departmentCode: data.data.departmentCode,
-        departmentName: data.data.departmentName,
-      });
-      setEditId(id);
-      setShowModal(true);
-    }
-  };
-
-  const validateInput = (name, value) => {
-    let errors = { ...validationErrors };
-
-    if (name === "departmentCode") {
-      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
-      if (!alphanumericRegex.test(value)) {
-        errors.departmentCode =
-          "Department code must contain only alphanumeric characters.";
-      } else if (value.length >= 10) {
-        errors.departmentCode = "Department code must not exceed 10 characters.";
+    if (field === "deptCode") {
+      // If deptCode is not empty, apply validation
+      if (value && !value.match(alphanumericRegex)) {
+        validationErrors.deptCode =
+          "Department Code must contain only alphanumeric characters.";
+      } else if (
+        value &&
+        departments.data?.some((dept) => dept.departmentCode === value)
+      ) {
+        validationErrors.deptCode = "Department Code already exists.";
       } else {
-        delete errors.departmentCode;
+        delete validationErrors.deptCode;
       }
     }
 
-    setValidationErrors(errors);
+    if (field === "deptName") {
+      // If deptName is not empty, apply validation
+      if (value && !value.match(alphanumericRegex)) {
+        validationErrors.deptName =
+          "Department Name must contain only alphanumeric characters.";
+      } else {
+        delete validationErrors.deptName;
+      }
+    }
+
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const handleInputChange = (field, value) => {
+    if (field === "deptCode") setDeptCode(value);
+    if (field === "deptName") setDeptName(value);
 
-    // Validate input
-    validateInput(name, value);
+    // Trigger validation on typing
+    validateInputs(field, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setValidationErrors({});
 
-    const requestData = {
-      departmentCode: formData.departmentCode,
-      departmentName: formData.departmentName,
+    if (
+      !validateInputs("deptCode", deptCode) ||
+      !validateInputs("deptName", deptName)
+    ) {
+      return;
+    }
+
+    const departmentData = {
+      departmentCode: deptCode,
+      departmentName: deptName,
     };
 
-    let response;
     try {
-      if (editId) {
-        requestData.idDepartment = editId;
-        response = await updateMasterDepartment(requestData);
+      setIsSubmitting(true);
+      let resultAction;
+
+      if (editingDepartmentId) {
+        console.log("Updating department with ID:", editingDepartmentId);
+        // Updating existing department
+        resultAction = await dispatch(
+          updateDepartments({
+            idDepartment: editingDepartmentId, // Ensure this ID is correctly passed
+            ...departmentData,
+          })
+        );
       } else {
-        response = await addMasterDepartment(requestData);
+        // Adding new department
+        resultAction = await dispatch(addMasterDepartment(departmentData));
       }
 
-      if (response.success) {
-        fetchDepartments();
-        setShowModal(false);
-        setEditId(null);
-        setFormData({ departmentCode: "", departmentName: "" });
-      } else if (response.response?.data?.errors) {
-        setValidationErrors(response.response.data.errors);
+      if (resultAction.payload && resultAction.payload.success) {
+        setDeptCode("");
+        setDeptName("");
+        setErrors({});
+        setEditingDepartmentId(null); // Reset ID after update
+        dispatch(fetchDepartments());
       }
     } catch (error) {
-      console.error("Error submitting department:", error);
+      console.error("Error processing department:", error);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleEdit = async (id) => {
+    try {
+      console.log("Fetching department details for ID:", id);
+      const resultAction = await dispatch(getMasterDepartmentListById(id));
+
+      if (getMasterDepartmentListById.fulfilled.match(resultAction)) {
+        console.log("Department Data Received:", resultAction.payload);
+        const department = resultAction.payload;
+
+        if (department) {
+          setDeptCode(department.data.departmentCode);
+          setDeptName(department.data.departmentName);
+          setEditingDepartmentId(department.data.idDepartment); // Ensure ID is set correctly
+        } else {
+          console.error("No department data found");
+        }
+      } else {
+        console.error(
+          "Failed to fetch department details:",
+          resultAction.error
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching department details:", error);
+    }
+  };
+
+  const handleReset = () => {
+    setDeptCode("");
+    setDeptName("");
+    setErrors({});
   };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
-        <div className="col-lg-12">
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Departments</h5>
-              <button
-                className="btn btn-primary btn-sm px-4"
-                onClick={handleAddClick} 
-              >
-                Add
-              </button>
-            </div>
-            <div className="card-body">
-              <div className="table-responsive text-nowrap">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Dept. Code</th>
-                      <th>Department Name</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {departments.data?.length > 0 ? (
-                      departments.data.map((dept) => (
-                        <tr key={dept.idDepartment}>
-                          <td>{dept.departmentCode}</td>
-                          <td>{dept.departmentName}</td>
-                          <td className="text-end">
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                              onClick={() => handleEditClick(dept.idDepartment)}
-                            >
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="text-center">
-                          No Departments Available
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+        <div className="col-lg-8">
+          <Card title="List of Departments">
+            {loading ? (
+              <div>Loading...</div>
+            ) : error ? (
+              <div className="text-danger">{error}</div>
+            ) : (
+              <Table
+                columns={columns}
+                data={departments.data}
+                onEditClick={handleEdit}
+                idKey="idDepartment"
+              />
+            )}
+          </Card>
+        </div>
+        <div className="col-lg-4">
+          <Card title="Add/Update Department">
+            <form onSubmit={handleSubmit}>
+              <Input
+                label="Department Code"
+                name="deptCode"
+                value={deptCode}
+                onChange={(e) => handleInputChange("deptCode", e.target.value)}
+                maxLength="10"
+                error={errors.deptCode}
+              />
+              <Input
+                label="Department Name"
+                name="deptName"
+                value={deptName}
+                onChange={(e) => handleInputChange("deptName", e.target.value)}
+                maxLength="50"
+                error={errors.deptName}
+              />
+              {errors.message && (
+                <div className="text-danger">{errors.message}</div>
+              )}
+              <div className="text-center">
+                <Button
+                  type="submit"
+                  className="btn btn-primary px-4 me-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Loading..." : "Submit"}
+                </Button>
+                <Button
+                  type="button"
+                  className="btn btn-outline-secondary px-4"
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
               </div>
-            </div>
-          </div>
+            </form>
+          </Card>
         </div>
       </div>
-      {showModal && (
-        <div className="modal-overlay" style={{
-          position: "fixed",
-          top: "0",
-          left: "0",
-          right: "0",
-          bottom: "0",
-          backgroundColor: "rgba(0, 0, 0, 0.5)", 
-          zIndex: "999",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}>
-          <div
-            className="modal-content"
-            style={{
-              maxWidth: "600px",
-              margin: "auto",
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px", 
-              zIndex: "1000", 
-            }}
-          >
-            <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  {editId ? "Update Department" : "Add Department"}
-                </h5>
-                <button
-                  className="btn-close"
-                  onClick={handleCloseModal}
-                ></button>
-              </div>
-              <div className="card-body">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Department Code</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="departmentCode"
-                      maxLength="10"
-                      value={formData.departmentCode}
-                      onChange={handleInputChange}
-                    />
-                    {validationErrors.departmentCode && (
-                      <div className="text-danger">
-                        {validationErrors.departmentCode}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Department Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="departmentName"
-                      maxLength="50"
-                      value={formData.departmentName}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <button type="submit" className="btn btn-primary px-4 me-2">
-                      {editId ? "Update" : "Submit"}
-                    </button>
-                    <button
-                      type="reset"
-                      className="btn btn-outline-secondary px-4"
-                      onClick={() =>
-                        setValidationErrors({}) ||
-                        setFormData({ departmentCode: "", departmentName: "" })
-                        
-                      }
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
 
 export default Departments;
