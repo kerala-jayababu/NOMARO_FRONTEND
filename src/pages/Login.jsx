@@ -5,10 +5,13 @@ import secureLocalStorage from "react-secure-storage";
  
 function Login() {
   const navigate = useNavigate();
- 
+
+   
   const handleSignIn = async () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+
+
     const formData = { email, password };
  
     try {
