@@ -1,13 +1,12 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVacationMode } from "../../redux/reducers/vacationMode";
-import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
 import Button from "../../components/button";
 import Card from "../../components/card";
 import DatePicker from "../../components/datePicker";
 import Dropdown from "../../components/dropdown";
-import Table from "../../components/table";
+import Grid from "../../components/grid";
 import Input from "../../components/input";
 import { useState } from "react";
 import { addVacationMode } from "../../redux/reducers/vacationMode";
@@ -20,13 +19,13 @@ const VacationMode = () => {
   const vacationModeState = useSelector(
     (state) => state.vacationMode.vacationModeList
   );
-  const employeeDetailsState = useSelector((state) => state.getEmployeeDetails);
+  // const employeeDetailsState = useSelector((state) => state.getEmployeeDetails);
   const getAllEmployeesState = useSelector(
     (state) => state.getAllEmployeeDetails
   );
   console.log("getAllEmployeesState", getAllEmployeesState);
-  console.log("vacationModeState.data", vacationModeState.data);
-  console.log("employeeDetailsState.options", employeeDetailsState.options);
+  // console.log("vacationModeState.data", vacationModeState.data);
+  // console.log("employeeDetailsState.options", employeeDetailsState.options);
   const [formData, setFormData] = useState({
     employeeName: "",
     vacationFrom: "",
@@ -42,6 +41,15 @@ const VacationMode = () => {
   const [errors, setErrors] = useState({
     reasonForVacation: "",
   });
+    // Function to get the first day of the financial year
+    const getFinancialYearStart = () => {
+      const today = new Date();
+      const year = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+      return new Date(year, 3, 1).toISOString().split("T")[0]; // April 1st
+    };
+    const [selectedDate, setSelectedDate] = useState(getFinancialYearStart());  
+
+    const today = new Date().toISOString().split("T")[0]
 
   useEffect(() => {
     if (
@@ -60,13 +68,20 @@ const VacationMode = () => {
     dispatch(fetchVacationMode());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (vacationModeState.data && vacationModeState.data.length > 0) {
-      vacationModeState.data.forEach((vacation) => {
-        dispatch(getEmployeeDetailsByID(vacation.idEmployee));
-      });
-    }
-  }, [vacationModeState.data, dispatch]);
+  // useEffect(() => {
+  //   if (vacationModeState.data && vacationModeState.data.length > 0) {
+  //     vacationModeState.data.forEach((vacation) => {
+  //       dispatch(getEmployeeDetailsByID(vacation.idEmployee));
+  //     });
+  //   }
+  // }, [vacationModeState.data, dispatch]);
+
+  const employeeOptions = React.useMemo(() => {
+    return getAllEmployeesState.options.map((employee) => ({
+      value: employee.idEmployee,
+      label: employee.fullName,
+    }));
+  }, [getAllEmployeesState.options]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -107,6 +122,7 @@ const VacationMode = () => {
       vacationFrom: formData.vacationFrom,
       vacationTo: formData.vacationTo,
       idSubstitueEmployee: formData.approvalAuthoritySubstitute,
+      reasonForVacation: formData.reasonForVacation,
     };
 
     if (editingVacationMode) {
@@ -174,21 +190,36 @@ const VacationMode = () => {
           const empCode = vacation ? vacation.employeeCode : "N/A";
           const employeeName = vacation ? vacation.employeeName : "N/A";
           const substitute = vacation ? vacation.substituteEmployeeName : "N/A";
+          const formatDate = (date) => {
+            return date
+              ? new Date(date).toLocaleDateString("en-US", {
+                  month: "2-digit",
+                  day: "2-digit",
+                  year: "2-digit",
+                })
+              : "N/A";
+          };
           return {
             empCode,
             employeeName,
-            dateFrom: vacation.vacationFrom
-              ? new Date(vacation.vacationFrom).toISOString().slice(0, 10)
-              : "N/A",
-            dateTo: vacation.vacationTo
-              ? new Date(vacation.vacationTo).toISOString().slice(0, 10)
-              : "N/A",
+            dateFrom: formatDate(vacation.vacationFrom),
+            dateTo: formatDate(vacation.vacationTo),
             substitute,
             id: vacation.idVacationMode,
+            reasonForVacation: vacation.reasonForVacation,
           };
         })
       : [];
-  }, [vacationModeState.data, employeeDetailsState.options]);
+  }, [vacationModeState.data]);
+
+  const filteredVacationList = React.useMemo(() => {
+    return vacationList.filter((vacation) => {
+      if (!selectedDate) return true;
+      const selectedDateObj = new Date(selectedDate);
+      const vacationDateObj = new Date(vacation.dateFrom);
+      return vacationDateObj >= selectedDateObj;
+    });
+  }, [vacationList, selectedDate]);
 
   if (!vacationModeState.data || vacationModeState.data.length === 0) {
     return <div>No vacation data available.</div>;
@@ -206,17 +237,32 @@ const VacationMode = () => {
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
         <div className="col-lg-8">
-          <Card title="List of Employees on Vacation Mode">
-            <Table
+          <Card>
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">List of Employees on Vacation Mode</h5>
+              <div className="d-flex align-items-center">
+                <label htmlFor="vacationFrom" className="me-2 mb-0 mt-3">
+                  Date From:
+                </label>
+                <DatePicker
+                  id="vacationFrom"
+                  name="vacationFrom"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Grid
               columns={[
                 { key: "empCode", label: "Emp. Code" },
                 { key: "employeeName", label: "Employee Name" },
                 { key: "dateFrom", label: "Date From" },
                 { key: "dateTo", label: "Date To" },
                 { key: "substitute", label: "Substitute" },
-                { key: "actions", label: "Actions" },
+                { key: "actions" },
               ]}
-              data={vacationList}
+              data={filteredVacationList}
               onEditClick={handleEditClick}
               idKey="id"
             />
@@ -228,12 +274,10 @@ const VacationMode = () => {
               <Dropdown
                 label="Employee Name"
                 name="employeeName"
-                options={getAllEmployeesState.options.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={employeeOptions}
                 value={formData.employeeName}
                 onChange={handleInputChange}
+                style={{ maxWidth: "331px" }}
               />
 
               <DatePicker
@@ -241,22 +285,22 @@ const VacationMode = () => {
                 name="vacationFrom"
                 value={formData.vacationFrom}
                 onChange={handleInputChange}
+                min={today}
               />
               <DatePicker
                 label="Vacation To"
                 name="vacationTo"
                 value={formData.vacationTo}
                 onChange={handleInputChange}
+                min={today}
               />
               <Dropdown
                 label="Approval Authority Substituted to"
                 name="approvalAuthoritySubstitute"
-                options={getAllEmployeesState.options.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={employeeOptions}
                 value={formData.approvalAuthoritySubstitute}
                 onChange={handleInputChange}
+                style={{ maxWidth: "331px" }}
               />
               {/* <div className="mb-2"> */}
               {/* <label className="form-label mb-1">Reason for Vacation</label> */}
@@ -267,6 +311,7 @@ const VacationMode = () => {
                 onChange={handleInputChange}
                 maxLength="150"
                 error={errors.reasonForVacation}
+                style={{ maxWidth: "331px" }}
               />
               {/* </div> */}
               <div className="text-center">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Card from "../../components/card";
-import Table from "../../components/table";
+import Grid from "../../components/grid";
 import Input from "../../components/input";
 import Button from "../../components/button";
 import {
@@ -47,7 +47,7 @@ const Departments = () => {
           "Department Code must contain only alphanumeric characters.";
       } else if (
         value &&
-        departments.data?.some((dept) => dept.departmentCode === value)
+        departments.data?.some((dept) => dept.departmentCode === value && dept.idDepartment !== editingDepartmentId)
       ) {
         validationErrors.deptCode = "Department Code already exists.";
       } else {
@@ -55,15 +55,6 @@ const Departments = () => {
       }
     }
 
-    if (field === "deptName") {
-      // If deptName is not empty, apply validation
-      if (value && !value.match(alphanumericRegex)) {
-        validationErrors.deptName =
-          "Department Name must contain only alphanumeric characters.";
-      } else {
-        delete validationErrors.deptName;
-      }
-    }
 
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
@@ -167,7 +158,7 @@ const Departments = () => {
             ) : error ? (
               <div className="text-danger">{error}</div>
             ) : (
-              <Table
+              <Grid
                 columns={columns}
                 data={departments.data}
                 onEditClick={handleEdit}

@@ -46,16 +46,21 @@ const slice = createSlice({
       state.loading = true;
       state.error = null;
     });
+    // builder.addCase(getAllEmployeeDetails.fulfilled, (state, action) => {
+    //   state.loading = false;
+    //   state.loaded = true;  // Set to true once data is fetched
+    //   if (action.payload && action.payload.data) {
+    //     // Populate options with employee names
+    //     state.options = action.payload.data.map((employee) => ({
+    //       value: employee.idEmployee,
+    //       label: employee.fullName,
+    //     }));
+    //   }
+    // });
     builder.addCase(getAllEmployeeDetails.fulfilled, (state, action) => {
       state.loading = false;
-      state.loaded = true;  // Set to true once data is fetched
-      if (action.payload && action.payload.data) {
-        // Populate options with employee names
-        state.options = action.payload.data.map((employee) => ({
-          value: employee.idEmployee,
-          label: employee.fullName,
-        }));
-      }
+      state.loaded = true;
+      state.options = action.payload.data; // Store raw data without mapping
     });
     builder.addCase(getAllEmployeeDetails.rejected, (state, action) => {
       state.loading = false;

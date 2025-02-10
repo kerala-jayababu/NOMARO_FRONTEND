@@ -1,4 +1,5 @@
 import axios from "axios";
+import secureLocalStorage from "react-secure-storage";
 
 const salaryTemplateURL = "http://46.250.230.34:8081/api/v1/SalaryTemplate/";
 
@@ -217,8 +218,19 @@ export const updateDesignation = async (data) => {
 
 export const getSalaryHeadList = async () => {
   try {
+    const storedUser = secureLocalStorage.getItem("user");
+    const token = storedUser ? JSON.parse(storedUser)?.token : null;
+    if (!token) {
+      console.error("Authorization token missing");
+    }
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadList`
+      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadList`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -228,8 +240,22 @@ export const getSalaryHeadList = async () => {
 
 export const getSalaryHeadById = async (id) => {
   try {
+    const storedUser = secureLocalStorage.getItem("user");
+    const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+    console.log("Retrieved Token:", token); // Debugging
+
+    if (!token) {
+      console.error("Authorization token missing");
+    }
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadByID?Id=${id}`
+      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadByID?Id=${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -239,9 +265,20 @@ export const getSalaryHeadById = async (id) => {
 
 export const addSalaryHead = async (data) => {
   try {
+    const storedUser = secureLocalStorage.getItem("user");
+    const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+    console.log("Retrieved Token:", token); // Debugging
+
     const response = await axios.post(
       `http://46.250.230.34:8081/api/v1/MasterData/AddSalaryHead`,
-      data
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -251,16 +288,26 @@ export const addSalaryHead = async (data) => {
 
 export const updateSalaryHead = async (data) => {
   try {
+    const storedUser = secureLocalStorage.getItem("user");
+    const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+    console.log("Retrieved Token:", token); // Debugging
+
     const response = await axios.post(
       `http://46.250.230.34:8081/api/v1/MasterData/UpdateSalaryHead`,
-      data
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     return response.data;
   } catch (error) {
     return error;
   }
 };
-
 
 export const getVacationModeList = async () => {
   try {

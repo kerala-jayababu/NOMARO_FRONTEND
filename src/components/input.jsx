@@ -8,9 +8,10 @@ const Input = ({
   maxLength,
   label,
   error,
+  style
 }) => {
   return (
-    <div className="mb-2">
+    <div className="mb-2" style={{ maxWidth: "250px" , ...style}}>
       <label className="form-label mb-1">{label}</label>
       <input
         type={type}
@@ -19,6 +20,7 @@ const Input = ({
         maxLength={maxLength}
         value={value}
         onChange={onChange}
+        style={{ width: "100%" }} // Ensures responsiveness
       />
       {error && <div className="text-danger">{error}</div>}
     </div>
@@ -33,6 +35,7 @@ Input.propTypes = {
   maxLength: PropTypes.string,
   label: PropTypes.string.isRequired,
   error: PropTypes.string,
+  style: PropTypes.object,
 };
 
 Input.defaultProps = {

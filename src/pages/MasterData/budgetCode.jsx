@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Card from "../../components/card";
-import Table from "../../components/table";
+import Grid from "../../components/grid";
 import Input from "../../components/input";
 import Button from "../../components/button";
 import {
@@ -55,14 +55,6 @@ const BudgetCodes = () => {
       }
     }
 
-    if (field === "budgetName") {
-      if (!value.match(alphanumericRegex)) {
-        validationErrors.budgetName =
-          "Budget Name must contain only alphanumeric characters.";
-      } else {
-        delete validationErrors.budgetName;
-      }
-    }
 
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
@@ -147,7 +139,7 @@ const BudgetCodes = () => {
         <div className="col-lg-8">
           <Card title="List of Budget Codes">
             {localBudgetCodes.length > 0 && (
-              <Table
+              <Grid
                 columns={columns}
                 data={localBudgetCodes}
                 idKey="idBudgetCode"
@@ -187,7 +179,7 @@ const BudgetCodes = () => {
                   className="btn btn-primary px-4 me-2"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Saving..." : isEditing ? "Update" : "Save"}
+                  {isSubmitting ? "Saving..." : isEditing ? "Update" : "Submit"}
                 </Button>
 
                 <Button

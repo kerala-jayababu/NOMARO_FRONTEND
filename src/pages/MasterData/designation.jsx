@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDesignations, addMasterDesignation, getMasterDesignationListById, updateDesignations } from "../../redux/reducers/designation";
 import Card from "../../components/card";
-import Table from "../../components/table";
+import Grid from "../../components/grid";
 import Input from "../../components/input";
 import Button from "../../components/button";
 import RadioButton from "../../components/radioButton";
@@ -95,7 +95,12 @@ const Designation = () => {
             ) : error ? (
               <p className="text-danger">Error: {error}</p>
             ) : (
-              <Table columns={columns} data={designation.data} onEditClick={handleEditClick} idKey="idDesignation" />
+              <Grid
+                columns={columns}
+                data={designation.data}
+                onEditClick={handleEditClick}
+                idKey="idDesignation"
+              />
             )}
           </Card>
         </div>
@@ -117,13 +122,20 @@ const Designation = () => {
                 onChange={(e) => handleChange("name", e.target.value)}
                 maxLength="50"
               />
+              <label className="form-label">Overtime Allowed</label>
               <RadioButton
                 name="overtime"
-                options={[{ label: "Yes", value: "Yes" }, { label: "No", value: "No" }]}
+                options={[
+                  { label: "Yes", value: "Yes" },
+                  { label: "No", value: "No" },
+                ]}
                 selectedValue={formData.overtime}
                 onChange={(value) => handleChange("overtime", value)}
               />
-              <div className="text-center">
+              <div
+                className="text-center d-flex justify-content-center gap-3"
+                style={{ marginTop: "10px" }}
+              >
                 <Button type="submit" className="btn btn-primary px-4 me-2">
                   {editId ? "Update" : "Submit"}
                 </Button>

@@ -49,12 +49,8 @@ const slice = createSlice({
     });
     builder.addCase(getEmployeeDetailsByID.fulfilled, (state, action) => {
       state.loading = false;
-      // Check if data exists and populate options
-      if (action.payload && action.payload.data) {
-        console.log(action.payload, "action.payload");
 
-        state.options.push(action.payload.data); // Append employee details
-      }
+      state.options = action.payload;
     });
     builder.addCase(getEmployeeDetailsByID.rejected, (state, action) => {
       state.loading = false;

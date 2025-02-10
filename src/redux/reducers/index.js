@@ -10,6 +10,8 @@ import getEmployeeDetails from "./getEmployeeDetails";
 import getAllEmployeeDetails from "./getAllEmployeeDetails";
 import budgetCode from "./budgetCode";
 import designation from "./designation";
+import salaryHead from "./salaryHead";
+import employeeProfiles from "./employeeProfiles";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -22,7 +24,9 @@ const rootReducer = combineReducers({
   getEmployeeDetails: getEmployeeDetails,
   getAllEmployeeDetails: getAllEmployeeDetails,
   budgetCode: budgetCode,
-  designation : designation
+  designation : designation,
+  salaryHead : salaryHead,
+  employeeProfiles : employeeProfiles
 });
 
 export default rootReducer;

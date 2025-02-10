@@ -1,55 +1,37 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
-const Modal = ({ show, onClose, title, children }) => {
-  if (!show) return null;
+const Modal = ({ id, title, children }) => {
+
+
 
   return (
-    <div
-      className="modal-overlay"
-      style={{
-        position: "fixed",
-        top: "0",
-        left: "0",
-        right: "0",
-        bottom: "0",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: "999",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div
-        className="modal-content"
-        style={{
-          maxWidth: "600px",
-          margin: "auto",
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          zIndex: "1000",
-        }}
-      >
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">{title}</h5>
-            <button className="btn-close" onClick={onClose}></button>
+    <div className="modal fade" id={id} tabIndex="-1" aria-hidden="true">
+      <div className="modal-dialog modal-xl modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{title}</h5>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div className="card-body">{children}</div>
+          <div className="modal-body">{children}</div>
+          <div className="modal-footer">
+            <button type="submit" className="btn btn-primary btn-sm py-2 px-4 me-2">Submit</button>
+            <button type="button" className="btn btn-outline-secondary btn-sm py-2 px-4" data-bs-dismiss="modal">
+              Reset
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
+export default Modal;
+
+
 Modal.propTypes = {
-  show: PropTypes.bool,
-  onClose: PropTypes.func.isRequired,
+  id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
+  onShow: PropTypes.func,
 };
-
-
-
-export default Modal;

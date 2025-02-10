@@ -9,6 +9,7 @@ import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
 import VacationMode from "./pages/PayrollManagement/VacationMode";
 import ComingSoon from "./pages/dashboard/components/Content";
+import EmployeeProfile from "./pages/MasterData/employeeProfile";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="departments" element={<Departments />} />
             <Route path="designations" element={<Designations />} />
             <Route path="salary-heads" element={<SalaryHeads />} />
+            <Route path="employee-profile" element={<EmployeeProfile />} />
           </Route>
         </Route>
 
