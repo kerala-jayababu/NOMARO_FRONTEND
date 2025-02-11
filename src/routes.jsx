@@ -5,6 +5,7 @@ import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
 import VacationMode from "./pages/PayrollManagement/VacationMode";
 import EmployeeProfile from "./pages/EmployeeProfile/EmployeeProfile";
+import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
 
 export const privateRoutes = [
   {
@@ -34,6 +35,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/employee-profile",
     element: <EmployeeProfile />,
+  },
+  {
+    path: "/dashboard/salary-adjustments",
+    element: <SalaryAdjustments />,
   }
 ];
 
