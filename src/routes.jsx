@@ -35,10 +35,6 @@ export const privateRoutes = [
   {
     path: "/dashboard/employee-profile",
     element: <EmployeeProfile />,
-  },
-  {
-    path: "/dashboard/salary-adjustments",
-    element: <SalaryAdjustments />,
   }
 ];
 
