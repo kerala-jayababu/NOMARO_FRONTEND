@@ -36,10 +36,19 @@ const SalaryGeneration = lazy(() =>
 const SalaryRevision = lazy(() =>
   import("../../PayrollManagement/SalaryRevision")
 );
+const VacationModes = lazy(() => import("../../PayrollManagement/VacationMode"));
+
+
+const BudgetCode = lazy(() => import("../../MasterData/budgetCode"));
+
+const Departments = lazy(() => import("../../MasterData/departments"));
+const Designations = lazy(() => import("../../MasterData/designation"));
+// const SalaryHeads = lazy(() => import("../../MasterData/salaryHeads"));
+const SalaryHeads = lazy(() => import("../../MasterData/salaryHeads"));
 
 function Content() {
   const { componentName } = useSelector((state) => state.component);
-
+  console.log(componentName, "componentName");
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {(() => {
@@ -69,7 +78,17 @@ function Content() {
           case "Salary Adjustments":
             return <SalaryAdjustments />;
           case "Scheduled Deductions":
-            return <ScheduledDeductions/>
+            return <ScheduledDeductions />;
+          case "Vacation Mode":
+            return <VacationModes />;  
+          case "Budget Codes":
+            return <BudgetCode />;
+          case "Departments":
+            return <Departments />;
+          case "Designations":
+            return <Designations />;
+          case "Salary Heads":
+            return <SalaryHeads />;  
           default:
             return <ComingSoon />;
         }
@@ -80,7 +99,7 @@ function Content() {
 
 export default Content;
 
-const ComingSoon = () => {
+export const ComingSoon = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 m-4">
       <div className="text-center bg-white rounded-lg shadow-lg max-w-lg w-full p-10">

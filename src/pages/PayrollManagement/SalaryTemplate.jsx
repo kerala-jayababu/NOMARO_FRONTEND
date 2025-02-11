@@ -1,7 +1,121 @@
-import React from "react";
-import '../../../public/assets/vendor/css/theme-default.css'
+import { useState, useEffect } from "react";
+import "../../../public/assets/vendor/css/theme-default.css";
+import {
+  getAllSalaryTemplates,
+  addSalaryTemplate,
+  getSalaryTemplateById,
+  updateSalaryTemplate,
+  getAllOptions,
+} from "./../../utils/service";
 
 function SalaryTemplate() {
+  const [salaryTemplateName, setSalaryTemplateName] = useState("");
+  const [description, setDescription] = useState("");
+  const [activeStatus, setActiveStatus] = useState(true);
+  const [validationMessage, setValidationMessage] = useState("");
+  const [templates, setTemplates] = useState([]); // State to hold fetched templates
+  const [editingTemplateId, setEditingTemplateId] = useState(null); // ID of template being edited
+  const [options, setOptions] = useState({}); // To hold dropdown options
+  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+  console.log(templates.data, "templates");
+  console.log(salaryTemplateName, "salaryTemplateName");
+  console.log(description, "description");
+
+  console.log(validationMessage, "validationMessage");
+
+  useEffect(() => {
+    // Fetch templates and dropdown options on component mount
+    const fetchData = async () => {
+      try {
+        const templatesData = await getAllSalaryTemplates();
+        setTemplates(templatesData);
+
+        const optionsData = await getAllOptions();
+        setOptions(optionsData.data);
+      } catch (error) {
+        console.error("Error fetching data", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Open modal for editing and fetch template data
+  const handleEdit = async (id) => {
+    setEditingTemplateId(id); // Set ID for the template being edited
+    try {
+      const template = await getSalaryTemplateById(id);
+      console.log(template, "template-123455");
+      setSalaryTemplateName(template.data.salaryTemplateName);
+      setDescription(template.data.description);
+      setActiveStatus(template.data.activeStatus);
+    } catch (error) {
+      console.error("Error fetching template by ID", error);
+    }
+  };
+
+  const handleAddOrUpdateTemplate = async () => {
+    const data = {
+      idSalaryTemplate: editingTemplateId, // Include the template ID for the update
+      salaryTemplateName,
+      description,
+      activeStatus,
+    };
+
+    if (!salaryTemplateName) {
+      setValidationMessage("Template Name is required.");
+      return;
+    }
+    setValidationMessage("");
+
+    try {
+      let response;
+      if (editingTemplateId) {
+        // Update the existing template
+        response = await updateSalaryTemplate(data);
+      } else {
+        // Add a new template
+        response = await addSalaryTemplate(data);
+      }
+      if (response.success === true) {
+        // Update the templates list
+        if (editingTemplateId) {
+          // If editing, update the specific template in the state
+          setTemplates((prevTemplates) =>
+            prevTemplates.data.map((template) =>
+              template.idSalaryTemplate === editingTemplateId
+                ? { ...template, salaryTemplateName, description, activeStatus }
+                : template
+            )
+          );
+        } else {
+          // If adding, add the new template to the state
+          setTemplates((prevTemplates) => ({
+            ...prevTemplates,
+            data: [...prevTemplates.data, { ...data }],
+          }));
+        }
+
+        setSalaryTemplateName("");
+        setDescription("");
+        setActiveStatus(true);
+        // Refresh templates after update
+        const updatedTemplates = await getAllSalaryTemplates();
+        setTemplates(updatedTemplates);
+      }
+    } catch (err) {
+      console.error("Error occurred while adding salary template", err);
+    }
+  };
+
+  const filteredTemplates = templates.data?.filter((template) =>
+    template.salaryTemplateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.description.toLowerCase().includes(searchQuery.toLowerCase()) 
+  );
+
+  console.log(filteredTemplates, "filteredTemplates");
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -11,7 +125,13 @@ function SalaryTemplate() {
               <h5 className="m-0">List of Salary Templates</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" />
+                  <input
+                    type="search"
+                    className="form-control"
+                    placeholder="Search templates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                   <i className="bx bx-search"></i>
                 </div>
                 <button
@@ -19,6 +139,13 @@ function SalaryTemplate() {
                   type="button"
                   data-bs-toggle="modal"
                   data-bs-target="#modalCenter"
+                  onClick={() => {
+                    setEditingTemplateId(null); // Clear editing state
+                    setSalaryTemplateName("");
+                    setDescription("");
+                    setActiveStatus(true);
+                    setValidationMessage("");
+                  }}
                 >
                   Add
                 </button>
@@ -30,71 +157,54 @@ function SalaryTemplate() {
                   <thead>
                     <tr>
                       <th className="text-nowrap">Template Name</th>
-                      <th>Description </th>
-
+                      <th>Description</th>
                       <th>Status</th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td className="text-nowrap"> Monthly Template </td>
-                      <td>
-                        Pay your employees easily and on time with customizable
-                        payroll templates.
-                      </td>
-                      <td>
-                        <span className="badge bg-label-success">Enabled</span>
-                      </td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className=" bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td>Basic Template</td>
-                      <td>
-                        Pay your employees easily and on time with customizable
-                        payroll templates.
-                      </td>
-                      <td>
-                        <span className="badge bg-label-warning">Disabled</span>
-                      </td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondar y px-3 border-0"
-                        >
-                          <span className=" bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td>Allowance Template</td>
-                      <td>
-                        Pay your employees easily and on time with customizable
-                        payroll templates.
-                      </td>
-                      <td>
-                        <span className="badge bg-label-warning">Disabled</span>
-                      </td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className=" bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
+                    {filteredTemplates?.length > 0 ? (
+                      filteredTemplates.map((template, index) => (
+                        <tr key={index}>
+                          <td className="text-nowrap">
+                            {template.salaryTemplateName}
+                          </td>
+                          <td>{template.description}</td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                template.activeStatus
+                                  ? "bg-label-success"
+                                  : "bg-label-warning"
+                              }`}
+                            >
+                              {template.activeStatus ? "Enabled" : "Disabled"}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                              data-bs-toggle="modal"
+                              data-bs-target="#modalCenter"
+                              onClick={() =>
+                                handleEdit(template.idSalaryTemplate)
+                              }
+                            >
+                              <span className="bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center">
+                          No templates available.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
+
                 <div className="text-end pt-2">
                   <nav aria-label="Page navigation">
                     <ul className="pagination justify-content-end">
@@ -108,7 +218,7 @@ function SalaryTemplate() {
                           <i className="tf-icon bx bx-chevron-left"></i>
                         </a>
                       </li>
-                      <li className="page-item">
+                      <li className="page-item active">
                         <a className="page-link" href="">
                           1
                         </a>
@@ -118,7 +228,7 @@ function SalaryTemplate() {
                           2
                         </a>
                       </li>
-                      <li className="page-item active">
+                      <li className="page-item ">
                         <a className="page-link" href="">
                           3
                         </a>
@@ -153,7 +263,7 @@ function SalaryTemplate() {
           <div
             className="modal fade"
             id="modalCenter"
-            tabindex="-1"
+            tabIndex="-1"
             aria-hidden="true"
           >
             <div
@@ -163,7 +273,9 @@ function SalaryTemplate() {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title" id="modalCenterTitle">
-                    Add/Update Salary Template
+                    {editingTemplateId
+                      ? "Update Salary Template"
+                      : "Add Salary Template"}
                   </h5>
                   <button
                     type="button"
@@ -182,7 +294,10 @@ function SalaryTemplate() {
                           value=""
                           id="flexCheckDefault"
                         />
-                        <label className="form-check-label" for="flexCheckDefault">
+                        <label
+                          className="form-check-label"
+                          htmlFor="flexCheckDefault"
+                        >
                           Copy form templates
                         </label>
                       </div>
@@ -202,8 +317,16 @@ function SalaryTemplate() {
                         <input
                           type="text"
                           className="form-control form-control-sm"
-                          maxlength="50"
+                          maxLength="50"
+                          value={salaryTemplateName}
+                          onChange={(e) =>
+                            setSalaryTemplateName(e.target.value)
+                          }
+                          required
                         />
+                        {validationMessage && (
+                          <p className="text-danger">{validationMessage}</p>
+                        )}
                       </div>
                     </div>
                     <div className="col-md-6 p-2">
@@ -211,7 +334,9 @@ function SalaryTemplate() {
                       <textarea
                         className="form-control form-control-sm"
                         rows="5"
-                        maxlength="500"
+                        maxLength="500"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                       ></textarea>
                     </div>
                   </div>
@@ -226,7 +351,7 @@ function SalaryTemplate() {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
+                        {/* <tr>
                           <td>
                             <select className="form-select form-select-sm">
                               <option>Select Salary Head Name</option>
@@ -255,7 +380,7 @@ function SalaryTemplate() {
                                 <input
                                   type="number"
                                   className="form-control form-control-sm"
-                                  maxlength="5"
+                                  maxLength="5"
                                   placeholder="value"
                                 />
                               </div>
@@ -546,6 +671,56 @@ function SalaryTemplate() {
                               <i className="bx bx-plus"></i>
                             </button>
                           </td>
+                        </tr> */}
+                        <tr>
+                          <td>
+                            <select className="form-select form-select-sm">
+                              <option>Select Salary Head Name</option>
+                              {options.salaryHeads?.map((head) => (
+                                <option key={head.value} value={head.value}>
+                                  {head.displayName}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <select className="form-select form-select-sm">
+                              <option>Percentage of</option>
+                              <option>Fixed Amount</option>
+                              <option>Custom Formula</option>
+                            </select>
+                          </td>
+                          <td>
+                            <div className="row px-1">
+                              <div className="col-md-8 px-2">
+                                <select className="form-select form-select-sm">
+                                  {options.salaryHeads?.map((head) => (
+                                    <option key={head.value} value={head.value}>
+                                      {head.displayName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="col-md-4 px-2">
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm"
+                                  maxLength="5"
+                                  placeholder="value"
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex">
+                              <button className="btn btn-outline-primary border-0 btn-sm me-2">
+                                <i className="bx bx-plus"></i>
+                              </button>
+                              <button className="btn btn-outline-danger btn-sm border-0">
+                                <i className="bx bx-trash"></i>
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -569,15 +744,16 @@ function SalaryTemplate() {
                   <button
                     type="submit"
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
+                    onClick={handleAddOrUpdateTemplate}
                   >
-                    Submit for Approval
+                    {editingTemplateId ? "Update" : "Save"}
                   </button>
-                  <button
+                  {/* <button
                     type="submit"
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
                   >
                     Submit for Approval
-                  </button>
+                  </button> */}
                   <button
                     type="submit"
                     className="btn btn-outline-secondary  btn-sm py-2 px-4"

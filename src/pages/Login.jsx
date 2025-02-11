@@ -1,13 +1,37 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
+import { signIn } from "../redux/api/authAPI";
+import secureLocalStorage from "react-secure-storage";
+ 
 function Login() {
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
-    navigate("/dashboard");
-  };
+   
+  const handleSignIn = async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
+
+    const formData = { email, password };
+ 
+    try {
+      console.log("Form data:", formData);
+      const result = await signIn(formData); // Await API response
+      console.log("Sign in result:", result.data);
+ 
+      if (result?.data) {
+        secureLocalStorage.setItem("user", JSON.stringify(result.data));
+        console.log("Sign in successful, token received.");
+
+        navigate("/dashboard");
+      } else {
+        console.error("Authentication failed, no token received.");
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    }
+  };
+ 
   return (
     <div className="container-xxl">
       <div className="authentication-wrapper authentication-basic container-p-y">
@@ -69,5 +93,7 @@ function Login() {
     </div>
   );
 }
-
+ 
 export default Login;
+ 
+ 

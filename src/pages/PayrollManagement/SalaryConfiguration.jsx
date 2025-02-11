@@ -1,7 +1,39 @@
-import React from "react";
+import { useState, useEffect } from "react";
+import { getEmployeeDetails } from "../../utils/service";
 
 function SalaryConfiguration() {
-  return (
+  const [employeeData, setEmployeeData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+
+  console.log(employeeData, "employeeData");
+
+  // Fetch employee details on component mount
+  useEffect(() => {
+    const fetchEmployeeDetails = async () => {
+      try {
+        const response = await getEmployeeDetails();
+        console.log(response.data, "response");
+        if (response.success) {
+          setEmployeeData(response.data);
+        } else {
+          console.error(response.message);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEmployeeDetails();
+  }, []);
+
+  const filteredTemplates = employeeData?.filter((template) =>
+    template.employeeCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.designation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.department.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  return ( 
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
         <div className="col-lg-12">
@@ -9,8 +41,14 @@ function SalaryConfiguration() {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Salary Configuration</h5>
               <div className="list_menu">
-                <div className="list_searchbox">
-                  <input type="search" className="form-control" />
+              <div className="list_searchbox">
+                  <input
+                    type="search"
+                    className="form-control"
+                    placeholder="Search templates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                   <i className="bx bx-search"></i>
                 </div>
                 <button
@@ -39,48 +77,45 @@ function SalaryConfiguration() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>
-                        <span
-                          className="cursor"
-                          data-bs-toggle="modal"
-                          data-bs-target="#modalCenter"
-                        >
-                          Emp01
-                        </span>
-                      </td>
-                      <td className="text-nowrap">johnny manziel </td>
-                      <td>Designer</td>
-                      <td>10/12/2024</td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Emp02</td>
-                      <td className="text-nowrap">johnny manziel </td>
-                      <td>Developer</td>
-                      <td>10/12/2024</td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
+                    {filteredTemplates?.length > 0 ? (
+                      filteredTemplates.map((employee) => (
+                        <tr key={employee.idEmployee}>
+                          <td>
+                            <span
+                              className="cursor"
+                              data-bs-toggle="modal"
+                              data-bs-target="#modalCenter"
+                            >
+                              {employee.employeeCode}
+                            </span>
+                          </td>
+                          <td className="text-nowrap">{employee.fullName}</td>
+                          <td>{employee.designation}</td>
+                          <td>
+                            {new Date(
+                              employee.joiningDate
+                            ).toLocaleDateString()}
+                          </td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td className="text-end">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                            >
+                              <span className="tf-icons bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          No records found
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
                 <div className="text-end pt-2">
@@ -96,7 +131,7 @@ function SalaryConfiguration() {
                           <i className="tf-icon bx bx-chevron-left"></i>
                         </a>
                       </li>
-                      <li className="page-item">
+                      <li className="page-item active">
                         <a className="page-link" href="">
                           1
                         </a>
@@ -106,7 +141,7 @@ function SalaryConfiguration() {
                           2
                         </a>
                       </li>
-                      <li className="page-item active">
+                      <li className="page-item">
                         <a className="page-link" href="">
                           3
                         </a>
@@ -140,7 +175,12 @@ function SalaryConfiguration() {
         </div>
       </div>
 
-      <div className="modal fade" id="modalCenter" tabindex="-1" aria-hidden="true">
+      <div
+        className="modal fade"
+        id="modalCenter"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
         <div
           className="modal-dialog modal-xl  modal-dialog-centered"
           role="document"
@@ -219,7 +259,7 @@ function SalaryConfiguration() {
       <div
         className="modal fade"
         id="SalaryConfigurationModal"
-        tabindex="-1"
+        tabIndex="-1"
         aria-hidden="true"
       >
         <div
@@ -262,7 +302,7 @@ function SalaryConfiguration() {
                     type="text"
                     className="form-control form-control-sm"
                     value="Designer"
-                    readonly
+                    readOnly
                   />
                 </div>
                 <div className="col-md-4 p-2">
@@ -317,7 +357,7 @@ function SalaryConfiguration() {
                             <input
                               type="number"
                               className="form-control form-control-sm"
-                              maxlength="5"
+                              maxLength="5"
                               placeholder="value"
                             />
                           </div>
