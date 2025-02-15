@@ -35,7 +35,11 @@ export const getAllOptions = createAsyncThunk(
 const slice = createSlice({
   name: "getAllOptions",
   initialState: {
-    options: [],
+    banks: [],
+    bankBranches: [],
+    overTimesTypes: [],
+    budgetCode: [],
+    salaryHeads: [],
     loading: false,
     error: null,
   },
@@ -47,7 +51,11 @@ const slice = createSlice({
     });
     builder.addCase(getAllOptions.fulfilled, (state, action) => {
       state.loading = false;
-      state.options = action.payload;
+      state.banks = action.payload.banks || [];
+      state.bankBranches = action.payload.bankBranches || [];
+      state.budgetCode = action.payload.budgetCodes || [];
+      state.overTimesTypes = action.payload.overTimesTypes || [];
+      state.salaryHeads = action.payload.salaryHeads || [];
     });
     builder.addCase(getAllOptions.rejected, (state, action) => {
       state.loading = false;
@@ -55,6 +63,7 @@ const slice = createSlice({
     });
   },
 });
+
 
 export default slice.reducer;
 
