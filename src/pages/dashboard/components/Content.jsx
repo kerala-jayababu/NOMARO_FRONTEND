@@ -15,7 +15,7 @@ const CurrencyConverter = lazy(() =>
   import("../../PayrollManagement/CurrencyConversion")
 );
 const SalaryTemplate = lazy(() =>
-  import("../../PayrollManagement/SalaryTemplate")
+  import("../../PayrollManagement/SalaryTemplates")
 );
 const SalaryTemplateApproval = lazy(() =>
   import("../../PayrollManagement/SalaryTemplateApproval")

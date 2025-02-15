@@ -1,468 +1,460 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Card from "../../components/card";
+import Dropdown from "../../components/Dropdown";
+import Input from "../../components/Input";
+import RadioButton from "../../components/RadioButton";
+import Button from "../../components/Button";
+import Grid from "../../components/Grid";
+import StatusBadge from "../../components/statusBadge";
 import {
-  getSalaryHeadList,
+  fetchSalaryHead,
   getSalaryHeadById,
   addSalaryHead,
   updateSalaryHead,
-} from "../../utils/service";
+} from "../../redux/reducers/salaryHead";
+import { getAllOptions } from "../../redux/reducers/getAllOptions";
 
-function SalaryHeads() {
-  const [salaryHeads, setSalaryHeads] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedSalaryHead, setSelectedSalaryHead] = useState(null);
+const SalaryHeads = () => {
   const [formData, setFormData] = useState({
     salaryHeadCode: "",
     salaryHeadName: "",
-    headType: "",
-    isTaxable: false,
-    isActive: false,
+    type: "",
+    taxability: "",
     calculationMethod: "",
-    percentageValue: "",
+    percentageOf: "",
+    value: "",
     customFormula: "",
+    defaultValue: "",
+    activeStatus: true,
+    orderNumber: "",
   });
-  const [errors, setErrors] = useState({});
+
+  const [errors, setErrors] = useState({
+    salaryHeadCode: "",
+    salaryHeadName: "",
+    orderNumber: "",
+  });
+
+  const dispatch = useDispatch();
+
+  // Access the fetched data from the Redux store
+  const { salaryHeadList, status, error, currentSalaryHead } = useSelector(
+    (state) => state.salaryHead
+  );
+
+  // Access the options data from the Redux store
+  const { salaryHeads } = useSelector((state) => state.getAllOptions);
+
+  // Columns for the Grid
+  const columns = [
+    { key: "salaryHeadCode", label: "S. H. Code" },
+    { key: "salaryHeadName", label: "Salary Head Name" },
+    { key: "isActive", label: "Active Status" },
+    { key: "actions", label: "" },
+  ];
+
+  // Fetch salary head data when the component mounts
+  useEffect(() => {
+    dispatch(fetchSalaryHead());
+    dispatch(getAllOptions());
+  }, [dispatch]);
 
   useEffect(() => {
-    fetchSalaryHeads();
-  }, []);
-  const fetchSalaryHeads = async () => {
-    const data = await getSalaryHeadList();
-    setSalaryHeads(data);
-  };
-
-  const handleAddClick = () => {
-    setFormData({
-      salaryHeadCode: "",
-      salaryHeadName: "",
-      headType: "",
-      isTaxable: false,
-      isActive: false,
-      calculationMethod: "",
-      percentageValue: "",
-      customFormula: "",
-    });
-    setShowModal(true);
-    setSelectedSalaryHead(null);
-  };
-
-  const handleEditClick = async (head) => {
-    try {
-      const response = await getSalaryHeadById(head.idSalaryHead);
-      if (response.success) {
-        const updatedData = {
-          ...response.data,
-          headType:
-            response.data.headType?.toLowerCase() === "earning"
-              ? "Earning"
-              : "Deduction",
-        };
-        setFormData(updatedData);
-        setSelectedSalaryHead(response.data.idSalaryHead);
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error fetching salary head details:", error);
+    if (currentSalaryHead) {
+      setFormData({
+        salaryHeadCode: currentSalaryHead.salaryHeadCode,
+        salaryHeadName: currentSalaryHead.salaryHeadName,
+        type: currentSalaryHead.headType === "EARNING" ? "E" : "D",
+        taxability: currentSalaryHead.isTaxable ? "Taxable" : "Non-Taxable",
+        calculationMethod:
+          currentSalaryHead.calculationMethod === "FORMULA"
+            ? "Custom Formula"
+            : currentSalaryHead.calculationMethod === "PERCENTAGE"
+            ? "Percentage of"
+            : "Fixed Amount",
+        percentageOf: currentSalaryHead.idPercentageSalaryHead || "",
+        value: currentSalaryHead.percentageValue || "",
+        customFormula: currentSalaryHead.customFormula || "",
+        defaultValue: currentSalaryHead.fixedValue || "",
+        activeStatus: currentSalaryHead.isActive,
+        orderNumber: currentSalaryHead.orderNumber,
+      });
     }
+  }, [currentSalaryHead]);
+
+  const handleEditClick = (id) => {
+    dispatch(getSalaryHeadById(id));
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedSalaryHead(null);
+  const handleReset = () => {
     setFormData({
       salaryHeadCode: "",
       salaryHeadName: "",
-      headType: "",
-      isTaxable: false,
-      isActive: false,
+      type: "",
+      taxability: "",
       calculationMethod: "",
-      percentageValue: "",
+      percentageOf: "",
+      value: "",
       customFormula: "",
+      defaultValue: "",
+      activeStatus: true,
+      orderNumber: "",
+    });
+    setErrors({
+      salaryHeadCode: "",
+      salaryHeadName: "",
+      orderNumber: "",
     });
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Clear the specific error when the user starts typing valid input
-    setErrors((prevState) => ({
-      ...prevState,
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    // Clear errors when the user starts typing
+    setErrors({
+      ...errors,
       [name]: "",
-    }));
+    });
+  };
 
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : name === "isTaxable"
-          ? value === "true"
-          : value,
-    }));
+  const handleRadioChange = (value, name) => {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    let validationErrors = {};
-
-    // Check required fields
+  const validateForm = () => {
+    const newErrors = {};
+  
+    // Validate mandatory fields
     if (!formData.salaryHeadCode.trim()) {
-      validationErrors.salaryHeadCode = "Salary Head Code is required.";
+      newErrors.salaryHeadCode = "Salary Head Code is required.";
+    } else if (
+      // Only check for existing Salary Head Code if it's a new salary head
+      !currentSalaryHead?.idSalaryHead &&
+      salaryHeadList.some(
+        (head) =>
+          head.salaryHeadCode === formData.salaryHeadCode
+      )
+    ) {
+      newErrors.salaryHeadCode = "Salary Head Code already exists.";
     }
+  
     if (!formData.salaryHeadName.trim()) {
-      validationErrors.salaryHeadName = "Salary Head Name is required.";
+      newErrors.salaryHeadName = "Salary Head Name is required.";
     }
-    if (!formData.headType) {
-      validationErrors.headType = "Salary Head Type is required.";
-    }
-    if (formData.isTaxable === "") {
-      validationErrors.isTaxable = "Please select taxability.";
-    }
-    if (!formData.calculationMethod) {
-      validationErrors.calculationMethod = "Calculation Method is required.";
-    }
-
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    try {
-      if (selectedSalaryHead) {
-        formData.idSalaryHead = selectedSalaryHead;
-        const response = await updateSalaryHead(formData);
-        if (response.success) {
-          setShowModal(false);
-          fetchSalaryHeads();
-        }
-      } else {
-        const response = await addSalaryHead(formData);
-        if (response.success) {
-          setShowModal(false);
-          fetchSalaryHeads();
-        }
+  
+    // Validate mandatory orderNumber
+    if (!formData.orderNumber) {
+      newErrors.orderNumber = "Order Number is required.";
+    } else {
+      // Validate unique orderNumber
+      if (
+        !currentSalaryHead?.idSalaryHead &&
+        salaryHeadList.some(
+          (head) =>
+            head.orderNumber === formData.orderNumber
+        )
+      ) {
+        newErrors.orderNumber = "Order Number must be unique.";
       }
-    } catch (error) {
-      console.error("Error submitting salary head:", error);
+    }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+  
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+
+  //   if (!validateForm()) {
+  //     return; // Stop submission if validation fails
+  //   }
+
+  //   // Prepare the data to be sent to the API
+  //   const data = {
+  //     salaryHeadCode: formData.salaryHeadCode,
+  //     salaryHeadName: formData.salaryHeadName,
+  //     headType: formData.type === "E" ? "Earning" : "Deduction",
+  //     isTaxable: formData.taxability === "Taxable",
+  //     calculationMethod:
+  //       formData.calculationMethod === "Custom Formula"
+  //         ? "FORMULA"
+  //         : formData.calculationMethod === "Percentage of"
+  //         ? "PERCENTAGE"
+  //         : "FIXEDAMOUNT",
+  //     idPercentageSalaryHead: formData.percentageOf || null,
+  //     percentageValue: formData.value || 0,
+  //     customFormula: formData.customFormula || "",
+  //     fixedValue: formData.defaultValue || 0,
+  //     isActive: formData.activeStatus,
+  //     orderNumber: formData.orderNumber,
+  //   };
+
+  //   // Dispatch the addSalaryHead action
+  //   dispatch(addSalaryHead(data))
+  //     .then((response) => {
+  //       if (response.payload) {
+  //         console.log("Salary Head added successfully:", response.payload);
+  //         setFormData({
+  //           salaryHeadCode: "",
+  //           salaryHeadName: "",
+  //           type: "",
+  //           taxability: "",
+  //           calculationMethod: "",
+  //           percentageOf: "",
+  //           value: "",
+  //           customFormula: "",
+  //           defaultValue: "",
+  //           activeStatus: true,
+  //           orderNumber: "",
+  //         });
+  //       }
+  //       dispatch(fetchSalaryHead());
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error adding salary head:", error);
+  //     });
+  // };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+  
+    if (!validateForm()) {
+      return; // Stop submission if validation fails
+    }
+  
+    const data = {
+      salaryHeadCode: formData.salaryHeadCode,
+      salaryHeadName: formData.salaryHeadName,
+      headType: formData.type === "E" ? "Earning" : "Deduction",
+      isTaxable: formData.taxability === "Taxable",
+      calculationMethod:
+        formData.calculationMethod === "Custom Formula"
+          ? "FORMULA"
+          : formData.calculationMethod === "Percentage of"
+          ? "PERCENTAGE"
+          : "FIXEDAMOUNT",
+      idPercentageSalaryHead: formData.percentageOf || null,
+      percentageValue: formData.value || 0,
+      customFormula: formData.customFormula || "",
+      fixedValue: formData.defaultValue || 0,
+      isActive: formData.activeStatus,
+      orderNumber: formData.orderNumber,
+    };
+  
+    // Check if it's an update
+    if (currentSalaryHead?.idSalaryHead) {
+      // Update existing salary head
+      dispatch(updateSalaryHead({ ...data, idSalaryHead: currentSalaryHead.idSalaryHead }))
+        .then((response) => {
+          if (response.payload) {
+            console.log("Salary Head updated successfully:", response.payload);
+            dispatch(fetchSalaryHead());
+            handleReset(); // Reset the form after successful submission
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating salary head:", error);
+        });
+    } else {
+      // Add new salary head
+      dispatch(addSalaryHead(data))
+        .then((response) => {
+          if (response.payload) {
+            console.log("Salary Head added successfully:", response.payload);
+            dispatch(fetchSalaryHead());
+            handleReset(); // Reset the form after successful submission
+          }
+        })
+        .catch((error) => {
+          console.error("Error adding salary head:", error);
+        });
     }
   };
+  
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
-        <div className="col-lg-12">
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Salary Heads</h5>
-              <button
-                className="btn btn-primary btn-sm px-4"
-                onClick={handleAddClick}
-              >
-                Add
-              </button>
-            </div>
-            <div className="card-body">
-              <div className="table-responsive text-nowrap">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>S. H. Code</th>
-                      <th>Salary Head Name</th>
-                      <th>Active Status</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {salaryHeads.data?.length > 0 ? (
-                      salaryHeads.data.map((head) => (
-                        <tr key={head.idSalaryHead}>
-                          <td>
-                            <strong>{head.salaryHeadCode}</strong>
-                          </td>
-                          <td>{head.salaryHeadName}</td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                head.isActive
-                                  ? "bg-label-success"
-                                  : "bg-label-warning"
-                              }`}
-                            >
-                              {head.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            <button
-                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                              onClick={() => handleEditClick(head)}
-                            >
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="text-center">
-                          No data available
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+        {/* Salary Head List */}
+        <div className="col-lg-8">
+          <Card title="List of Salary Heads">
+            {status === "loading" && <div>Loading...</div>}
+            {status === "failed" && <div>Error: {error}</div>}
+            {status === "succeeded" && (
+              <Grid
+                columns={columns}
+                data={salaryHeadList.map((head) => ({
+                  salaryHeadCode: head.salaryHeadCode,
+                  salaryHeadName: head.salaryHeadName,
+                  isActive: (
+                    <StatusBadge
+                      status={head.isActive ? "Active" : "Inactive"}
+                    />
+                  ),
+                  id: head.idSalaryHead,
+                }))}
+                onEditClick={handleEditClick}
+                idKey="id"
+                modalId="editSalaryHeadModal"
+              />
+            )}
+          </Card>
+        </div>
+
+        {/* Add/Update Salary Head */}
+        <div className="col-lg-4">
+          <Card title="Add/Update Salary Head">
+            <form onSubmit={handleSubmit}>
+              <Input
+                label="Salary Head Code"
+                name="salaryHeadCode"
+                value={formData.salaryHeadCode}
+                onChange={handleChange}
+                maxLength="10"
+                error={errors.salaryHeadCode}
+              />
+              <Input
+                label="Salary Head Name"
+                name="salaryHeadName"
+                value={formData.salaryHeadName}
+                onChange={handleChange}
+                maxLength="50"
+                error={errors.salaryHeadName}
+              />
+              <Input
+                label="Order Number"
+                name="orderNumber"
+                value={formData.orderNumber}
+                onChange={handleChange}
+                maxLength="50"
+                error={errors.orderNumber}
+              />
+              <div className="mb-2">
+                <label className="form-label mb-1">Type of Salary Head</label>
+                <RadioButton
+                  name="type"
+                  options={[
+                    { value: "E", label: "Earning" },
+                    { value: "D", label: "Deduction" },
+                  ]}
+                  selectedValue={formData.type}
+                  onChange={(value) => handleRadioChange(value, "type")}
+                />
               </div>
-            </div>
-          </div>
+              <div className="mb-2">
+                <label className="form-label mb-1">Taxability</label>
+                <RadioButton
+                  name="taxability"
+                  options={[
+                    { value: "Taxable", label: "Taxable" },
+                    { value: "Non-Taxable", label: "Non-Taxable" },
+                  ]}
+                  selectedValue={formData.taxability}
+                  onChange={(value) => handleRadioChange(value, "taxability")}
+                />
+              </div>
+              <Dropdown
+                label="Calculation Method"
+                name="calculationMethod"
+                value={formData.calculationMethod}
+                onChange={handleChange}
+                options={[
+                  { value: "Fixed Amount", label: "Fixed Amount" },
+                  { value: "Percentage of", label: "Percentage of" },
+                  { value: "Custom Formula", label: "Custom Formula" },
+                ]}
+              />
+              {formData.calculationMethod === "Percentage of" && (
+                <div className="row mb-0">
+                  <div className="col-md-8 mb-2">
+                    <Dropdown
+                      label="Percentage of"
+                      name="percentageOf"
+                      value={formData.percentageOf}
+                      onChange={handleChange}
+                      options={salaryHeads.map((head) => ({
+                        value: head.value,
+                        label: head.displayName,
+                      }))}
+                    />
+                  </div>
+                  <div className="col-md-4 mb-2">
+                    <Input
+                      label="Value"
+                      name="value"
+                      value={formData.value}
+                      onChange={handleChange}
+                      maxLength="5"
+                    />
+                  </div>
+                </div>
+              )}
+              {formData.calculationMethod === "Custom Formula" && (
+                <Input
+                  label="Custom Formula"
+                  name="customFormula"
+                  value={formData.customFormula}
+                  onChange={handleChange}
+                  maxLength="100"
+                  placeholder="(BP + DA) / 10"
+                />
+              )}
+              <Input
+                label="Default Value"
+                name="defaultValue"
+                value={formData.defaultValue}
+                onChange={handleChange}
+                maxLength="9"
+              />
+              <div className="mb-3 pt-2">
+                <div className="form-check form-switch">
+                  <label
+                    className="form-check-label"
+                    htmlFor="flexSwitchCheckDefault"
+                  >
+                    Active Status
+                  </label>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="flexSwitchCheckDefault"
+                    checked={formData.activeStatus}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        activeStatus: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <Button type="submit" className="btn btn-primary px-4 me-2">
+                  {currentSalaryHead?.idSalaryHead ? "Update" : "Submit"}
+                </Button>
+                <Button
+                  type="button" // Change type to "button" to prevent default form reset
+                  className="btn btn-outline-secondary px-4"
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
       </div>
-      {showModal && (
-        <div
-          className="modal-overlay"
-          style={{
-            position: "fixed",
-            top: "0",
-            left: "0",
-            right: "0",
-            bottom: "0",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            zIndex: "999",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            className="modal-content"
-            style={{
-              maxWidth: "600px",
-              maxHeight: "80vh",
-              margin: "auto",
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              zIndex: "1000",
-              overflowY: "auto",
-            }}
-          >
-            <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  {selectedSalaryHead
-                    ? "Update Salary Head"
-                    : "Add Salary Head"}
-                </h5>
-                <button
-                  className="btn-close"
-                  onClick={handleCloseModal}
-                ></button>
-              </div>
-              <div className="card-body">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Salary Head Code</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      maxLength="10"
-                      name="salaryHeadCode"
-                      value={formData.salaryHeadCode}
-                      onChange={handleInputChange}
-                    />
-                    {errors.salaryHeadCode && (
-                      <div className="text-danger">{errors.salaryHeadCode}</div>
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Salary Head Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      maxLength="50"
-                      name="salaryHeadName"
-                      value={formData.salaryHeadName}
-                      onChange={handleInputChange}
-                    />
-                    <div className="text-danger">{errors.salaryHeadName}</div>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">
-                      Type of Salary Head
-                    </label>
-                    <div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="headType"
-                          value="Earning"
-                          checked={formData.headType === "Earning"}
-                          onChange={handleInputChange}
-                        />
-                        <label className="form-check-label">Earning</label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="headType"
-                          value="Deduction"
-                          checked={formData.headType === "Deduction"}
-                          onChange={handleInputChange}
-                        />
-                        <label className="form-check-label">Deduction</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Taxability</label>
-                    <div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="isTaxable"
-                          id="Taxability01"
-                          value="true"
-                          checked={formData.isTaxable === true}
-                          onChange={handleInputChange}
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor="Taxability01"
-                        >
-                          Taxable
-                        </label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="isTaxable"
-                          id="Taxability02"
-                          value="false"
-                          checked={formData.isTaxable === false}
-                          onChange={handleInputChange}
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor="Taxability02"
-                        >
-                          Non-Taxable
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">
-                      Calculation Method
-                    </label>
-                    <select
-                      className={`form-select ${
-                        errors.calculationMethod ? "is-invalid" : ""
-                      }`}
-                      name="calculationMethod"
-                      value={formData.calculationMethod}
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Select Calculation Method</option>
-                      <option value="PERCENTAGE">Percentage of</option>
-                      <option value="FORMULA">Custom Formula</option>
-                      <option value="FIXEDAMOUNT">Fixed Amount</option>
-                    </select>
-                    <div className="text-danger">
-                      {errors.calculationMethod}
-                    </div>
-                  </div>
-                  <div className="row mb-0">
-                    <div className="col-md-8 mb-2">
-                      <label className="form-label mb-1">Percentage of</label>
-                      <select
-                        className="form-select"
-                        name="salaryHeadName"
-                        value={formData.salaryHeadName}
-                        onChange={handleInputChange}
-                      >
-                        <option value="">Select Salary Head</option>
-                        {salaryHeads.data?.map((head) => (
-                          <option
-                            key={head.idSalaryHead}
-                            value={head.salaryHeadName}
-                          >
-                            {head.salaryHeadName}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="text-danger">{errors.salaryHeadName}</div>
-                    </div>
-                    <div className="col-md-4 mb-2">
-                      <label className="form-label mb-1">Value</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        maxLength="5"
-                        name="percentageValue"
-                        value={formData.percentageValue}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                  {formData.calculationMethod === "FORMULA" && (
-                    <div className="mb-2">
-                      <label className="form-label mb-1">Custom Formula</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        maxLength="100"
-                        placeholder="(BP + DA) / 10"
-                        value={formData.customFormula}
-                        name="customFormula"
-                        onChange={handleInputChange}
-                        disabled={formData.calculationMethod === "PERCENTAGE"}  
-                      />
-                      <div className="text-danger">{errors.customFormula}</div>
-                    </div>
-                  )}
-
-                  <div className="mb-3 pt-2">
-                    <div className="form-check form-switch">
-                      <label
-                        className="form-check-label"
-                        htmlFor="flexSwitchCheckDefault"
-                      >
-                        Active Status
-                      </label>
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        id="flexSwitchCheckDefault"
-                        name="isActive"
-                        checked={formData.isActive}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <button type="submit" className="btn btn-primary px-4 me-2">
-                      {selectedSalaryHead ? "Update" : "Submit"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary px-4"
-                      onClick={handleCloseModal}
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
 
 export default SalaryHeads;

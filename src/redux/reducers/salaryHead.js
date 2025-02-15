@@ -137,7 +137,7 @@ const salaryHeadSlice = createSlice({
   name: "salaryHead",
   initialState: {
     salaryHeadList: [],
-    status: "idle",
+    loading: false,
     error: null,
   },
   reducers: {
@@ -151,11 +151,13 @@ const salaryHeadSlice = createSlice({
       state.error = null;
     });
     builder.addCase(fetchSalaryHead.fulfilled, (state, action) => {
+      state.salaryHeadList = action.payload.data; 
       state.status = "succeeded";
-      state.vacationModeList = action.payload;
+      state.loading = false;
     });
     builder.addCase(fetchSalaryHead.rejected, (state, action) => {
       state.status = "failed";
+      state.loading = false;
       state.error = action.payload;
     });
     builder.addCase(addSalaryHead.pending, (state) => {
@@ -216,6 +218,7 @@ const salaryHeadSlice = createSlice({
       if (action.payload && action.payload.success) {
         state.currentSalaryHead = action.payload.data;
       }
+      state.status = "succeeded";
     });
     builder.addCase(getSalaryHeadById.rejected, (state, action) => {
       state.status = "failed";
