@@ -266,7 +266,7 @@ function OvertimeTransaction() {
                             {" "}
                             <input type="checkbox" className="form-check-input" />
                           </td> */}
-                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.overtimeTypeName}</td>
                           <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
@@ -295,7 +295,7 @@ function OvertimeTransaction() {
                       <tr>
                         <td colSpan="12" className="text-center">
                           <div className="Nodatafound_box">
-                            <h6>No data available!</h6>
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
                         </td>
                       </tr>
@@ -422,9 +422,10 @@ function OvertimeTransaction() {
                       <div class="col-md-6 p-2">
                         <label class="form-label mb-1">Reason for Overtime</label>
                         <textarea className="form-control" rows={5}
-                          value={newData.reasonForOvertime}
+                          value={newData.reasonForOvertime} maxlength="100"
                           onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })} required>
                         </textarea>
+                        <small>{100 - newData.reasonForOvertime.length} / 100 characters remaining</small>
                       </div>
                     </div>
                   </div>

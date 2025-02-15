@@ -95,6 +95,7 @@ function MaternityLeaveSalaries() {
     MaternityService.getMaternityLeaveSalariesData(date, searchText).then(res => {
       setMaternityLeaveSalaries(res.data.data);
     }).catch(err => {
+      setMaternityLeaveSalaries([]);
     });
   }
 
@@ -245,7 +246,7 @@ function MaternityLeaveSalaries() {
                     {maternityLeaveSalaries?.length > 0 ? (
                       maternityLeaveSalaries?.map((item, index) => (
                         <tr>
-                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
@@ -263,7 +264,7 @@ function MaternityLeaveSalaries() {
                       <tr>
                         <td colSpan="12" className="text-center">
                           <div className="Nodatafound_box">
-                            <h6>No data available!</h6>
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
                         </td>
                       </tr>

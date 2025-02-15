@@ -64,6 +64,7 @@ function ScheduledDeductions() {
     ScheduledDeductionService.getScheduledDeductionsData(date, searchText).then(res => {
       setScheduledDeductions(res.data.data);
     }).catch(err => {
+      setScheduledDeductions([]);
     });
   }
 
@@ -231,7 +232,7 @@ function ScheduledDeductions() {
                     {scheduledDeductions?.length > 0 ? (
                       scheduledDeductions?.map((item, index) => (
                         <tr>
-                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
                           <td>{item?.deductionFromSalaryMonthText}</td>
@@ -250,7 +251,7 @@ function ScheduledDeductions() {
                       <tr>
                         <td colSpan="12" className="text-center">
                           <div className="Nodatafound_box">
-                            <h6>No data available!</h6>
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
                         </td>
                       </tr>

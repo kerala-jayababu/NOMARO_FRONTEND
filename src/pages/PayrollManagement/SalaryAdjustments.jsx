@@ -6,16 +6,15 @@ import moment from "moment";
 import CommonService from '../../core/services/CommonService';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { toast } from "react-toastify";
-import { Months } from '../../core/constants/commons';
+// import DatePicker from '../../components/datePicker';
 
 function SalaryAdjustments() {
   const [employeesList, setEmployeesList] = useState([]);
-  const [departmentsList, setDepartmentsListList] = useState([]);
-  const [designationsList, setDesignationsListList] = useState([]);
-  const [salaryHeadList, setSalaryHeadListList] = useState([]);
+  const [salaryHeadList, setSalaryHeadList] = useState([]);
+  const [salaryHeadListToShow, setSalaryHeadListToShow] = useState([]);
+  const [empDescDept, setEmpDescDept] = useState('');
   const [salaryAdjustments, setSalaryAdjustments] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
-  const optionsMonth = Months;
   const [startDate, setStartDate] = useState(new Date());
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
@@ -28,7 +27,7 @@ function SalaryAdjustments() {
     allocatingSalaryHead: 0,
     earningOrDeduction: "",
     allocatingSalaryMonth: 0,
-    taxable: "",
+    isTaxable: "",
     amount: 0,
     remarks: ""
   });
@@ -38,8 +37,6 @@ function SalaryAdjustments() {
 
   useEffect(() => {
     getEmployeesData();
-    getDepartmentsData();
-    getDesignationsData();
     getSalaryHeadData();
     getSalaryMonths();
   }, []);
@@ -63,7 +60,14 @@ function SalaryAdjustments() {
       idDepartment: empDetails.idDepartment,
       idDesignation: empDetails.idDesignation,
     }));
+    setEmpDescDept(empDetails.department + ', ' + empDetails.designation);
   }, [newData.idEmployee]);
+
+  useEffect(() => {
+    if (newData.earningOrDeduction == "") return;
+    const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'Deduction'));
+    setSalaryHeadListToShow(salHead);
+  }, [newData.earningOrDeduction]);
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
@@ -72,23 +76,9 @@ function SalaryAdjustments() {
     });
   }
 
-  const getDepartmentsData = () => {
-    CommonService.getDepartmentsList().then(res => {
-      setDepartmentsListList(res.data.data);
-    }).catch(err => {
-    });
-  }
-
-  const getDesignationsData = () => {
-    CommonService.getDesignationsList().then(res => {
-      setDesignationsListList(res.data.data);
-    }).catch(err => {
-    });
-  }
-
   const getSalaryHeadData = () => {
     CommonService.getSalaryHeadList().then(res => {
-      setSalaryHeadListList(res.data.data);
+      setSalaryHeadList(res.data.data);
     }).catch(err => {
     });
   }
@@ -105,12 +95,26 @@ function SalaryAdjustments() {
     SalaryAdjustmentService.getSalaryAdjustmentsData(date, searchText).then(res => {
       setSalaryAdjustments(res.data.data);
     }).catch(err => {
+      setSalaryAdjustments([]);
     });
   }
 
   const setupEdit = (item) => {
     setIsEdit(true);
-    setNewData(item);
+    setNewData({
+      idSalaryAdjustment: item.idSalaryAdjustment,
+      idEmployee: item.idEmployee,
+      idDepartment: item.idDepartment,
+      idDesignation: item.idDesignation,
+      payAdjustmentDate: item.payAdjustmentDate,
+      payAdjustmentDetails: item.payAdjustmentDetails,
+      allocatingSalaryHead: item.allocatingSalaryHead,
+      earningOrDeduction: item.earningOrDeduction,
+      allocatingSalaryMonth: item.allocatingSalaryMonth,
+      isTaxable: item.isTaxable == true ? 'Yes' : 'No',
+      amount: item.amount,
+      remarks: item.remarks,
+    });
     setShowModal(true);
   }
 
@@ -121,6 +125,7 @@ function SalaryAdjustments() {
       return;
     }
     let passData = newData;
+    passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     SalaryAdjustmentService.saveSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Salary adjustments added successfully', {
@@ -146,6 +151,7 @@ function SalaryAdjustments() {
       return;
     }
     let passData = newData;
+    passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     SalaryAdjustmentService.updateSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Salary adjustments updated successfully', {
@@ -177,7 +183,7 @@ function SalaryAdjustments() {
       allocatingSalaryHead: 0,
       earningOrDeduction: "",
       allocatingSalaryMonth: 0,
-      taxable: "",
+      isTaxable: "",
       amount: 0,
       remarks: ""
     });
@@ -195,6 +201,12 @@ function SalaryAdjustments() {
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} />
+                  {/* <DatePicker
+                    id="startDate"
+                    name="startDate"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  /> */}
                 </div>
                 <div className="list_searchbox">
                   <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
@@ -215,7 +227,7 @@ function SalaryAdjustments() {
                       <th>Designation</th>
                       <th>Adjustment Date</th>
                       <th>Adjustment Type</th>
-                      {/* <th className="text-center">Taxable </th> */}
+                      <th>Taxable </th>
                       <th>Allocating Salary Month</th>
                       <th>Allocating Salary Head</th>
                       <th className="text-end">Amount</th>
@@ -227,13 +239,13 @@ function SalaryAdjustments() {
                     {salaryAdjustments?.length > 0 ? (
                       salaryAdjustments?.map((item, index) => (
                         <tr>
-                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.departmentName}</td>
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.payAdjustmentDate).format("MM/DD/YYYY")}</td>
                           <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
-                          {/* <td className="text-center">NA</td> */}
+                          <td>{item?.designationName}</td>
                           <td>{item.allocatingSalaryMonthText}</td>
                           <td>{item.allcoatingSalaryHeadName}</td>
                           <td className="text-end">{(item.amount).toFixed(2)}</td>
@@ -249,7 +261,7 @@ function SalaryAdjustments() {
                       <tr>
                         <td colSpan="12" className="text-center">
                           <div className="Nodatafound_box">
-                            <h6>No data available!</h6>
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
                         </td>
                       </tr>
@@ -315,8 +327,8 @@ function SalaryAdjustments() {
                     </select>
                   </div> */}
                   <div className="col-md-6 p-2">
-                    <label className="form-label mb-1">Designation</label>
-                    <input className='form-control' disabled />
+                    <label className="form-label mb-1">Department, Designation</label>
+                    <input className='form-control' value={empDescDept} disabled />
                   </div>
 
                   <div className="col-md-6 p-2">
@@ -328,6 +340,13 @@ function SalaryAdjustments() {
                           required
                           dateFormat="MM/dd/yyyy"
                           placeholderText='Select Date' />
+                        {/* <DatePicker
+                          id="payAdjustmentDate"
+                          name="payAdjustmentDate"
+                          value={newData.payAdjustmentDate}
+                          onChange={(e) => setNewData({ ...newData, payAdjustmentDate: e.target.value })}
+                          required
+                        /> */}
                       </div>
                     </div>
                   </div>
@@ -363,14 +382,14 @@ function SalaryAdjustments() {
                     </div>
                     <div className="form-check form-check-inline ">
                       <input className="form-check-input" type="radio" name="Taxable" id="Taxable1"
-                        value={'Yes'} checked={newData.taxable === 'Yes' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, taxable: e.target.value })} required />
+                        value={'Yes'} checked={newData.isTaxable === 'Yes' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} required />
                       <label className="form-check-label" for="Taxable1">Yes</label>
                     </div>
                     <div className="form-check form-check-inline">
                       <input className="form-check-input" type="radio" name="Taxable" id="Taxable2"
-                        value={'No'} checked={newData.taxable === 'No' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, taxable: e.target.value })} required />
+                        value={'No'} checked={newData.isTaxable === 'No' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} required />
                       <label className="form-check-label" for="Taxable2"> No </label>
                     </div>
                   </div>
@@ -394,7 +413,7 @@ function SalaryAdjustments() {
                       onChange={(e) => setNewData({ ...newData, allocatingSalaryHead: e.target.value })} required>
                       <option value={''}>Select</option>
                       {
-                        salaryHeadList?.map((el) => (
+                        salaryHeadListToShow?.map((el) => (
                           <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
                         ))
                       }
@@ -409,9 +428,10 @@ function SalaryAdjustments() {
 
                   <div className="col-md-12 p-2">
                     <label className="form-label mb-1">Remarks</label>
-                    <textarea className="form-control" rows="4" maxlength="500" value={newData.remarks}
+                    <textarea className="form-control" rows="4" maxlength="100" value={newData.remarks}
                       onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
                       required placeholder='Add remarks here'></textarea>
+                      <small>{100 - newData.remarks.length} / 100 characters remaining</small>
                   </div>
                 </div>
               </Form>
