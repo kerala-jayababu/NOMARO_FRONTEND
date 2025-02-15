@@ -1,11 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SalaryAdjustmentService from '../../core/services/SalaryAdjustmentService';
-import { EarningsOrDeductions, Months } from '../../core/constants/commons';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import CommonService from '../../core/services/CommonService';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Modal } from 'react-bootstrap';
+import { toast } from "react-toastify";
+import { Months } from '../../core/constants/commons';
 
 function SalaryAdjustments() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -13,27 +14,56 @@ function SalaryAdjustments() {
   const [designationsList, setDesignationsListList] = useState([]);
   const [salaryHeadList, setSalaryHeadListList] = useState([]);
   const [salaryAdjustments, setSalaryAdjustments] = useState([]);
-  const [showAddSalaryAdjustments, setShowAddSalaryAdjustments] = useState(false);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const optionsMonth = Months;
+  const [startDate, setStartDate] = useState(new Date());
+  const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idSalaryAdjustment: 0,
     idEmployee: 0,
+    idDepartment: 0,
+    idDesignation: 0,
     payAdjustmentDate: "",
     payAdjustmentDetails: "",
     allocatingSalaryHead: 0,
     earningOrDeduction: "",
     allocatingSalaryMonth: 0,
+    taxable: "",
     amount: 0,
     remarks: ""
   });
   const [validated, setValidated] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
     getEmployeesData();
     getDepartmentsData();
     getDesignationsData();
     getSalaryHeadData();
-    getSalaryAdjustments();
+    getSalaryMonths();
   }, []);
+
+  useEffect(() => {
+    getSalaryAdjustments();
+  }, [startDate, searchText]);
+
+  useEffect(() => {
+    if (newData.idEmployee == 0 || newData.idEmployee == "") {
+      setNewData((prevData) => ({
+        ...prevData,
+        idDepartment: "",
+        idDesignation: "",
+      }));
+      return;
+    }
+    const empDetails = employeesList.find(emp => emp.idEmployee == newData.idEmployee);
+    setNewData((prevData) => ({
+      ...prevData,
+      idDepartment: empDetails.idDepartment,
+      idDesignation: empDetails.idDesignation,
+    }));
+  }, [newData.idEmployee]);
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
@@ -63,32 +93,25 @@ function SalaryAdjustments() {
     });
   }
 
+  const getSalaryMonths = () => {
+    CommonService.getAllSalaryMonths().then(res => {
+      setSalaryMonthsList(res.data);
+    }).catch(err => {
+    });
+  }
+
   const getSalaryAdjustments = () => {
-    SalaryAdjustmentService.getSalaryAdjustmentsData().then(res => {
+    const date = moment(startDate).format("YYYY-MM-DD");
+    SalaryAdjustmentService.getSalaryAdjustmentsData(date, searchText).then(res => {
       setSalaryAdjustments(res.data.data);
     }).catch(err => {
     });
   }
 
-  const employeeDataFetch = (id, field) => {
-    const empData = employeesList.find(x => x.idEmployee === id);
-    switch (field) {
-      case 'empCode':
-        return empData?.employeeCode;
-      case 'empName':
-        return empData?.fullName;
-      case 'empDepartment':
-        return empData?.department;
-      case 'empDesignation':
-        return empData?.designation;
-      default:
-        return 'NA';
-    }
-  }
-
-  const salaryHeadDataFetch = (id) => {
-    const salaryHeadData = salaryHeadList.find(x => x.idSalaryHead === id);
-    return salaryHeadData?.salaryHeadName ?? 'NA'
+  const setupEdit = (item) => {
+    setIsEdit(true);
+    setNewData(item);
+    setShowModal(true);
   }
 
   const saveSalaryAdjustments = (e) => {
@@ -97,6 +120,67 @@ function SalaryAdjustments() {
       setValidated(true);
       return;
     }
+    let passData = newData;
+    SalaryAdjustmentService.saveSalaryAdjustmentsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Salary adjustments added successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getSalaryAdjustments();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const updateSalaryAdjustments = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.allocatingSalaryMonth) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    SalaryAdjustmentService.updateSalaryAdjustmentsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Salary adjustments updated successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getSalaryAdjustments();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const resetValues = () => {
+    setValidated(false);
+    setIsEdit(false);
+    setNewData({
+      idSalaryAdjustment: 0,
+      idEmployee: 0,
+      idDepartment: 0,
+      idDesignation: 0,
+      payAdjustmentDate: "",
+      payAdjustmentDetails: "",
+      allocatingSalaryHead: 0,
+      earningOrDeduction: "",
+      allocatingSalaryMonth: 0,
+      taxable: "",
+      amount: 0,
+      remarks: ""
+    });
   }
 
   return (
@@ -106,8 +190,19 @@ function SalaryAdjustments() {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Salary Adjustments</h5>
-              <button className="btn btn-primary btn-sm px-4" data-bs-toggle="modal"
-                data-bs-target="#Add_PayAdjustments">Add</button>
+
+              <div className="list_menu">
+                <div className="list_searchbox">
+                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                </div>
+                <div className="list_searchbox">
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                  <i className="bx bx-search"></i>
+                </div>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
+              </div>
+
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
@@ -118,33 +213,33 @@ function SalaryAdjustments() {
                       <th>Employee Name</th>
                       <th>Department</th>
                       <th>Designation</th>
-                      <th className="text-center">Adjustment Date</th>
-                      <th className="text-center">Adjustment Type</th>
-                      <th className="text-center">Taxable </th>
-                      <th className="text-center">Allocating Salary Month</th>
-                      <th className="text-center">Allocating Salary Head</th>
+                      <th>Adjustment Date</th>
+                      <th>Adjustment Type</th>
+                      {/* <th className="text-center">Taxable </th> */}
+                      <th>Allocating Salary Month</th>
+                      <th>Allocating Salary Head</th>
                       <th className="text-end">Amount</th>
                       <th>Remarks</th>
-                      <th>Action</th>
+                      <th className="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
                     {salaryAdjustments?.length > 0 ? (
                       salaryAdjustments?.map((item, index) => (
                         <tr>
-                          <th>{employeeDataFetch(item.idEmployee, 'empCode')}</th>
-                          <td>{employeeDataFetch(item.idEmployee, 'empName')}</td>
-                          <td>{employeeDataFetch(item.idEmployee, 'empDepartment')}</td>
-                          <td>{employeeDataFetch(item.idEmployee, 'empDesignation')}</td>
-                          <td className="text-center">{moment(item?.payAdjustmentDate).format("MMM DD, YYYY")}</td>
-                          <td className="text-center">{item.earningOrDeduction === 'E' ? 'EARNINGS' : 'Deductions'}</td>
-                          <td className="text-center">NA</td>
-                          <td className="text-center">{item.allocatingSalaryMonth}</td>
-                          <td className="text-center">{salaryHeadDataFetch(item.allocatingSalaryHead)}</td>
-                          <td className="text-end">{item.amount}</td>
+                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.departmentName}</td>
+                          <td>{item?.designationName}</td>
+                          <td>{moment(item?.payAdjustmentDate).format("MM/DD/YYYY")}</td>
+                          <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
+                          {/* <td className="text-center">NA</td> */}
+                          <td>{item.allocatingSalaryMonthText}</td>
+                          <td>{item.allcoatingSalaryHeadName}</td>
+                          <td className="text-end">{(item.amount).toFixed(2)}</td>
                           <td>{item.remarks}</td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0">
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
                               <span className="tf-icons bx bx-pencil"></span>
                             </button>
                           </td>
@@ -165,121 +260,178 @@ function SalaryAdjustments() {
             </div>
           </div>
         </div>
-        <div className="modal fade" id="Add_PayAdjustments" tabindex="-1" aria-hidden="true">
-          <div className="modal-dialog modal-lg  modal-dialog-centered" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="modalCenterTitle">Add/Update Salary Adjustment</h5>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div className="modal-body  accountDetail_card">
-                <Form noValidate validated={validated}>
-                  <div className="row m-0">
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Employee Name</label>
-                      <select className="form-select" required>
-                        {
-                          employeesList?.map((el) => (
-                            <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
 
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Department</label>
-                      <select className="form-select">
-                        {
-                          departmentsList?.map((el) => (
-                            <option value={el.idDepartment} key={el.idDepartment}>{el.departmentName}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
+        <Modal
+          show={showModal} onHide={() => { setShowModal(false); resetValues() }} size='lg'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Add/Update Salary Adjustment</h5>
+            </Modal.Title>
+          </Modal.Header>
 
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Designation</label>
-                      <select className="form-select">
-                        {
-                          designationsList?.map((el) => (
-                            <option value={el.idDesignation} key={el.idDesignation}>{el.designationName}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
+          <Modal.Body>
+            <div className="accountDetail_card">
+              <Form noValidate validated={validated}>
+                <div className="row m-0">
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Employee Name</label>
+                    <select className="form-select" value={newData.idEmployee}
+                      onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
+                      <option value={''}>Select</option>
+                      {
+                        employeesList?.map((el) => (
+                          <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
 
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Pay Adjustment Date</label>
-                      <DatePicker className="form-control" dateFormat="dd/MM/yyyy" />
-                    </div>
+                  {/* <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Department</label>
+                    <select className="form-select" value={newData.idDepartment}
+                      onChange={(e) => setNewData({ ...newData, idDepartment: e.target.value })} required disabled>
+                      <option value={''}></option>
+                      {
+                        departmentsList?.map((el) => (
+                          <option value={el.idDepartment} key={el.idDepartment}>{el.departmentName}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
 
-                    <div className="col-md-6 p-2">
-                      <div>
-                        <label className="form-label mb-1">Pay Adjustment Type</label>
-                      </div>
-                      <div className="form-check form-check-inline ">
-                        <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
-                          value="option1" />
-                        <label className="form-check-label" for="inlineRadio1">Earning</label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
-                          value="option2" />
-                        <label className="form-check-label" for="inlineRadio2"> Deduction </label>
-                      </div>
-                    </div>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Designation</label>
+                    <select className="form-select" value={newData.idDesignation}
+                      onChange={(e) => setNewData({ ...newData, idDesignation: e.target.value })} required disabled>
+                      <option value={''}></option>
+                      {
+                        designationsList?.map((el) => (
+                          <option value={el.idDesignation} key={el.idDesignation}>{el.designationName}</option>
+                        ))
+                      }
+                    </select>
+                  </div> */}
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Designation</label>
+                    <input className='form-control' disabled />
+                  </div>
 
-                    <div className="col-md-6 p-2">
-                      <div>
-                        <label className="form-label mb-1">Taxable </label>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Salary Adjustment Date</label>
+                    <div className="row m-0">
+                      <div className="col-md-12 ps-0 pe-2">
+                        <DatePicker className="form-control" selected={newData.payAdjustmentDate}
+                          onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
+                          required
+                          dateFormat="MM/dd/yyyy"
+                          placeholderText='Select Date' />
                       </div>
-                      <div className="form-check form-check-inline ">
-                        <input className="form-check-input" type="radio" name="Taxable" id="Taxable1"
-                          value="option1" />
-                        <label className="form-check-label" for="Taxable1">Yes</label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input className="form-check-input" type="radio" name="Taxable" id="Taxable2"
-                          value="option2" />
-                        <label className="form-check-label" for="Taxable2"> No </label>
-                      </div>
-                    </div>
-
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Allocating Salary Month</label>
-                      <input className="form-control" type="month" maxlength="12" value="January-2025" required/>
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Allocating Salary Head</label>
-                      <select className="form-select">
-                        {
-                          salaryHeadList?.map((el) => (
-                            <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Amount</label>
-                      <input className="form-control" type="number" />
-                    </div>
-                    <div className="col-md-12 p-2">
-                      <label className="form-label mb-1">Remarks</label>
-                      <textarea className="form-control" rows="4" maxlength="500"></textarea>
                     </div>
                   </div>
-                </Form>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveSalaryAdjustments(e)}>Submit</button>
-                <button className="btn btn-outline-secondary  btn-sm py-2 px-4"
-                  data-bs-dismiss="modal">Reset</button>
-              </div>
+
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Salary Adjustment Details</label>
+                    <input type="text" className="form-control" value={newData.payAdjustmentDetails}
+                      onChange={(e) => setNewData({ ...newData, payAdjustmentDetails: e.target.value })}
+                      required placeholder='Add Details' />
+                  </div>
+
+                  <div className="col-md-6 p-2">
+                    <div>
+                      <label className="form-label mb-1">Salary Adjustment Type</label>
+                    </div>
+                    <div className="form-check form-check-inline ">
+                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
+                        value={'E'} checked={newData.earningOrDeduction === 'E' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} required />
+                      <label className="form-check-label" for="inlineRadio1">Earning</label>
+                    </div>
+                    <div className="form-check form-check-inline">
+                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
+                        value={'D'} checked={newData.earningOrDeduction === 'D' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} required />
+                      <label className="form-check-label" for="inlineRadio2"> Deduction </label>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 p-2">
+                    <div>
+                      <label className="form-label mb-1">Taxable </label>
+                    </div>
+                    <div className="form-check form-check-inline ">
+                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable1"
+                        value={'Yes'} checked={newData.taxable === 'Yes' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, taxable: e.target.value })} required />
+                      <label className="form-check-label" for="Taxable1">Yes</label>
+                    </div>
+                    <div className="form-check form-check-inline">
+                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable2"
+                        value={'No'} checked={newData.taxable === 'No' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, taxable: e.target.value })} required />
+                      <label className="form-check-label" for="Taxable2"> No </label>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Allocating Salary Month</label>
+                    <select className="form-select" value={newData.allocatingSalaryMonth}
+                      onChange={(e) => setNewData({ ...newData, allocatingSalaryMonth: e.target.value })}
+                      required>
+                      <option value={''}>Select</option>
+                      {
+                        salaryMonthsList?.map((el) => (
+                          <option value={el.idSalaryMonth} key={el.idSalaryMonth}>{el.salaryMonthText}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Allocating Salary Head</label>
+                    <select className="form-select" value={newData.allocatingSalaryHead}
+                      onChange={(e) => setNewData({ ...newData, allocatingSalaryHead: e.target.value })} required>
+                      <option value={''}>Select</option>
+                      {
+                        salaryHeadList?.map((el) => (
+                          <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Amount</label>
+                    <input className="form-control" type="number" value={newData.amount}
+                      onChange={(e) => setNewData({ ...newData, amount: e.target.value })}
+                      required placeholder='Add amount' />
+                  </div>
+
+                  <div className="col-md-12 p-2">
+                    <label className="form-label mb-1">Remarks</label>
+                    <textarea className="form-control" rows="4" maxlength="500" value={newData.remarks}
+                      onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
+                      required placeholder='Add remarks here'></textarea>
+                  </div>
+                </div>
+              </Form>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <div className="modal-footer">
+              {
+                isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateSalaryAdjustments(e)}>Update</button>
+              }
+              {
+                !isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveSalaryAdjustments(e)}>Submit</button>
+              }
+              <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+            </div>
+          </Modal.Body>
+        </Modal >
+      </div >
+    </div >
+
   )
 }
 

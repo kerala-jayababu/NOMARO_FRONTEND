@@ -10,6 +10,10 @@ import SalaryHeads from "./pages/MasterData/salaryHeads";
 import VacationMode from "./pages/PayrollManagement/VacationMode";
 import ComingSoon from "./pages/dashboard/components/Content";
 import EmployeeProfile from "./pages/MasterData/employeeProfile";
+import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
+import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
+import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
+import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
 
 function App() {
   return (
@@ -24,6 +28,10 @@ function App() {
             <Route path="designations" element={<Designations />} />
             <Route path="salary-heads" element={<SalaryHeads />} />
             <Route path="employee-profile" element={<EmployeeProfile />} />
+            <Route path="salary-adjustments" element={<SalaryAdjustments />} />
+            <Route path="maternity-leave-salaries" element={<MaternityLeaveSalaries />} />
+            <Route path="scheduled-deductions" element={<ScheduledDeductions />} />
+            <Route path="overtime-transactions" element={<OvertimeTransaction />} />
           </Route>
         </Route>
 

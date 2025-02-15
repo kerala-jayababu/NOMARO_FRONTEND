@@ -1,6 +1,184 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import OvertimeService from "../../core/services/OvertimeService";
+import secureLocalStorage from "react-secure-storage";
+import moment from "moment";
+import CommonService from "../../core/services/CommonService";
+import { Form, Modal } from "react-bootstrap";
+import { toast } from "react-toastify";
 
 function OvertimeTransaction() {
+
+  const [startDate, setStartDate] = useState(new Date());
+  const [overtimeTransactions, setOvertimeTransactions] = useState([]);
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const [holidayTypes, setHolidayTypes] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [newData, setNewData] = useState({
+    idOvertimeTransaction: 0,
+    idEmployee: 0,
+    idOvertimeType: "",
+    startDate: "",
+    startTime: 0,
+    endDate: "",
+    endTime: 0,
+    durationInHours: 0,
+    reasonForOvertime: "",
+    file: ""
+  });
+  const [statusType, setStatusType] = useState('');
+  const [validated, setValidated] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  useEffect(() => {
+    getEmployeesHeirarchy();
+    getHolidayTypesData();
+  }, []);
+
+  useEffect(() => {
+    getOTTranasactions();
+  }, [startDate, statusType, searchText]);
+
+  useEffect(() => {
+    calculateDuration();
+  }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
+
+  const calculateDuration = () => {
+    const startDate = moment(newData.startDate).format('YYYY-MM-DD');
+    const endDate = moment(newData.endDate).format('YYYY-MM-DD');
+    const startDateTime = new Date(`${startDate}T${newData.startTime}:00`);
+    const endDateTime = new Date(`${endDate}T${newData.endTime}:00`);
+    const durationInMilliseconds = endDateTime - startDateTime;
+    const durationInHours = durationInMilliseconds / (1000 * 60 * 60);
+    setNewData(prevState => ({
+      ...prevState,
+      durationInHours: durationInHours > 0 ? durationInHours : 0
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setNewData(prevState => ({
+      ...prevState,
+      file: file
+    }));
+  };
+
+  const getEmployeesHeirarchy = () => {
+    CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
+      setEmployeesList(res.data.data);
+    }).catch(err => {
+    });
+  }
+
+  const getHolidayTypesData = () => {
+    CommonService.getHolidayTypes().then(res => {
+      setHolidayTypes(res.data);
+    }).catch(err => {
+    });
+  }
+
+  const getOTTranasactions = () => {
+    const date = moment(startDate).format("YYYY-MM-DD");
+    OvertimeService.getOvertimeTransactionsData(userData.userId ?? 0, date, statusType, searchText).then(res => {
+      setOvertimeTransactions(res.data.data);
+    }).catch(err => {
+      setOvertimeTransactions([]);
+    });
+  }
+
+  const setupEdit = (item) => {
+    setIsEdit(true);
+    setNewData({
+      idOvertimeTransaction: item.idOvertimeTransaction,
+      idEmployee: item.idEmployee,
+      idOvertimeType: item.idOvertimeType,
+      startDate: moment(item.startDate),
+      startTime: moment(item.startTime, 'hh:mm:ss').format('HH:mm'),
+      endDate: moment(item.endDate),
+      endTime: moment(item.endTime, 'hh:mm:ss').format('HH:mm'),
+      durationInHours: item.durationInHours,
+      reasonForOvertime: item.reasonForOvertime,
+      file: item.file,
+    });
+    setShowModal(true);
+  }
+
+
+  const saveOvertimeTransactions = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.startDate) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
+    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
+    OvertimeService.saveOvertimeTransactionsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Overtime transactions added successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getOTTranasactions();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const updateOvertimeTransactions = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.startDate) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
+    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
+    OvertimeService.updateOvertimeTransactionsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Overtime transactions updated successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getOTTranasactions();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const resetValues = () => {
+    setValidated(false);
+    setIsEdit(false);
+    setNewData({
+      idOvertimeTransaction: 0,
+      idEmployee: 0,
+      idOvertimeType: "",
+      startDate: "",
+      startTime: 0,
+      endDate: "",
+      endTime: 0,
+      durationInHours: 0,
+      reasonForOvertime: "",
+      file: ""
+    });
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -10,20 +188,30 @@ function OvertimeTransaction() {
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" />
+                  <select className="form-select-sm" value={statusType}
+                    onChange={(e) => setStatusType(e.target.value)}>
+                    <option value={''}>ALL</option>
+                    <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
+                    <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
+                    <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
+                  </select>
+                </div>
+                <div className="list_searchbox">
+                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                </div>
+                <div className="list_searchbox">
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}/>
                   <i className="bx bx-search"></i>
                 </div>
                 <button
-                  className="btn btn-primary btn-sm px-4"
-                  data-bs-toggle="modal"
-                  data-bs-target="#Add_OvertimeModal"
-                >
+                  className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>
                   Add
                 </button>
               </div>
             </div>
             <div className="card-body">
-              <div className="pb-2">
+              {/* <div className="pb-2">
                 <div className="form-check form-check-inline ">
                   <input
                     className="form-check-input"
@@ -49,87 +237,72 @@ function OvertimeTransaction() {
                     Action Completed options
                   </label>
                 </div>
-              </div>
+              </div> */}
 
               <div className="table-responsive ">
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                      <th className="checkbox_td">
+                      {/* <th className="checkbox_td">
                         <input type="checkbox" className="form-check-input" />
-                      </th>
+                      </th> */}
                       <th>ID</th>
                       <th>Name</th>
                       <th>Type</th>
                       <th>Date</th>
                       <th>Start Time</th>
-                      <th>Duration</th>
+                      <th className="text-center">Duration</th>
                       <th>Reason</th>
-                      <th>Status</th>
+                      <th className="text-center">Status</th>
                       <th className="text-center"> </th>
-                      <th></th>
+                      <th className="text-end"></th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        {" "}
-                        <input type="checkbox" className="form-check-input" />
-                      </td>
-                      <td>EPM0123</td>
-                      <td>john</td>
-                      <td>Normal Overtime</td>
-                      <td>22/12/2024</td>
-                      <td>08:00pm</td>
-                      <td>2Hrs </td>
-                      <td>Pending works</td>
-                      <td>
-                        <span className="badge bg-label-warning">Pending</span>
-                      </td>
-                      <td></td>
-
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        {" "}
-                        <input type="checkbox" className="form-check-input" />
-                      </td>
-                      <td>EPM0123</td>
-                      <td>john</td>
-                      <td>Normal Overtime</td>
-                      <td>22/12/2024</td>
-                      <td>08:00pm</td>
-                      <td>2Hrs </td>
-                      <td>Pending works</td>
-                      <td>
-                        <span className="badge bg-label-warning">Pending</span>
-                      </td>
-                      <td className="text-center">
-                        <button className="btn btn-outline-primary border-0 btn-sm">
-                          <i className="bx bx-paperclip"></i>
-                        </button>
-                      </td>
-
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
+                  <tbody className="table-border-bottom-0">
+                    {overtimeTransactions?.length > 0 ? (
+                      overtimeTransactions?.map((item, index) => (
+                        <tr>
+                          {/* <td>
+                            {" "}
+                            <input type="checkbox" className="form-check-input" />
+                          </td> */}
+                          <th>{item?.employeeCode}</th>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.overtimeTypeName}</td>
+                          <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
+                          <td className="text-center">{item.durationInHours}</td>
+                          <td>{item.reasonForOvertime}</td>
+                          <td className="text-end">
+                            <span className="badge bg-label-warning">{item.approvalStatus}</span>
+                          </td>
+                          <td>
+                            {
+                              item.file &&
+                              <button className="btn btn-outline-primary border-0 btn-sm">
+                                <i className="bx bx-paperclip"></i>
+                              </button>
+                            }
+                          </td>
+                          <td className="text-end">
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
+                              <span className="tf-icons bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="12" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6>No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
-                <div className="text-center pt-3">
+                {/* <div className="text-center pt-3">
                   <button
                     type="submit"
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
@@ -147,209 +320,129 @@ function OvertimeTransaction() {
                   >
                     Reject Selected Record
                   </button>
-                </div>
-              </div>
-
-              <div className="table-responsive d-none">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Date</th>
-                      <th>Start Time</th>
-                      <th>Duration</th>
-                      <th>Reason</th>
-                      <th>Status</th>
-                      <th className="text-center">Attachments </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>EPM0123</td>
-                      <td>john</td>
-                      <td>Normal Overtime</td>
-                      <td>22/12/2024</td>
-                      <td>08:00pm</td>
-                      <td>2Hrs </td>
-                      <td>Pending works</td>
-                      <td>
-                        <span className="badge bg-label-success">Approved</span>
-                      </td>
-                      <td className="text-center">
-                        <button className="btn btn-outline-primary border-0 btn-sm">
-                          <i className="bx bx-paperclip"></i>
-                        </button>
-                      </td>
-
-                      {/* <!-- <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td> --> */}
-                    </tr>
-
-                    <tr>
-                      <td>EPM0123</td>
-                      <td>john</td>
-                      <td>Normal Overtime</td>
-                      <td>22/12/2024</td>
-                      <td>08:00pm</td>
-                      <td>2Hrs </td>
-
-                      <td>Pending works</td>
-                      <td>
-                        <span className="badge bg-label-danger">Rejected </span>
-                      </td>
-                      <td></td>
-
-                      {/* <!-- <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td> --> */}
-                    </tr>
-                    <tr>
-                      <td>EPM0123</td>
-                      <td>Normal Overtime</td>
-                      <td>22/12/2024</td>
-                      <td>08:00pm</td>
-                      <td>2Hrs </td>
-
-                      <td>Pending works</td>
-                      <td>
-                        <span className="badge bg-label-danger">Rejected </span>
-                      </td>
-                      <td></td>
-
-                      {/* <!-- <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td> --> */}
-                    </tr>
-                  </tbody>
-                </table>
+                </div> */}
               </div>
             </div>
           </div>
 
-          <div
-            className="modal fade"
-            id="Add_OvertimeModal"
-            tabindex="-1"
-            aria-hidden="true"
-          >
-            <div
-              className="modal-dialog modal-lg  modal-dialog-centered"
-              role="document"
-            >
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title" id="modalCenterTitle">
-                    Add/Update Overtime Transaction
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <div className="modal-body pt-1 accountDetail_card">
-                  <div className="row m-0 mt-3">
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">ID/Name</label>
-                      <select className="form-select">
-                        <option>Jhone</option>
-                        <option>Mercy</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Type</label>
-                      <select className="form-select">
-                        <option>Normal Overtime</option>
-                        <option>Weekend Overtime</option>
-                        <option>Public Holiday Overtime </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="row m-0">
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Start Date and Time</label>
-                      <div className="row m-0">
-                        <div className="col-md-6 ps-0 pe-2">
-                          <input
-                            type="date"
-                            className="form-control"
-                            maxlength="50"
-                          />
-                        </div>
-                        <div className="col-md-6 p-0 pe-2">
-                          <input
-                            type="time"
-                            className="form-control ms-2"
-                            maxlength="50"
-                          />
-                        </div>
+          <Modal
+            show={showModal} onHide={() => { setShowModal(false); resetValues() }} size='lg'
+            aria-labelledby="contained-modal-title-vcenter"
+            centered backdrop="static"
+            keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <h5>Add/Update Overtime Transaction</h5>
+              </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <div className="accountDetail_card">
+                <Form noValidate validated={validated}>
+                  <div className="accountDetail_card">
+                    <div className="row m-0 mt-3">
+                      <div className="col-md-6 p-2">
+                        <label className="form-label mb-1">Employee Name</label>
+                        <select className="form-select" value={newData.idEmployee}
+                          onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
+                          <option value={''}>Select</option>
+                          {
+                            employeesList?.map((el) => (
+                              <option value={el.idEmployee} key={el.idEmployee}>{el.employeeName}</option>
+                            ))
+                          }
+                        </select>
+                      </div>
+                      <div className="col-md-6 p-2">
+                        <label className="form-label mb-1">Type</label>
+                        <select className="form-select" value={newData.idOvertimeType}
+                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value })} required>
+                          <option value={''}>Select</option>
+                          {
+                            holidayTypes?.map((el) => (
+                              <option value={el.holidayType} key={el.holidayType}>{el.holidayTypeName}</option>
+                            ))
+                          }
+                        </select>
                       </div>
                     </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">End Date and Time</label>
-                      <div className="row m-0">
-                        <div className="col-md-6 ps-0 pe-2">
-                          <input
-                            type="date"
-                            className="form-control"
-                            maxlength="50"
-                          />
-                        </div>
-                        <div className="col-md-6 p-0 pe-2">
-                          <input
-                            type="time"
-                            className="form-control ms-2"
-                            maxlength="50"
-                          />
+                    <div className="row m-0">
+                      <div className="col-md-6 p-2">
+                        <label className="form-label mb-1">Start Date and Time</label>
+                        <div className="row m-0">
+                          <div className="col-md-6 ps-0 pe-2">
+                            <DatePicker className="form-control" selected={newData.startDate}
+                              onChange={(date) => setNewData({ ...newData, startDate: date })}
+                              required
+                              dateFormat="MM/dd/yyyy"
+                              placeholderText='Select Date' />
+                          </div>
+                          <div className="col-md-6 p-0 pe-2">
+                            <input type="time" className="form-control ms-2"
+                              value={newData.startTime}
+                              onChange={(e) => setNewData({ ...newData, startTime: e.target.value })} required />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Duration</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="00"
-                      />
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1">Reason for Overtime</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                    <div className="col-md-6 p-2">
-                      <label className="form-label mb-1"> Attachments </label>
-                      <input type="file" className="form-control" maxlength="50" />
+                      <div className="col-md-6 p-2">
+                        <label className="form-label mb-1">End Date and Time</label>
+                        <div className="row m-0">
+                          <div className="col-md-6 ps-0 pe-2">
+                            <DatePicker className="form-control" selected={newData.endDate}
+                              onChange={(date) => setNewData({ ...newData, endDate: date })}
+                              required
+                              dateFormat="MM/dd/yyyy"
+                              placeholderText='Select Date' />
+                          </div>
+                          <div className="col-md-6 p-0 pe-2">
+                            <input type="time" className="form-control ms-2"
+                              value={newData.endTime}
+                              onChange={(e) => setNewData({ ...newData, endTime: e.target.value })} required />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6 p-0">
+                        <div class="p-2">
+                          <label class="form-label mb-1">Duration</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="00"
+                            value={newData.durationInHours}
+                            onChange={(e) => setNewData({ ...newData, durationInHours: e.target.value })} required
+                          />
+                        </div>
+                        <div class="p-2">
+                          <label class="form-label mb-1"> Attachments </label>
+                          <input type="file" className="form-control" onChange={handleFileChange} />
+                        </div>
+                      </div>
+
+                      <div class="col-md-6 p-2">
+                        <label class="form-label mb-1">Reason for Overtime</label>
+                        <textarea className="form-control" rows={5}
+                          value={newData.reasonForOvertime}
+                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })} required>
+                        </textarea>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-sm py-2 px-4 me-2"
-                  >
-                    Submit
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-outline-secondary  btn-sm py-2 px-4"
-                    data-bs-dismiss="modal"
-                  >
-                    Reset
-                  </button>
-                </div>
+                </Form>
               </div>
-            </div>
-          </div>
+              <div className="modal-footer">
+                {
+                  isEdit &&
+                  <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateOvertimeTransactions(e)}>Update</button>
+                }
+                {
+                  !isEdit &&
+                  <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveOvertimeTransactions(e)}>Submit</button>
+                }
+                <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+              </div>
+            </Modal.Body>
+          </Modal>
 
           <div
             className="modal fade"

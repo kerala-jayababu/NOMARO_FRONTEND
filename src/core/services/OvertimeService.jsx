@@ -1,0 +1,31 @@
+import { API } from "../../redux/api/utils";
+
+export default class OvertimeService {
+
+  static getOvertimeTransactionsData = async (empId, date, status, searchText) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetOvertimeTransactions?EmployeeId=" + empId + '&startDate=' + date + '&dropdownFilter=' + status + '&searchText=' + searchText);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+  static saveOvertimeTransactionsData = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/PayRollManagement/AddOvertimeTransaction", payload);
+      return { error: null, data: res };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
+  static updateOvertimeTransactionsData = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/PayRollManagement/UpdateOvertimeTransaction", payload);
+      return { error: null, data: res };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+}

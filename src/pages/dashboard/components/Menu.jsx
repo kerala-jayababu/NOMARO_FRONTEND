@@ -10,10 +10,7 @@ function Menu() {
   const navigate = useNavigate();  
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
-  console.log(subMenu, "subMenu");
 
-
-  console.log(payrollScreen, "payrollScreen");
   useEffect(() => {
     dispatch(getAllPayrollScreensAction());
   }, [dispatch]);
