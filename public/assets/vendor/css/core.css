@@ -16262,7 +16262,7 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
   flex-grow: 0;
   flex-shrink: 0;
   margin-right: 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.25rem !important;
 }
 
 .menu:not(.menu-no-animation) .menu-icon {
@@ -16308,7 +16308,7 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
 
 .menu-item.open>.menu-sub {
   display: flex;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .menu-toggle::after {
@@ -16406,7 +16406,7 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
 }
 
 .menu-vertical .menu-icon {
-  width: 1.5rem;
+  width: 1.5rem !important;
 }
 
 .menu-vertical .menu-sub .menu-icon {
