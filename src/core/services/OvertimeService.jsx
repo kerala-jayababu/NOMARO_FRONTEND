@@ -11,6 +11,15 @@ export default class OvertimeService {
     } 
   }
 
+  static getOvertimeTransactionsById = async (id) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetOvertimeTransactionsById?id=" + id);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
   static saveOvertimeTransactionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddOvertimeTransaction", payload);

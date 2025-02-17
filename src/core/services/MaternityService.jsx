@@ -11,6 +11,15 @@ export default class MaternityService {
     } 
   }
 
+  static getMaternityLeaveSalaryById = async (id) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetMaternityLeaveSalaryById?id=" + id);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
   static saveMaternityLeaveSalariesData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddMaternityLeaveSalary", payload);

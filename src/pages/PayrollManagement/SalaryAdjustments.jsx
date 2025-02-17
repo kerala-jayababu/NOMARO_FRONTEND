@@ -6,6 +6,7 @@ import moment from "moment";
 import CommonService from '../../core/services/CommonService';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { toast } from "react-toastify";
+import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
 
 function SalaryAdjustments() {
@@ -15,7 +16,7 @@ function SalaryAdjustments() {
   const [empDescDept, setEmpDescDept] = useState('');
   const [salaryAdjustments, setSalaryAdjustments] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idSalaryAdjustment: 0,
@@ -43,7 +44,7 @@ function SalaryAdjustments() {
 
   useEffect(() => {
     getSalaryAdjustments();
-  }, [startDate, searchText]);
+  }, [startDate]);
 
   useEffect(() => {
     if (newData.idEmployee == 0 || newData.idEmployee == "") {
@@ -85,7 +86,9 @@ function SalaryAdjustments() {
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
-      setSalaryMonthsList(res.data);
+      const salMonths = res.data;
+      const filterred = salMonths.slice(0, 12);
+      setSalaryMonthsList(filterred);
     }).catch(err => {
     });
   }
@@ -173,6 +176,7 @@ function SalaryAdjustments() {
   const resetValues = () => {
     setValidated(false);
     setIsEdit(false);
+    setEmpDescDept('')
     setNewData({
       idSalaryAdjustment: 0,
       idEmployee: 0,
@@ -209,8 +213,9 @@ function SalaryAdjustments() {
                   /> */}
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-                  <i className="bx bx-search"></i>
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' ? getSalaryAdjustments() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getSalaryAdjustments()}></i>
                 </div>
                 <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
               </div>
@@ -231,8 +236,8 @@ function SalaryAdjustments() {
                       <th>Allocating Salary Month</th>
                       <th>Allocating Salary Head</th>
                       <th className="text-end">Amount</th>
-                      <th>Remarks</th>
-                      <th className="text-end">Action</th>
+                      {/* <th>Remarks</th> */}
+                      <th className="text-end"></th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
@@ -245,11 +250,11 @@ function SalaryAdjustments() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.payAdjustmentDate).format("MM/DD/YYYY")}</td>
                           <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
-                          <td>{item?.designationName}</td>
-                          <td>{item.allocatingSalaryMonthText}</td>
-                          <td>{item.allcoatingSalaryHeadName}</td>
-                          <td className="text-end">{(item.amount).toFixed(2)}</td>
-                          <td>{item.remarks}</td>
+                          <td>{item?.isTaxable}</td>
+                          <td>{item?.allocatingSalaryMonthText}</td>
+                          <td>{item?.allcoatingSalaryHeadName}</td>
+                          <td className="text-end">{Utils.formattedNumber(item?.amount)}.00</td>
+                          {/* <td>{item?.remarks}</td> */}
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -431,7 +436,7 @@ function SalaryAdjustments() {
                     <textarea className="form-control" rows="4" maxlength="100" value={newData.remarks}
                       onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
                       required placeholder='Add remarks here'></textarea>
-                      <small>{100 - newData.remarks.length} / 100 characters remaining</small>
+                    <small>{100 - newData.remarks.length} / 100 characters remaining</small>
                   </div>
                 </div>
               </Form>

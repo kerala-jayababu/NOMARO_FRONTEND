@@ -158,6 +158,7 @@ const salaryAdjustmentsSlice = createSlice({
       state.status = "failed";
       state.error = action.payload;
     });
+
     builder.addCase(addSalaryAdjustments.pending, (state) => {
       state.status = "loading";
       state.error = null;
@@ -173,6 +174,7 @@ const salaryAdjustmentsSlice = createSlice({
       state.status = "failed";
       state.error = action.payload;
     });
+
     builder.addCase(updateSalaryAdjustments.pending, (state) => {
       state.status = "loading";
       state.error = null;
@@ -208,6 +210,7 @@ const salaryAdjustmentsSlice = createSlice({
       state.status = "failed";
       state.error = action.payload;
     });
+    
     builder.addCase(getSalaryAdjustmentsById.pending, (state) => {
       state.status = "loading";
       state.error = null;

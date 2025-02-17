@@ -6,6 +6,7 @@ import { Form, Modal } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
+import Utils from "../../utils/Utils";
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -14,7 +15,7 @@ function MaternityLeaveSalaries() {
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryStructure, setSalaryStructure] = useState([]);
   const [salaryStructureToDisplay, setSalaryStructureToDisplay] = useState({});
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idMaternityLeaveSalary: 0,
@@ -23,12 +24,15 @@ function MaternityLeaveSalaries() {
     maternityLeaveTo: "",
     idSalaryMonthFrom: 0,
     idSalaryMonthTo: 0,
+    netSalary: 0,
+    totalEarnings: 0,
+    totalDeductions: 0,
   });
   const [salaryDetails, setSalaryDetails] = useState([
     {
       idSalaryHead: 0,
-      salaryHeadType: 0,
-      amount: 0,
+      salaryHeadType: "",
+      amount: null,
       amountInUSD: 0
     },
   ]);
@@ -46,21 +50,50 @@ function MaternityLeaveSalaries() {
 
   useEffect(() => {
     getMaternityLeaveSalaries();
-  }, [startDate, searchText]);
+  }, [startDate]);
 
   useEffect(() => {
-    if (newData.idEmployee == 0) return;
+    if (newData.idEmployee == 0) {
+      setSalaryStructureToDisplay({})
+      return;
+    }
     const empSalaryStructure = salaryStructure.find(emp => emp.idEmployee == newData.idEmployee);
     setSalaryStructureToDisplay(empSalaryStructure);
   }, [newData.idEmployee]);
 
-  // useEffect(() => {
-  //   if (newData.maternityLeaveFrom == "" || newData.maternityLeaveTo == "") return;
-  //   const fromDate = moment(new Date(newData.maternityLeaveFrom)).format('DD-MM-YYYY');
-  //   const toDate = moment(new Date(newData.maternityLeaveTo)).format('DD-MM-YYYY');;
-  //   console.log(fromDate)
-  //   console.log(toDate)
-  // }, [newData.maternityLeaveFrom, newData.maternityLeaveTo]);
+  useEffect(() => {
+    if (newData.idSalaryMonthFrom == '' || newData.idSalaryMonthFrom == 0) {
+      setNewData(prevState => ({
+        ...prevState,
+        maternityLeaveFrom: ""
+      }));
+      return;
+    }
+    const salaryMonthById = salaryMonthsList.find(el => el.idSalaryMonth == newData.idSalaryMonthFrom);
+    setNewData(prevState => ({
+      ...prevState,
+      maternityLeaveFrom: salaryMonthById.salaryMonthDate
+    }));
+  }, [newData.idSalaryMonthFrom]);
+
+  useEffect(() => {
+    if (newData.idSalaryMonthTo == '' || newData.idSalaryMonthTo == 0) {
+      setNewData(prevState => ({
+        ...prevState,
+        maternityLeaveTo: ""
+      }));
+      return;
+    }
+    const salaryMonthById = salaryMonthsList.find(el => el.idSalaryMonth == newData.idSalaryMonthTo);
+    setNewData(prevState => ({
+      ...prevState,
+      maternityLeaveTo: salaryMonthById.salaryMonthDate
+    }));
+  }, [newData.idSalaryMonthTo]);
+
+  useEffect(() => {
+    calculateEarningsDeductionsTotal();
+  }, [salaryDetails]);
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
@@ -71,14 +104,18 @@ function MaternityLeaveSalaries() {
 
   const getSalaryHeadData = () => {
     CommonService.getSalaryHeadList().then(res => {
-      setSalaryHeadList(res.data.data);
+      const salHead = res.data.data;
+      // const filterred = salHead.filter(el => el.headType === "Deduction");
+      setSalaryHeadList(salHead);
     }).catch(err => {
     });
   }
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
-      setSalaryMonthsList(res.data);
+      const salMonths = res.data;
+      const filterred = salMonths.slice(0, 12);
+      setSalaryMonthsList(filterred);
     }).catch(err => {
     });
   }
@@ -99,6 +136,20 @@ function MaternityLeaveSalaries() {
     });
   }
 
+  const getMaternityLeaveSalById = (id) => {
+    MaternityService.getMaternityLeaveSalaryById(id).then(res => {
+      setupEdit(res.data.data);
+    }).catch(err => {
+      setMaternityLeaveSalaries([]);
+    });
+  }
+
+  const getSalaryHeadTypeName = (id) => {
+    if (id == '' || id == 0) return "";
+    const salHeadData = salaryHeadList.find(el => el.idSalaryHead == id);
+    return salHeadData?.headType ?? ""
+  }
+
   const addRow = () => {
     setSalaryDetails([
       ...salaryDetails,
@@ -111,35 +162,79 @@ function MaternityLeaveSalaries() {
     setSalaryDetails(newSalaryDetails);
   };
 
-  const handleInputChange = (index, event) => {
-    const { name, value } = event.target;
+  const handleSelectChange = (index, event) => {
+    const { value } = event.target;
     const newSalaryDetails = [...salaryDetails];
-    newSalaryDetails[index][name] = value;
+    newSalaryDetails[index]['idSalaryHead'] = value;
+    newSalaryDetails[index]['salaryHeadType'] = getSalaryHeadTypeName(value);
+    setSalaryDetails(newSalaryDetails);
+  };
+
+  const handleInputChange = (index, event) => {
+    const { value } = event.target;
+    const newSalaryDetails = [...salaryDetails];
+    newSalaryDetails[index]['amount'] = value;
     setSalaryDetails(newSalaryDetails);
   };
 
   const setupEdit = (item) => {
     setIsEdit(true);
-    setNewData(item);
+    setNewData({
+      idMaternityLeaveSalary: item.idMaternityLeaveSalary,
+      idEmployee: item.idEmployee,
+      maternityLeaveFrom: item.maternityLeaveFrom,
+      maternityLeaveTo: item.maternityLeaveTo,
+      idSalaryMonthFrom: item.idSalaryMonthFrom,
+      idSalaryMonthTo: item.idSalaryMonthTo,
+      netSalary: item.maternityLeaveNetSalary,
+      totalEarnings: item.totalEarnings,
+      totalDeductions: item.totalDeductions,
+    });
+    setSalaryDetails(item.maternityLeaveSalaryDetailDto);
     setShowModal(true);
   }
 
+  const calculateEarningsDeductionsTotal = () => {
+    const totalEarnings = salaryDetails.reduce((total, item) => {
+      if (item.salaryHeadType && item.salaryHeadType.toLowerCase() === 'earning') {
+        return total + parseFloat(item.amount);
+      }
+      return total;
+    }, 0);
+
+    const totalDeductions = salaryDetails.reduce((total, item) => {
+      if (item.salaryHeadType && item.salaryHeadType.toLowerCase() === 'deduction') {
+        return total + parseFloat(item.amount);
+      }
+      return total;
+    }, 0);
+
+    setNewData(prevState => ({
+      ...prevState,
+      totalEarnings: totalEarnings,
+      totalDeductions: totalDeductions,
+      netSalary: totalEarnings - totalDeductions,
+    }));
+  }
+
   const saveMaternityLeaveSalaries = (e) => {
-    // const isValid = validateForm();
-    // if (isValid) {
-    //   console.log('Submitted Salary Details:', salaryDetails);
-    // } else {
-    //   console.log('Form has errors. Please fix them.');
-    // }
     e.preventDefault();
     if (!newData.idEmployee || !newData.idSalaryMonthFrom) {
       setValidated(true);
       return;
     }
     let passData = newData;
-    passData['maternityLeaveFrom'] = moment(passData['maternityLeaveFrom']).format('YYYY-MM-DD');
-    passData['maternityLeaveTo'] = moment(passData['maternityLeaveTo']).format('YYYY-MM-DD');
     passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
+
+    // const netSalary = totalEarnings - totalDeductions;
+    // passData['totalEarnings'] = totalEarnings;
+    // passData['totalDeductions'] = totalDeductions;
+    // passData['netSalary'] = netSalary;
+
+    delete passData['totalEarnings'];
+    delete passData['totalDeductions'];
+    delete passData['netSalary'];
+
     MaternityService.saveMaternityLeaveSalariesData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Maternity leave salaries added successfully', {
@@ -165,8 +260,17 @@ function MaternityLeaveSalaries() {
       return;
     }
     let passData = newData;
-    passData['maternityLeaveFrom'] = moment(passData['maternityLeaveFrom']).format('YYYY-MM-DD');
-    passData['maternityLeaveTo'] = moment(passData['maternityLeaveTo']).format('YYYY-MM-DD');
+    passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
+
+    // const netSalary = totalEarnings - totalDeductions;
+    // passData['totalEarnings'] = totalEarnings;
+    // passData['totalDeductions'] = totalDeductions;
+    // passData['netSalary'] = netSalary;
+
+    delete passData['totalEarnings'];
+    delete passData['totalDeductions'];
+    delete passData['netSalary'];
+
     MaternityService.updateMaternityLeaveSalariesData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Maternity leave salaries updated successfully', {
@@ -195,11 +299,14 @@ function MaternityLeaveSalaries() {
       maternityLeaveTo: "",
       idSalaryMonthFrom: 0,
       idSalaryMonthTo: 0,
+      netSalary: 0,
+      totalEarnings: 0,
+      totalDeductions: 0,
     });
     setSalaryDetails([
       {
         idSalaryHead: 0,
-        salaryHeadType: 0,
+        salaryHeadType: "",
         amount: 0,
         amountInUSD: 0
       },
@@ -220,8 +327,9 @@ function MaternityLeaveSalaries() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-                  <i className="bx bx-search"></i>
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' ? getMaternityLeaveSalaries() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getMaternityLeaveSalaries()}></i>
                 </div>
                 <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
               </div>
@@ -239,7 +347,7 @@ function MaternityLeaveSalaries() {
                       <th>Date To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
-                      <th className="text-end">Action</th>
+                      <th className="text-end"></th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
@@ -251,10 +359,10 @@ function MaternityLeaveSalaries() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
-                          <td className="text-end">{(item.defaultNetSalary).toFixed(2)}</td>
-                          <td className="text-end">{(item.netSalary).toFixed(2)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item.netSalary)}.00</td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
                               <span className="tf-icons bx bx-pencil"></span>
                             </button>
                           </td>
@@ -409,28 +517,35 @@ function MaternityLeaveSalaries() {
                         </thead>
                         <tbody class="table-border-bottom-0">
                           <tr>
-                            <td>Earnings</td>
-                            <td class="text-end">{salaryStructureToDisplay?.totalEarnings}</td>
+                            <td><b>Earnings</b></td>
+                            <td class="text-end"></td>
+                            {/* {salaryStructureToDisplay?.totalEarnings ? Utils.formattedNumber(salaryStructureToDisplay?.totalEarnings) : 0} */}
                           </tr>
                           <tr>
-                            <td>Deduction</td>
-                            <td class="text-end">{salaryStructureToDisplay?.totalDeductions}</td>
-                          </tr>
-                          {/* <tr>
-                            <td>Basic Pay</td>
+                            <td style={{ paddingLeft: '30px' }}>Basic Pay</td>
                             <td class="text-end">10,000</td>
                           </tr>
                           <tr>
-                            <td>Insurance</td>
+                            <td style={{ paddingLeft: '30px' }}>Allowance</td>
+                            <td class="text-end">5,000</td>
+                          </tr>
+
+                          <tr>
+                            <td><b>Deduction</b></td>
+                            <td class="text-end"></td>
+                            {/* {salaryStructureToDisplay?.totalDeductions ? Utils.formattedNumber(salaryStructureToDisplay?.totalDeductions) : 0} */}
+                          </tr>
+                          <tr>
+                            <td style={{ paddingLeft: '30px' }}>Insurance</td>
                             <td class="text-end">5,000</td>
                           </tr>
                           <tr>
-                            <td>Provident Fund</td>
+                            <td style={{ paddingLeft: '30px' }}>Provident Fund</td>
                             <td class="text-end">1,000</td>
-                          </tr> */}
+                          </tr>
                           <tr>
                             <td><b>Net Salary</b></td>
-                            <td class="text-end"><b>{salaryStructureToDisplay?.netSalary}</b></td>
+                            <td class="text-end"><b>{salaryStructureToDisplay?.netSalary ? Utils.formattedNumber(salaryStructureToDisplay?.netSalary) : 0}</b></td>
                           </tr>
                         </tbody>
                       </table>
@@ -451,8 +566,8 @@ function MaternityLeaveSalaries() {
                           {salaryDetails.map((detail, index) => (
                             <tr key={index}>
                               <td>
-                                <select className="form-select" value={detail.salaryHeadType} name="salaryHeadType"
-                                  onChange={(e) => handleInputChange(index, e)} required>
+                                <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
+                                  onChange={(e) => handleSelectChange(index, e)} required>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (
@@ -462,24 +577,38 @@ function MaternityLeaveSalaries() {
                                 </select>
                               </td>
                               <td>
+                                <label>{detail.salaryHeadType}</label>
+                              </td>
+                              <td>
                                 <input type="number" class="form-control" value={detail.amount} name="amount"
-                                  onChange={(e) => handleInputChange(index, e)}
+                                  onChange={(e) => { handleInputChange(index, e); }}
                                   placeholder="Amount" required />
                               </td>
                               <td>
                                 <div class="d-flex">
-                                  <button type="button" class="btn btn-outline-primary border-0 btn-sm me-2" onClick={() => addRow()}>
-                                    <i class="bx bx-plus"></i>
-                                  </button>
-                                  <button type="button" class="btn btn-outline-danger btn-sm border-0" onClick={() => removeRow(index)}>
-                                    <i class="bx bx-trash"></i>
-                                  </button>
+                                  {(index == salaryDetails.length - 1) &&
+                                    <button type="button" class="btn btn-outline-primary border-0 btn-sm me-2" onClick={() => addRow()}>
+                                      <i class="bx bx-plus"></i>
+                                    </button>
+                                  }
+                                  {(salaryDetails.length > 1) &&
+                                    <button type="button" class="btn btn-outline-danger btn-sm border-0" onClick={() => removeRow(index)}>
+                                      <i class="bx bx-trash"></i>
+                                    </button>
+                                  }
                                 </div>
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+
+                      <div className="p-2">
+                        <label className="badge bg-label-primary">Earnings: {newData.totalEarnings ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-warning">Deductions: {newData.totalDeductions ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-info">Net Total: {newData.netSalary ?? 0}</label>
+                      </div>
+
                     </div>
                   </div>
                 </div>

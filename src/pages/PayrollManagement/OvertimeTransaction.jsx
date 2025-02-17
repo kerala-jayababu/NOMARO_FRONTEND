@@ -10,10 +10,10 @@ import { toast } from "react-toastify";
 
 function OvertimeTransaction() {
 
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [overtimeTransactions, setOvertimeTransactions] = useState([]);
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
-  const [holidayTypes, setHolidayTypes] = useState([]);
+  const [overtimeTypes, setOvertimeTypes] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
@@ -26,7 +26,9 @@ function OvertimeTransaction() {
     endTime: 0,
     durationInHours: 0,
     reasonForOvertime: "",
-    file: ""
+    file: null,
+    attachment: "",
+    attachmentDescription: "",
   });
   const [statusType, setStatusType] = useState('');
   const [validated, setValidated] = useState(false);
@@ -35,12 +37,12 @@ function OvertimeTransaction() {
 
   useEffect(() => {
     getEmployeesHeirarchy();
-    getHolidayTypesData();
+    getOvertimeTypesData();
   }, []);
 
   useEffect(() => {
     getOTTranasactions();
-  }, [startDate, statusType, searchText]);
+  }, [startDate, statusType]);
 
   useEffect(() => {
     calculateDuration();
@@ -74,9 +76,9 @@ function OvertimeTransaction() {
     });
   }
 
-  const getHolidayTypesData = () => {
-    CommonService.getHolidayTypes().then(res => {
-      setHolidayTypes(res.data);
+  const getOvertimeTypesData = () => {
+    CommonService.getAllOptions().then(res => {
+      setOvertimeTypes(res.data.overTimesTypes);
     }).catch(err => {
     });
   }
@@ -84,6 +86,14 @@ function OvertimeTransaction() {
   const getOTTranasactions = () => {
     const date = moment(startDate).format("YYYY-MM-DD");
     OvertimeService.getOvertimeTransactionsData(userData.userId ?? 0, date, statusType, searchText).then(res => {
+      setOvertimeTransactions(res.data.data);
+    }).catch(err => {
+      setOvertimeTransactions([]);
+    });
+  }
+
+  const getOTTranasactionsById = (id) => {
+    OvertimeService.getOvertimeTransactionsById(id).then(res => {
       setOvertimeTransactions(res.data.data);
     }).catch(err => {
       setOvertimeTransactions([]);
@@ -103,10 +113,11 @@ function OvertimeTransaction() {
       durationInHours: item.durationInHours,
       reasonForOvertime: item.reasonForOvertime,
       file: item.file,
+      attachment: item.attachment,
+      attachmentDescription: item.attachmentDescription,
     });
     setShowModal(true);
   }
-
 
   const saveOvertimeTransactions = (e) => {
     e.preventDefault();
@@ -175,7 +186,9 @@ function OvertimeTransaction() {
       endTime: 0,
       durationInHours: 0,
       reasonForOvertime: "",
-      file: ""
+      file: "",
+      attachment: "",
+      attachmentDescription: "",
     });
   }
 
@@ -189,7 +202,7 @@ function OvertimeTransaction() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <select className="form-select-sm" value={statusType}
-                    onChange={(e) => setStatusType(e.target.value)}>
+                    onChange={(e) => setStatusType(e.target.value)} style={{width:'150px'}}>
                     <option value={''}>ALL</option>
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
@@ -201,8 +214,9 @@ function OvertimeTransaction() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}/>
-                  <i className="bx bx-search"></i>
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' ? getOTTranasactions() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getOTTranasactions()}></i>
                 </div>
                 <button
                   className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>
@@ -252,9 +266,9 @@ function OvertimeTransaction() {
                       <th>Date</th>
                       <th>Start Time</th>
                       <th className="text-center">Duration</th>
-                      <th>Reason</th>
-                      <th className="text-center">Status</th>
-                      <th className="text-center"> </th>
+                      {/* <th>Reason</th> */}
+                      <th>Status</th>
+                      <th className="text-center"></th>
                       <th className="text-end"></th>
                     </tr>
                   </thead>
@@ -271,9 +285,9 @@ function OvertimeTransaction() {
                           <td>{item?.overtimeTypeName}</td>
                           <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
-                          <td className="text-center">{item.durationInHours}</td>
-                          <td>{item.reasonForOvertime}</td>
-                          <td className="text-end">
+                          <td className="text-center">{item.durationInHours} Hr</td>
+                          {/* <td>{item.reasonForOvertime}</td> */}
+                          <td>
                             <span className="badge bg-label-warning">{item.approvalStatus}</span>
                           </td>
                           <td>
@@ -359,8 +373,8 @@ function OvertimeTransaction() {
                           onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value })} required>
                           <option value={''}>Select</option>
                           {
-                            holidayTypes?.map((el) => (
-                              <option value={el.holidayType} key={el.holidayType}>{el.holidayTypeName}</option>
+                            overtimeTypes?.map((el) => (
+                              <option value={el.value} key={el.value}>{el.displayName}</option>
                             ))
                           }
                         </select>

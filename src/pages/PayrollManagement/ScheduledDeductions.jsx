@@ -7,13 +7,15 @@ import { toast } from "react-toastify";
 import moment from "moment";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Utils from "../../utils/Utils";
 
 function ScheduledDeductions() {
   const [scheduledDeductions, setScheduledDeductions] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
-  const [salaryHeadList, setSalaryHeadListList] = useState([]);
+  const [salaryHeadList, setSalaryHeadList] = useState([]);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const optionsMonth = Months;
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idScheduledSalaryDeduction: 0,
@@ -32,11 +34,12 @@ function ScheduledDeductions() {
   useEffect(() => {
     getSalaryHeadData();
     getEmployeesData();
+    getSalaryMonths();
   }, []);
 
   useEffect(() => {
     getScheduledDeductions();
-  }, [startDate, searchText]);
+  }, [startDate]);
 
   useEffect(() => {
     const monthCount = calculateMonthCount(
@@ -77,10 +80,22 @@ function ScheduledDeductions() {
 
   const getSalaryHeadData = () => {
     CommonService.getSalaryHeadList().then(res => {
-      setSalaryHeadListList(res.data.data);
+      const salHead = res.data.data;
+      const filterred = salHead.filter(el => el.headType === "Deduction");
+      setSalaryHeadList(filterred);
     }).catch(err => {
     });
   }
+
+  const getSalaryMonths = () => {
+    CommonService.getAllSalaryMonths().then(res => {
+      const salMonths = res.data;
+      const filterred = salMonths.slice(0, 12);
+      setSalaryMonthsList(filterred);
+    }).catch(err => {
+    });
+  }
+
 
   const setupEdit = (item) => {
     setIsEdit(true);
@@ -88,12 +103,13 @@ function ScheduledDeductions() {
       idScheduledSalaryDeduction: item.idScheduledSalaryDeduction,
       idEmployee: item.idEmployee,
       totalAmount: item.totalAmount,
-      deductionFromSalaryMonthDate: moment(new Date(item.deductionFromSalaryMonthDate)).format("MM/dd/yyyy"),
-      deductionToSalaryMonthDate: moment(new Date(item.deductionToSalaryMonthDate)).format("MM/dd/yyyy"),
+      deductionFromSalaryMonthDate: item.deductionFromSalaryMonthDate,
+      deductionToSalaryMonthDate: item.deductionToSalaryMonthDate,
       allocatingSalaryHead: item.allocatingSalaryHead,
       monthCount: item.monthCount,
       monthlyDeductableAmount: item.monthlyDeductableAmount,
     });
+    console.log(newData)
     setShowModal(true);
   }
 
@@ -125,8 +141,8 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
-    passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
-    passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
+    // passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
+    // passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
     passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
     passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
@@ -154,8 +170,8 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
-    passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
-    passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
+    // passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
+    // passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
     passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
     passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
@@ -205,8 +221,9 @@ function ScheduledDeductions() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-                  <i className="bx bx-search"></i>
+                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' ? getScheduledDeductions() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getScheduledDeductions()}></i>
                 </div>
                 <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
               </div>
@@ -225,7 +242,7 @@ function ScheduledDeductions() {
                       <th className="text-center">No. of Months </th>
                       <th className="text-end">Monthly Deduction</th>
                       <th className="text-end">Total Deduction</th>
-                      <th className="text-end">Action</th>
+                      <th className="text-end"></th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
@@ -238,8 +255,8 @@ function ScheduledDeductions() {
                           <td>{item?.deductionFromSalaryMonthText}</td>
                           <td>{item?.deductionToSalaryMonthText}</td>
                           <td className="text-center">{item.monthCount}</td>
-                          <td className="text-end">{(item.monthlyDeductableAmount).toFixed(2)}</td>
-                          <td className="text-end">{(item.totalAmount).toFixed(2)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.monthlyDeductableAmount)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item.totalAmount)}.00</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -296,21 +313,39 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month From</label>
-                  <div className="row m-0">
+                  {/* <div className="row m-0">
                     <div className="col-md-12 ps-0 pe-2">
                       <DatePicker className="form-control" dateFormat="MM/DD/YYYY" placeholderText={'From Date'}
                         selected={newData.deductionFromSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionFromSalaryMonthDate: date })} />
                     </div>
-                  </div>
+                  </div> */}
+                  <select className="form-select" value={newData.deductionFromSalaryMonthDate}
+                    onChange={(e) => setNewData({ ...newData, deductionFromSalaryMonthDate: e.target.value })} required>
+                    <option value={''}>Select</option>
+                    {
+                      salaryMonthsList?.map((el) => (
+                        <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
+                      ))
+                    }
+                  </select>
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month To</label>
-                  <div className="row m-0">
+                  {/* <div className="row m-0">
                     <div className="col-md-12 ps-0 pe-2">
                       <DatePicker className="form-control" dateFormat="MM/DD/YYYY" placeholderText={'To Date'}
                         selected={newData.deductionToSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionToSalaryMonthDate: date })} />
                     </div>
-                  </div>
+                  </div> */}
+                  <select className="form-select" value={newData.deductionToSalaryMonthDate}
+                    onChange={(e) => setNewData({ ...newData, deductionToSalaryMonthDate: e.target.value })} required>
+                    <option value={''}>Select</option>
+                    {
+                      salaryMonthsList?.map((el) => (
+                        <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
+                      ))
+                    }
+                  </select>
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">

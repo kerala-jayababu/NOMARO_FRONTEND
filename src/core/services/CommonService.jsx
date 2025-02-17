@@ -74,4 +74,13 @@ export default class CommonService {
     }
   }
 
+  static getAllOptions = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetAllOptions");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+
 }
