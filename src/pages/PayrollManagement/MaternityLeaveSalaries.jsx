@@ -523,11 +523,11 @@ function MaternityLeaveSalaries() {
                           </tr>
                           <tr>
                             <td style={{ paddingLeft: '30px' }}>Basic Pay</td>
-                            <td class="text-end">10,000</td>
+                            <td class="text-end"></td>
                           </tr>
                           <tr>
                             <td style={{ paddingLeft: '30px' }}>Allowance</td>
-                            <td class="text-end">5,000</td>
+                            <td class="text-end"></td>
                           </tr>
 
                           <tr>
@@ -537,15 +537,15 @@ function MaternityLeaveSalaries() {
                           </tr>
                           <tr>
                             <td style={{ paddingLeft: '30px' }}>Insurance</td>
-                            <td class="text-end">5,000</td>
+                            <td class="text-end"></td>
                           </tr>
                           <tr>
                             <td style={{ paddingLeft: '30px' }}>Provident Fund</td>
-                            <td class="text-end">1,000</td>
+                            <td class="text-end"></td>
                           </tr>
                           <tr>
                             <td><b>Net Salary</b></td>
-                            <td class="text-end"><b>{salaryStructureToDisplay?.netSalary ? Utils.formattedNumber(salaryStructureToDisplay?.netSalary) : 0}</b></td>
+                            <td class="text-end"><b>0</b></td>
                           </tr>
                         </tbody>
                       </table>

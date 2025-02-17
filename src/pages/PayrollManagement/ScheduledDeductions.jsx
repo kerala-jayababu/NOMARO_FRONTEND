@@ -13,7 +13,8 @@ function ScheduledDeductions() {
   const [scheduledDeductions, setScheduledDeductions] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
   const [salaryHeadList, setSalaryHeadList] = useState([]);
-  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const [salaryMonthsListFrom, setSalaryMonthsListFrom] = useState([]);
+  const [salaryMonthsListTo, setSalaryMonthsListTo] = useState([]);
   const optionsMonth = Months;
   const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
@@ -90,8 +91,10 @@ function ScheduledDeductions() {
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
       const salMonths = res.data;
-      const filterred = salMonths.slice(0, 12);
-      setSalaryMonthsList(filterred);
+      const filterredFrom = salMonths.slice(0, 12);
+      const filterredTo = salMonths.slice(0, 60);
+      setSalaryMonthsListFrom(filterredFrom);
+      setSalaryMonthsListTo(filterredTo);
     }).catch(err => {
     });
   }
@@ -323,7 +326,7 @@ function ScheduledDeductions() {
                     onChange={(e) => setNewData({ ...newData, deductionFromSalaryMonthDate: e.target.value })} required>
                     <option value={''}>Select</option>
                     {
-                      salaryMonthsList?.map((el) => (
+                      salaryMonthsListFrom?.map((el) => (
                         <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
                       ))
                     }
@@ -341,7 +344,7 @@ function ScheduledDeductions() {
                     onChange={(e) => setNewData({ ...newData, deductionToSalaryMonthDate: e.target.value })} required>
                     <option value={''}>Select</option>
                     {
-                      salaryMonthsList?.map((el) => (
+                      salaryMonthsListTo?.map((el) => (
                         <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
                       ))
                     }

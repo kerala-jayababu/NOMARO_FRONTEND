@@ -63,9 +63,12 @@ function OvertimeTransaction() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
     setNewData(prevState => ({
       ...prevState,
-      file: file
+      file: formData,
+      attachment: file.name ?? ""
     }));
   };
 
@@ -202,7 +205,7 @@ function OvertimeTransaction() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <select className="form-select-sm" value={statusType}
-                    onChange={(e) => setStatusType(e.target.value)} style={{width:'150px'}}>
+                    onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
                     <option value={''}>ALL</option>
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
@@ -406,7 +409,7 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' />
+                              placeholderText='Select Date' minDate={newData.startDate} />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"

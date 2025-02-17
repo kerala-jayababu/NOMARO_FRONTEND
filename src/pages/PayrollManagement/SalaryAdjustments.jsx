@@ -342,7 +342,7 @@ function SalaryAdjustments() {
                       <div className="col-md-12 ps-0 pe-2">
                         <DatePicker className="form-control" selected={newData.payAdjustmentDate}
                           onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
-                          required
+                          required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
                           placeholderText='Select Date' />
                         {/* <DatePicker
