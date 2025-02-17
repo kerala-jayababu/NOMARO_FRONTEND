@@ -360,7 +360,7 @@ function MaternityLeaveSalaries() {
                           <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}.00</td>
-                          <td className="text-end">{Utils.formattedNumber(item.netSalary)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}.00</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
                               <span className="tf-icons bx bx-pencil"></span>
