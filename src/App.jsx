@@ -10,6 +10,9 @@ import SalaryHeads from "./pages/MasterData/salaryHeads";
 import VacationMode from "./pages/PayrollManagement/VacationMode";
 import ComingSoon from "./pages/dashboard/components/Content";
 import EmployeeProfile from "./pages/MasterData/employeeProfile";
+import SalaryTemplate from "./pages/PayrollManagement/SalaryTemplates";
+import SalaryConfiguration from "./pages/PayrollManagement/SalaryConfiguration";
+import ScreenPermission from "./pages/AdminTools/screenPermission";
 
 function App() {
   return (
@@ -19,11 +22,14 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />}> 
             <Route index element={<ComingSoon />} /> {/* Default route inside Dashboard */}
             <Route path="vacation-mode" element={<VacationMode />} />
+            <Route path="salary-templates" element={<SalaryTemplate />} />
             <Route path="budget-codes" element={<BudgetCode />} />
             <Route path="departments" element={<Departments />} />
             <Route path="designations" element={<Designations />} />
             <Route path="salary-heads" element={<SalaryHeads />} />
             <Route path="employee-profile" element={<EmployeeProfile />} />
+            <Route path='employee-salary-config' element={<SalaryConfiguration/>}/>
+            <Route path='screen-permissions' element={<ScreenPermission/>}/>
           </Route>
         </Route>
 

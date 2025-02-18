@@ -12,6 +12,9 @@ import budgetCode from "./budgetCode";
 import designation from "./designation";
 import salaryHead from "./salaryHead";
 import employeeProfiles from "./employeeProfiles";
+import salaryConfig from "./salaryConfig";
+import salaryTemplate from "./salaryTemplate";
+import screenPermission from "./screenPermission";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -26,7 +29,10 @@ const rootReducer = combineReducers({
   budgetCode: budgetCode,
   designation : designation,
   salaryHead : salaryHead,
-  employeeProfiles : employeeProfiles
+  employeeProfiles : employeeProfiles,
+  salaryConfig : salaryConfig,
+  salaryTemplate : salaryTemplate,
+  screenPermission: screenPermission
 });
 
 export default rootReducer;
