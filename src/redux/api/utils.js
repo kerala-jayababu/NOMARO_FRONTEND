@@ -6,14 +6,12 @@ export const BASE_URL = import.meta.env.VITE_API_URL;
  
 export const authInterceptor = (req) => {
   const user = secureLocalStorage.getItem("user");
-  console.log("Raw user data from storage:", user);
- 
+
   let token = null;
   if (user) {
     try {
       const parsedUser = JSON.parse(user);
       token = parsedUser.token;
-      console.log("Parsed token:", token);
     } catch (error) {
       console.error("Error parsing token:", error);
     }
@@ -21,7 +19,6 @@ export const authInterceptor = (req) => {
  
   if (token) {
     req.headers.Authorization = `Bearer ${token}`;
-    console.log("Authorization header set:", req.headers.Authorization);
   } else {
     console.log("No token found in storage");
   }

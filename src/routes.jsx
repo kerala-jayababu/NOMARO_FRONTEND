@@ -5,6 +5,10 @@ import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
 import VacationMode from "./pages/PayrollManagement/VacationMode";
 import EmployeeProfile from "./pages/EmployeeProfile/EmployeeProfile";
+import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
+import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
+import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
+import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
 import SalaryTemplate from "./pages/PayrollManagement/SalaryTemplates";
 import SalaryConfiguration from "./pages/PayrollManagement/SalaryConfiguration";
 import ScreenPermission from "./pages/AdminTools/screenPermission";
@@ -37,6 +41,22 @@ export const privateRoutes = [
   {
     path: "/dashboard/employee-profile",
     element: <EmployeeProfile />,
+  },
+  {
+    path: "/dashboard/salary-adjustments",
+    element: <SalaryAdjustments />,
+  },
+  {
+    path: "/dashboard/maternity-leave-salaries",
+    element: <MaternityLeaveSalaries />,
+  },
+  {
+    path: "/dashboard/scheduled-deductions",
+    element: <ScheduledDeductions />,
+  },
+  {
+    path: "/dashboard/overtime-transactions",
+    element: <OvertimeTransaction />,
   }, 
   {
     path: "/dashboard/salary-templates",
