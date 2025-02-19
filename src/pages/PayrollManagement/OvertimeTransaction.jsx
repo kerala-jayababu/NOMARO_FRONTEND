@@ -206,7 +206,7 @@ function OvertimeTransaction() {
                 <div className="list_searchbox">
                   <select className="form-select-sm" value={statusType}
                     onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
-                    <option value={''}>ALL</option>
+                    <option value={''}>All Status</option>
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
                     <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
@@ -217,7 +217,13 @@ function OvertimeTransaction() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getOTTranasactions();
+                      }
+                    }}
                     onKeyDown={e => e.key === 'Enter' ? getOTTranasactions() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getOTTranasactions()}></i>
                 </div>

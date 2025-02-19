@@ -213,7 +213,13 @@ function SalaryAdjustments() {
                   /> */}
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getSalaryAdjustments();
+                      }
+                    }}
                     onKeyDown={e => e.key === 'Enter' ? getSalaryAdjustments() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getSalaryAdjustments()}></i>
                 </div>
@@ -253,7 +259,7 @@ function SalaryAdjustments() {
                           <td>{item?.isTaxable}</td>
                           <td>{item?.allocatingSalaryMonthText}</td>
                           <td>{item?.allcoatingSalaryHeadName}</td>
-                          <td className="text-end">{Utils.formattedNumber(item?.amount)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item?.amount)}</td>
                           {/* <td>{item?.remarks}</td> */}
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>

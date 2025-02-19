@@ -30,7 +30,11 @@ export default class Utils {
 
     static formattedNumber = (val) => {
         if (val !== undefined && val !== null) {
-            return val.toLocaleString('en-US');
+            return val.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              });
+            // return val.toLocaleString('en-US');
         }
         return '';
     }

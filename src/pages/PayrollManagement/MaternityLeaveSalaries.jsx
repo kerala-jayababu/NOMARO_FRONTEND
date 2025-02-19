@@ -327,7 +327,13 @@ function MaternityLeaveSalaries() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getMaternityLeaveSalaries();
+                      }
+                    }}
                     onKeyDown={e => e.key === 'Enter' ? getMaternityLeaveSalaries() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getMaternityLeaveSalaries()}></i>
                 </div>
@@ -359,8 +365,8 @@ function MaternityLeaveSalaries() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
-                          <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}.00</td>
-                          <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
                               <span className="tf-icons bx bx-pencil"></span>

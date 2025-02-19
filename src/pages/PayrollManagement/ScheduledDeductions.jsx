@@ -224,7 +224,13 @@ function ScheduledDeductions() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getScheduledDeductions();
+                      }
+                    }}
                     onKeyDown={e => e.key === 'Enter' ? getScheduledDeductions() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getScheduledDeductions()}></i>
                 </div>
@@ -258,8 +264,8 @@ function ScheduledDeductions() {
                           <td>{item?.deductionFromSalaryMonthText}</td>
                           <td>{item?.deductionToSalaryMonthText}</td>
                           <td className="text-center">{item.monthCount}</td>
-                          <td className="text-end">{Utils.formattedNumber(item.monthlyDeductableAmount)}.00</td>
-                          <td className="text-end">{Utils.formattedNumber(item.totalAmount)}.00</td>
+                          <td className="text-end">{Utils.formattedNumber(item.monthlyDeductableAmount)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.totalAmount)}</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -318,7 +324,7 @@ function ScheduledDeductions() {
                   <label className="form-label mb-1">Salary Month From</label>
                   {/* <div className="row m-0">
                     <div className="col-md-12 ps-0 pe-2">
-                      <DatePicker className="form-control" dateFormat="MM/DD/YYYY" placeholderText={'From Date'}
+                      <DatePicker className="form-control" dateFormat="MM/yyyy" placeholderText={'From Date'} showMonthYearPicker
                         selected={newData.deductionFromSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionFromSalaryMonthDate: date })} />
                     </div>
                   </div> */}
