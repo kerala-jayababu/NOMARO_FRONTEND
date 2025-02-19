@@ -11,7 +11,7 @@ const Input = ({
   style
 }) => {
   return (
-    <div className="mb-2" style={{ maxWidth: "250px" , ...style}}>
+    <div className="mb-2" style={{ ...style}}>
       <label className="form-label mb-1">{label}</label>
       <input
         type={type}

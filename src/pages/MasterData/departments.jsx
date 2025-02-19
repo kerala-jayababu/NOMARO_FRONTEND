@@ -13,7 +13,7 @@ import {
 
 const Departments = () => {
   const dispatch = useDispatch();
-  const { departments, loading, error } = useSelector(
+  const { departments, error } = useSelector(
     (state) => state.department
   );
 
@@ -35,7 +35,6 @@ const Departments = () => {
   ];
 
   // Function to validate the input fields
-  // Function to validate the input fields
   const validateInputs = (field, value) => {
     const validationErrors = {};
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
@@ -47,14 +46,13 @@ const Departments = () => {
           "Department Code must contain only alphanumeric characters.";
       } else if (
         value &&
-        departments.data?.some((dept) => dept.departmentCode === value && dept.idDepartment !== editingDepartmentId)
+        departments.data?.some((dept) => dept.departmentCode.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)
       ) {
         validationErrors.deptCode = "Department Code already exists.";
       } else {
         delete validationErrors.deptCode;
       }
     }
-
 
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
@@ -153,9 +151,7 @@ const Departments = () => {
       <div className="row">
         <div className="col-lg-8">
           <Card title="List of Departments">
-            {loading ? (
-              <div>Loading...</div>
-            ) : error ? (
+            {error ? (
               <div className="text-danger">{error}</div>
             ) : (
               <Grid
