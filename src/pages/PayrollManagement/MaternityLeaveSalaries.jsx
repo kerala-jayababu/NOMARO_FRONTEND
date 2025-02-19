@@ -583,7 +583,7 @@ function MaternityLeaveSalaries() {
                                 </select>
                               </td>
                               <td>
-                                <label>{detail.salaryHeadType}</label>
+                                <label>{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
                               </td>
                               <td>
                                 <input type="number" class="form-control" value={detail.amount} name="amount"
