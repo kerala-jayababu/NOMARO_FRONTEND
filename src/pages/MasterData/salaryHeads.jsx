@@ -310,8 +310,19 @@ const handleEditClick = (id) => {
               <Grid
                 columns={columns}
                 data={salaryHeadList.map((head) => ({
-                  salaryHeadCode: head.salaryHeadCode,
-                  salaryHeadName: head.salaryHeadName,
+                  salaryHeadCode: (
+                    <span className="bold">
+                      {head.salaryHeadCode}
+                    </span>
+                  ),
+                  salaryHeadName: (
+                    <div className="salary-head-name">
+                      <span className="badge-headtype" style={{ backgroundColor: head.headType.toUpperCase() === "EARNING" ? "#5d8b1b" : "#701c21" }}>
+                          {head.headType.toUpperCase() === "EARNING" ? "E" : "D"}
+                      </span>
+                      <span className="name">{head.salaryHeadName}</span>
+                    </div>
+                  ),
                   isActive: (
                     <StatusBadge
                       status={head.isActive ? "Active" : "Inactive"}
@@ -356,7 +367,7 @@ const handleEditClick = (id) => {
                 error={errors.orderNumber}
               />
               <div className="mb-2">
-                <label className="form-label mb-1">Type of Salary Head</label>
+                {/* <label className="form-label mb-1">Type of Salary Head</label> */}
                 <RadioButton
                   name="type"
                   options={[
@@ -368,7 +379,7 @@ const handleEditClick = (id) => {
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label mb-1">Taxability</label>
+                {/* <label className="form-label mb-1">Taxability</label> */}
                 <RadioButton
                   name="taxability"
                   options={[

@@ -35,7 +35,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
           }}
         >
           <option value="" disabled>
-            Select an option
+            Select
           </option>
           {options?.map((option) => (
             <option key={option.value} value={option.value}>

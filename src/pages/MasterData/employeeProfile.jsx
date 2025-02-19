@@ -944,64 +944,80 @@ const EmployeeProfile = () => {
                 <div className="accountDetail_cardProfile">
                   <div className="avatar-upload">
                     <div className="avatar-preview">
-                      <img src="assets/img/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-vector.jpg" />
+                      <img src="src/assets/avatar.jpg" />
                     </div>
                   </div>
 
                   <div className="row m-0 mt-3">
-                    <Label
-                      text="Employee Code"
-                      value={profileData?.employeeCode}
-                    />
-                    <Label text="Employee Name" value={profileData?.fullName} />
-                    <Label
-                      text="Date of Birth, Gender"
-                      value={`${profileData?.dob || "N/A"} - ${
-                        selectedEmployee?.gender || "N/A"
-                      }`}
-                    />
-                    <Label text="Email ID" value={profileData?.emailId} />
-                    <Label
-                      text="Work Phone"
-                      value={profileData?.phoneNumber1}
-                    />
-                    <Label
-                      text="Mobile Number"
-                      value={profileData?.phoneNumber2}
-                    />
-                    <Label text="Department" value={profileData?.department} />
-                    <Label
-                      text="Designation"
-                      value={profileData?.designation}
-                    />
-                    <Label
-                      text="Joining Date"
-                      value={new Date(
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Employee Code</label>
+                      <p className="m-0">{employeeData?.employeeCode}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Employee Name</label>
+                      <p className="m-0">{employeeData?.employeeName}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Date of Birth, Gender</label>
+                      <p className="m-0">
+                        {profileData?.dob ? profileData.dob : "N/A"} - {profileData?.gender ? profileData?.gender : "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Email ID</label>
+                      <p className="m-0">{profileData?.emailId}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Work Phone</label>
+                      <p className="m-0">{profileData?.phoneNumber1}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Mobile Number</label>
+                      <p className="m-0">{profileData?.phoneNumber2}</p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Department</label>
+                      <p className="m-0">{profileData?.department}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Designation</label>
+                      <p className="m-0">{profileData?.designation}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Joining Date</label>
+                      <p className="m-0">{new Date(
                         profileData?.joiningDate
-                      ).toLocaleDateString()}
-                    />
-                    <Label text="Address" value={profileData?.address} />
-                    <Label
-                      text="Reporting To"
-                      value={profileData?.reportingTo}
-                    />
-                    <Label
-                      text="Current Status"
-                      value={
-                        <span className="badge bg-label-success">
-                          {profileData?.currentStatus}
-                        </span>
-                      }
-                    />
-                    <Label
-                      text="SSN"
-                      value={profileData?.taxIdNumber || "N/A"}
-                    />
-                    <Label
-                      text="Tax ID Number"
-                      value={profileData?.taxIdNumber || "N/A"}
-                    />
-                    <Label text="Budget Code" value={profileData?.budgetCode} />
+                      ).toLocaleDateString()}</p>
+                    </div>
+
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Address</label>
+                      <p className="m-0">{profileData?.address}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Reporting To</label>
+                      <p className="m-0">{profileData?.reportingTo}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Current Status</label>
+                      <p className="m-0"><span className="badge bg-label-success">{profileData?.currentStatus}</span></p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">SSN</label>
+                      <p className="m-0">{profileData?.ssn || "N/A"}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Tax ID Number</label>
+                      <p className="m-0">{profileData?.taxIdNumber || "N/A"}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Budget Code </label>
+                      <p className="m-0">{profileData?.budgetCode}</p>
+                    </div>
                   </div>
 
                   <div className="row m-0">
@@ -1016,9 +1032,9 @@ const EmployeeProfile = () => {
                           : []
                         ).map((config, index) => (
                           <tr key={index}>
-                            <td>{config.dayType}</td>
-                            <td>{config.standardRate}</td>
-                            <td>{config.dayRate}</td>
+                            <td className="col-md-6">{config.dayType}</td>
+                            <td className="col-md-3">{config.standardRate}</td>
+                            <td className="col-md-3">{config.dayRate}</td>
                           </tr>
                         ))}
                       />
@@ -1095,7 +1111,7 @@ const EmployeeProfile = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         isOpen={isModalOpen}
-        employeeId={selectedEmployeeId} // Pass the selected employee ID to the modal
+        employeeId={selectedEmployeeId}
       >
         <div className="row m-0 mb-3">
           {selectedEmployee && (
