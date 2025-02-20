@@ -8,6 +8,10 @@ import EmployeeProfile from "./pages/EmployeeProfile/EmployeeProfile";
 import SalaryTemplate from "./pages/PayrollManagement/SalaryTemplates";
 import SalaryConfiguration from "./pages/PayrollManagement/SalaryConfiguration";
 import ScreenPermission from "./pages/AdminTools/screenPermission";
+import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
+import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
+import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
+import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
 
 export const privateRoutes = [
   {
@@ -49,7 +53,23 @@ export const privateRoutes = [
   {
     path: "/dashboard/screen-permissions",
     element: <ScreenPermission />,
-  }
+  },
+  {
+    path: "/dashboard/salary-adjustments",
+    element: <SalaryAdjustments />,
+  },
+  {
+    path: "/dashboard/maternity-leave-salaries",
+    element: <MaternityLeaveSalaries />,
+  },
+  {
+    path: "/dashboard/scheduled-deductions",
+    element: <ScheduledDeductions />,
+  },
+  {
+    path: "/dashboard/overtime-transactions",
+    element: <OvertimeTransaction />,
+  }, 
 ];
 
 export default privateRoutes
