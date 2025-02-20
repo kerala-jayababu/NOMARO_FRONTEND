@@ -192,8 +192,18 @@ const handleEditClick = (id) => {
       newErrors.salaryHeadCode = "Salary Head Code already exists.";
     }
   
+    // Validate Salary Head Name
     if (!formData.salaryHeadName.trim()) {
       newErrors.salaryHeadName = "Salary Head Name is required.";
+    } else if (
+      // Only check for existing Salary Head Name if it's a new salary head or updated name is different
+      (!currentSalaryHead?.idSalaryHead ||
+        currentSalaryHead.salaryHeadName !== formData.salaryHeadName) &&
+      salaryHeadList.some(
+        (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
+      )
+    ) {
+      newErrors.salaryHeadName = "Salary Head Name already exists.";
     }
   
     // Validate mandatory orderNumber

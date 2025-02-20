@@ -34,13 +34,11 @@ const Departments = () => {
     { key: "actions", label: "" },
   ];
 
-  // Function to validate the input fields
   const validateInputs = (field, value) => {
     const validationErrors = {};
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
     if (field === "deptCode") {
-      // If deptCode is not empty, apply validation
       if (value && !value.match(alphanumericRegex)) {
         validationErrors.deptCode =
           "Department Code must contain only alphanumeric characters.";
@@ -51,6 +49,14 @@ const Departments = () => {
         validationErrors.deptCode = "Department Code already exists.";
       } else {
         delete validationErrors.deptCode;
+      }
+    }
+
+    if (field === "deptName") {
+      if (value && departments.data?.some((dept) => dept.departmentName.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)) {
+        validationErrors.deptName = "Department Name already exists.";
+      } else {
+        delete validationErrors.deptName;
       }
     }
 

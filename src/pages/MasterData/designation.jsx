@@ -43,10 +43,21 @@ const Designation = () => {
         delete errors.code; // Clear the error if valid
       }
     }
+
+    const isUniqueName = (name) => {
+      return !designation.data.some(
+        (item) =>
+          item.designationName.toLowerCase() === name.toLowerCase() &&
+          item.idDesignation !== editId
+      );
+    };
+    
   
     if (name === "name") {
       if (value.trim() === "") {
         errors.name = "Designation Name is required.";
+      } else if (!isUniqueName(value)) {
+        errors.name = "Designation Name must be unique.";
       } else {
         delete errors.name; // Clear the error if valid
       }

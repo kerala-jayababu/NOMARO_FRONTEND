@@ -108,28 +108,7 @@ const EmployeeProfile = () => {
   }, [dispatch]);
 
   
-
-  const rowsPerPage = 10; // Number of rows per page
-
-  const totalPages = Math.ceil(employees?.length / rowsPerPage);
-
   const handlePageChange = (page) => setCurrentPage(page);
-
-    // Get paginated data
-    const paginatedEmployeeData = useMemo(() => {
-      const startIndex = (currentPage - 1) * rowsPerPage;
-      const endIndex = startIndex + rowsPerPage;
-      return employees?.slice(startIndex, endIndex).map((employee) => ({
-        editId: employee.idEmployee,
-        empCode: employee.employeeCode,
-        name: employee.fullName,
-        designation: employee.designation,
-        department: employee.department,
-        joiningDate: new Date(employee.joiningDate).toLocaleDateString(),
-        status: employee.currentStatus,
-        childCount: employee.childrenCount,
-      }));
-    }, [employees, currentPage, rowsPerPage]);
 
   const handleEditClick = (id) => {
     setSelectedEmployee(null);
@@ -511,16 +490,38 @@ const EmployeeProfile = () => {
   useEffect(() => {}, [selectedEmployee]);
 
   const employeeData =
-    employees?.map((employee) => ({
-      editId: employee.idEmployee,
-      empCode: employee.employeeCode,
-      name: employee.fullName,
-      designation: employee.designation,
-      department: employee.department,
-      joiningDate: new Date(employee.joiningDate).toLocaleDateString(),
-      status: employee.currentStatus,
-      childCount: employee.childrenCount,
-    })) || [];
+  employees?.map((employee) => ({
+    editId: employee.idEmployee,
+    empCode: employee.employeeCode,
+    name: employee.fullName,
+    designation: employee.designation,
+    department: employee.department,
+    joiningDate: new Date(employee.joiningDate).toLocaleDateString(),
+    status: employee.currentStatus,
+    childCount: employee.childrenCount,
+  })) || [];
+
+  const filteredEmployeeData = useMemo(() => {
+    if (!searchTerm) return employeeData;
+  
+    return employeeData.filter((employee) => {
+      return (
+        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [employeeData, searchTerm]);
+  
+
+  const rowsPerPage = 10; // Number of rows per page
+
+  const totalPages = Math.ceil(filteredEmployeeData.length / rowsPerPage);
+
+  const paginatedEmployeeData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredEmployeeData.slice(startIndex, endIndex);
+  }, [filteredEmployeeData, currentPage, rowsPerPage]);
 
   const handleBankChange = (value, index) => {
     setBankAccountsState((prevState) => {
@@ -639,17 +640,6 @@ const EmployeeProfile = () => {
 
     setOvertimeDetails(newOvertimeDetails);
   };
-
-  const filteredEmployeeData = useMemo(() => {
-    if (!searchTerm) return employeeData;
-
-    return employeeData.filter((employee) => {
-      return (
-        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  }, [employeeData, searchTerm]);
 
   const handleOvertimeChange = (index, field, value) => {
     if (field === "type" && isDuplicateDayType(value, index)) {
@@ -845,10 +835,11 @@ const EmployeeProfile = () => {
 
       if (errors.length > 0) {
         console.error("API Errors:", errors);
-        // Don't close the modal if there are API errors
+        return false;
       } else {
         console.log("All updates successful");
         setIsModalOpen(false); // Close the modal only on successful submission
+        return true;
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -857,6 +848,8 @@ const EmployeeProfile = () => {
       setIsSubmitting(false);
     }
   };
+
+
 
   const columns = [
     { key: "empCode", label: "Emp. Code" },
@@ -951,11 +944,11 @@ const EmployeeProfile = () => {
                   <div className="row m-0 mt-3">
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Employee Code</label>
-                      <p className="m-0">{employeeData?.employeeCode}</p>
+                      <p className="m-0">{profileData?.employeeCode}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Employee Name</label>
-                      <p className="m-0">{employeeData?.employeeName}</p>
+                      <p className="m-0">{profileData?.fullName}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Date of Birth, Gender</label>

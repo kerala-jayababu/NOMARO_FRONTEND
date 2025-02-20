@@ -103,6 +103,24 @@ const VacationMode = () => {
       }
     }
 
+    if (name === "vacationFrom" || name === "vacationTo") {
+      const vacationFromDate = new Date(formData.vacationFrom);
+      const vacationToDate = new Date(value);
+  
+      if (name === "vacationTo" && vacationFromDate > vacationToDate) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          vacationTo: "Vacation To date must be later than Vacation From date.",
+        }));
+      } else {
+        // Clear the error if it's valid
+        setErrors((prevErrors) => {
+          const { vacationTo, ...restErrors } = prevErrors;
+          return restErrors;
+        });
+      }
+    }
+
     setFormData({
       ...formData,
       [name]: value,
@@ -127,6 +145,13 @@ const VacationMode = () => {
         reasonForVacation: "Reason for vacation is required.",
       });
       return;
+    }
+
+    // Validate if vacationTo is later than vacationFrom
+    const vacationFromDate = new Date(formData.vacationFrom);
+    const vacationToDate = new Date(formData.vacationTo);
+    if (vacationFromDate > vacationToDate) {
+      newErrors.vacationTo = "Vacation To date must be later than Vacation From date.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -317,6 +342,7 @@ const VacationMode = () => {
                 onChange={handleInputChange}
                 min={today}
               />
+              {errors.vacationTo && <p className="text-danger">{errors.vacationTo}</p>}
               <Dropdown
                 label="Approval Authority Substituted to"
                 name="approvalAuthoritySubstitute"
