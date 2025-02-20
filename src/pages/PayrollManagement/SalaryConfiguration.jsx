@@ -166,14 +166,43 @@ function SalaryConfiguration() {
     }
   }, [salaryTemplates]);
 
+
   useEffect(() => {
     if (selectedEmployee) {
-      console.log("Selected employee:", selectedEmployee);
       setEmployeeCode(selectedEmployee.employeeCode || "");
       setEmployeeName(selectedEmployee.employeeName || "");
       setDesignation(selectedEmployee.designationName || "");
       setTemplateName(selectedEmployee.idSalaryTemplate?.toString() || "");
-
+  
+      // Fetch template details if idSalaryTemplate is set
+      if (selectedEmployee.idSalaryTemplate) {
+        dispatch(getSalaryTemplateById(selectedEmployee.idSalaryTemplate))
+          .then((response) => {
+            if (response.payload?.data) {
+              const templateDetails = response.payload.data.salaryTemplateDetails;
+              if (templateDetails && Array.isArray(templateDetails)) {
+                const mappedRows = templateDetails.map((detail) => ({
+                  salaryHead: detail.idSalaryHead.toString(),
+                  method: getMethodFromCalculationMethod(detail.calculationMethod),
+                  value:
+                    detail.calculationMethod === "FIXEDAMOUNT"
+                      ? detail.fixedAmount
+                      : detail.calculationMethod === "PERCENTAGE"
+                      ? detail.percentageValue
+                      : "",
+                  formula: detail.customFormula || "",
+                  type: detail.headType || "EARNING", // Default to "EARNING" if not defined
+                  percentageOf: detail.percentageOfIdSalaryHead?.toString() || "", // For "Percentage of" method
+                }));
+                setRows(mappedRows);
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching template details:", error);
+          });
+      }
+  
       const updatedRows = selectedEmployee.employeeSalaryConfigDetails.map(
         (detail) => ({
           idEmployeeSalaryConfigDetail: detail.idEmployeeSalaryConfigDetail,
@@ -193,9 +222,11 @@ function SalaryConfiguration() {
         })
       );
       setRows(updatedRows);
-      console.log("Updated rows:", updatedRows);
-
-      updateTotalAmounts(selectedEmployee);
+  
+      // Update totals
+      setTotalEarnings(selectedEmployee.totalEarnings || 0);
+      setTotalDeductions(selectedEmployee.totalDeductions || 0);
+      setNetSalary(selectedEmployee.netSalary || 0);
     }
   }, [selectedEmployee]);
 
@@ -220,6 +251,26 @@ function SalaryConfiguration() {
     }
   }, [salaryTemplateDetails]);
 
+  useEffect(() => {
+    if (salaryTemplateDetails && Array.isArray(salaryTemplateDetails)) {
+      const mappedRows = salaryTemplateDetails.map((detail) => ({
+        salaryHead: detail.idSalaryHead.toString(),
+        method: getMethodFromCalculationMethod(detail.calculationMethod),
+        value:
+          detail.calculationMethod === "FIXEDAMOUNT"
+            ? detail.fixedAmount
+            : detail.calculationMethod === "PERCENTAGE"
+            ? detail.percentageValue
+            : "",
+        formula: detail.customFormula || "",
+        type: detail.headType || "EARNING", // Default to "EARNING" if not defined
+        percentageOf: detail.percentageOfIdSalaryHead?.toString() || "", // For "Percentage of" method
+      }));
+
+      setRows(mappedRows);
+    }
+  }, [salaryTemplateDetails]);
+
   const handleSalaryHeadChange = async (id, index) => {
     if (id) {
       try {
@@ -227,11 +278,12 @@ function SalaryConfiguration() {
         if (response.payload && response.payload.success) {
           const salaryHeadData = response.payload.data;
 
+
           let updatedRow = { ...rows[index] };
 
           // Update calculation method
           switch (salaryHeadData.calculationMethod) {
-            case "FIXED":
+            case "FIXEDAMOUNT":
               updatedRow.method = "Fixed Amount";
               updatedRow.value = salaryHeadData.fixedValue || "";
               break;
@@ -268,7 +320,6 @@ function SalaryConfiguration() {
             updatedRow.percentageOf = "";
           }
 
-          console.log("salaryHeadData.type", salaryHeadData);
 
           // Add type (EARNING or DEDUCTION) to the row
           updatedRow.type = salaryHeadData.headType || "EARNING"; // Default to EARNING if type is not defined
@@ -291,7 +342,32 @@ function SalaryConfiguration() {
     setTemplateName(selectedTemplateId);
 
     if (selectedTemplateId) {
-      dispatch(getSalaryTemplateById(selectedTemplateId));
+      dispatch(getSalaryTemplateById(selectedTemplateId)).then((response) => {
+        if (response.payload && response.payload.data) {
+          const netCalculationMethod = response.payload.data;
+          setTotalEarnings(netCalculationMethod.totalEarnings);
+          setTotalDeductions(netCalculationMethod.totalDeductions);
+          setNetSalary(netCalculationMethod.netSalary);
+          const templateDetails = response.payload.data.salaryTemplateDetails;
+          if (templateDetails && Array.isArray(templateDetails)) {
+            const mappedRows = templateDetails.map((detail) => ({
+              salaryHead: detail.idSalaryHead.toString(),
+              method: getMethodFromCalculationMethod(detail.calculationMethod),
+              value:
+                detail.calculationMethod === "FIXEDAMOUNT"
+                  ? detail.fixedAmount
+                  : detail.calculationMethod === "PERCENTAGE"
+                  ? detail.percentageValue
+                  : "",
+              formula: detail.customFormula || "",
+              type: detail.headType || "EARNING", // Default to "EARNING" if not defined
+              percentageOf: detail.percentageOfIdSalaryHead?.toString() || "", // For "Percentage of" method
+            }));
+
+            setRows(mappedRows);
+          }
+        }
+      });
     } else {
       setRows([
         {
@@ -304,23 +380,36 @@ function SalaryConfiguration() {
     }
   };
 
+  const getMethodFromCalculationMethod = (method) => {
+    switch (method) {
+      case "FIXEDAMOUNT":
+        return "Fixed Amount";
+      case "PERCENTAGE":
+        return "Percentage of";
+      case "FORMULA":
+        return "Custom Formula";
+      default:
+        return "Percentage of";
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-     // Check if Employee Code is missing
-  if (!employeeCode) {
-    newErrors.employeeCode = "Employee Code is required";
-  }
+    // Check if Employee Code is missing
+    if (!employeeCode) {
+      newErrors.employeeCode = "Employee Code is required";
+    }
 
-  // Check if Employee Name is missing
-  if (!employeeName) {
-    newErrors.employeeName = "Employee Name is required";
-  }
+    // Check if Employee Name is missing
+    if (!employeeName) {
+      newErrors.employeeName = "Employee Name is required";
+    }
 
-  // Check if Designation is missing
-  if (!designation) {
-    newErrors.designation = "Designation is required";
-  }
+    // Check if Designation is missing
+    if (!designation) {
+      newErrors.designation = "Designation is required";
+    }
 
     // Check if calculation method is missing for any row
     rows.forEach((row, index) => {
@@ -339,6 +428,9 @@ function SalaryConfiguration() {
     if (netSalary === 0) {
       newErrors.netSalary = "Net Salary is required";
     }
+    if (netSalary < 0) {
+      newErrors.netSalary = "Net Salary cannot be negative";
+    }
 
     setErrors(newErrors);
 
@@ -346,41 +438,6 @@ function SalaryConfiguration() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateTotalAmounts = (employee) => {
-    const totalEarningsElement = document.querySelector(
-      ".total_salarycard li:nth-child(1) b"
-    );
-    const totalDeductionsElement = document.querySelector(
-      ".total_salarycard li:nth-child(2) b"
-    );
-    const netSalaryElement = document.querySelector(
-      ".total_salarycard li:nth-child(3) b"
-    );
-
-    const totalEarnings = totalEarningsElement
-      ? totalEarningsElement.nextSibling
-      : null;
-    const totalDeductions = totalDeductionsElement
-      ? totalDeductionsElement.nextSibling
-      : null;
-    const netSalary = netSalaryElement ? netSalaryElement.nextSibling : null;
-
-    if (totalEarnings) {
-      totalEarnings.textContent = ` ${(employee.totalEarnings ?? 0).toFixed(
-        2
-      )}`;
-    }
-
-    if (totalDeductions) {
-      totalDeductions.textContent = ` ${(employee.totalDeductions ?? 0).toFixed(
-        2
-      )}`;
-    }
-
-    if (netSalary) {
-      netSalary.textContent = ` ${(employee.netSalary ?? 0).toFixed(2)}`;
-    }
-  };
 
   const handlePageChange = (page) => setCurrentPage(page);
 
@@ -390,8 +447,10 @@ function SalaryConfiguration() {
 
   const filteredData = data.filter(
     (item) =>
-      item.empCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.empName.toLowerCase().includes(searchQuery.toLowerCase())
+      (item.empCode &&
+        item.empCode.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.empName &&
+        item.empName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredData.length / 5);
@@ -403,10 +462,15 @@ function SalaryConfiguration() {
   const handleEmployeeCodeChange = (selectedCode) => {
     setEmployeeCode(selectedCode);
 
-     // Revalidate Employee Code
-  if (selectedCode) {
-    setErrors((prevErrors) => ({ ...prevErrors, employeeCode: "" , employeeName: "", designation: ""}));
-  }
+    // Revalidate Employee Code
+    if (selectedCode) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        employeeCode: "",
+        employeeName: "",
+        designation: "",
+      }));
+    }
 
     const selectedEmployee = employeeList.find(
       (employee) => employee.employeeCode === selectedCode
@@ -430,22 +494,15 @@ function SalaryConfiguration() {
     setRows(rows.filter((_, i) => i !== index));
   };
 
-  // const handleInputChange = (updatedRows, rowIndex, field) => {
-  //   if (field === "salaryHead") {
-  //     handleSalaryHeadChange(updatedRows[rowIndex].salaryHead, rowIndex);
-  //   } else {
-  //     setRows(updatedRows);
-  //     calculateTotals(updatedRows); // Recalculate totals after updating rows
-  //   }
-  // };
   const handleInputChange = (updatedRows, rowIndex, field) => {
     if (field === "salaryHead") {
       handleSalaryHeadChange(updatedRows[rowIndex].salaryHead, rowIndex);
     } else {
+      updatedRows[rowIndex].value = parseFloat(updatedRows[rowIndex].value) || 0;
       setRows(updatedRows);
       calculateTotals(updatedRows); // Recalculate totals after updating rows
     }
-  
+
     // Revalidate the calculation method for the row
     if (field === "method" && updatedRows[rowIndex].method) {
       setErrors((prevErrors) => ({
@@ -456,8 +513,24 @@ function SalaryConfiguration() {
   };
 
   const handleAddClick = () => {
+    setTotalEarnings(0);
+    setTotalDeductions(0);
+    setNetSalary(0);
     resetForm();
     setTemplateName(""); // Reset template name
+
+    // Explicitly clear the fields that should not retain values from the Edit state
+    setTotalEarnings(0); // Ensure net salary values are reset
+    setTotalDeductions(0);
+    setNetSalary(0);
+
+    // Clear any errors related to these fields
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      totalEarnings: "",
+      totalDeductions: "",
+      netSalary: "",
+    }));
   };
 
   const handleEditClick = (id) => {
@@ -470,12 +543,43 @@ function SalaryConfiguration() {
           setEmployeeName(employeeData.employeeName || "");
           setDesignation(employeeData.designationName || "");
           setTemplateName(employeeData.idSalaryTemplate?.toString() || "");
-
+  
           // Ensure these are set as numbers
-          setTotalEarnings(Number(employeeData.totalEarnings) || 0);
-          setTotalDeductions(Number(employeeData.totalDeductions) || 0);
-          setNetSalary(Number(employeeData.netSalary) || 0);
-
+          setTotalEarnings(Number(employeeData.totalEarnings || 0));
+          setTotalDeductions(Number(employeeData.totalDeductions || 0));
+          setNetSalary(Number(employeeData.netSalary || 0));
+  
+          // Fetch template details if idSalaryTemplate is set
+          if (employeeData.idSalaryTemplate) {
+            dispatch(getSalaryTemplateById(employeeData.idSalaryTemplate))
+              .then((templateResponse) => {
+                if (templateResponse.payload?.data) {
+                  const templateDetails = templateResponse.payload.data.salaryTemplateDetails;
+                  if (templateDetails && Array.isArray(templateDetails)) {
+                    const mappedRows = templateDetails.map((detail) => ({
+                      salaryHead: detail.idSalaryHead.toString(),
+                      method: getMethodFromCalculationMethod(detail.calculationMethod),
+                      value:
+                        detail.calculationMethod === "FIXEDAMOUNT"
+                          ? detail.fixedAmount
+                          : detail.calculationMethod === "PERCENTAGE"
+                          ? detail.percentageValue
+                          : "",
+                      formula: detail.customFormula || "",
+                      type: detail.headType || "EARNING", // Default to "EARNING" if not defined
+                      percentageOf: detail.percentageOfIdSalaryHead?.toString() || "", // For "Percentage of" method
+                    }));
+                    setRows(mappedRows);
+                    console.log("mappedRows", mappedRows);
+                    calculateTotals(mappedRows);
+                  }
+                }
+              })
+              .catch((error) => {
+                console.error("Error fetching template details:", error);
+              });
+          }
+  
           const updatedRows = employeeData.employeeSalaryConfigDetails.map(
             (detail) => ({
               idEmployeeSalaryConfigDetail: detail.idEmployeeSalaryConfigDetail,
@@ -497,94 +601,29 @@ function SalaryConfiguration() {
             })
           );
           setRows(updatedRows);
-
-          // Recalculate totals based on the loaded data
-          calculateTotals(updatedRows);
         }
       })
       .catch((error) => console.error("Error fetching employee data:", error));
   };
+  useEffect(() => {
+    const modal = document.getElementById("SalaryConfigurationModal");
+    if (modal) {
+      modal.addEventListener("hidden.bs.modal", resetForm);
+    }
 
-  // const handleSubmit = () => {
-  //   console.log("Submitting form data...", selectedEmployee);
+    return () => {
+      if (modal) {
+        modal.removeEventListener("hidden.bs.modal", resetForm);
+      }
+    };
+  }, []);
 
-  //   const salaryConfigData = {
-  //     idEmployeeSalaryConfig: selectedEmployee?.idEmployeeSalaryConfig || 0, // Add this line
-  //     idEmployee: selectedEmployeeId,
-  //     idSalaryTemplate: parseInt(templateName),
-  //     activeStatus: true,
-  //     totalEarnings: totalEarnings,
-  //     totalDeductions: totalDeductions,
-  //     validFrom: new Date().toISOString(),
-  //     netSalary: netSalary,
-  //     employeeCode: employeeCode,
-  //     employeeName: employeeName,
-  //     idDesignation: selectedEmployee?.idDesignation || 0,
-  //     designationName: designation,
-  //     idDepartment: selectedEmployee?.idDepartment || 0,
-  //     departmentName: selectedEmployee?.departmentName || "",
-  //     joiningDate: selectedEmployee?.joiningDate || new Date().toISOString(),
-  //     gender: selectedEmployee?.gender || "Not Specified",
-  //     emailID: selectedEmployee?.emailID || "",
-  //     phoneNumber1: selectedEmployee?.phoneNumber1 || "",
-  //     phoneNumber2: selectedEmployee?.phoneNumber2 || "",
-  //     currentStatus: selectedEmployee?.currentStatus || "Active",
-  //     employeeSalaryConfigDetails: rows.map((row) => ({
-  //       idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail || 0,
-  //       idEmployeeSalaryConfig: selectedEmployee?.idEmployeeSalaryConfig || 0,
-  //       idSalaryHead: parseInt(row.salaryHead) || 0,
-  //       calculationMethod:
-  //         row.method === "Percentage of"
-  //           ? "PERCENTAGE"
-  //           : row.method === "Fixed Amount"
-  //           ? "FIXED"
-  //           : row.method === "Custom Formula"
-  //           ? "FORMULA"
-  //           : "", // Default to empty string if no method is selected
-  //       fixedAmount: row.method === "Fixed Amount" ? parseFloat(row.value) : 0,
-  //       percentageValue:
-  //         row.method === "Percentage of" ? parseFloat(row.value) : 0,
-  //       customFormula: row.method === "Custom Formula" ? row.formula : "",
-  //     })),
-  //   };
-
-  //   if (selectedEmployee) {
-  //     // Update existing salary configuration
-  //     dispatch(updateEmployeeSalaryConfig(salaryConfigData))
-  //       .then((response) => {
-  //         console.log(
-  //           "Employee salary configuration updated successfully:",
-  //           response
-  //         );
-  //         resetForm();
-  //         dispatch(getAllEmployeeSalaryConfig()); // Refresh the list
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error updating employee salary configuration:", error);
-  //       });
-  //   } else {
-  //     // Add new salary configuration
-  //     dispatch(AddEmployeeSalaryConfig(salaryConfigData))
-  //       .then((response) => {
-  //         console.log(
-  //           "Employee salary configuration added successfully:",
-  //           response
-  //         );
-  //         resetForm();
-  //         dispatch(getAllEmployeeSalaryConfig()); // Refresh the list
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error adding employee salary configuration:", error);
-  //       });
-  //   }
-  // };
   const handleSubmit = () => {
     // Validate the form
     if (!validateForm()) {
       return; // Stop submission if validation fails
     }
 
-    console.log("Submitting form data...", selectedEmployee);
 
     const salaryConfigData = {
       idEmployeeSalaryConfig: selectedEmployee?.idEmployeeSalaryConfig || 0,
@@ -636,6 +675,12 @@ function SalaryConfiguration() {
           );
           resetForm();
           dispatch(getAllEmployeeSalaryConfig()); // Refresh the list
+          // Close the modal
+          const modal = document.getElementById("SalaryConfigurationModal");
+          if (modal) {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide(); // Close the modal
+          }
         })
         .catch((error) => {
           console.error("Error updating employee salary configuration:", error);
@@ -650,6 +695,12 @@ function SalaryConfiguration() {
           );
           resetForm();
           dispatch(getAllEmployeeSalaryConfig()); // Refresh the list
+          // Close the modal
+          const modal = document.getElementById("SalaryConfigurationModal");
+          if (modal) {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide(); // Close the modal
+          }
         })
         .catch((error) => {
           console.error("Error adding employee salary configuration:", error);
@@ -677,53 +728,46 @@ function SalaryConfiguration() {
     setErrors({}); // Clear errors
   };
 
-  // const calculateTotals = (rows) => {
-  //   let totalEarnings = 0;
-  //   let totalDeductions = 0;
+ 
 
-  //   rows.forEach((row) => {
-  //     const value = parseFloat(row.value) || 0; // Ensure the value is a number
-  //     if (row.type === "EARNING" || row.type === "Earning") {
-  //       totalEarnings += value;
-  //     } else if (row.type === "DEDUCTION" || row.type === "Deduction") {
-  //       totalDeductions += value;
-  //     }
-  //   });
-
-  //   const netSalary = totalEarnings - totalDeductions;
-
-  //   // Use toFixed(2) to round to 2 decimal places, then parse back to a number
-  //   setTotalEarnings(Number(totalEarnings.toFixed(2)));
-  //   setTotalDeductions(Number(totalDeductions.toFixed(2)));
-  //   setNetSalary(Number(netSalary.toFixed(2)));
-  // };
   const calculateTotals = (rows) => {
-    let totalEarnings = 0;
-    let totalDeductions = 0;
-  
+    let earnings = 0;
+
+    let deductions = 0;
+
     rows.forEach((row) => {
+      console.log("row.value", row);
       const value = parseFloat(row.value) || 0;
-      if (row.type === "EARNING" || row.type === "Earning") {
-        totalEarnings += value;
-      } else if (row.type === "DEDUCTION" || row.type === "Deduction") {
-        totalDeductions += value;
+      console.log("value", value);
+      console.log("row.type", row.headType);
+      if (row.headType === "EARNING" || row.headType === "Earning") {
+        earnings += value;
+        console.log("earnings", earnings);
+      } else if (row.headType === "DEDUCTION" || row.headType === "Deduction") {
+        deductions += value;
       }
     });
-  
-    const netSalary = totalEarnings - totalDeductions;
-  
-    setTotalEarnings(Number(totalEarnings.toFixed(2)));
-    setTotalDeductions(Number(totalDeductions.toFixed(2)));
-    setNetSalary(Number(netSalary.toFixed(2)));
-  
+    console.log("earnings-123", earnings);
+    const net = earnings - deductions;
+
+    // Ensure the values are set as numbers
+
+    // Ensure the values are set as numbers
+    setTotalEarnings(Number(earnings.toFixed(2)));
+    setTotalDeductions(Number(deductions.toFixed(2)));
+    setNetSalary(Number(net.toFixed(2)));
+
     // Clear errors for totals if they are valid
-    if (totalEarnings > 0) {
+
+    if (earnings > 0) {
       setErrors((prevErrors) => ({ ...prevErrors, totalEarnings: "" }));
     }
-    if (totalDeductions > 0) {
+
+    if (deductions > 0) {
       setErrors((prevErrors) => ({ ...prevErrors, totalDeductions: "" }));
     }
-    if (netSalary > 0) {
+
+    if (net > 0) {
       setErrors((prevErrors) => ({ ...prevErrors, netSalary: "" }));
     }
   };
@@ -818,25 +862,26 @@ function SalaryConfiguration() {
                     ))}
                   </select>
                   {errors.employeeCode && (
-        <div className="text-danger">{errors.employeeCode}</div>
-      )}
+                    <div className="text-danger">{errors.employeeCode}</div>
+                  )}
                 </div>
                 <div className="col-md-4 p-2">
                   <Input
                     label="Employee Name"
                     value={employeeName}
+                    readOnly={true}
                     onChange={(e) => setEmployeeName(e.target.value)}
                     maxLength="25"
                   />
                   {errors.employeeName && (
-        <div className="text-danger">{errors.employeeName}</div>
-      )}
+                    <div className="text-danger">{errors.employeeName}</div>
+                  )}
                 </div>
                 <div className="col-md-4 p-2">
-                  <Input label="Designation" value={designation} />
+                  <Input label="Designation" value={designation} readOnly={true} />
                   {errors.designation && (
-        <div className="text-danger">{errors.designation}</div>
-      )}
+                    <div className="text-danger">{errors.designation}</div>
+                  )}
                 </div>
 
                 <div className="col-md-4 p-2">
@@ -867,34 +912,47 @@ function SalaryConfiguration() {
                     handleInputChange(updatedRows, rowIndex, field)
                   }
                 />
-                <div className="total_salarycard">
-                  <ul>
-                    <li>
-                      <b>Total Earnings:</b> {totalEarnings.toFixed(2)}
-                      {errors.totalEarnings && (
-                        <span className="text-danger">
-                          {" "}
-                          {errors.totalEarnings}
-                        </span>
-                      )}
-                    </li>
-                    <li>
-                      <b>Total Deductions:</b> {totalDeductions.toFixed(2)}
-                      {errors.totalDeductions && (
-                        <span className="text-danger">
-                          {" "}
-                          {errors.totalDeductions}
-                        </span>
-                      )}
-                    </li>
-                    <li>
-                      <b>Net Salary:</b> {netSalary.toFixed(2)}
-                      {errors.netSalary && (
-                        <span className="text-danger"> {errors.netSalary}</span>
-                      )}
-                    </li>
-                  </ul>
-                </div>
+
+                  <div className="total_salarycard">
+                       
+                        <ul
+                          style={{
+                            display: "flex",
+                            gap: "20px",
+                            listStyleType: "none",
+                            padding: "0",
+                          }}
+                        >
+                          <li style={{ margin: "0" }}>
+                            <b>Total Earnings:</b> {totalEarnings.toFixed(2)}
+                            {errors.totalEarnings && (
+                              <span className="text-danger">
+                                {" "}
+                                {errors.totalEarnings}
+                              </span>
+                            )}
+                          </li>
+                          <li style={{ margin: "0" }}>
+                            <b>Total Deductions:</b> {totalDeductions.toFixed(2)}
+                            {errors.totalDeductions && (
+                              <span className="text-danger">
+                                {" "}
+                                {errors.totalDeductions}
+                              </span>
+                            )}
+                          </li>
+                          <li style={{ margin: "0" }}>
+                            <b>Net Salary:</b> {netSalary.toFixed(2)}
+                            {errors.netSalary && (
+                              <span className="text-danger"> {errors.netSalary}</span>
+                            )}
+                          </li>
+                        </ul>
+
+                      </div>
+                
+                
+
                 {/* Display row-specific errors */}
                 {Object.keys(errors).map((key) => {
                   if (key.startsWith("row-") && key.endsWith("-method")) {
@@ -908,6 +966,8 @@ function SalaryConfiguration() {
                 })}
               </div>
             </div>
+
+            
             <div className="modal-footer">
               <Button
                 className="btn btn-primary btn-sm py-2 px-4 me-2"
