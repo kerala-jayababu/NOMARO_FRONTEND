@@ -7,7 +7,7 @@ const Table = ({ headers, rows }) => {
       <thead>
         <tr>
           {headers.map((header, index) => (
-            <th key={index} className="text-nowrap">
+            <th key={index}>
               {header}
             </th>
           ))}

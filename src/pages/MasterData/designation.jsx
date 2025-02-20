@@ -10,15 +10,16 @@ import RadioButton from "../../components/radioButton";
 const Designation = () => {
   const dispatch = useDispatch();
   const designationState = useSelector((state) => state.designation);
-  const { designation, loading, error } = designationState;
+  const { designation, error } = designationState;
 
   const [formData, setFormData] = useState({
     code: "",
     name: "",
-    overtime: "",
+    overtime: "Yes",
   });
 
   const [editId, setEditId] = useState(null); // Track edit mode
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     dispatch(fetchDesignations());
@@ -26,10 +27,61 @@ const Designation = () => {
 
   const handleChange = (name, value) => {
     setFormData({ ...formData, [name]: value });
+  
+    let errors = { ...validationErrors };
+  
+    if (name === "code") {
+      if (value === "") {
+        delete errors.code; // Allow empty value
+      } else if (value.length > 10) {
+        errors.code = "Designation Code cannot exceed 10 characters.";
+      } else if (!isValidCode(value)) {
+        errors.code = "Designation Code must be alphanumeric.";
+      } else if (!isUniqueCode(value)) {
+        errors.code = "Designation Code must be unique.";
+      } else {
+        delete errors.code; // Clear the error if valid
+      }
+    }
+  
+    if (name === "name") {
+      if (value.trim() === "") {
+        errors.name = "Designation Name is required.";
+      } else {
+        delete errors.name; // Clear the error if valid
+      }
+    }
+  
+    if (name === "overtime") {
+      if (!["Yes", "No"].includes(value)) {
+        errors.overtime = "Overtime Allowed must be Yes or No.";
+      } else {
+        delete errors.overtime; // Clear the error if valid
+      }
+    }
+  
+    setValidationErrors(errors);
+  };
+  
+  
+
+  const isUniqueCode = (code) => {
+    return !designation.data.some(
+      (item) => item.designationCode.toLowerCase() === code.toLowerCase() && item.idDesignation !== editId
+    );
+  };
+
+  const isValidCode = (code) => {
+    const alphanumericRegex = /^[a-z0-9]+$/i;
+    return alphanumericRegex.test(code);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
     const payload = {
       idDesignation: editId, // Include only if updating
@@ -45,8 +97,9 @@ const Designation = () => {
         await dispatch(addMasterDesignation(payload)).unwrap();
       }
       
-      setFormData({ code: "", name: "", overtime: "" });
+      setFormData({ code: "", name: "", overtime: "Yes" });
       setEditId(null); // Reset edit mode
+      setValidationErrors({}); // Clear validation errors
       dispatch(fetchDesignations());
     } catch (err) {
       console.error("Failed to save designation:", err);
@@ -72,6 +125,7 @@ const Designation = () => {
   const handleReset = () => {
     setFormData({ code: "", name: "", overtime: "" });
     setEditId(null); // Exit edit mode
+    setValidationErrors({}); // Clear validation errors
   };
 
   const columns = [
@@ -90,9 +144,7 @@ const Designation = () => {
       <div className="row">
         <div className="col-lg-8">
           <Card title="List of Designations">
-            {loading ? (
-              <p>Loading...</p>
-            ) : error ? (
+            {error ? (
               <p className="text-danger">Error: {error}</p>
             ) : (
               <Grid
@@ -113,8 +165,9 @@ const Designation = () => {
                 name="code"
                 value={formData.code}
                 onChange={(e) => handleChange("code", e.target.value)}
-                maxLength="10"
+                maxLength="11"
               />
+              {validationErrors.code && <p className="text-danger">{validationErrors.code}</p>}
               <Input
                 label="Designation Name"
                 name="name"
@@ -122,6 +175,7 @@ const Designation = () => {
                 onChange={(e) => handleChange("name", e.target.value)}
                 maxLength="50"
               />
+              {validationErrors.name && <p className="text-danger">{validationErrors.name}</p>}
               <label className="form-label">Overtime Allowed</label>
               <RadioButton
                 name="overtime"
@@ -132,6 +186,7 @@ const Designation = () => {
                 selectedValue={formData.overtime}
                 onChange={(value) => handleChange("overtime", value)}
               />
+              {validationErrors.overtime && <p className="text-danger">{validationErrors.overtime}</p>}
               <div
                 className="text-center d-flex justify-content-center gap-3"
                 style={{ marginTop: "10px" }}
@@ -156,4 +211,3 @@ const Designation = () => {
 };
 
 export default Designation;
-

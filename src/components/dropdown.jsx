@@ -11,7 +11,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
   };
 
   return (
-    <div className="form-group" style={{ maxWidth: "250px", ...style }}>
+    <div className="form-group" style={{ ...style }}>
       <label className="form-label mb-1">{label}</label>
       <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
         <select
@@ -35,7 +35,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
           }}
         >
           <option value="" disabled>
-            Select an option
+            Select
           </option>
           {options?.map((option) => (
             <option key={option.value} value={option.value}>

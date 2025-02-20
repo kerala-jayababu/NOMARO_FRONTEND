@@ -41,15 +41,21 @@ const VacationMode = () => {
   const [errors, setErrors] = useState({
     reasonForVacation: "",
   });
-    // Function to get the first day of the financial year
-    const getFinancialYearStart = () => {
-      const today = new Date();
-      const year = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
-      return new Date(year, 3, 1).toISOString().split("T")[0]; // April 1st
-    };
-    const [selectedDate, setSelectedDate] = useState(getFinancialYearStart());  
+  const getFinancialYearStart = () => {
+    const today = new Date();
+    const year =
+      today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
 
-    const today = new Date().toISOString().split("T")[0]
+    // Set the date to April 1st at midnight (00:00:00) to avoid time zone issues
+    const financialYearStart = new Date(Date.UTC(year, 3, 1, 0, 0, 0));
+
+    // Return the date in YYYY-MM-DD format
+    return financialYearStart.toISOString().split("T")[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getFinancialYearStart());
+
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     if (
@@ -68,14 +74,6 @@ const VacationMode = () => {
     dispatch(fetchVacationMode());
   }, [dispatch]);
 
-  // useEffect(() => {
-  //   if (vacationModeState.data && vacationModeState.data.length > 0) {
-  //     vacationModeState.data.forEach((vacation) => {
-  //       dispatch(getEmployeeDetailsByID(vacation.idEmployee));
-  //     });
-  //   }
-  // }, [vacationModeState.data, dispatch]);
-
   const employeeOptions = React.useMemo(() => {
     return getAllEmployeesState.options.map((employee) => ({
       value: employee.idEmployee,
@@ -86,6 +84,25 @@ const VacationMode = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     console.log(`Changing ${name} to ${value}`);
+
+    // Check if employeeName and approvalAuthoritySubstitute are the same
+    // Check if employeeName and approvalAuthoritySubstitute are the same
+    if (name === "approvalAuthoritySubstitute") {
+      if (value === formData.employeeName) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          approvalAuthoritySubstitute:
+            "Employee name cannot be the same as the Approval Authority Substitute.",
+        }));
+      } else {
+        // Clear the error message if the condition is no longer true
+        setErrors((prevErrors) => {
+          const { approvalAuthoritySubstitute, ...restErrors } = prevErrors;
+          return restErrors; // Remove the error for 'approvalAuthoritySubstitute'
+        });
+      }
+    }
+
     setFormData({
       ...formData,
       [name]: value,
@@ -158,6 +175,7 @@ const VacationMode = () => {
       reasonForVacation: "",
     });
     setEditingVacationMode(null);
+    setErrors({}); // Clear validation errors
   };
 
   const handleEditClick = (idVacationMode) => {
@@ -166,14 +184,18 @@ const VacationMode = () => {
         const vacationData = action.payload.data;
         console.log("vacationData", vacationData);
         setEditingVacationMode(vacationData);
+        const formatDate = (dateStr) => {
+          const date = new Date(dateStr);
+          // Adjust for the time zone by setting the hours to UTC
+          const adjustedDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60000
+          );
+          return adjustedDate.toISOString().split("T")[0]; // Get only the date part (YYYY-MM-DD)
+        };
         setFormData({
           employeeName: vacationData.idEmployee.toString(),
-          vacationFrom: new Date(vacationData.vacationFrom)
-            .toISOString()
-            .split("T")[0],
-          vacationTo: new Date(vacationData.vacationTo)
-            .toISOString()
-            .split("T")[0],
+          vacationFrom: formatDate(vacationData.vacationFrom),
+          vacationTo: formatDate(vacationData.vacationTo),
           approvalAuthoritySubstitute:
             vacationData.idSubstitueEmployee.toString(),
           reasonForVacation: vacationData.reasonForVacation || "",
@@ -191,14 +213,15 @@ const VacationMode = () => {
           const employeeName = vacation ? vacation.employeeName : "N/A";
           const substitute = vacation ? vacation.substituteEmployeeName : "N/A";
           const formatDate = (date) => {
-            return date
-              ? new Date(date).toLocaleDateString("en-US", {
-                  month: "2-digit",
-                  day: "2-digit",
-                  year: "2-digit",
-                })
-              : "N/A";
+            if (!date) return "N/A";
+            const newDate = new Date(date);
+            const month = String(newDate.getMonth() + 1).padStart(2, "0"); // Get month, ensure 2 digits
+            const day = String(newDate.getDate()).padStart(2, "0"); // Get day, ensure 2 digits
+            const year = newDate.getFullYear(); // Get year
+
+            return `${month}/${day}/${year}`; // Format as MM/DD/YYYY
           };
+
           return {
             empCode,
             employeeName,
@@ -303,7 +326,11 @@ const VacationMode = () => {
                 style={{ maxWidth: "331px" }}
               />
               {/* <div className="mb-2"> */}
-              {/* <label className="form-label mb-1">Reason for Vacation</label> */}
+              {errors.approvalAuthoritySubstitute && (
+                <p className="text-danger">
+                  {errors.approvalAuthoritySubstitute}
+                </p>
+              )}
               <Input
                 label="Reason for Vacation"
                 name="reasonForVacation"

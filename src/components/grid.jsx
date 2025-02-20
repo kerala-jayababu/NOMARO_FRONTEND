@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const Grid = ({ columns, data, onEditClick, idKey, modalId }) => {
+const Grid = ({ columns, data, onEditClick, idKey, modalId, popUpId , onEmpCodeClick}) => {
   return (
     <div className="table-responsive text-nowrap">
       <table className="table table-sm">
@@ -17,9 +17,24 @@ const Grid = ({ columns, data, onEditClick, idKey, modalId }) => {
             data.map((row) => (
               <tr key={row[idKey]}>
                 {columns?.map((column) => (
-                  <td key={column.key}>
+                  <td
+                    key={column.key}
+                    data-bs-toggle="modal"
+                    data-bs-target={`#${popUpId}`}
+                    onClick={() => {
+                      if (column.key !== "actions") {
+                        // Ensure we don't trigger on actions column
+                        console.log(
+                          `Editing row with ID: ${row[idKey]} for field: ${column.key}`
+                        );
+                        onEmpCodeClick(row[idKey]); // Call onEditClick when cell is clicked
+                      }
+                    }}
+                  >
                     {column.key === "actions" ? (
-                      <div className="text-end"> {/* Align button to right */}
+                      <div className="text-end">
+                        {" "}
+                        {/* Align button to right */}
                         <button
                           type="button"
                           className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
@@ -66,6 +81,7 @@ Grid.propTypes = {
   onEditClick: PropTypes.func.isRequired,
   idKey: PropTypes.string.isRequired,
   modalId: PropTypes.string.isRequired, // Ensure modal ID is passed
+  popUpId: PropTypes.string.isRequired, // Ensure pop-up ID is passed
 };
 
 export default Grid;

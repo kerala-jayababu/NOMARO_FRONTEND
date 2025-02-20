@@ -34,6 +34,7 @@ const SalaryHeads = () => {
     salaryHeadCode: "",
     salaryHeadName: "",
     orderNumber: "",
+    customFormula: "",
   });
 
   const dispatch = useDispatch();
@@ -61,7 +62,7 @@ const SalaryHeads = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentSalaryHead) {
+    if (currentSalaryHead && Object.keys(currentSalaryHead).length > 0) {
       setFormData({
         salaryHeadCode: currentSalaryHead.salaryHeadCode,
         salaryHeadName: currentSalaryHead.salaryHeadName,
@@ -83,9 +84,24 @@ const SalaryHeads = () => {
     }
   }, [currentSalaryHead]);
 
-  const handleEditClick = (id) => {
-    dispatch(getSalaryHeadById(id));
-  };
+  // const handleEditClick = (id) => {
+  //   dispatch(getSalaryHeadById(id));
+  // };
+  const [isEditing, setIsEditing] = useState(false);
+
+const handleEditClick = (id) => {
+  if (!isEditing) {
+    setIsEditing(true);
+    dispatch(getSalaryHeadById(id))
+      .then(() => {
+        setIsEditing(false);
+      })
+      .catch(() => {
+        setIsEditing(false);
+      });
+  }
+};
+
 
   const handleReset = () => {
     setFormData({
@@ -105,21 +121,52 @@ const SalaryHeads = () => {
       salaryHeadCode: "",
       salaryHeadName: "",
       orderNumber: "",
+      customFormula: "",
     });
+    dispatch({ type: "salaryHead/clearCurrentSalaryHead" });
   };
 
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+
+  //   // Allow only numeric values for "orderNumber"
+  //   if (name === "orderNumber" && isNaN(value)) {
+  //     return; // Do nothing if the value is not a number
+  //   }
+
+  //   setFormData({
+  //     ...formData,
+  //     type: currentSalaryHead.headType === "EARNING" ? "E" : "D",
+  //     [name]: value,
+  //   });
+
+  //   // Clear errors when the user starts typing
+  //   setErrors({
+  //     ...errors,
+  //     [name]: "",
+  //   });
+  // };
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+  
+    // Allow only numeric values for "orderNumber"
+    if (name === "orderNumber" && isNaN(value)) {
+      return; // Do nothing if the value is not a number
+    }
+  
+    // Update the formData state
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       [name]: value,
-    });
+    }));
+  
     // Clear errors when the user starts typing
-    setErrors({
-      ...errors,
+    setErrors((prevErrors) => ({
+      ...prevErrors,
       [name]: "",
-    });
+    }));
   };
+
 
   const handleRadioChange = (value, name) => {
     setFormData({
@@ -128,7 +175,6 @@ const SalaryHeads = () => {
     });
   };
 
-
   const validateForm = () => {
     const newErrors = {};
   
@@ -136,11 +182,11 @@ const SalaryHeads = () => {
     if (!formData.salaryHeadCode.trim()) {
       newErrors.salaryHeadCode = "Salary Head Code is required.";
     } else if (
-      // Only check for existing Salary Head Code if it's a new salary head
-      !currentSalaryHead?.idSalaryHead &&
+      // Only check for existing Salary Head Code if it's a new salary head or updated code is different
+      (!currentSalaryHead?.idSalaryHead ||
+        currentSalaryHead.salaryHeadCode !== formData.salaryHeadCode) &&
       salaryHeadList.some(
-        (head) =>
-          head.salaryHeadCode === formData.salaryHeadCode
+        (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
       )
     ) {
       newErrors.salaryHeadCode = "Salary Head Code already exists.";
@@ -158,11 +204,19 @@ const SalaryHeads = () => {
       if (
         !currentSalaryHead?.idSalaryHead &&
         salaryHeadList.some(
-          (head) =>
-            head.orderNumber === formData.orderNumber
+          (head) => Number(head.orderNumber) === Number(formData.orderNumber)
         )
       ) {
         newErrors.orderNumber = "Order Number must be unique.";
+      }
+    }
+  
+    // Validate Custom Formula
+    if (formData.calculationMethod === "Custom Formula") {
+      if (!formData.customFormula.trim()) {
+        newErrors.customFormula = "Custom Formula is required.";
+      } else if (!isValidCustomFormula(formData.customFormula, salaryHeadList)) {
+        newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
       }
     }
   
@@ -171,69 +225,33 @@ const SalaryHeads = () => {
   };
   
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
+  const isValidCustomFormula = (formula, salaryHeadList) => {
+    console.log("Formula:", formula);
+    const salaryHeadCodes = salaryHeadList.map((head) => head.salaryHeadCode);
+    console.log("Salary Head Codes:", salaryHeadCodes);
 
-  //   if (!validateForm()) {
-  //     return; // Stop submission if validation fails
-  //   }
+    const escapedSalaryHeadCodes = salaryHeadCodes.map(code => code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    console.log("Escaped Salary Head Codes:", escapedSalaryHeadCodes);
+    const regex = new RegExp(`\\b(${escapedSalaryHeadCodes.join("|")})\\b`, "g");
+    console.log("Regex:", regex);
 
-  //   // Prepare the data to be sent to the API
-  //   const data = {
-  //     salaryHeadCode: formData.salaryHeadCode,
-  //     salaryHeadName: formData.salaryHeadName,
-  //     headType: formData.type === "E" ? "Earning" : "Deduction",
-  //     isTaxable: formData.taxability === "Taxable",
-  //     calculationMethod:
-  //       formData.calculationMethod === "Custom Formula"
-  //         ? "FORMULA"
-  //         : formData.calculationMethod === "Percentage of"
-  //         ? "PERCENTAGE"
-  //         : "FIXEDAMOUNT",
-  //     idPercentageSalaryHead: formData.percentageOf || null,
-  //     percentageValue: formData.value || 0,
-  //     customFormula: formData.customFormula || "",
-  //     fixedValue: formData.defaultValue || 0,
-  //     isActive: formData.activeStatus,
-  //     orderNumber: formData.orderNumber,
-  //   };
+    const validFormula = formula.replace(regex, '').replace(/[0-9+\-*/()\s]/g, '').trim();
+    console.log("Remaining after replacements:", validFormula);
 
-  //   // Dispatch the addSalaryHead action
-  //   dispatch(addSalaryHead(data))
-  //     .then((response) => {
-  //       if (response.payload) {
-  //         console.log("Salary Head added successfully:", response.payload);
-  //         setFormData({
-  //           salaryHeadCode: "",
-  //           salaryHeadName: "",
-  //           type: "",
-  //           taxability: "",
-  //           calculationMethod: "",
-  //           percentageOf: "",
-  //           value: "",
-  //           customFormula: "",
-  //           defaultValue: "",
-  //           activeStatus: true,
-  //           orderNumber: "",
-  //         });
-  //       }
-  //       dispatch(fetchSalaryHead());
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error adding salary head:", error);
-  //     });
-  // };
+    return validFormula === '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
       return; // Stop submission if validation fails
     }
-  
+
     const data = {
       salaryHeadCode: formData.salaryHeadCode,
       salaryHeadName: formData.salaryHeadName,
-      headType: formData.type === "E" ? "Earning" : "Deduction",
+      headType: formData.type === "E" ? "EARNING" : "DEDUCTION",
       isTaxable: formData.taxability === "Taxable",
       calculationMethod:
         formData.calculationMethod === "Custom Formula"
@@ -248,11 +266,13 @@ const SalaryHeads = () => {
       isActive: formData.activeStatus,
       orderNumber: formData.orderNumber,
     };
-  
+
     // Check if it's an update
     if (currentSalaryHead?.idSalaryHead) {
       // Update existing salary head
-      dispatch(updateSalaryHead({ ...data, idSalaryHead: currentSalaryHead.idSalaryHead }))
+      dispatch(
+        updateSalaryHead({ ...data, idSalaryHead: currentSalaryHead.idSalaryHead })
+      )
         .then((response) => {
           if (response.payload) {
             console.log("Salary Head updated successfully:", response.payload);
@@ -278,7 +298,6 @@ const SalaryHeads = () => {
         });
     }
   };
-  
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -286,14 +305,24 @@ const SalaryHeads = () => {
         {/* Salary Head List */}
         <div className="col-lg-8">
           <Card title="List of Salary Heads">
-            {status === "loading" && <div>Loading...</div>}
             {status === "failed" && <div>Error: {error}</div>}
             {status === "succeeded" && (
               <Grid
                 columns={columns}
                 data={salaryHeadList.map((head) => ({
-                  salaryHeadCode: head.salaryHeadCode,
-                  salaryHeadName: head.salaryHeadName,
+                  salaryHeadCode: (
+                    <span className="bold">
+                      {head.salaryHeadCode}
+                    </span>
+                  ),
+                  salaryHeadName: (
+                    <div className="salary-head-name">
+                      <span className="badge-headtype" style={{ backgroundColor: head.headType.toUpperCase() === "EARNING" ? "#5d8b1b" : "#701c21" }}>
+                          {head.headType.toUpperCase() === "EARNING" ? "E" : "D"}
+                      </span>
+                      <span className="name">{head.salaryHeadName}</span>
+                    </div>
+                  ),
                   isActive: (
                     <StatusBadge
                       status={head.isActive ? "Active" : "Inactive"}
@@ -334,11 +363,11 @@ const SalaryHeads = () => {
                 name="orderNumber"
                 value={formData.orderNumber}
                 onChange={handleChange}
-                maxLength="50"
+                maxLength="3"
                 error={errors.orderNumber}
               />
               <div className="mb-2">
-                <label className="form-label mb-1">Type of Salary Head</label>
+                {/* <label className="form-label mb-1">Type of Salary Head</label> */}
                 <RadioButton
                   name="type"
                   options={[
@@ -350,7 +379,7 @@ const SalaryHeads = () => {
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label mb-1">Taxability</label>
+                {/* <label className="form-label mb-1">Taxability</label> */}
                 <RadioButton
                   name="taxability"
                   options={[
@@ -398,22 +427,34 @@ const SalaryHeads = () => {
                 </div>
               )}
               {formData.calculationMethod === "Custom Formula" && (
+                <>
+                  <Input
+                    label="Custom Formula"
+                    name="customFormula"
+                    value={formData.customFormula}
+                    onChange={handleChange}
+                    maxLength="100"
+                    placeholder="(BP + DA) / 10"
+                    error={errors.customFormula}
+                  />
+                  <Input
+                    label="Value"
+                    name="value"
+                    value={formData.value}
+                    onChange={handleChange}
+                    maxLength="5"
+                  />
+                </>
+              )}
+              {formData.calculationMethod === "Fixed Amount" && (
                 <Input
-                  label="Custom Formula"
-                  name="customFormula"
-                  value={formData.customFormula}
+                  label="Default Value"
+                  name="defaultValue"
+                  value={formData.defaultValue}
                   onChange={handleChange}
-                  maxLength="100"
-                  placeholder="(BP + DA) / 10"
+                  maxLength="9"
                 />
               )}
-              <Input
-                label="Default Value"
-                name="defaultValue"
-                value={formData.defaultValue}
-                onChange={handleChange}
-                maxLength="9"
-              />
               <div className="mb-3 pt-2">
                 <div className="form-check form-switch">
                   <label
@@ -442,7 +483,7 @@ const SalaryHeads = () => {
                   {currentSalaryHead?.idSalaryHead ? "Update" : "Submit"}
                 </Button>
                 <Button
-                  type="button" // Change type to "button" to prevent default form reset
+                  type="button"
                   className="btn btn-outline-secondary px-4"
                   onClick={handleReset}
                 >

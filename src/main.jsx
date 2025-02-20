@@ -19,13 +19,11 @@ import "../public/assets/vendor/js/bootstrap.js"
 import "../public/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"
 import "../public/assets/vendor/js/menu.js"
 import "../public/assets/js/main.js"
-import { ToastContainer } from "react-toastify";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
       <App />
-      <ToastContainer />
     </Provider>
   </StrictMode>
 );

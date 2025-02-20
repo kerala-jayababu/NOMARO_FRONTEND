@@ -2583,6 +2583,7 @@ textarea.form-control-lg {
 
 .form-check-input[type=radio] {
   border-radius: 50%;
+  margin-right: 5px;
 }
 
 .form-check-input:active {
@@ -2607,6 +2608,7 @@ textarea.form-control-lg {
 .form-check-input:checked[type=radio] {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='1.5' fill='%23fff'/%3e%3c/svg%3e");
 }
+
 
 .form-check-input[type=checkbox]:indeterminate {
   background-color: rgba(105, 108, 255, 0.08);
@@ -4609,7 +4611,7 @@ fieldset:disabled .btn {
 
 .badge {
   display: inline-block;
-  padding: 0.52em 0.593em;
+  padding: 5px 15px;
   font-size: 0.8125em;
   font-weight: 500;
   line-height: 1;
@@ -4618,6 +4620,9 @@ fieldset:disabled .btn {
   white-space: nowrap;
   vertical-align: baseline;
   border-radius: 0.25rem;
+  width: 100%;
+  max-width: 90px;
+
 }
 
 .badge:empty {
@@ -7969,7 +7974,7 @@ button:focus {
 }
 
 .badge {
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   line-height: 0.75;
 }
 
@@ -18277,4 +18282,61 @@ html:not(.layout-footer-fixed) .content-wrapper {
 
 .footer.bg-light hr {
   border-color: rgba(105, 122, 141, 0.0783835294);
+}
+
+.radio-label{
+  font-size: 13px;
+  font-weight: 500;
+}
+
+
+.bold{
+  font-weight: 600;
+  color: #000;
+}
+
+.salary-head-name {
+  display: flex;
+  align-items: center;
+}
+
+.badge-headtype {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px; /* Adjust size as needed */
+  height: 24px; /* Adjust size as needed */
+  border-radius: 50%; /* Makes it circular */
+  background-color: #4caf50; /* Green background */
+  color: white; /* White text */
+  font-size: 14px; /* Adjust font size */
+  font-weight: 400; /* Bold text */
+  margin-right: 8px; /* Space between badge and name */
+}
+
+.name {
+  font-size: 16px; /* Adjust font size for name */
+  color: #2c3e50; /* Darker text color */
+}
+
+.avatar-upload{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+
+.avatar-preview{
+    width: 150px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.avatar-preview img{
+    width: 100%;
+}
+
+
+.accountDetail_cardProfile {
+  position: relative;
+  padding-left: 170px;
 }
