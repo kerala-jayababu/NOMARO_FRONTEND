@@ -224,7 +224,7 @@ function ScheduledDeductions() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -372,15 +372,15 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">No of Months</label>
-                  <input className="form-control" type="number" disabled={true}
+                  <input className="form-control" type="text" disabled={true}
                     value={newData.monthCount}
                     required
                   />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Monthly Deduction</label>
-                  <input className="form-control" type="number" disabled={true}
-                    value={newData.monthlyDeductableAmount}
+                  <input className="form-control" type="text" disabled={true}
+                    value={newData.monthlyDeductableAmount.toFixed(2)}
                     required />
                 </div>
 

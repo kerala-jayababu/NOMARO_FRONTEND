@@ -14,7 +14,7 @@ function MaternityLeaveSalaries() {
   const [salaryHeadList, setSalaryHeadList] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryStructure, setSalaryStructure] = useState([]);
-  const [salaryStructureToDisplay, setSalaryStructureToDisplay] = useState({});
+  const [salaryStructureToDisplay, setSalaryStructureToDisplay] = useState(null);
   const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
@@ -54,11 +54,11 @@ function MaternityLeaveSalaries() {
 
   useEffect(() => {
     if (newData.idEmployee == 0) {
-      setSalaryStructureToDisplay({})
+      setSalaryStructureToDisplay(null)
       return;
     }
     const empSalaryStructure = salaryStructure.find(emp => emp.idEmployee == newData.idEmployee);
-    setSalaryStructureToDisplay(empSalaryStructure);
+    setSalaryStructureToDisplay(empSalaryStructure?.salaryComponents ?? null);
   }, [newData.idEmployee]);
 
   useEffect(() => {
@@ -327,7 +327,7 @@ function MaternityLeaveSalaries() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -522,37 +522,53 @@ function MaternityLeaveSalaries() {
                           </tr>
                         </thead>
                         <tbody class="table-border-bottom-0">
-                          <tr>
-                            <td><b>Earnings</b></td>
-                            <td class="text-end"></td>
-                            {/* {salaryStructureToDisplay?.totalEarnings ? Utils.formattedNumber(salaryStructureToDisplay?.totalEarnings) : 0} */}
-                          </tr>
-                          <tr>
-                            <td style={{ paddingLeft: '30px' }}>Basic Pay</td>
-                            <td class="text-end"></td>
-                          </tr>
-                          <tr>
-                            <td style={{ paddingLeft: '30px' }}>Allowance</td>
-                            <td class="text-end"></td>
-                          </tr>
+                          {
+                            salaryStructureToDisplay &&
+                            <>
+                              <tr>
+                                <td><b>Earnings</b></td>
+                                <td class="text-end"></td>
+                                {/* {salaryStructureToDisplay?.totalEarnings ? Utils.formattedNumber(salaryStructureToDisplay?.totalEarnings) : 0} */}
+                              </tr>
+                              <tr>
+                                <td style={{ paddingLeft: '30px' }}>Amount</td>
+                                <td class="text-end">{salaryStructureToDisplay ? salaryStructureToDisplay[0]?.salaryAmount : 0}</td>
+                              </tr>
+                              {/* <tr>
+                                <td style={{ paddingLeft: '30px' }}>Allowance</td>
+                                <td class="text-end"></td>
+                              </tr> */}
 
-                          <tr>
-                            <td><b>Deduction</b></td>
-                            <td class="text-end"></td>
-                            {/* {salaryStructureToDisplay?.totalDeductions ? Utils.formattedNumber(salaryStructureToDisplay?.totalDeductions) : 0} */}
-                          </tr>
-                          <tr>
-                            <td style={{ paddingLeft: '30px' }}>Insurance</td>
-                            <td class="text-end"></td>
-                          </tr>
-                          <tr>
-                            <td style={{ paddingLeft: '30px' }}>Provident Fund</td>
-                            <td class="text-end"></td>
-                          </tr>
-                          <tr>
-                            <td><b>Net Salary</b></td>
-                            <td class="text-end"><b>0</b></td>
-                          </tr>
+                              <tr>
+                                <td><b>Deduction</b></td>
+                                <td class="text-end"></td>
+                                {/* {salaryStructureToDisplay?.totalDeductions ? Utils.formattedNumber(salaryStructureToDisplay?.totalDeductions) : 0} */}
+                              </tr>
+                              <tr>
+                                <td style={{ paddingLeft: '30px' }}>Amount</td>
+                                <td class="text-end">{salaryStructureToDisplay ? salaryStructureToDisplay[1]?.salaryAmount : 0}</td>
+                              </tr>
+                              {/* <tr>
+                                <td style={{ paddingLeft: '30px' }}>Provident Fund</td>
+                                <td class="text-end"></td>
+                              </tr> */}
+                              {/* <tr>
+                                <td><b>Net Salary</b></td>
+                                <td class="text-end"><b>{salaryStructureToDisplay?.netSalary}</b></td>
+                              </tr> */}
+                            </>
+                          }
+                          {
+                            salaryStructureToDisplay == null &&
+                            <tr>
+                              <td colSpan="12" className="text-center">
+                                <div className="Nodatafound_box">
+                                  <h6><i className="bx bx-search"></i> No salary structure available!</h6>
+                                </div>
+                              </td>
+                            </tr>
+
+                          }
                         </tbody>
                       </table>
                     </div>
@@ -611,7 +627,7 @@ function MaternityLeaveSalaries() {
 
                       <div className="p-2">
                         <label className="badge bg-label-primary">Earnings: {newData.totalEarnings ?? 0}</label> &nbsp;&nbsp;
-                        <label className="badge bg-label-warning">Deductions: {newData.totalDeductions ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-warning staticWidth">Deductions: {newData.totalDeductions ?? 0}</label> &nbsp;&nbsp;
                         <label className="badge bg-label-info">Net Total: {newData.netSalary ?? 0}</label>
                       </div>
 

@@ -213,7 +213,7 @@ function SalaryAdjustments() {
                   /> */}
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -256,7 +256,7 @@ function SalaryAdjustments() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.payAdjustmentDate).format("MM/DD/YYYY")}</td>
                           <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
-                          <td>{item?.isTaxable}</td>
+                          <td>{item?.isTaxable ? 'Yes' : 'No'}</td>
                           <td>{item?.allocatingSalaryMonthText}</td>
                           <td>{item?.allcoatingSalaryHeadName}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.amount)}</td>

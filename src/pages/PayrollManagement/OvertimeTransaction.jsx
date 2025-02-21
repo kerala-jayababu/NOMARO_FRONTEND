@@ -217,7 +217,7 @@ function OvertimeTransaction() {
                     selected={startDate} onChange={(date) => setStartDate(date)} />
                 </div>
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -297,7 +297,7 @@ function OvertimeTransaction() {
                           <td className="text-center">{item.durationInHours} Hr</td>
                           {/* <td>{item.reasonForOvertime}</td> */}
                           <td>
-                            <span className="badge bg-label-warning">{item.approvalStatus}</span>
+                            <span className={`badge ${item.approvalStatus=='APPROVED' ? 'bg-label-success' : item.approvalStatus=='SUBMITTED' ? 'bg-label-warning' : 'bg-label-danger'}`}>{item.approvalStatus}</span>
                           </td>
                           <td>
                             {

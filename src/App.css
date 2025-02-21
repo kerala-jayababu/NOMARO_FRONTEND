@@ -87,3 +87,7 @@
   width: 25%;
   text-align: center;
 }
+
+.staticWidth {
+  max-width: 110px !important;
+}
