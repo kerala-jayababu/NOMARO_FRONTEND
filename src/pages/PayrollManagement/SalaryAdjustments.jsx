@@ -8,9 +8,11 @@ import { Button, Form, Modal } from 'react-bootstrap';
 import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
+import Select from 'react-select';
 
 function SalaryAdjustments() {
   const [employeesList, setEmployeesList] = useState([]);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
   const [salaryHeadList, setSalaryHeadList] = useState([]);
   const [salaryHeadListToShow, setSalaryHeadListToShow] = useState([]);
   const [empDescDept, setEmpDescDept] = useState('');
@@ -55,6 +57,7 @@ function SalaryAdjustments() {
       }));
       return;
     }
+    console.log(newData.idEmployee);
     const empDetails = employeesList.find(emp => emp.idEmployee == newData.idEmployee);
     setNewData((prevData) => ({
       ...prevData,
@@ -73,6 +76,11 @@ function SalaryAdjustments() {
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
       setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
     }).catch(err => {
     });
   }
@@ -193,6 +201,13 @@ function SalaryAdjustments() {
     });
   }
 
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -301,7 +316,7 @@ function SalaryAdjustments() {
                 <div className="row m-0">
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Employee Name</label>
-                    <select className="form-select" value={newData.idEmployee}
+                    {/* <select className="form-select" value={newData.idEmployee}
                       onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
                       <option value={''}>Select</option>
                       {
@@ -309,7 +324,14 @@ function SalaryAdjustments() {
                           <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
                         ))
                       }
-                    </select>
+                    </select> */}
+                    <Select
+                      options={employeesListOption}
+                      isSearchable
+                      onChange={handleChange} 
+                      value={newData.idEmployee}
+                      placeholder={'Select Employee'}
+                    />
                   </div>
 
                   {/* <div className="col-md-6 p-2">
