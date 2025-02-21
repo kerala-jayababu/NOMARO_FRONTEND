@@ -82,7 +82,7 @@ function ScheduledDeductions() {
   const getSalaryHeadData = () => {
     CommonService.getSalaryHeadList().then(res => {
       const salHead = res.data.data;
-      const filterred = salHead.filter(el => el.headType === "Deduction");
+      const filterred = salHead.filter(el => el.headType === "DEDUCTION");
       setSalaryHeadList(filterred);
     }).catch(err => {
     });

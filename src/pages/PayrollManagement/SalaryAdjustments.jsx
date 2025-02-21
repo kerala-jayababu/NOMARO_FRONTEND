@@ -66,7 +66,7 @@ function SalaryAdjustments() {
 
   useEffect(() => {
     if (newData.earningOrDeduction == "") return;
-    const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'Deduction'));
+    const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'DEDUCTION'));
     setSalaryHeadListToShow(salHead);
   }, [newData.earningOrDeduction]);
 
