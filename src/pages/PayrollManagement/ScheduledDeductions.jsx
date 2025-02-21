@@ -8,6 +8,7 @@ import moment from "moment";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Utils from "../../utils/Utils";
+import Select from 'react-select';
 
 function ScheduledDeductions() {
   const [scheduledDeductions, setScheduledDeductions] = useState([]);
@@ -31,6 +32,8 @@ function ScheduledDeductions() {
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -41,6 +44,11 @@ function ScheduledDeductions() {
   useEffect(() => {
     getScheduledDeductions();
   }, [startDate]);
+
+  useEffect(() => {
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+  }, [newData.idEmployee]);
 
   useEffect(() => {
     const monthCount = calculateMonthCount(
@@ -75,6 +83,11 @@ function ScheduledDeductions() {
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
       setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
     }).catch(err => {
     });
   }
@@ -112,7 +125,8 @@ function ScheduledDeductions() {
       monthCount: item.monthCount,
       monthlyDeductableAmount: item.monthlyDeductableAmount,
     });
-    console.log(newData)
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
     setShowModal(true);
   }
 
@@ -208,7 +222,15 @@ function ScheduledDeductions() {
       monthCount: 0,
       monthlyDeductableAmount: 0,
     });
+    setSelectedEmployee(null)
   }
+
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -305,7 +327,7 @@ function ScheduledDeductions() {
               <Form noValidate validated={validated}>
                 <div className="mb-2">
                   <label className="form-label mb-1">Employee Name</label>
-                  <select className="form-select" value={newData.idEmployee}
+                  {/* <select className="form-select" value={newData.idEmployee}
                     onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
                     <option value={''}>Select</option>
                     {
@@ -313,7 +335,14 @@ function ScheduledDeductions() {
                         <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
                       ))
                     }
-                  </select>
+                  </select> */}
+                  <Select
+                    options={employeesListOption}
+                    isSearchable
+                    onChange={handleChange}
+                    value={selectedEmployee}
+                    placeholder={'Select Employee'}
+                  />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Total Deduction</label>

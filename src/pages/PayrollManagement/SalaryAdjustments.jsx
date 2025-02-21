@@ -37,6 +37,7 @@ function SalaryAdjustments() {
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     getEmployeesData();
@@ -65,6 +66,8 @@ function SalaryAdjustments() {
       idDesignation: empDetails.idDesignation,
     }));
     setEmpDescDept(empDetails.department + ', ' + empDetails.designation);
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
   }, [newData.idEmployee]);
 
   useEffect(() => {
@@ -126,6 +129,8 @@ function SalaryAdjustments() {
       amount: item.amount,
       remarks: item.remarks,
     });
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
     setShowModal(true);
   }
 
@@ -199,6 +204,7 @@ function SalaryAdjustments() {
       amount: 0,
       remarks: ""
     });
+    setSelectedEmployee(null)
   }
 
   const handleChange = (selectedOption) => {
@@ -329,7 +335,7 @@ function SalaryAdjustments() {
                       options={employeesListOption}
                       isSearchable
                       onChange={handleChange} 
-                      value={newData.idEmployee}
+                      value={selectedEmployee}
                       placeholder={'Select Employee'}
                     />
                   </div>
