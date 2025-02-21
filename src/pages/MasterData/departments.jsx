@@ -46,7 +46,7 @@ const Departments = () => {
         value &&
         departments.data?.some((dept) => dept.departmentCode.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)
       ) {
-        validationErrors.deptCode = "Department Code already exists.";
+        validationErrors.deptCode = "Department Code Already Exists.";
       } else {
         delete validationErrors.deptCode;
       }
@@ -54,7 +54,7 @@ const Departments = () => {
 
     if (field === "deptName") {
       if (value && departments.data?.some((dept) => dept.departmentName.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)) {
-        validationErrors.deptName = "Department Name already exists.";
+        validationErrors.deptName = "Department Name Already Exists.";
       } else {
         delete validationErrors.deptName;
       }

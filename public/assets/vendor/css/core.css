@@ -43,7 +43,7 @@
   --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
   --bs-root-font-size: 16px;
   --bs-body-font-family: var(--bs-font-sans-serif);
-  --bs-body-font-size: 0.9375rem;
+  --bs-body-font-size: 13px;
   --bs-body-font-weight: 400;
   --bs-body-line-height: 1.53;
   --bs-body-color: #0d384d;
@@ -2037,7 +2037,7 @@ progress {
   --bs-table-hover-bg: rgba(67, 89, 113, 0.06);
   width: 100%;
   margin-bottom: 1rem;
-  color: #697a8d;
+  color: #0d384d;
   vertical-align: middle;
   border-color: #d9dee3;
 }
@@ -18309,13 +18309,13 @@ html:not(.layout-footer-fixed) .content-wrapper {
   border-radius: 50%; /* Makes it circular */
   background-color: #4caf50; /* Green background */
   color: white; /* White text */
-  font-size: 14px; /* Adjust font size */
+  font-size: 13px; /* Adjust font size */
   font-weight: 400; /* Bold text */
   margin-right: 8px; /* Space between badge and name */
 }
 
 .name {
-  font-size: 16px; /* Adjust font size for name */
+  font-size: 13px; /* Adjust font size for name */
   color: #2c3e50; /* Darker text color */
 }
 

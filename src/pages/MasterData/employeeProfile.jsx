@@ -496,7 +496,11 @@ const EmployeeProfile = () => {
     name: employee.fullName,
     designation: employee.designation,
     department: employee.department,
-    joiningDate: new Date(employee.joiningDate).toLocaleDateString(),
+    joiningDate: new Date(employee.joiningDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }),
     status: employee.currentStatus,
     childCount: employee.childrenCount,
   })) || [];
@@ -506,7 +510,9 @@ const EmployeeProfile = () => {
   
     return employeeData.filter((employee) => {
       return (
-        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        employee.designation.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     });
@@ -542,6 +548,14 @@ const EmployeeProfile = () => {
 
   const handleInputChange = (e, index, field) => {
     const { value } = e.target;
+    
+    if (field === "accountNumber") {
+      // Allow only alphanumeric values and enforce max length of 25
+      if (!/^[a-zA-Z0-9]{0,25}$/.test(value)) {
+        return; // Do nothing if the input is invalid
+      }
+    }
+
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index][field] = value;
@@ -1171,16 +1185,12 @@ const EmployeeProfile = () => {
                           }
                           style={{ width: "20%" }}
                         />
-                        <Input
+                      <Input
                           type="text"
                           name="accountNumber"
                           value={bank.accountNumber}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (/^\d*$/.test(value)) {
-                              handleInputChange(e, index, "accountNumber");
-                            }
-                          }}
+                          maxLength="25"
+                          onChange={(e) => handleInputChange(e, index, "accountNumber")}
                           style={{ width: "15%", marginTop: "-14.5px" }}
                         />
                         <Input
@@ -1311,15 +1321,15 @@ const EmployeeProfile = () => {
                       />
                     </td>
                     <td>
-                      <Input
+                    <Input
                         type="text"
-                        maxLength="2"
+                        maxLength="5"
                         name="appliedRate"
                         value={detail.appliedRate}
                         style={{ marginTop: "-14.5px" }}
                         onChange={(e) => {
                           const value = e.target.value;
-                          if (/^\d*\.?\d{0,10}$/.test(value)) {
+                          if (/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
                             handleOvertimeChange(index, "appliedRate", value);
                           }
                         }}

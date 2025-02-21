@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
-
 const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
   const [tableData, setTableData] = useState(data);
 
@@ -13,10 +12,20 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
     const updatedData = [...tableData];
 
     if (isSubMenu) {
+      // Handle submenu checkbox change
       updatedData[parentIndex].subMenus[subMenuIndex][columnKey] =
         !updatedData[parentIndex].subMenus[subMenuIndex][columnKey];
     } else {
+      // Handle parent checkbox change
       updatedData[parentIndex][columnKey] = !updatedData[parentIndex][columnKey];
+
+      // Propagate the parent's state to all submenus
+      if (updatedData[parentIndex].subMenus && updatedData[parentIndex].subMenus.length > 0) {
+        updatedData[parentIndex].subMenus = updatedData[parentIndex].subMenus.map((subMenu) => ({
+          ...subMenu,
+          [columnKey]: updatedData[parentIndex][columnKey], // Sync submenu state with parent
+        }));
+      }
     }
 
     setTableData(updatedData);
@@ -82,7 +91,6 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
     </div>
   );
 };
-
 
 MultiSelectTable.propTypes = {
   data: PropTypes.arrayOf(PropTypes.object).isRequired,

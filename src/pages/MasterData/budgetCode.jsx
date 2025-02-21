@@ -82,7 +82,7 @@ const BudgetCodes = () => {
         console.log("Is Duplicate:", isDuplicate);
   
         if (isDuplicate) {
-          validationErrors.budgetCode = "Budget Code already exists.";
+          validationErrors.budgetCode = "Budget Code Already Exists.";
         } else {
           delete validationErrors.budgetCode;
         }
@@ -102,7 +102,7 @@ const BudgetCodes = () => {
         );
   
         if (isDuplicate) {
-          validationErrors.budgetName = "Budget Name already exists.";
+          validationErrors.budgetName = "Budget Name Already Exists.";
         } else {
           delete validationErrors.budgetName;
         }
