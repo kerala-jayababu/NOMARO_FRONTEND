@@ -51,6 +51,7 @@ const SalaryHeads = () => {
   const columns = [
     { key: "salaryHeadCode", label: "S. H. Code" },
     { key: "salaryHeadName", label: "Salary Head Name" },
+    { key: "orderNumber", label: "Order Number" },
     { key: "isActive", label: "Active Status" },
     { key: "actions", label: "" },
   ];
@@ -189,7 +190,7 @@ const handleEditClick = (id) => {
         (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
       )
     ) {
-      newErrors.salaryHeadCode = "Salary Head Code already exists.";
+      newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
     }
   
     // Validate Salary Head Name
@@ -203,7 +204,7 @@ const handleEditClick = (id) => {
         (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
       )
     ) {
-      newErrors.salaryHeadName = "Salary Head Name already exists.";
+      newErrors.salaryHeadName = "Salary Head Name Already Exists.";
     }
   
     // Validate mandatory orderNumber
@@ -217,7 +218,7 @@ const handleEditClick = (id) => {
           (head) => Number(head.orderNumber) === Number(formData.orderNumber)
         )
       ) {
-        newErrors.orderNumber = "Order Number must be unique.";
+        newErrors.orderNumber = "Order Number Already Exists.";
       }
     }
   
@@ -315,8 +316,6 @@ const handleEditClick = (id) => {
         {/* Salary Head List */}
         <div className="col-lg-8">
           <Card title="List of Salary Heads">
-            {status === "failed" && <div>Error: {error}</div>}
-            {status === "succeeded" && (
               <Grid
                 columns={columns}
                 data={salaryHeadList.map((head) => ({
@@ -333,6 +332,11 @@ const handleEditClick = (id) => {
                       <span className="name">{head.salaryHeadName}</span>
                     </div>
                   ),
+                  orderNumber: (
+                    <span>
+                      {head.orderNumber}
+                    </span>
+                  ),
                   isActive: (
                     <StatusBadge
                       status={head.isActive ? "Active" : "Inactive"}
@@ -344,7 +348,6 @@ const handleEditClick = (id) => {
                 idKey="id"
                 modalId="editSalaryHeadModal"
               />
-            )}
           </Card>
         </div>
 
@@ -426,13 +429,19 @@ const handleEditClick = (id) => {
                     />
                   </div>
                   <div className="col-md-4 mb-2">
-                    <Input
-                      label="Value"
-                      name="value"
-                      value={formData.value}
-                      onChange={handleChange}
-                      maxLength="5"
-                    />
+                  <Input
+                    label="Default Value"
+                    name="defaultValue"
+                    value={formData.defaultValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d{0,2}$/.test(value)) {
+                        handleChange(e);
+                      }
+                    }}
+                    maxLength="9"
+                    pattern="^\d*\.?\d{0,2}$"
+                  />
                   </div>
                 </div>
               )}
@@ -447,13 +456,13 @@ const handleEditClick = (id) => {
                     placeholder="(BP + DA) / 10"
                     error={errors.customFormula}
                   />
-                  <Input
+                  {/* <Input
                     label="Value"
                     name="value"
                     value={formData.value}
                     onChange={handleChange}
                     maxLength="5"
-                  />
+                  /> */}
                 </>
               )}
               {formData.calculationMethod === "Fixed Amount" && (

@@ -572,7 +572,11 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                         <h5 className="m-0">Screen Permissions</h5>
                       </div>
                       <div className="card-body p-0">
-                        <div className="table-responsive">
+                        <div className="table-responsive" style={{
+                            maxHeight: "500px", // Adjust the height as needed
+                            overflowY: "auto", // Enable vertical scrolling
+                            border: "1px solid #ddd", // Optional: Add a border for better visibility
+                          }}>
                           <MultiSelectTable
                             data={employeePermissions}
                             columns={columns}
@@ -600,7 +604,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
               </div>
               <div className="tab-pane fade" id="navs-top-Role" role="tabpanel">
                 <div className="row m-0">
-                  <div className="col-lg-6 p-1">
+                  <div className="col-lg-6 p-1" >
                     <SingleSelectTable
                       title="Designation Permissions"
                       headers={designationHeaders}
@@ -618,7 +622,11 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                         <h5 className="m-0">Screen Permissions</h5>
                       </div>
                       <div className="card-body p-0">
-                        <div className="table-responsive">
+                        <div className="table-responsive" style={{
+                            maxHeight: "500px", // Adjust the height as needed
+                            overflowY: "auto", // Enable vertical scrolling
+                            border: "1px solid #ddd", // Optional: Add a border for better visibility
+                          }}>
                           <MultiSelectTable
                             data={designationPermissions}
                             columns={columns}

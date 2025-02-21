@@ -57,6 +57,7 @@ const [searchQuery, setSearchQuery] = useState("");
 
 useEffect(() => {
     if (selectedTemplate) {
+      console.log("inside")
       setTemplateName(selectedTemplate.salaryTemplateName || "");
       setDescription(selectedTemplate.description || "");
       setTotalEarnings(selectedTemplate.totalEarnings || 0);
@@ -270,6 +271,87 @@ useEffect(() => {
 
 
 
+  // const handleInputChange = (updatedRows, rowIndex, field) => {
+  //   if (field === "salaryHead") {
+  //     const selectedSalaryHeadId = updatedRows[rowIndex].salaryHead;
+  //     dispatch(getSalaryHeadById(selectedSalaryHeadId))
+  //       .then((action) => {
+  //         if (action.payload && action.payload.success) {
+  //           const salaryHeadData = action.payload.data;
+  //           let updatedRow = { ...updatedRows[rowIndex] };
+
+  //           // Update calculation method
+  //           switch (salaryHeadData.calculationMethod) {
+  //             case "FIXEDAMOUNT":
+  //               updatedRow.method = "Fixed Amount";
+  //               updatedRow.value = salaryHeadData.fixedValue || "";
+  //               break;
+  //             case "PERCENTAGE":
+  //               updatedRow.method = "Percentage of";
+  //               updatedRow.value = salaryHeadData.percentageValue || "";
+  //               if (salaryHeadData.idPercentageSalaryHead) {
+  //                 dispatch(
+  //                   getSalaryHeadById(salaryHeadData.idPercentageSalaryHead)
+  //                 )
+  //                   .then((percentageAction) => {
+  //                     if (
+  //                       percentageAction.payload &&
+  //                       percentageAction.payload.success
+  //                     ) {
+  //                       const percentageSalaryHeadData =
+  //                         percentageAction.payload.data;
+  //                       updatedRow.percentageOf =
+  //                         percentageSalaryHeadData.idSalaryHead.toString();
+  //                       const newRows = [...updatedRows];
+  //                       newRows[rowIndex] = updatedRow;
+  //                       setSalaryRows(newRows);
+  //                       calculateTotals(newRows); // Recalculate totals
+  //                     }
+  //                   })
+  //                   .catch((error) => {
+  //                     console.error(
+  //                       "Error fetching percentage salary head details:",
+  //                       error
+  //                     );
+  //                   });
+  //               }
+  //               break;
+  //             case "FORMULA":
+  //               updatedRow.method = "Custom Formula";
+  //               updatedRow.formula = salaryHeadData.customFormula || "";
+  //               break;
+  //             default:
+  //               updatedRow.method = "Percentage of";
+  //           }
+
+  //           if (updatedRow.method !== "Custom Formula") {
+  //             updatedRow.formula = "";
+  //           }
+  //           if (updatedRow.method !== "Percentage of") {
+  //             updatedRow.percentageOf = "";
+  //           }
+
+  //           console.log(salaryHeadData, "updatedRow");
+  //           // Add type (EARNING or DEDUCTION) to the row
+  //           updatedRow.type = salaryHeadData.headType || "EARNING"; // Default to EARNING if type is not defined
+
+  //           const newRows = [...updatedRows];
+  //           newRows[rowIndex] = updatedRow;
+  //           setSalaryRows(newRows);
+
+  //           // Calculate totals after updating the row
+  //           calculateTotals(newRows);
+  //         }
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error fetching salary head details:", error);
+  //       });
+  //   } else {
+  //     setSalaryRows(updatedRows);
+  //     calculateTotals(updatedRows);
+  //   }
+  // };
+
   const handleInputChange = (updatedRows, rowIndex, field) => {
     if (field === "salaryHead") {
       const selectedSalaryHeadId = updatedRows[rowIndex].salaryHead;
@@ -278,7 +360,7 @@ useEffect(() => {
           if (action.payload && action.payload.success) {
             const salaryHeadData = action.payload.data;
             let updatedRow = { ...updatedRows[rowIndex] };
-
+  
             // Update calculation method
             switch (salaryHeadData.calculationMethod) {
               case "FIXEDAMOUNT":
@@ -301,10 +383,24 @@ useEffect(() => {
                           percentageAction.payload.data;
                         updatedRow.percentageOf =
                           percentageSalaryHeadData.idSalaryHead.toString();
+  
+                        // Calculate the percentage value
+                        const referencedRow = updatedRows.find(
+                          (row) => row.salaryHead === updatedRow.percentageOf
+                        );
+                        console.log(referencedRow, "referencedRow875885");
+                        if (referencedRow) {
+                          const referencedValue = parseFloat(referencedRow.value) || 0;
+                          // updatedRow.value = (
+                          //   (referencedValue * parseFloat(updatedRow.value || 0)) /
+                          //   100
+                          // ).toFixed(2);
+                        }
+                        
                         const newRows = [...updatedRows];
                         newRows[rowIndex] = updatedRow;
                         setSalaryRows(newRows);
-                        calculateTotals(newRows); // Recalculate totals
+                        calculateTotals(newRows);
                       }
                     })
                     .catch((error) => {
@@ -322,23 +418,20 @@ useEffect(() => {
               default:
                 updatedRow.method = "Percentage of";
             }
-
+  
             if (updatedRow.method !== "Custom Formula") {
               updatedRow.formula = "";
             }
             if (updatedRow.method !== "Percentage of") {
               updatedRow.percentageOf = "";
             }
-
-            console.log(salaryHeadData, "updatedRow");
-            // Add type (EARNING or DEDUCTION) to the row
-            updatedRow.type = salaryHeadData.headType || "EARNING"; // Default to EARNING if type is not defined
-
+  
+            updatedRow.type = salaryHeadData.headType || "EARNING";
+  
             const newRows = [...updatedRows];
             newRows[rowIndex] = updatedRow;
             setSalaryRows(newRows);
-
-            // Calculate totals after updating the row
+  
             calculateTotals(newRows);
           }
         })
@@ -351,26 +444,99 @@ useEffect(() => {
     }
   };
 
-  const calculateTotals = (rows) => {
-    let totalEarnings = 0;
-    let totalDeductions = 0;
+  // const calculateTotals = (rows) => {
+  //   let totalEarnings = 0;
+  //   let totalDeductions = 0;
 
-    console.log(rows, "rows");  
+  //   console.log(rows, "rows");  
+  //   rows.forEach((row) => {
+  //     const value = parseFloat(row.value) || 0; // Ensure the value is a number
+  //     if (row.type === "EARNING" || row.type === "Earning") {
+  //       totalEarnings += value;
+  //     } else if (row.type === "DEDUCTION" || row.type === "Deduction") {
+  //       totalDeductions += value;
+  //     }
+  //   });
+
+  //   const netSalary = totalEarnings - totalDeductions;
+
+  //   setTotalEarnings(totalEarnings);
+  //   setTotalDeductions(totalDeductions);
+  //   setNetSalary(netSalary);
+  // };
+  // const calculateTotals = (rows) => {
+  //   let earnings = 0;
+  //   let deductions = 0;
+  
+  //   rows.forEach((row) => {
+  //     let value = parseFloat(row.value) || 0;
+  
+  //     if (row.method === "Percentage of" && row.percentageOf) {
+  //       // Find the referenced salary head row
+  //       const referencedRow = rows.find(r => r.salaryHead === row.percentageOf);
+  //       if (referencedRow) {
+  //         const referencedValue = parseFloat(referencedRow.value) || 0;
+  //         value = (referencedValue * value) / 100;
+  //       }
+  //     }
+  
+  //     if (row.type === "EARNING" || row.type === "Earning") {
+  //       earnings += value;
+  //     } else if (row.type === "DEDUCTION" || row.type === "Deduction") {
+  //       deductions += value;
+  //     }
+  //   });
+  
+  //   const net = earnings - deductions;
+  
+  //   setTotalEarnings(Number(earnings.toFixed(2)));
+  //   setTotalDeductions(Number(deductions.toFixed(2)));
+  //   setNetSalary(Number(net.toFixed(2)));
+  // };
+  const calculateTotals = (rows) => {
+    let earnings = 0;
+    let deductions = 0;
+  
     rows.forEach((row) => {
-      const value = parseFloat(row.value) || 0; // Ensure the value is a number
+      let value = parseFloat(row.value) || 0;
+  
+      if (row.method === "Percentage of" && row.percentageOf) {
+        // Find the referenced salary head row
+        const referencedRow = rows.find(
+          (r) => r.salaryHead === row.percentageOf
+        );
+        if (referencedRow) {
+          const referencedValue = parseFloat(referencedRow.value) || 0;
+          console.log(value, "referencedValue");
+          value = ((referencedValue * value) / 100).toFixed(2);
+          console.log(value, "value");
+        }
+      }
+  
       if (row.type === "EARNING" || row.type === "Earning") {
-        totalEarnings += value;
+        earnings += parseFloat(value);
       } else if (row.type === "DEDUCTION" || row.type === "Deduction") {
-        totalDeductions += value;
+        deductions += parseFloat(value);
       }
     });
-
-    const netSalary = totalEarnings - totalDeductions;
-
-    setTotalEarnings(totalEarnings);
-    setTotalDeductions(totalDeductions);
-    setNetSalary(netSalary);
+  
+    const net = earnings - deductions;
+  
+    setTotalEarnings(Number(earnings.toFixed(2)));
+    setTotalDeductions(Number(deductions.toFixed(2)));
+    setNetSalary(Number(net.toFixed(2)));
   };
+
+  function openModal() {
+  const modalElement = document.getElementById("modalCenter");
+  if (modalElement) {
+    const modalInstance = new bootstrap.Modal(modalElement, {
+      backdrop: "static", // Prevent closing on outside click
+      keyboard: false, // Prevent closing on Escape key
+    });
+    modalInstance.show();
+  }
+}
 
 const handleSubmitForApproval = () => {
 
@@ -467,18 +633,18 @@ const handleSubmitForApproval = () => {
         });
     }
 };
-
-  
-
   const salaryColumns = [
     {
       header: "Salary Head Name",
       field: "salaryHead",
       type: "select",
-      options: salaryHeads.map((head) => ({
-        value: head.value.toString(),
-        label: head.displayName,
-      })),
+      options: [
+        { value: "", label: "Select Salary Head" },  // Add this default option
+        ...salaryHeads.map((head) => ({
+          value: head.value.toString(),
+          label: head.displayName,
+        })),
+      ],
     },
     {
       header: "Calculation Method",
@@ -536,6 +702,7 @@ const handleSubmitForApproval = () => {
   };
 
   const handleEditClick = (id) => {
+    console.log("data")
     if (id) {
       dispatch(getSalaryTemplateById(id));
       setEditingTemplateId(id);
@@ -558,6 +725,27 @@ const handleSubmitForApproval = () => {
       setNetSalary(0);
       setCopyFromTemplate(false); // Reset the checkbox state
     }
+  };
+  const handleReset = () => {
+    setTemplateName("");
+    setDescription("");
+    setSalaryRows([
+      {
+        salaryHead: "",
+        method: "Percentage of",
+        value: "",
+        formula: "",
+      },
+    ]);
+    setTotalEarnings(0);
+    setTotalDeductions(0);
+    setNetSalary(0);
+    setTemplateNameError("");
+    setTableError("");
+    setSelectedTemplateId("");
+    setCopyFromTemplate(false);
+    setIsEditing(false);
+    setEditingTemplateId(null);
   };
 
   const filteredTemplates = salaryTemplates?.data?.filter((template) =>
@@ -717,7 +905,19 @@ const handleSubmitForApproval = () => {
                     {tableError && (
                       <div className="text-danger small">{tableError}</div>
                     )}
-               
+                    {/* <div className="total_salarycard">
+                      <ul>
+                        <li>
+                          <b>Total Earnings:</b> {totalEarnings.toFixed(2)}
+                        </li>
+                        <li>
+                          <b>Total Deductions:</b> {totalDeductions.toFixed(2)}
+                        </li>
+                        <li>
+                          <b>Net Salary:</b> {netSalary.toFixed(2)}
+                        </li>
+                      </ul>
+                    </div> */}
                     <div className="total_salarycard">
                       <ul
                         style={{
@@ -741,7 +941,10 @@ const handleSubmitForApproval = () => {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <Button className="btn btn-primary btn-sm py-2 px-4 me-2">
+                  <Button
+                    className="btn btn-primary btn-sm py-2 px-4 me-2"
+                    onClick={handleSubmitForApproval}
+                  >
                     Save Template
                   </Button>
                   <Button
@@ -753,6 +956,7 @@ const handleSubmitForApproval = () => {
                   <Button
                     className="btn btn-outline-secondary btn-sm py-2 px-4"
                     data-bs-dismiss="modal"
+                    onClick={handleReset}
                   >
                     Reset
                   </Button>

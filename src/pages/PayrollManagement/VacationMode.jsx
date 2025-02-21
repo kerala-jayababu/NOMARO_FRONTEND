@@ -269,17 +269,17 @@ const VacationMode = () => {
     });
   }, [vacationList, selectedDate]);
 
-  if (!vacationModeState.data || vacationModeState.data.length === 0) {
-    return <div>No vacation data available.</div>;
-  }
+  // if (!vacationModeState.data || vacationModeState.data.length === 0) {
+  //   return <div>No vacation data available.</div>;
+  // }
 
-  if (vacationModeState.loading) {
-    return <div>Loading...</div>;
-  }
+  // if (vacationModeState.loading) {
+  //   return <div>Loading...</div>;
+  // }
 
-  if (vacationModeState.error) {
-    return <div>Error: {vacationModeState.error}</div>;
-  }
+  // if (vacationModeState.error) {
+  //   return <div>Error: {vacationModeState.error}</div>;
+  // }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">

@@ -38,7 +38,7 @@ const Designation = () => {
       } else if (!isValidCode(value)) {
         errors.code = "Designation Code must be alphanumeric.";
       } else if (!isUniqueCode(value)) {
-        errors.code = "Designation Code must be unique.";
+        errors.code = "Designation Code Already Exists.";
       } else {
         delete errors.code; // Clear the error if valid
       }
@@ -57,7 +57,7 @@ const Designation = () => {
       if (value.trim() === "") {
         errors.name = "Designation Name is required.";
       } else if (!isUniqueName(value)) {
-        errors.name = "Designation Name must be unique.";
+        errors.name = "Designation Name Already Exists.";
       } else {
         delete errors.name; // Clear the error if valid
       }
