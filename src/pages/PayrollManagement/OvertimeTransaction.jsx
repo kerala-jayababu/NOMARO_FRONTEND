@@ -7,6 +7,7 @@ import moment from "moment";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
+import Select from 'react-select';
 
 function OvertimeTransaction() {
 
@@ -34,6 +35,8 @@ function OvertimeTransaction() {
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -43,6 +46,11 @@ function OvertimeTransaction() {
   useEffect(() => {
     getOTTranasactions();
   }, [startDate, statusType]);
+
+  useEffect(() => {
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+  }, [newData.idEmployee]);
 
   useEffect(() => {
     calculateDuration();
@@ -75,6 +83,11 @@ function OvertimeTransaction() {
   const getEmployeesHeirarchy = () => {
     CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
       setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.employeeName,
+      }));
+      setEmployeesListOption(options);
     }).catch(err => {
     });
   }
@@ -119,6 +132,8 @@ function OvertimeTransaction() {
       attachment: item.attachment,
       attachmentDescription: item.attachmentDescription,
     });
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
     setShowModal(true);
   }
 
@@ -193,7 +208,15 @@ function OvertimeTransaction() {
       attachment: "",
       attachmentDescription: "",
     });
+    setSelectedEmployee(null)
   }
+
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -297,7 +320,7 @@ function OvertimeTransaction() {
                           <td className="text-center">{item.durationInHours} Hr</td>
                           {/* <td>{item.reasonForOvertime}</td> */}
                           <td>
-                            <span className={`badge ${item.approvalStatus=='APPROVED' ? 'bg-label-success' : item.approvalStatus=='SUBMITTED' ? 'bg-label-warning' : 'bg-label-danger'}`}>{item.approvalStatus}</span>
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : 'bg-label-danger'}`}>{item.approvalStatus}</span>
                           </td>
                           <td>
                             {
@@ -366,7 +389,7 @@ function OvertimeTransaction() {
                     <div className="row m-0 mt-3">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
-                        <select className="form-select" value={newData.idEmployee}
+                        {/* <select className="form-select" value={newData.idEmployee}
                           onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
                           <option value={''}>Select</option>
                           {
@@ -374,7 +397,14 @@ function OvertimeTransaction() {
                               <option value={el.idEmployee} key={el.idEmployee}>{el.employeeName}</option>
                             ))
                           }
-                        </select>
+                        </select> */}
+                        <Select
+                          options={employeesListOption}
+                          isSearchable
+                          onChange={handleChange}
+                          value={selectedEmployee}
+                          placeholder={'Select Employee'}
+                        />
                       </div>
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Type</label>

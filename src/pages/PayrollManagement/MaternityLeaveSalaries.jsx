@@ -7,6 +7,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import Utils from "../../utils/Utils";
+import Select from 'react-select';
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -40,6 +41,8 @@ function MaternityLeaveSalaries() {
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -59,6 +62,8 @@ function MaternityLeaveSalaries() {
     }
     const empSalaryStructure = salaryStructure.find(emp => emp.idEmployee == newData.idEmployee);
     setSalaryStructureToDisplay(empSalaryStructure?.salaryComponents ?? null);
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
   }, [newData.idEmployee]);
 
   useEffect(() => {
@@ -98,6 +103,11 @@ function MaternityLeaveSalaries() {
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
       setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
     }).catch(err => {
     });
   }
@@ -191,6 +201,8 @@ function MaternityLeaveSalaries() {
       totalDeductions: item.totalDeductions,
     });
     setSalaryDetails(item.maternityLeaveSalaryDetailDto);
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
     setShowModal(true);
   }
 
@@ -311,7 +323,15 @@ function MaternityLeaveSalaries() {
         amountInUSD: 0
       },
     ]);
+    setSelectedEmployee(null)
   }
+
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -457,7 +477,7 @@ function MaternityLeaveSalaries() {
                 <div class="row m-0">
                   <div class="col-md-5 p-2">
                     <label class="form-label mb-1">Employee Name</label>
-                    <select className="form-select" value={newData.idEmployee}
+                    {/* <select className="form-select" value={newData.idEmployee}
                       onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
                       <option value={''}>Select</option>
                       {
@@ -465,7 +485,14 @@ function MaternityLeaveSalaries() {
                           <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
                         ))
                       }
-                    </select>
+                    </select> */}
+                    <Select
+                      options={employeesListOption}
+                      isSearchable
+                      onChange={handleChange}
+                      value={selectedEmployee}
+                      placeholder={'Select Employee'}
+                    />
                   </div>
 
                   <div class="col-md-3 p-2">
