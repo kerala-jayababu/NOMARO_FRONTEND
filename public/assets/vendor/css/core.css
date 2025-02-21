@@ -18309,7 +18309,7 @@ html:not(.layout-footer-fixed) .content-wrapper {
   border-radius: 50%; /* Makes it circular */
   background-color: #4caf50; /* Green background */
   color: white; /* White text */
-  font-size: 14px; /* Adjust font size */
+  font-size: 13px; /* Adjust font size */
   font-weight: 400; /* Bold text */
   margin-right: 8px; /* Space between badge and name */
 }
