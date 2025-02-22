@@ -43,6 +43,7 @@ function MaternityLeaveSalaries() {
   const [errors, setErrors] = useState([]);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -124,8 +125,8 @@ function MaternityLeaveSalaries() {
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
       const salMonths = res.data;
-      const filterred = salMonths.slice(0, 12);
-      setSalaryMonthsList(filterred);
+      // const filterred = salMonths.slice(0, 12);
+      setSalaryMonthsList(salMonths);
     }).catch(err => {
     });
   }
@@ -333,6 +334,31 @@ function MaternityLeaveSalaries() {
     }));
   };
 
+  const handleMonthFromChange = (e) => {
+    const selectedId = e.target.value;
+    setNewData({
+      ...newData,
+      idSalaryMonthFrom: selectedId,
+      idSalaryMonthTo: '',
+    });
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
+
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthToChange = (e) => {
+    setNewData({
+      ...newData,
+      idSalaryMonthTo: e.target.value,
+    });
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -385,7 +411,7 @@ function MaternityLeaveSalaries() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
-                          <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
@@ -506,7 +532,7 @@ function MaternityLeaveSalaries() {
                           placeholderText='From Date' />
                       </div>
                     </div> */}
-                    <select className="form-select" value={newData.idSalaryMonthFrom}
+                    {/* <select className="form-select" value={newData.idSalaryMonthFrom}
                       onChange={(e) => setNewData({ ...newData, idSalaryMonthFrom: e.target.value })} required>
                       <option value={''}>Select</option>
                       {
@@ -514,6 +540,19 @@ function MaternityLeaveSalaries() {
                           <option value={el.idSalaryMonth} key={el.idSalaryMonth}>{el.salaryMonthText}</option>
                         ))
                       }
+                    </select> */}
+                    <select
+                      className="form-select"
+                      value={newData.idSalaryMonthFrom}
+                      onChange={handleMonthFromChange}
+                      required
+                    >
+                      <option value={''}>Select</option>
+                      {salaryMonthsList.map((el) => (
+                        <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                          {el.salaryMonthText}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div class="col-md-3 p-2">
@@ -527,7 +566,7 @@ function MaternityLeaveSalaries() {
                           placeholderText='To Date' />
                       </div>
                     </div> */}
-                    <select className="form-select" value={newData.idSalaryMonthTo}
+                    {/* <select className="form-select" value={newData.idSalaryMonthTo}
                       onChange={(e) => setNewData({ ...newData, idSalaryMonthTo: e.target.value })} required>
                       <option value={''}>Select</option>
                       {
@@ -535,6 +574,19 @@ function MaternityLeaveSalaries() {
                           <option value={el.idSalaryMonth} key={el.idSalaryMonth}>{el.salaryMonthText}</option>
                         ))
                       }
+                    </select> */}
+                    <select
+                      className="form-select"
+                      value={newData.idSalaryMonthTo}
+                      onChange={handleMonthToChange}
+                      required
+                    >
+                      <option value={''}>Select</option>
+                      {filteredMonthsList.map((el) => (
+                        <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                          {el.salaryMonthText}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -653,9 +705,9 @@ function MaternityLeaveSalaries() {
                       </table>
 
                       <div className="p-2">
-                        <label className="badge bg-label-primary">Earnings: {newData.totalEarnings ?? 0}</label> &nbsp;&nbsp;
-                        <label className="badge bg-label-warning staticWidth">Deductions: {newData.totalDeductions ?? 0}</label> &nbsp;&nbsp;
-                        <label className="badge bg-label-info">Net Total: {newData.netSalary ?? 0}</label>
+                        <label className="badge bg-label-primary staticWidth">Earnings: {Utils.formattedNumber(newData.totalEarnings) ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-warning staticWidth">Deductions: {Utils.formattedNumber(newData.totalDeductions) ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-info staticWidth">Net Total: {Utils.formattedNumber(newData.netSalary) ?? 0}</label>
                       </div>
 
                     </div>

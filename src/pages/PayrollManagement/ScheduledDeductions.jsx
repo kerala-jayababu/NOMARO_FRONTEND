@@ -34,6 +34,8 @@ function ScheduledDeductions() {
   const [isEdit, setIsEdit] = useState(false);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [salaryMonthsList , setSalaryMonthsList ] = useState([]);
+  const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -104,14 +106,14 @@ function ScheduledDeductions() {
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
       const salMonths = res.data;
-      const filterredFrom = salMonths.slice(0, 12);
-      const filterredTo = salMonths.slice(0, 60);
-      setSalaryMonthsListFrom(filterredFrom);
-      setSalaryMonthsListTo(filterredTo);
+      // const filterredFrom = salMonths.slice(0, 12);
+      // const filterredTo = salMonths.slice(0, 60);
+      // setSalaryMonthsListFrom(filterredFrom);
+      // setSalaryMonthsListTo(filterredTo);
+      setSalaryMonthsList(salMonths);
     }).catch(err => {
     });
   }
-
 
   const setupEdit = (item) => {
     setIsEdit(true);
@@ -158,10 +160,6 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
-    // passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
-    // passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
-    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
-    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Scheduled deductions added successfully', {
@@ -187,10 +185,6 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
-    // passData['deductionFromSalaryMonthDate'] = moment(passData['deductionFromSalaryMonthDate']).format('YYYY-MM-DD');
-    // passData['deductionToSalaryMonthDate'] = moment(passData['deductionToSalaryMonthDate']).format('YYYY-MM-DD');
-    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
-    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Scheduled deductions updated successfully', {
@@ -230,6 +224,32 @@ function ScheduledDeductions() {
       ...prevData,
       idEmployee: selectedOption.value
     }));
+  };
+
+  const handleMonthFromChange = (e) => {
+    const selectedDate = e.target.value;
+    const selectedId = (salaryMonthsList.find(el=>el.salaryMonthDate == selectedDate)).idSalaryMonth;
+    setNewData({
+      ...newData,
+      deductionFromSalaryMonthDate: selectedDate,
+      deductionToSalaryMonthDate: '',
+    });
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
+      
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthToChange = (e) => {
+    setNewData({
+      ...newData,
+      deductionToSalaryMonthDate: e.target.value,
+    });
   };
 
   return (
@@ -357,7 +377,7 @@ function ScheduledDeductions() {
                         selected={newData.deductionFromSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionFromSalaryMonthDate: date })} />
                     </div>
                   </div> */}
-                  <select className="form-select" value={newData.deductionFromSalaryMonthDate}
+                  {/* <select className="form-select" value={newData.deductionFromSalaryMonthDate}
                     onChange={(e) => setNewData({ ...newData, deductionFromSalaryMonthDate: e.target.value })} required>
                     <option value={''}>Select</option>
                     {
@@ -365,6 +385,19 @@ function ScheduledDeductions() {
                         <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
                       ))
                     }
+                  </select> */}
+                  <select
+                    className="form-select"
+                    value={newData.deductionFromSalaryMonthDate}
+                    onChange={handleMonthFromChange}
+                    required
+                  >
+                    <option value={''}>Select</option>
+                    {salaryMonthsList.map((el) => (
+                      <option value={el.salaryMonthDate} key={el.salaryMonthDate}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-2">
@@ -375,7 +408,7 @@ function ScheduledDeductions() {
                         selected={newData.deductionToSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionToSalaryMonthDate: date })} />
                     </div>
                   </div> */}
-                  <select className="form-select" value={newData.deductionToSalaryMonthDate}
+                  {/* <select className="form-select" value={newData.deductionToSalaryMonthDate}
                     onChange={(e) => setNewData({ ...newData, deductionToSalaryMonthDate: e.target.value })} required>
                     <option value={''}>Select</option>
                     {
@@ -383,6 +416,19 @@ function ScheduledDeductions() {
                         <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
                       ))
                     }
+                  </select> */}
+                  <select
+                    className="form-select"
+                    value={newData.deductionToSalaryMonthDate}
+                    onChange={handleMonthToChange}
+                    required
+                  >
+                    <option value={''}>Select</option>
+                    {filteredMonthsList.map((el) => (
+                      <option value={el.salaryMonthDate} key={el.salaryMonthDate}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-2">
@@ -401,14 +447,14 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">No of Months</label>
-                  <input className="form-control" type="text" disabled={true}
+                  <input className="form-control" type="number" disabled={true}
                     value={newData.monthCount}
                     required
                   />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Monthly Deduction</label>
-                  <input className="form-control" type="text" disabled={true}
+                  <input className="form-control" type="number" disabled={true}
                     value={newData.monthlyDeductableAmount.toFixed(2)}
                     required />
                 </div>
