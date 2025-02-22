@@ -1116,34 +1116,43 @@ function SalaryConfiguration() {
                     </li>
                   </ul>
                 </div> */}
+
                 <div className="total_salarycard">
-                  <ul>
-                    <li>
-                      <b>Total Earnings:</b> {totalEarnings.toFixed(2)}
-                      {errors.totalEarnings && (
+                    <ul
+                      style={{
+                        display: "flex",
+                        gap: "20px",
+                        listStyleType: "none",
+                        padding: "0",
+                      }}
+                    >
+                      <li style={{ margin: "0" }}>
+                        <b>Total Earnings:</b> {totalEarnings.toFixed(2)}
+                        {errors.totalEarnings && (
                         <span className="text-danger">
                           {" "}
                           {errors.totalEarnings}
                         </span>
                       )}
-                    </li>
-                    <li>
-                      <b>Total Deductions:</b> {totalDeductions.toFixed(2)}
-                      {errors.totalDeductions && (
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Total Deductions:</b> {totalDeductions.toFixed(2)}
+                        {errors.totalDeductions && (
                         <span className="text-danger">
                           {" "}
                           {errors.totalDeductions}
                         </span>
                       )}
-                    </li>
-                    <li>
-                      <b>Net Salary:</b> {netSalary.toFixed(2)}
-                      {errors.netSalary && (
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Net Salary:</b> {netSalary.toFixed(2)}
+                        {errors.netSalary && (
                         <span className="text-danger"> {errors.netSalary}</span>
                       )}
-                    </li>
-                  </ul>
-                </div>
+                      </li>
+                    </ul>
+                  </div>
+
 
                 {/* Display row-specific errors */}
                 {Object.keys(errors).map((key) => {

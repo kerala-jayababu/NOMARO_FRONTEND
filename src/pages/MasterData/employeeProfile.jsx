@@ -1137,133 +1137,92 @@ const EmployeeProfile = () => {
           <strong>Bank Account Details</strong>
         </h6>
 
-        <Table
-          headers={[
-            "Bank Name",
-            "Branch Name",
-            "Account Number",
-            "% Salary",
-            "Currency",
-            "",
-          ]}
-          rows={
-            bankAccountsState.length > 0 ? (
+
+        {/* Bank Account Details Table Component Starts */}
+        <table className="table table-sm mb-0 border">
+          <thead>
+            <tr>
+              <th>Bank Name</th>
+              <th className="text-nowrap">Branch Name</th>
+              <th className="text-nowrap">Account Number</th>
+              <th className="text-nowrap">% Salary</th>
+              <th className="text-nowrap">Currency</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {bankAccountsState.length > 0 ? (
               bankAccountsState.map((bank, index) => (
-                <React.Fragment
-                  key={bank.idEmployeeBankAccount || `new-${index}`}
-                >
+                <React.Fragment key={index}>
                   <tr>
-                    <td colSpan="6">
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "19px",
-                          alignItems: "center",
-                        }}
-                      >
+                    <td className="col-md-3">
                         <Dropdown
-                          options={[
-                            { value: "", label: "Select an option" },
-                            ...bankOptions,
-                          ]}
+                          options={[{ value: "", label: "Select an option" }, ...bankOptions]}
                           name="bankName"
                           value={bank.selectedBank}
-                          onChange={(e) =>
-                            handleBankChange(e.target.value, index)
-                          }
-                          style={{ width: "20%" }}
+                          onChange={(e) => handleBankChange(e.target.value, index)}
                         />
+                      </td>
+                      <td className="col-md-3">
                         <Dropdown
-                          options={[
-                            { value: "", label: "Select an option" },
-                            ...branchOptions,
-                          ]}
+                          options={[{ value: "", label: "Select an option" }, ...branchOptions]}
                           name="branchName"
                           value={bank.selectedBranch}
-                          onChange={(e) =>
-                            handleBranchChange(e.target.value, index)
-                          }
-                          style={{ width: "20%" }}
+                          onChange={(e) => handleBranchChange(e.target.value, index)}
                         />
-                      <Input
-                          type="text"
-                          name="accountNumber"
-                          value={bank.accountNumber}
-                          maxLength="25"
-                          onChange={(e) => handleInputChange(e, index, "accountNumber")}
-                          style={{ width: "15%", marginTop: "-14.5px" }}
-                        />
-                        <Input
-                          type="text"
-                          name="salaryPercentage"
-                          value={bank.salaryPercentageDistributed}
-                          onChange={(e) => {
-                            // Check if the input is a valid number (can include decimal point)
-                            const value = e.target.value;
-                            if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                              handleInputChange(
-                                e,
-                                index,
-                                "salaryPercentageDistributed"
-                              );
-                            }
-                          }}
-                          style={{ width: "15%", marginTop: "-14.5px" }}
-                        />
+                      </td>
+                      <td className="col-md-3">
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="accountNumber"
+                            value={bank.accountNumber}
+                            maxLength="25"
+                            onChange={(e) => handleInputChange(e, index, "accountNumber")}
+                          />
 
+                      </td>
+
+                      <td className="col-md-2">
+                        <input
+                            type="text"
+                            name="salaryPercentage"
+                            className="form-control"
+                            value={bank.salaryPercentageDistributed}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                                handleInputChange(e, index, "salaryPercentageDistributed");
+                              }
+                            }}
+                          />
+                      </td>
+                      
+                      <td className="col-md-3">
                         <Dropdown
-                          options={[
-                            { value: "GYD", label: "GYD" },
-                            { value: "USD", label: "USD" },
-                          ]}
-                          name="currency"
-                          value={bank.currencyCode}
-                          onChange={(e) =>
-                            handleInputChange(e, index, "currencyCode")
-                          }
-                          style={{ width: "10%" }}
-                        />
-                        {index === bankAccountsState.length - 1 && (
-                          <AddIcon onClick={handleAddRow} />
-                        )}
-                        {bankAccountsState.length > 1 &&
-                          index < bankAccountsState.length - 1 && (
-                            <DeleteIcon
-                              onClick={() => handleDeleteRow(index)}
-                            />
-                          )}
-                      </div>
-                    </td>
+                            options={[{ value: "GYD", label: "GYD" }, { value: "USD", label: "USD" }]}
+                            name="currency"
+                            value={bank.currencyCode}
+                            onChange={(e) => handleInputChange(e, index, "currencyCode")}
+                          />
+                          
+                      </td>
+                      <td className="col-md-1">
+                      {index === bankAccountsState.length - 1 && <AddIcon onClick={handleAddRow} />}
+                        {bankAccountsState.length > 1 && index < bankAccountsState.length - 1 && (
+                              <DeleteIcon onClick={() => handleDeleteRow(index)} />
+                            )}
+                      </td>
                   </tr>
-                  {Object.keys(bankAccountErrors).some((key) =>
-                    key.endsWith(`_${index}`)
-                  ) && (
+                  {Object.keys(bankAccountErrors).some((key) => key.endsWith(`_${index}`)) && (
                     <tr>
-                      <td colSpan="6">
+                      <td className="col-md-3">
                         <div style={{ color: "red" }}>
-                          {bankAccountErrors[`idBank_${index}`] && (
-                            <div>{bankAccountErrors[`idBank_${index}`]}</div>
-                          )}
-                          {bankAccountErrors[`idBankBranch_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`idBankBranch_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`accountNumber_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`accountNumber_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`salaryPercentage_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`salaryPercentage_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`currencyCode_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`currencyCode_${index}`]}
-                            </div>
-                          )}
+                          {bankAccountErrors[`idBank_${index}`] && <div>{bankAccountErrors[`idBank_${index}`]}</div>}
+                          {bankAccountErrors[`idBankBranch_${index}`] && <div>{bankAccountErrors[`idBankBranch_${index}`]}</div>}
+                          {bankAccountErrors[`accountNumber_${index}`] && <div>{bankAccountErrors[`accountNumber_${index}`]}</div>}
+                          {bankAccountErrors[`salaryPercentage_${index}`] && <div>{bankAccountErrors[`salaryPercentage_${index}`]}</div>}
+                          {bankAccountErrors[`currencyCode_${index}`] && <div>{bankAccountErrors[`currencyCode_${index}`]}</div>}
                         </div>
                       </td>
                     </tr>
@@ -1271,14 +1230,18 @@ const EmployeeProfile = () => {
                 </React.Fragment>
               ))
             ) : (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  No bank accounts found. Click &apos;+&apos; to add one.
-                </td>
+              <tr >
+                <td className="text-center col-md-6">No bank accounts found. Click '+' to add one.</td>
               </tr>
-            )
-          }
-        />
+            )}
+          </tbody>
+        </table>
+
+
+
+        {/* Bank Account Details Table Component Ends */}
+
+      
 
         {/* Overtime Details & Budget Code */}
         <div className="row mt-4">

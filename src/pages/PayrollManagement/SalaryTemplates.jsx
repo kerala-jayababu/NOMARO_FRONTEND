@@ -1138,12 +1138,12 @@ const handleSubmitForApproval = () => {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <Button
-                    className="btn btn-primary btn-sm py-2 px-4 me-2"
-                    onClick={handleSubmitForApproval}
-                  >
-                    Save Template
-                  </Button>
+                {/* <Button
+                  className="btn btn-primary btn-sm py-2 px-4 me-2"
+                  onClick={handleSubmitForApproval}
+                >
+                  Save Template
+                </Button> */}
                   <Button
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={handleSubmitForApproval}
