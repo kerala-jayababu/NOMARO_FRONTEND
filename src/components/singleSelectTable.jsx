@@ -12,9 +12,11 @@ const SingleSelectTable = ({
   onSearchChange, // Add onSearchChange prop
 }) => {
   const handleSelect = (row) => {
-    if (selectedRow === row) {
+    if (selectedRow && selectedRow.idEmployee === row.idEmployee) {
+      // Deselect if the same row is clicked again
       onSelect(null);
     } else {
+      // Select the new row
       onSelect(row);
     }
   };
@@ -37,12 +39,12 @@ const SingleSelectTable = ({
         </div>
       </div>
       <div className="card-body p-0">
-        <div className="table-responsive" style={{
-                            maxHeight: "500px", // Adjust the height as needed
+        <div className="table-responsive"  style={{
+                            maxHeight: "490px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
-          <table className="table table-sm" >
+          <table className="table table-sm">
             <thead>
               <tr>
                 <th></th>
@@ -70,8 +72,8 @@ const SingleSelectTable = ({
                         type="radio"
                         className="form-check-input"
                         name="flexRadioDefault"
-                        value={row.id || rowIndex}
-                        checked={selectedRow === row}
+                        value={row.idEmployee || rowIndex}
+                        checked={selectedRow && selectedRow.idEmployee === row.idEmployee}
                         onChange={() => handleSelect(row)}
                       />
                     </td>
