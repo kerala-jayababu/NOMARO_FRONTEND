@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SalaryAdjustmentService from '../../core/services/SalaryAdjustmentService';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
 import Select from 'react-select';
+import Pagination from '../../components/pagination';
 
 function SalaryAdjustments() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -38,6 +39,9 @@ function SalaryAdjustments() {
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(salaryAdjustments.length / rowsPerPage);
 
   useEffect(() => {
     getEmployeesData();
@@ -75,6 +79,12 @@ function SalaryAdjustments() {
     const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'DEDUCTION'));
     setSalaryHeadListToShow(salHead);
   }, [newData.earningOrDeduction]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return salaryAdjustments.slice(startIndex, endIndex);
+  }, [salaryAdjustments, currentPage, rowsPerPage]);
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
@@ -214,6 +224,8 @@ function SalaryAdjustments() {
     }));
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -226,12 +238,7 @@ function SalaryAdjustments() {
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
-                  {/* <DatePicker
-                    id="startDate"
-                    name="startDate"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  /> */}
+                 
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -268,8 +275,8 @@ function SalaryAdjustments() {
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    {salaryAdjustments?.length > 0 ? (
-                      salaryAdjustments?.map((item, index) => (
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
                         <tr>
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
@@ -301,6 +308,13 @@ function SalaryAdjustments() {
                   </tbody>
                 </table>
               </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -322,49 +336,17 @@ function SalaryAdjustments() {
                 <div className="row m-0">
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Employee Name</label>
-                    {/* <select className="form-select" value={newData.idEmployee}
-                      onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
-                      <option value={''}>Select</option>
-                      {
-                        employeesList?.map((el) => (
-                          <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
-                        ))
-                      }
-                    </select> */}
+                    
                     <Select
                       options={employeesListOption}
                       isSearchable
-                      onChange={handleChange} 
+                      onChange={handleChange}
                       value={selectedEmployee}
                       placeholder={'Select Employee'}
                     />
                   </div>
 
-                  {/* <div className="col-md-6 p-2">
-                    <label className="form-label mb-1">Department</label>
-                    <select className="form-select" value={newData.idDepartment}
-                      onChange={(e) => setNewData({ ...newData, idDepartment: e.target.value })} required disabled>
-                      <option value={''}></option>
-                      {
-                        departmentsList?.map((el) => (
-                          <option value={el.idDepartment} key={el.idDepartment}>{el.departmentName}</option>
-                        ))
-                      }
-                    </select>
-                  </div>
-
-                  <div className="col-md-6 p-2">
-                    <label className="form-label mb-1">Designation</label>
-                    <select className="form-select" value={newData.idDesignation}
-                      onChange={(e) => setNewData({ ...newData, idDesignation: e.target.value })} required disabled>
-                      <option value={''}></option>
-                      {
-                        designationsList?.map((el) => (
-                          <option value={el.idDesignation} key={el.idDesignation}>{el.designationName}</option>
-                        ))
-                      }
-                    </select>
-                  </div> */}
+                  
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Department, Designation</label>
                     <input className='form-control' value={empDescDept} disabled />
@@ -378,14 +360,8 @@ function SalaryAdjustments() {
                           onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
                           required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
-                          placeholderText='Select Date' showYearDropdown/>
-                        {/* <DatePicker
-                          id="payAdjustmentDate"
-                          name="payAdjustmentDate"
-                          value={newData.payAdjustmentDate}
-                          onChange={(e) => setNewData({ ...newData, payAdjustmentDate: e.target.value })}
-                          required
-                        /> */}
+                          placeholderText='Select Date' showYearDropdown />
+                       
                       </div>
                     </div>
                   </div>
@@ -468,7 +444,7 @@ function SalaryAdjustments() {
                           setNewData({ ...newData, amount: value });
                         }
                       }}
-                      required placeholder='Add amount'min="0" max="999999999999"/>
+                      required placeholder='Add amount' min="0" max="999999999999" />
                   </div>
 
                   <div className="col-md-12 p-2">

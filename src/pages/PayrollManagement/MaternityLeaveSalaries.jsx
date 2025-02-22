@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import MaternityService from '../../core/services/MaternityService';
 import moment from "moment";
 import CommonService from "../../core/services/CommonService";
@@ -8,6 +8,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
+import Pagination from "../../components/pagination";
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -44,6 +45,9 @@ function MaternityLeaveSalaries() {
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -100,6 +104,12 @@ function MaternityLeaveSalaries() {
   useEffect(() => {
     calculateEarningsDeductionsTotal();
   }, [salaryDetails]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return maternityLeaveSalaries.slice(startIndex, endIndex);
+  }, [maternityLeaveSalaries, currentPage, rowsPerPage]);
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
@@ -359,6 +369,8 @@ function MaternityLeaveSalaries() {
     });
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -403,8 +415,8 @@ function MaternityLeaveSalaries() {
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    {maternityLeaveSalaries?.length > 0 ? (
-                      maternityLeaveSalaries?.map((item, index) => (
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
                         <tr>
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
@@ -432,6 +444,13 @@ function MaternityLeaveSalaries() {
                   </tbody>
                 </table>
               </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -450,68 +469,10 @@ function MaternityLeaveSalaries() {
           <Modal.Body>
             <div className="accountDetail_card">
               <Form noValidate validated={validated}>
-                {/* <div className="mb-2">
-                  <label className="form-label mb-1">Employee Name</label>
-                  <select className="form-select" value={newData.idEmployee}
-                    onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
-                    <option value={''}>Select</option>
-                    {
-                      employeesList?.map((el) => (
-                        <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
-                      ))
-                    }
-                  </select>
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Month From</label>
-                  <div className="row m-0">
-                    <div className="col-md-12 ps-0 pe-2">
-                      <DatePicker className="form-control" selected={newData.maternityLeaveFrom}
-                        onChange={(date) => setNewData({ ...newData, maternityLeaveFrom: date })}
-                        required
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText='From Date' />
-                    </div>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Month To</label>
-                  <div className="row m-0">
-                    <div className="col-md-12 ps-0 pe-2">
-                      <DatePicker className="form-control" selected={newData.maternityLeaveTo}
-                        onChange={(date) => setNewData({ ...newData, maternityLeaveTo: date })}
-                        required
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText='To Date' />
-                    </div>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Net Salary</label>
-                  <input className="form-control" type="number" value={newData.netSalary}
-                    onChange={(e) => setNewData({ ...newData, netSalary: e.target.value })}
-                    required placeholder='Add amount' />
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Salary During Maternity Leave</label>
-                  <input className="form-control" type="number" value={newData.maternityLeaveSalary}
-                    onChange={(e) => setNewData({ ...newData, maternityLeaveSalary: e.target.value })}
-                    required placeholder='Add amount' />
-                </div> */}
-
-
                 <div class="row m-0">
                   <div class="col-md-5 p-2">
                     <label class="form-label mb-1">Employee Name</label>
-                    {/* <select className="form-select" value={newData.idEmployee}
-                      onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
-                      <option value={''}>Select</option>
-                      {
-                        employeesList?.map((el) => (
-                          <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
-                        ))
-                      }
-                    </select> */}
+
                     <Select
                       options={employeesListOption}
                       isSearchable
@@ -523,24 +484,7 @@ function MaternityLeaveSalaries() {
 
                   <div class="col-md-3 p-2">
                     <label class="form-label mb-1">Month From</label>
-                    {/* <div className="row m-0">
-                      <div className="col-md-12 ps-0 pe-2">
-                        <DatePicker className="form-control" selected={newData.maternityLeaveFrom}
-                          onChange={(date) => setNewData({ ...newData, maternityLeaveFrom: date })}
-                          required
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText='From Date' />
-                      </div>
-                    </div> */}
-                    {/* <select className="form-select" value={newData.idSalaryMonthFrom}
-                      onChange={(e) => setNewData({ ...newData, idSalaryMonthFrom: e.target.value })} required>
-                      <option value={''}>Select</option>
-                      {
-                        salaryMonthsList?.map((el) => (
-                          <option value={el.idSalaryMonth} key={el.idSalaryMonth}>{el.salaryMonthText}</option>
-                        ))
-                      }
-                    </select> */}
+
                     <select
                       className="form-select"
                       value={newData.idSalaryMonthFrom}
@@ -557,24 +501,7 @@ function MaternityLeaveSalaries() {
                   </div>
                   <div class="col-md-3 p-2">
                     <label class="form-label mb-1">Month To</label>
-                    {/* <div className="row m-0">
-                      <div className="col-md-12 ps-0 pe-2">
-                        <DatePicker className="form-control" selected={newData.maternityLeaveTo}
-                          onChange={(date) => setNewData({ ...newData, maternityLeaveTo: date })}
-                          required
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText='To Date' />
-                      </div>
-                    </div> */}
-                    {/* <select className="form-select" value={newData.idSalaryMonthTo}
-                      onChange={(e) => setNewData({ ...newData, idSalaryMonthTo: e.target.value })} required>
-                      <option value={''}>Select</option>
-                      {
-                        salaryMonthsList?.map((el) => (
-                          <option value={el.idSalaryMonth} key={el.idSalaryMonth}>{el.salaryMonthText}</option>
-                        ))
-                      }
-                    </select> */}
+
                     <select
                       className="form-select"
                       value={newData.idSalaryMonthTo}

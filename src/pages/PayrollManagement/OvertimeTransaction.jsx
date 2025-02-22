@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import OvertimeService from "../../core/services/OvertimeService";
@@ -8,6 +8,7 @@ import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import Select from 'react-select';
+import Pagination from "../../components/pagination";
 
 function OvertimeTransaction() {
 
@@ -37,6 +38,9 @@ function OvertimeTransaction() {
   const [isEdit, setIsEdit] = useState(false);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(overtimeTransactions.length / rowsPerPage);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -55,6 +59,12 @@ function OvertimeTransaction() {
   useEffect(() => {
     calculateDuration();
   }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return overtimeTransactions.slice(startIndex, endIndex);
+  }, [overtimeTransactions, currentPage, rowsPerPage]);
 
   const calculateDuration = () => {
     const startDate = moment(newData.startDate).format('YYYY-MM-DD');
@@ -218,6 +228,8 @@ function OvertimeTransaction() {
     }));
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -257,34 +269,7 @@ function OvertimeTransaction() {
               </div>
             </div>
             <div className="card-body">
-              {/* <div className="pb-2">
-                <div className="form-check form-check-inline ">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="inlineRadioOptions"
-                    id="inlineRadio1"
-                    value="option1"
-                    checked
-                  />
-                  <label className="form-check-label" for="inlineRadio1">
-                    Action Pending
-                  </label>
-                </div>
-                <div className="form-check form-check-inline">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="inlineRadioOptions"
-                    id="inlineRadio2"
-                    value="option2"
-                  />
-                  <label className="form-check-label" for="inlineRadio2">
-                    Action Completed options
-                  </label>
-                </div>
-              </div> */}
-
+              
               <div className="table-responsive ">
                 <table className="table table-sm">
                   <thead>
@@ -305,8 +290,8 @@ function OvertimeTransaction() {
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    {overtimeTransactions?.length > 0 ? (
-                      overtimeTransactions?.map((item, index) => (
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
                         <tr>
                           {/* <td>
                             {" "}
@@ -348,25 +333,14 @@ function OvertimeTransaction() {
                     )}
                   </tbody>
                 </table>
-                {/* <div className="text-center pt-3">
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-sm py-2 px-4 me-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#Approved_Overtime"
-                  >
-                    Approve Selected Record
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-reject  btn-sm py-2 px-4"
-                    data-bs-dismiss="modal"
-                    data-bs-toggle="modal"
-                    data-bs-target="#Rejected_Overtime "
-                  >
-                    Reject Selected Record
-                  </button>
-                </div> */}
+               
+              </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             </div>
           </div>
@@ -389,15 +363,7 @@ function OvertimeTransaction() {
                     <div className="row m-0 mt-3">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
-                        {/* <select className="form-select" value={newData.idEmployee}
-                          onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
-                          <option value={''}>Select</option>
-                          {
-                            employeesList?.map((el) => (
-                              <option value={el.idEmployee} key={el.idEmployee}>{el.employeeName}</option>
-                            ))
-                          }
-                        </select> */}
+                      
                         <Select
                           options={employeesListOption}
                           isSearchable

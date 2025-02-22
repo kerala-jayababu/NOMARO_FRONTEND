@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ScheduledDeductionService from "../../core/services/ScheduledDeductionService";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
@@ -9,6 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
+import Pagination from "../../components/pagination";
 
 function ScheduledDeductions() {
   const [scheduledDeductions, setScheduledDeductions] = useState([]);
@@ -36,6 +37,9 @@ function ScheduledDeductions() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(scheduledDeductions.length / rowsPerPage);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -72,6 +76,12 @@ function ScheduledDeductions() {
     newData.deductionToSalaryMonthDate,
     newData.totalAmount,
   ]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return scheduledDeductions.slice(startIndex, endIndex);
+  }, [scheduledDeductions, currentPage, rowsPerPage]);
 
   const getScheduledDeductions = () => {
     const date = moment(startDate).format("YYYY-MM-DD");
@@ -252,6 +262,8 @@ function ScheduledDeductions() {
     });
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -297,8 +309,8 @@ function ScheduledDeductions() {
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    {scheduledDeductions?.length > 0 ? (
-                      scheduledDeductions?.map((item, index) => (
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
                         <tr>
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
@@ -327,6 +339,13 @@ function ScheduledDeductions() {
                   </tbody>
                 </table>
               </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -347,15 +366,7 @@ function ScheduledDeductions() {
               <Form noValidate validated={validated}>
                 <div className="mb-2">
                   <label className="form-label mb-1">Employee Name</label>
-                  {/* <select className="form-select" value={newData.idEmployee}
-                    onChange={(e) => setNewData({ ...newData, idEmployee: e.target.value })} required>
-                    <option value={''}>Select</option>
-                    {
-                      employeesList?.map((el) => (
-                        <option value={el.idEmployee} key={el.idEmployee}>{el.fullName}</option>
-                      ))
-                    }
-                  </select> */}
+
                   <Select
                     options={employeesListOption}
                     isSearchable
@@ -376,21 +387,7 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month From</label>
-                  {/* <div className="row m-0">
-                    <div className="col-md-12 ps-0 pe-2">
-                      <DatePicker className="form-control" dateFormat="MM/yyyy" placeholderText={'From Date'} showMonthYearPicker
-                        selected={newData.deductionFromSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionFromSalaryMonthDate: date })} />
-                    </div>
-                  </div> */}
-                  {/* <select className="form-select" value={newData.deductionFromSalaryMonthDate}
-                    onChange={(e) => setNewData({ ...newData, deductionFromSalaryMonthDate: e.target.value })} required>
-                    <option value={''}>Select</option>
-                    {
-                      salaryMonthsListFrom?.map((el) => (
-                        <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
-                      ))
-                    }
-                  </select> */}
+
                   <select
                     className="form-select"
                     value={newData.deductionFromSalaryMonthDate}
@@ -407,21 +404,7 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month To</label>
-                  {/* <div className="row m-0">
-                    <div className="col-md-12 ps-0 pe-2">
-                      <DatePicker className="form-control" dateFormat="MM/DD/YYYY" placeholderText={'To Date'}
-                        selected={newData.deductionToSalaryMonthDate} onChange={(date) => setNewData({ ...newData, deductionToSalaryMonthDate: date })} />
-                    </div>
-                  </div> */}
-                  {/* <select className="form-select" value={newData.deductionToSalaryMonthDate}
-                    onChange={(e) => setNewData({ ...newData, deductionToSalaryMonthDate: e.target.value })} required>
-                    <option value={''}>Select</option>
-                    {
-                      salaryMonthsListTo?.map((el) => (
-                        <option value={el.salaryMonthDate} key={el.salaryMonthDate}>{el.salaryMonthText}</option>
-                      ))
-                    }
-                  </select> */}
+
                   <select
                     className="form-select"
                     value={newData.deductionToSalaryMonthDate}
