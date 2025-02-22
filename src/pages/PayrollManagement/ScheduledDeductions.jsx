@@ -34,7 +34,7 @@ function ScheduledDeductions() {
   const [isEdit, setIsEdit] = useState(false);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [salaryMonthsList , setSalaryMonthsList ] = useState([]);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
 
   useEffect(() => {
@@ -228,7 +228,7 @@ function ScheduledDeductions() {
 
   const handleMonthFromChange = (e) => {
     const selectedDate = e.target.value;
-    const selectedId = (salaryMonthsList.find(el=>el.salaryMonthDate == selectedDate)).idSalaryMonth;
+    const selectedId = (salaryMonthsList.find(el => el.salaryMonthDate == selectedDate)).idSalaryMonth;
     setNewData({
       ...newData,
       deductionFromSalaryMonthDate: selectedDate,
@@ -238,7 +238,7 @@ function ScheduledDeductions() {
       const filteredList = salaryMonthsList.filter(
         (el) => el.idSalaryMonth > parseInt(selectedId, 10)
       );
-      
+
       setFilteredMonthsList(filteredList);
     } else {
       setFilteredMonthsList(salaryMonthsList);
@@ -263,10 +263,10 @@ function ScheduledDeductions() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
                 <div className="list_searchbox">
-                  <input type="text" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -366,8 +366,13 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Total Deduction</label>
-                  <input className="form-control" type="number" value={newData.totalAmount}
-                    onChange={(e) => setNewData({ ...newData, totalAmount: e.target.value })} required />
+                  <input className="form-control" type="number" value={newData.totalAmount} min="0" max="999999999999"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d{0,12}$/.test(value)) {
+                        setNewData({ ...newData, totalAmount: value });
+                      }
+                    }} required />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month From</label>

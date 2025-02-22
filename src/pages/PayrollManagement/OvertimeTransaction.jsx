@@ -237,10 +237,10 @@ function OvertimeTransaction() {
                 </div>
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
                 <div className="list_searchbox">
-                  <input type="text" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -428,7 +428,7 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, startDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' />
+                              placeholderText='Select Date' showYearDropdown />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -445,7 +445,7 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' minDate={newData.startDate} />
+                              placeholderText='Select Date' minDate={newData.startDate} showYearDropdown />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -462,7 +462,7 @@ function OvertimeTransaction() {
                             type="number"
                             className="form-control"
                             placeholder="00"
-                            value={newData.durationInHours}
+                            value={newData.durationInHours} disabled={true}
                             onChange={(e) => setNewData({ ...newData, durationInHours: e.target.value })} required
                           />
                         </div>

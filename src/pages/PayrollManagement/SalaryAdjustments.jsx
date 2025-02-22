@@ -225,7 +225,7 @@ function SalaryAdjustments() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                   {/* <DatePicker
                     id="startDate"
                     name="startDate"
@@ -234,7 +234,7 @@ function SalaryAdjustments() {
                   /> */}
                 </div>
                 <div className="list_searchbox">
-                  <input type="text" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -257,11 +257,11 @@ function SalaryAdjustments() {
                       <th>Employee Name</th>
                       <th>Department</th>
                       <th>Designation</th>
-                      <th>Adjustment Date</th>
-                      <th>Adjustment Type</th>
+                      <th>Date</th>
+                      <th>Type</th>
                       <th>Taxable </th>
-                      <th>Allocating Salary Month</th>
-                      <th>Allocating Salary Head</th>
+                      <th>Salary Month</th>
+                      <th>Salary Head</th>
                       <th className="text-end">Amount</th>
                       {/* <th>Remarks</th> */}
                       <th className="text-end"></th>
@@ -378,7 +378,7 @@ function SalaryAdjustments() {
                           onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
                           required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
-                          placeholderText='Select Date' />
+                          placeholderText='Select Date' showYearDropdown/>
                         {/* <DatePicker
                           id="payAdjustmentDate"
                           name="payAdjustmentDate"
@@ -461,8 +461,14 @@ function SalaryAdjustments() {
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Amount</label>
                     <input className="form-control" type="number" value={newData.amount}
-                      onChange={(e) => setNewData({ ...newData, amount: e.target.value })}
-                      required placeholder='Add amount' />
+                      // onChange={(e) => setNewData({ ...newData, amount: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d{0,12}$/.test(value)) {
+                          setNewData({ ...newData, amount: value });
+                        }
+                      }}
+                      required placeholder='Add amount'min="0" max="999999999999"/>
                   </div>
 
                   <div className="col-md-12 p-2">

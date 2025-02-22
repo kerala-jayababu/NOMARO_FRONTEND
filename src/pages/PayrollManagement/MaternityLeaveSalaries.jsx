@@ -370,10 +370,10 @@ function MaternityLeaveSalaries() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
                 <div className="list_searchbox">
-                  <input type="text" className="form-control" placeholder="Search" value={searchText}
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
@@ -682,7 +682,14 @@ function MaternityLeaveSalaries() {
                               </td>
                               <td>
                                 <input type="number" class="form-control" value={detail.amount} name="amount"
-                                  onChange={(e) => { handleInputChange(index, e); }}
+                                  // onChange={(e) => { handleInputChange(index, e); }} 
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^\d{0,12}$/.test(value)) {
+                                      handleInputChange(index, e);
+                                    }
+                                  }}
+                                  min="0" max="999999999999"
                                   placeholder="Amount" required />
                               </td>
                               <td>
