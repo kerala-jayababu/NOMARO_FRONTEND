@@ -1286,32 +1286,44 @@ const EmployeeProfile = () => {
             <h6>
               <strong>Add Overtime Details</strong>
             </h6>
-            <Table
-              headers={["Days", "Hourly Rate", "Applied Rate", ""]}
-              rows={overtimeDetails.map((detail, index) => (
+
+
+
+           {/* Table Component Begins*/}
+           <table className="table table-sm mb-0 border">
+            <thead>
+              <tr>
+                <th>Days</th>
+                <th className="text-nowrap">Hourly Rate</th>
+                <th className="text-nowrap">Applied Rate</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {overtimeDetails.map((detail, index) => (
                 <React.Fragment key={index}>
                   <tr>
-                    <td>
-                      <Dropdown
-                        options={overtimeOptions}
-                        name="overtimeDays"
-                        value={
+                    <td className="col-md-3">
+                    <Dropdown
+                      options={overtimeOptions}
+                      name="overtimeDays"
+                      value={
                           overtimeOptions.find(
-                            (option) => option.label === detail.type
+                          (option) => option.label === detail.type
                           )?.value || ""
-                        }
-                        onChange={(e) =>
+                      }
+                      onChange={(e) =>
                           handleOvertimeChange(index, "type", e.target.value)
-                        }
+                      }
                       />
                     </td>
-                    <td>
-                      <Input
+                    <td className="col-md-3">
+                      <input
                         type="text"
+                        className="form-control"
                         maxLength="10"
                         name="hourlyRate"
                         value={detail.hourlyRate}
-                        style={{ marginTop: "-14.5px" }}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (/^\d{0,10}$/.test(value)) {
@@ -1320,13 +1332,13 @@ const EmployeeProfile = () => {
                         }}
                       />
                     </td>
-                    <td>
-                    <Input
+                    <td className="col-md-3">
+                      <input
                         type="text"
                         maxLength="5"
                         name="appliedRate"
+                        className="form-control"
                         value={detail.appliedRate}
-                        style={{ marginTop: "-14.5px" }}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
@@ -1335,16 +1347,13 @@ const EmployeeProfile = () => {
                         }}
                       />
                     </td>
-                    <td>
+                    <td className="col-md-1">
                       {index === overtimeDetails.length - 1 && (
                         <AddIcon onClick={handleAddOvertimeRow} />
                       )}
-                      {overtimeDetails.length > 1 &&
-                        index < overtimeDetails.length - 1 && (
-                          <DeleteIcon
-                            onClick={() => handleDeleteOvertimeRow(index)}
-                          />
-                        )}
+                      {overtimeDetails.length > 1 && index < overtimeDetails.length - 1 && (
+                        <DeleteIcon onClick={() => handleDeleteOvertimeRow(index)} />
+                      )}
                     </td>
                   </tr>
                   {Object.keys(overtimeErrors).some((key) =>
@@ -1368,7 +1377,14 @@ const EmployeeProfile = () => {
                   )}
                 </React.Fragment>
               ))}
-            />
+            </tbody>
+          </table>
+
+
+          {/* Table Component Ends*/}
+
+
+          
           </div>
           <div className="col-md-4">
             <h6>
