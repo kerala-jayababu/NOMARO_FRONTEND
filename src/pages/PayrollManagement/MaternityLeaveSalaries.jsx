@@ -113,8 +113,9 @@ function MaternityLeaveSalaries() {
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
-      setEmployeesList(res.data.data);
-      const options = res.data.data.map(employee => ({
+      // setEmployeesList(res.data.data);
+      const females = res.data.data.filter(em => em.gender == 'FEMALE');
+      const options = females.map(employee => ({
         value: employee.idEmployee,
         label: employee.fullName,
       }));
