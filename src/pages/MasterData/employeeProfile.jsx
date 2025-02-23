@@ -1157,7 +1157,7 @@ const EmployeeProfile = () => {
                   <tr>
                     <td className="col-md-3">
                         <Dropdown
-                          options={[{ value: "", label: "Select an option" }, ...bankOptions]}
+                          options={[ ...bankOptions]}
                           name="bankName"
                           value={bank.selectedBank}
                           onChange={(e) => handleBankChange(e.target.value, index)}
@@ -1165,7 +1165,7 @@ const EmployeeProfile = () => {
                       </td>
                       <td className="col-md-3">
                         <Dropdown
-                          options={[{ value: "", label: "Select an option" }, ...branchOptions]}
+                          options={[...branchOptions]}
                           name="branchName"
                           value={bank.selectedBranch}
                           onChange={(e) => handleBranchChange(e.target.value, index)}
@@ -1356,7 +1356,6 @@ const EmployeeProfile = () => {
             <Dropdown
               label="Budget Code"
               options={[
-                { value: "", label: "Select an option" },
                 ...budgetCodeOptions,
               ]}
               name="budgetCode"
