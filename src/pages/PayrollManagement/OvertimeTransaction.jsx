@@ -168,7 +168,6 @@ function OvertimeTransaction() {
     if (newData.file) {
         formData.append('file', newData.file);
     }
-
    
     OvertimeService.saveOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
@@ -194,10 +193,24 @@ function OvertimeTransaction() {
       setValidated(true);
       return;
     }
-    let passData = newData;
-    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
-    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
-    OvertimeService.updateOvertimeTransactionsData(passData).then(res => {
+
+    const formData = new FormData();
+    formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
+    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
+    formData.append('startTime', newData.startTime);
+    formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
+    formData.append('endTime', newData.endTime);
+    formData.append('durationInHours', newData.durationInHours);
+    formData.append('reasonForOvertime', newData.reasonForOvertime);
+    formData.append('attachmentDescription', newData.attachmentDescription);
+
+    // Append the file if it exists
+    if (newData.file) {
+        formData.append('file', newData.file);
+    }
+    OvertimeService.updateOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
         toast.success('Overtime transactions updated successfully', {
           position: 'top-right',
@@ -323,7 +336,7 @@ function OvertimeTransaction() {
                           </td>
                           <td>
                             {
-                              item.file &&
+                              item.attachment &&
                               <button className="btn btn-outline-primary border-0 btn-sm">
                                 <i className="bx bx-paperclip"></i>
                               </button>

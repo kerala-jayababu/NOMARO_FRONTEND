@@ -44,7 +44,7 @@ function MaternityLeaveSalaries() {
   const [errors, setErrors] = useState([]);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
+  const [filteredMonthsList, setFilteredMonthsList] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
@@ -335,7 +335,8 @@ function MaternityLeaveSalaries() {
         amountInUSD: 0
       },
     ]);
-    setSelectedEmployee(null)
+    setSelectedEmployee(null);
+    setFilteredMonthsList([]);
   }
 
   const handleChange = (selectedOption) => {
