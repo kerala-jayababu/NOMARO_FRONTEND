@@ -1064,8 +1064,8 @@ const EmployeeProfile = () => {
                     rows={(Array.isArray(bankData) ? bankData : []).map(
                       (account, index) => (
                         <tr key={index}>
-                          <td>{account.idBank}</td>
-                          <td>{account.idBankBranch}</td>
+                          <td>{account.bankName}</td>
+                          <td>{account.branchName}</td>
                           <td>{account.accountNumber}</td>
                           <td>{account.salaryPercentageDistributed}%</td>
                           <td>{account.currencyCode}</td>
@@ -1157,7 +1157,7 @@ const EmployeeProfile = () => {
                   <tr>
                     <td className="col-md-3">
                         <Dropdown
-                          options={[{ value: "", label: "Select an option" }, ...bankOptions]}
+                          options={[ ...bankOptions]}
                           name="bankName"
                           value={bank.selectedBank}
                           onChange={(e) => handleBankChange(e.target.value, index)}
@@ -1165,7 +1165,7 @@ const EmployeeProfile = () => {
                       </td>
                       <td className="col-md-3">
                         <Dropdown
-                          options={[{ value: "", label: "Select an option" }, ...branchOptions]}
+                          options={[...branchOptions]}
                           name="branchName"
                           value={bank.selectedBranch}
                           onChange={(e) => handleBranchChange(e.target.value, index)}
@@ -1208,10 +1208,14 @@ const EmployeeProfile = () => {
                           
                       </td>
                       <td className="col-md-1">
-                      {index === bankAccountsState.length - 1 && <AddIcon onClick={handleAddRow} />}
-                        {bankAccountsState.length > 1 && index < bankAccountsState.length - 1 && (
-                              <DeleteIcon onClick={() => handleDeleteRow(index)} />
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            {bankAccountsState.length > 1 && (
+                              <DeleteIcon className="delete-icon" onClick={() => handleDeleteRow(index)} />
                             )}
+                            {index === bankAccountsState.length - 1 && (
+                              <AddIcon className="add-icon" onClick={handleAddRow} />
+                            )}
+                        </div>
                       </td>
                   </tr>
                   {Object.keys(bankAccountErrors).some((key) => key.endsWith(`_${index}`)) && (
@@ -1311,12 +1315,14 @@ const EmployeeProfile = () => {
                       />
                     </td>
                     <td className="col-md-1">
-                      {index === overtimeDetails.length - 1 && (
-                        <AddIcon onClick={handleAddOvertimeRow} />
-                      )}
-                      {overtimeDetails.length > 1 && index < overtimeDetails.length - 1 && (
-                        <DeleteIcon onClick={() => handleDeleteOvertimeRow(index)} />
-                      )}
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          {overtimeDetails.length > 1 && (
+                            <DeleteIcon className="delete-icon"  onClick={() => handleDeleteOvertimeRow(index)} />
+                          )}
+                          {index === overtimeDetails.length - 1 && (
+                            <AddIcon className="add-icon" onClick={handleAddOvertimeRow} />
+                          )}
+                      </div>
                     </td>
                   </tr>
                   {Object.keys(overtimeErrors).some((key) =>
@@ -1356,7 +1362,6 @@ const EmployeeProfile = () => {
             <Dropdown
               label="Budget Code"
               options={[
-                { value: "", label: "Select an option" },
                 ...budgetCodeOptions,
               ]}
               name="budgetCode"

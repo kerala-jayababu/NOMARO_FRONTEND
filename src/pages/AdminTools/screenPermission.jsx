@@ -573,7 +573,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                       </div>
                       <div className="card-body p-0">
                         <div className="table-responsive" style={{
-                            maxHeight: "500px", // Adjust the height as needed
+                            maxHeight: "440px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
@@ -582,21 +582,19 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                             columns={columns}
                             onSelectionChange={handleEmployeeSelectionChange}
                           />
-                          <div className="text-center p-2 mt-2">
+                        </div>
+                        <div className="text-center p-2 mt-2">
                             <button
                               className="btn btn-primary btn-sm py-2 px-4 me-2"
-                              onClick={handleSubmit}
-                            >
+                              onClick={handleSubmit}>
                               Submit
                             </button>
                             <button
                               className="btn btn-outline-secondary btn-sm py-2 px-4"
-                              onClick={handleReset}
-                            >
+                              onClick={handleReset}>
                               Reset
                             </button>
                           </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -623,7 +621,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                       </div>
                       <div className="card-body p-0">
                         <div className="table-responsive" style={{
-                            maxHeight: "500px", // Adjust the height as needed
+                            maxHeight: "440px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
@@ -632,7 +630,8 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                             columns={columns}
                             onSelectionChange={handleDesignationSelectionChange}
                           />
-                          <div className="text-center p-2 mt-2 ">
+                        </div>
+                        <div className="text-center p-2 mt-2 ">
                             <button
                               className="btn btn-primary btn-sm py-2 px-4 me-2"
                               onClick={handleSubmit}
@@ -643,7 +642,6 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                               Reset
                             </button>
                           </div>
-                        </div>
                       </div>
                     </div>
                   </div>

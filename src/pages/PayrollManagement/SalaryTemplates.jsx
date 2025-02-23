@@ -788,40 +788,39 @@ const handleSubmitForApproval = () => {
 };
 
   
-
-  const salaryColumns = [
-    {
-      header: "Salary Head Name",
-      field: "salaryHead",
-      type: "select",
-      options: [
-        { value: "", label: "Select Salary Head" }, // Add this default option
-        ...salaryHeads.map((head) => ({
-          value: head.value.toString(),
-          label: head.displayName,
-        })),
-      ],
-    },
-    {
-      header: "Calculation Method",
-      field: "method",
-      type: "select",
-      options: [
-        { value: "Percentage of", label: "Percentage of" },
-        { value: "Fixed Amount", label: "Fixed Amount" },
-        { value: "Custom Formula", label: "Custom Formula" },
-      ],
-    },
-    {
-      header: "Value/Formula",
-      field: "dynamic",
-      type: "dynamic",
-      percentageOfOptions: salaryHeads.map((head) => ({
+const salaryColumns = [
+  {
+    header: "Salary Head Name",
+    field: "salaryHead",
+    type: "select",
+    options: [
+      { value: "", label: "Select Salary Head" }, // Add this default option
+      ...salaryHeads.map((head) => ({
         value: head.value.toString(),
         label: head.displayName,
       })),
-    },
-  ];
+    ],
+  },
+  {
+    header: "Calculation Method",
+    field: "method",
+    type: "select",
+    options: [
+      { value: "Percentage of", label: "Percentage of" },
+      { value: "Fixed Amount", label: "Fixed Amount" },
+      { value: "Custom Formula", label: "Custom Formula" },
+    ],
+  },
+  {
+    header: "Value/Formula",
+    field: "dynamic",
+    type: "dynamic",
+    percentageOfOptions: salaryHeads.map((head) => ({
+      value: head.value.toString(),
+      label: head.displayName,
+    })),
+  },
+];
 
   const handleAddRow = (newRow) => setSalaryRows([...salaryRows, newRow]);
 
@@ -878,11 +877,69 @@ const handleSubmitForApproval = () => {
           setTotalEarnings(templateData.totalEarnings);
           setTotalDeductions(templateData.totalDeductions);
           setNetSalary(templateData.netSalary);
-  
+
+          // // Process salary template details
+          // const processedDetails = await Promise.all(
+          //   templateData.salaryTemplateDetails.map(async (detail) => {
+          //     let processedDetail = {
+          //       salaryHead: detail.idSalaryHead.toString(),
+          //       method: getMethodFromCalculationMethod(detail.calculationMethod),
+          //       value: detail.fixedAmount || detail.percentageValue || "",
+          //       formula: detail.customFormula || "",
+          //       type: detail.headType,
+          //       percentageOfIdSalaryHead: detail.percentageOfIdSalaryHead?.toString() || "",
+          //       percentageOf: "",
+          //     };
+
+          //     if (detail.calculationMethod === "PERCENTAGE" && detail.percentageOfIdSalaryHead) {
+          //       const percentageOfSalaryHead = salaryHeadsMeta.find(
+          //         (head) => head.idSalaryHead.toString() === detail.percentageOfIdSalaryHead.toString()
+          //       );
+
+          //       if (percentageOfSalaryHead) {
+          //         processedDetail.percentageOf = percentageOfSalaryHead.salaryHeadName;
+          //       }
+          //     }
+
+          //     return processedDetail;
+          //   })
+          // );
           // Process salary template details
-          const processedDetails = await Promise.all(
-            templateData.salaryTemplateDetails.map(processTemplateDetail)
+          const processedDetails = templateData.salaryTemplateDetails.map(
+            (detail) => {
+              let processedDetail = {
+                salaryHead: detail.idSalaryHead.toString(),
+                method: getMethodFromCalculationMethod(
+                  detail.calculationMethod
+                ),
+                value: detail.fixedAmount || detail.percentageValue || "",
+                formula: detail.customFormula || "",
+                type: detail.headType,
+                percentageOfIdSalaryHead:
+                  detail.percentageOfIdSalaryHead?.toString() || "",
+                percentageOf: "",
+              };
+
+              if (
+                detail.calculationMethod === "PERCENTAGE" &&
+                detail.percentageOfIdSalaryHead
+              ) {
+                const percentageOfSalaryHead = salaryHeadsMeta.find(
+                  (head) =>
+                    head.idSalaryHead.toString() ===
+                    detail.percentageOfIdSalaryHead.toString()
+                );
+
+                if (percentageOfSalaryHead) {
+                  processedDetail.percentageOf =
+                    percentageOfSalaryHead.salaryHeadName;
+                }
+              }
+
+              return processedDetail;
+            }
           );
+
           setSalaryRows(processedDetails);
         }
       } catch (error) {
@@ -1095,6 +1152,7 @@ const handleSubmitForApproval = () => {
                       columns={salaryColumns}
                       onAddRow={handleAddRow}
                       onDeleteRow={handleDeleteRow}
+                      isEditing={isEditing}
                       onInputChange={(updatedRows, rowIndex, field) =>
                         handleInputChange(updatedRows, rowIndex, field)
                       }
