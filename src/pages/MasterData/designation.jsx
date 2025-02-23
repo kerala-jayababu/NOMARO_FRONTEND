@@ -29,10 +29,11 @@ const Designation = () => {
     setFormData({ ...formData, [name]: value });
   
     let errors = { ...validationErrors };
-  
+    console.log("error")
+
     if (name === "code") {
-      if (value === "") {
-        delete errors.code; // Allow empty value
+      if (!value.length) {
+        errors.code = "Designation Code is required"; // Allow empty value
       } else if (value.length > 10) {
         errors.code = "Designation Code cannot exceed 10 characters.";
       } else if (!isValidCode(value)) {
@@ -89,25 +90,42 @@ const Designation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (Object.keys(validationErrors).length > 0) {
+  
+    // Clear previous validation errors
+    setValidationErrors({});
+  
+    // Check if both code and name are provided
+    const errors = {};
+    if (!formData.code) {
+      errors.code = "Designation Code is required";
+    }
+    if (!formData.name) {
+      errors.name = "DesignationName is required";
+    }
+    if (formData.overtime === "") {
+      errors.overtime = "Overtime allowance selection is required";
+    }
+  
+    // If there are validation errors, set them and return
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
-
+  
     const payload = {
       idDesignation: editId, // Include only if updating
       designationCode: formData.code,
       designationName: formData.name,
       isOvertimeAllowanceAllowed: formData.overtime === "Yes",
     };
-
+  
     try {
       if (editId) {
         await dispatch(updateDesignations(payload)).unwrap();
       } else {
         await dispatch(addMasterDesignation(payload)).unwrap();
       }
-      
+  
       setFormData({ code: "", name: "", overtime: "Yes" });
       setEditId(null); // Reset edit mode
       setValidationErrors({}); // Clear validation errors

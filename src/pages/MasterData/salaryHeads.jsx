@@ -326,8 +326,8 @@ const handleEditClick = (id) => {
                   ),
                   salaryHeadName: (
                     <div className="salary-head-name">
-                      <span className="badge-headtype" style={{ backgroundColor: head.headType.toUpperCase() === "EARNING" ? "#5d8b1b" : "#701c21" }}>
-                          {head.headType.toUpperCase() === "EARNING" ? "E" : "D"}
+                      <span className="badge-headtype" style={{ backgroundColor: head?.headType === "EARNING" ? "#5d8b1b" : "#701c21" }}>
+                          {head?.headType === "EARNING" ? "E" : "D"}
                       </span>
                       <span className="name">{head.salaryHeadName}</span>
                     </div>

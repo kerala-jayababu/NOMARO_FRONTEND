@@ -74,23 +74,34 @@ const Departments = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (
-      !validateInputs("deptCode", deptCode) ||
-      !validateInputs("deptName", deptName)
-    ) {
+  
+    // Clear previous validation errors
+    setErrors({});
+  
+    // Check if both deptCode and deptName are provided
+    const errors = {};
+    if (!deptCode) {
+      errors.deptCode = "Department code is required";
+    }
+    if (!deptName) {
+      errors.deptName = "Department name is required";
+    }
+  
+    // If there are validation errors, set them and return
+    if (Object.keys(errors).length > 0) {
+      setErrors(errors);
       return;
     }
-
+  
     const departmentData = {
       departmentCode: deptCode,
       departmentName: deptName,
     };
-
+  
     try {
       setIsSubmitting(true);
       let resultAction;
-
+  
       if (editingDepartmentId) {
         console.log("Updating department with ID:", editingDepartmentId);
         // Updating existing department
@@ -104,7 +115,7 @@ const Departments = () => {
         // Adding new department
         resultAction = await dispatch(addMasterDepartment(departmentData));
       }
-
+  
       if (resultAction.payload && resultAction.payload.success) {
         setDeptCode("");
         setDeptName("");
