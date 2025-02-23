@@ -52,14 +52,16 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
                   <strong>{parent.screenName}</strong>
                 </td>
                 {columns.slice(1).map((column) => (
-                  <td key={column.key} className={column.className || ""}>
+                  <td key={column.key} className={column.className || ""} >
                     {column.type === "checkbox" && (
+                     <>
                       <input
                         className="form-check-input"
                         type="checkbox"
                         checked={parent[column.key] || false}
                         onChange={() => handleCheckboxChange(parentIndex, column.key)}
                       />
+                      </>
                     )}
                   </td>
                 ))}

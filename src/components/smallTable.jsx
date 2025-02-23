@@ -164,20 +164,28 @@
               ))}
               {rowActions && (
                 <td>
-                  <div className="d-flex justify-content-center">
+                  <div className="d-flex">
                     {rowIndex === rows.length - 1 ? (
-                      <button
-                        className="btn btn-outline-primary border-0 btn-sm"
-                        onClick={handleAddRow}
-                      >
-                        <i className="bx bx-plus"></i>
-                      </button>
+                      <>
+                       <button
+                          className="btn btn-outline-danger btn-sm border-0"
+                          onClick={() => handleDeleteRow(rowIndex)}>
+                            <i className="bx bx-trash"></i>
+                        </button>
+
+                        <button
+                          className="btn btn-outline-primary border-0 btn-sm"
+                          onClick={handleAddRow}>
+                          <i className="bx bx-plus"></i>
+                        </button>
+                      </>
+                     
+                      
                     ) : (
                       <button
                         className="btn btn-outline-danger btn-sm border-0"
-                        onClick={() => handleDeleteRow(rowIndex)}
-                      >
-                        <i className="bx bx-trash"></i>
+                        onClick={() => handleDeleteRow(rowIndex)}>
+                          <i className="bx bx-trash"></i>
                       </button>
                     )}
                   </div>

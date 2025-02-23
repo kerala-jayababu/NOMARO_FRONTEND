@@ -187,7 +187,7 @@ const Designation = () => {
         </div>
 
         <div className="col-lg-4">
-          <Card title={editId ? "Update Designation" : "Add Designation"}>
+          <Card title={"Add/Update Designation"}>
             <form onSubmit={handleSubmit}>
               <Input
                 label="Designation Code"
