@@ -81,14 +81,11 @@ function OvertimeTransaction() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
     setNewData(prevState => ({
-      ...prevState,
-      file: formData,
-      attachment: file.name ?? ""
+        ...prevState,
+        file: file,
     }));
-  };
+};
 
   const getEmployeesHeirarchy = () => {
     CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
@@ -147,16 +144,33 @@ function OvertimeTransaction() {
     setShowModal(true);
   }
 
-  const saveOvertimeTransactions = (e) => {
+  const saveOvertimeTransactions = (e) => {    
     e.preventDefault();
     if (!newData.idEmployee || !newData.startDate) {
-      setValidated(true);
-      return;
+        setValidated(true);
+        return;
     }
-    let passData = newData;
-    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
-    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
-    OvertimeService.saveOvertimeTransactionsData(passData).then(res => {
+
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
+    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
+    formData.append('startTime', newData.startTime);
+    formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
+    formData.append('endTime', newData.endTime);
+    formData.append('durationInHours', newData.durationInHours);
+    formData.append('reasonForOvertime', newData.reasonForOvertime);
+    formData.append('attachmentDescription', newData.attachmentDescription);
+
+    // Append the file if it exists
+    if (newData.file) {
+        formData.append('file', newData.file);
+    }
+
+   
+    OvertimeService.saveOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
         toast.success('Overtime transactions added successfully', {
           position: 'top-right',
