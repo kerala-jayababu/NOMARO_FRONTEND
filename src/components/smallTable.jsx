@@ -9,6 +9,7 @@
     onDeleteRow,
     onInputChange,
     isEditing = false,
+    calculateTotal,
   }) => {
     const [rows, setRows] = useState(initialRows);
 
@@ -28,8 +29,10 @@
 
     const handleDeleteRow = (index) => {
       const updatedRows = rows.filter((_, i) => i !== index);
+      console.log(updatedRows, "updatedRows-19859605");
       setRows(updatedRows);
       if (onDeleteRow) onDeleteRow(index);
+      if(updatedRows) calculateTotal(updatedRows);
     };
 
     const handleInputChange = (e, index, field) => {
@@ -217,4 +220,5 @@
     onDeleteRow: PropTypes.func,
     onInputChange: PropTypes.func,
     isEditing: PropTypes.bool, // Add isEditing to propTypes
+    calculateTotal: PropTypes.func, // Add calculateTotals to propTypes
   };

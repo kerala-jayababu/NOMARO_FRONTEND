@@ -18341,3 +18341,9 @@ html:not(.layout-footer-fixed) .content-wrapper {
   position: relative;
   padding-left: 170px;
 }
+
+.custom-multiselect th,
+.custom-multiselect td {
+  /* min-width: 60px;  */
+  text-align: center; 
+}

@@ -34,7 +34,7 @@ const Grid = ({ columns, data, onEditClick, idKey, modalId, popUpId, onEmpCodeCl
                             {row[column.key]}
                           </a>
                         ) : (
-                          <span style={{ cursor: "pointer", textDecoration: "none" }}>
+                          <span style={{  textDecoration: "none" }}>
                             {row[column.key]}
                           </span>
                         )

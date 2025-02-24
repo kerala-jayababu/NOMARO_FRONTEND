@@ -147,6 +147,89 @@ const handleEditClick = (id) => {
   //     [name]: "",
   //   });
   // };
+  const validateField = (name, value) => {
+    let error = "";
+  
+    switch (name) {
+      case "salaryHeadCode":
+        if (!value.trim()) {
+          error = "Salary Head Code is required.";
+        } else if (
+          (!currentSalaryHead?.idSalaryHead ||
+            currentSalaryHead.salaryHeadCode !== value) &&
+          salaryHeadList.some(
+            (head) => head.salaryHeadCode.toLowerCase() === value.toLowerCase()
+          )
+        ) {
+          error = "Salary Head Code Already Exists.";
+        }
+        break;
+  
+      case "salaryHeadName":
+        if (!value.trim()) {
+          error = "Salary Head Name is required.";
+        } else if (
+          (!currentSalaryHead?.idSalaryHead ||
+            currentSalaryHead.salaryHeadName !== value) &&
+          salaryHeadList.some(
+            (head) => head.salaryHeadName.toLowerCase() === value.toLowerCase()
+          )
+        ) {
+          error = "Salary Head Name Already Exists.";
+        }
+        break;
+  
+      case "orderNumber":
+        if (!value) {
+          error = "Order Number is required.";
+        } else if (
+          !currentSalaryHead?.idSalaryHead &&
+          salaryHeadList.some(
+            (head) => Number(head.orderNumber) === Number(value)
+          )
+        ) {
+          error = "Order Number Already Exists.";
+        }
+        break;
+  
+      case "customFormula":
+        if (formData.calculationMethod === "Custom Formula") {
+          if (!value.trim()) {
+            error = "Custom Formula is required.";
+          } else if (!isValidCustomFormula(value, salaryHeadList)) {
+            error = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
+          }
+        }
+        break;
+  
+      default:
+        break;
+    }
+  
+    return error;
+  };
+  
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  
+  //   // Allow only numeric values for "orderNumber"
+  //   if (name === "orderNumber" && isNaN(value)) {
+  //     return; // Do nothing if the value is not a number
+  //   }
+  
+  //   // Update the formData state
+  //   setFormData((prevFormData) => ({
+  //     ...prevFormData,
+  //     [name]: value,
+  //   }));
+  
+  //   // Clear errors when the user starts typing
+  //   setErrors((prevErrors) => ({
+  //     ...prevErrors,
+  //     [name]: "",
+  //   }));
+  // };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
   
@@ -161,79 +244,114 @@ const handleEditClick = (id) => {
       [name]: value,
     }));
   
-    // Clear errors when the user starts typing
+    // Validate the field
+    const fieldError = validateField(name, value);
+  
+    // Update the errors state
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: "",
+      [name]: fieldError,
     }));
   };
+  
 
 
+  // const handleRadioChange = (value, name) => {
+  //   setFormData({
+  //     ...formData,
+  //     [name]: value,
+  //   });
+  // };
   const handleRadioChange = (value, name) => {
-    setFormData({
-      ...formData,
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       [name]: value,
-    });
+    }));
+  
+    if (name === "calculationMethod" && value === "Custom Formula") {
+      const formulaError = validateField("customFormula", formData.customFormula);
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        customFormula: formulaError,
+      }));
+    }
   };
+
+  
+  // const validateForm = () => {
+  //   const newErrors = {};
+  
+  //   // Validate mandatory fields
+  //   if (!formData.salaryHeadCode.trim()) {
+  //     newErrors.salaryHeadCode = "Salary Head Code is required.";
+  //   } else if (
+  //     // Only check for existing Salary Head Code if it's a new salary head or updated code is different
+  //     (!currentSalaryHead?.idSalaryHead ||
+  //       currentSalaryHead.salaryHeadCode !== formData.salaryHeadCode) &&
+  //     salaryHeadList.some(
+  //       (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
+  //     )
+  //   ) {
+  //     newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
+  //   }
+  
+  //   // Validate Salary Head Name
+  //   if (!formData.salaryHeadName.trim()) {
+  //     newErrors.salaryHeadName = "Salary Head Name is required.";
+  //   } else if (
+  //     // Only check for existing Salary Head Name if it's a new salary head or updated name is different
+  //     (!currentSalaryHead?.idSalaryHead ||
+  //       currentSalaryHead.salaryHeadName !== formData.salaryHeadName) &&
+  //     salaryHeadList.some(
+  //       (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
+  //     )
+  //   ) {
+  //     newErrors.salaryHeadName = "Salary Head Name Already Exists.";
+  //   }
+  
+  //   // Validate mandatory orderNumber
+  //   if (!formData.orderNumber) {
+  //     newErrors.orderNumber = "Order Number is required.";
+  //   } else {
+  //     // Validate unique orderNumber
+  //     if (
+  //       !currentSalaryHead?.idSalaryHead &&
+  //       salaryHeadList.some(
+  //         (head) => Number(head.orderNumber) === Number(formData.orderNumber)
+  //       )
+  //     ) {
+  //       newErrors.orderNumber = "Order Number Already Exists.";
+  //     }
+  //   }
+  
+  //   // Validate Custom Formula
+  //   if (formData.calculationMethod === "Custom Formula") {
+  //     if (!formData.customFormula.trim()) {
+  //       newErrors.customFormula = "Custom Formula is required.";
+  //     } else if (!isValidCustomFormula(formData.customFormula, salaryHeadList)) {
+  //       newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
+  //     }
+  //   }
+  
+  //   setErrors(newErrors);
+  //   return Object.keys(newErrors).length === 0; // Return true if no errors
+  // };
 
   const validateForm = () => {
     const newErrors = {};
   
-    // Validate mandatory fields
-    if (!formData.salaryHeadCode.trim()) {
-      newErrors.salaryHeadCode = "Salary Head Code is required.";
-    } else if (
-      // Only check for existing Salary Head Code if it's a new salary head or updated code is different
-      (!currentSalaryHead?.idSalaryHead ||
-        currentSalaryHead.salaryHeadCode !== formData.salaryHeadCode) &&
-      salaryHeadList.some(
-        (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
-      )
-    ) {
-      newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
-    }
-  
-    // Validate Salary Head Name
-    if (!formData.salaryHeadName.trim()) {
-      newErrors.salaryHeadName = "Salary Head Name is required.";
-    } else if (
-      // Only check for existing Salary Head Name if it's a new salary head or updated name is different
-      (!currentSalaryHead?.idSalaryHead ||
-        currentSalaryHead.salaryHeadName !== formData.salaryHeadName) &&
-      salaryHeadList.some(
-        (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
-      )
-    ) {
-      newErrors.salaryHeadName = "Salary Head Name Already Exists.";
-    }
-  
-    // Validate mandatory orderNumber
-    if (!formData.orderNumber) {
-      newErrors.orderNumber = "Order Number is required.";
-    } else {
-      // Validate unique orderNumber
-      if (
-        !currentSalaryHead?.idSalaryHead &&
-        salaryHeadList.some(
-          (head) => Number(head.orderNumber) === Number(formData.orderNumber)
-        )
-      ) {
-        newErrors.orderNumber = "Order Number Already Exists.";
+    // Validate all fields
+    Object.keys(formData).forEach((field) => {
+      const fieldError = validateField(field, formData[field]);
+      if (fieldError) {
+        newErrors[field] = fieldError;
       }
-    }
-  
-    // Validate Custom Formula
-    if (formData.calculationMethod === "Custom Formula") {
-      if (!formData.customFormula.trim()) {
-        newErrors.customFormula = "Custom Formula is required.";
-      } else if (!isValidCustomFormula(formData.customFormula, salaryHeadList)) {
-        newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
-      }
-    }
+    });
   
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
+  
   
 
   const isValidCustomFormula = (formula, salaryHeadList) => {

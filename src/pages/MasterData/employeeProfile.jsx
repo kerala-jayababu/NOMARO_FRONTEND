@@ -142,6 +142,7 @@ const EmployeeProfile = () => {
         dispatch(getEmployeeOvertimeConfigsByID(id)),
       ])
         .then(([bankAccountsResult, overtimeConfigsResult]) => {
+          console.log("Bank Accounts Result:", bankAccountsResult);
           // Handle bank accounts
           if (
             bankAccountsResult.payload &&
@@ -165,6 +166,7 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
+            console.log("Mapped Bank Accounts:", mappedBankAccounts);
             setBankAccountsState(mappedBankAccounts);
           } else {
             setBankAccountsState([
@@ -224,7 +226,6 @@ const EmployeeProfile = () => {
 
       if (employee.idBudgetCode) {
         const budgetCodeValue = employee.idBudgetCode.toString();
-        console.log("Setting selectedBudgetCode:", budgetCodeValue);
         setSelectedBudgetCode(budgetCodeValue);
       }
     }
@@ -346,7 +347,6 @@ const EmployeeProfile = () => {
 
       if (employee.idBudgetCode) {
         const budgetCodeValue = employee.idBudgetCode.toString();
-        console.log("Setting selectedBudgetCode:", budgetCodeValue);
         setSelectedBudgetCode(budgetCodeValue);
       }
     }
@@ -355,7 +355,6 @@ const EmployeeProfile = () => {
 
 
   const handleEmpCodeClick = (empCode) => {
-    console.log(`Emp Code clicked: ${empCode}`);
     // Dispatch the action to get employee profile by emp code
     dispatch(getEmployeeProfileByID(empCode)).then((response) => {
       if (
@@ -369,19 +368,15 @@ const EmployeeProfile = () => {
       }
     });
     dispatch(getEmployeeBankAccountsByID(empCode)).then((response) => {
-      console.log("Bank Accounts Response:", response);
       if (response.payload && response.payload.data) {
         setBankData(response.payload.data || 0); // Update child count state
       }
-      console.log("Bank Data:", bankData);
     });
 
     dispatch(getEmployeeOvertimeConfigsByID(empCode)).then((response) => {
-      console.log("Overtime Response:", response);
       if (response.payload && response.payload.data) {
         setOverTimeData(response.payload.data || 0); // Update child count state
       }
-      console.log("OverTime Data:", overTimeData);
     });
   };
 
@@ -415,10 +410,7 @@ const EmployeeProfile = () => {
       setSelectedEmployee(employeeDetails.data);
       if (employeeDetails.data.idBudgetCode) {
         const budgetCodeValue = employeeDetails.data.idBudgetCode.toString();
-        console.log(
-          "Setting selectedBudgetCode from employeeDetails:",
-          budgetCodeValue
-        );
+
         setSelectedBudgetCode(budgetCodeValue);
         // Fetch the budget code label if needed
         dispatch(getBudgetCodeById(employeeDetails.data.idBudgetCode));
@@ -561,6 +553,14 @@ const EmployeeProfile = () => {
       newState[index][field] = value;
       return newState;
     });
+     // Revalidate total salary percentage when salaryPercentageDistributed changes
+  if (field === "salaryPercentageDistributed") {
+    const salaryPercentageValidation = validateSalaryPercentage();
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: salaryPercentageValidation.error,
+    }));
+  }
   };
 
   const handleAddRow = () => {
@@ -575,6 +575,11 @@ const EmployeeProfile = () => {
         currencyCode: "GYD",
       },
     ]);
+      // Clear total salary percentage error when adding a new row
+  setBankAccountErrors((prevErrors) => ({
+    ...prevErrors,
+    salaryPercentageTotal: "",
+  }));
   };
 
   const handleDeleteRow = (index) => {
@@ -594,6 +599,12 @@ const EmployeeProfile = () => {
       }
       return prevState.filter((_, i) => i !== index);
     });
+      // Revalidate total salary percentage when deleting a row
+  const salaryPercentageValidation = validateSalaryPercentage();
+  setBankAccountErrors((prevErrors) => ({
+    ...prevErrors,
+    salaryPercentageTotal: salaryPercentageValidation.error,
+  }));
   };
 
   // const handleAddOvertimeRow = () => {
@@ -608,8 +619,7 @@ const EmployeeProfile = () => {
   // };
 
   const isDuplicateDayType = (dayType, index) => {
-    console.log("Checking for duplicates in:", dayType);
-    console.log("Checking for duplicates in index:", index, overtimeDetails);
+   
 
     const dayTypeMapping = {
       1: "Workday",
@@ -637,11 +647,7 @@ const EmployeeProfile = () => {
     const lastIndex = newOvertimeDetails.length - 1;
     const newDayType = newOvertimeDetails[lastIndex].type;
 
-    console.log("Checking for duplicates in new row:", lastIndex);
-    console.log(
-      "Checking for duplicates in new type:",
-      newOvertimeDetails[lastIndex].type
-    );
+
 
     if (isDuplicateDayType(newDayType, lastIndex)) {
       setOvertimeErrors((prevErrors) => ({
@@ -657,7 +663,6 @@ const EmployeeProfile = () => {
 
   const handleOvertimeChange = (index, field, value) => {
     if (field === "type" && isDuplicateDayType(value, index)) {
-      console.log("Duplicate found for:", value);
       setOvertimeErrors((prevErrors) => ({
         ...prevErrors,
         [`overtimeType_${index}`]: "Duplicate DayType values are not allowed.",
@@ -738,7 +743,7 @@ const EmployeeProfile = () => {
         !account.salaryPercentageDistributed ||
         isNaN(parseFloat(account.salaryPercentageDistributed)) ||
         parseFloat(account.salaryPercentageDistributed) <= 0 ||
-        parseFloat(account.salaryPercentageDistributed) >= 100
+        parseFloat(account.salaryPercentageDistributed) > 100
       ) {
         isValid = false;
         errors[`salaryPercentage_${index}`] =
@@ -787,11 +792,69 @@ const EmployeeProfile = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const validateSalaryPercentage = () => {
+    const totalPercentage = bankAccountsState.reduce((sum, account) => {
+      const percentage = parseFloat(account.salaryPercentageDistributed) || 0;
+      return sum + percentage;
+    }, 0);
+  
+    if (totalPercentage > 100) {
+      return {
+        isValid: false,
+        error: "The total Salary Percentage Distributed must be less than or equal to 100.",
+      };
+    } 
+  
+    return { isValid: true, error: "" };
+  };
+
+  const validateBankAccountCombinations = () => {
+    const combinations = new Set();
+  
+    for (let i = 0; i < bankAccountsState.length; i++) {
+      const account = bankAccountsState[i];
+      const combinationKey = `${account.selectedBank}-${account.selectedBranch}`;
+      console.log("Combination Key:", combinationKey);
+      if (combinations.has(combinationKey)) {
+        return {
+          isValid: false,
+          error: "Duplicate Bank and BankBranch combination found.",
+        };
+      }
+  
+      combinations.add(combinationKey);
+    }
+  
+    return { isValid: true, error: "" };
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+      // Validate bank account combinations
+  const bankAccountCombinationValidation = validateBankAccountCombinations();
+  console.log("Bank Account Combination Validation:", bankAccountCombinationValidation);
+  if (!bankAccountCombinationValidation.isValid) {
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      bankAccountCombination: bankAccountCombinationValidation.error,
+    }));
+    return; // Stop submission if validation fails
+  }
+
     const bankAccountsValid = validateBankAccounts();
     const overtimeValid = validateOvertimeDetails();
+
+      // Validate salary percentage distribution
+  const salaryPercentageValidation = validateSalaryPercentage();
+  if (!salaryPercentageValidation.isValid) {
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: salaryPercentageValidation.error,
+    }));
+    return; // Stop submission if validation fails
+  }
+
 
     if (!bankAccountsValid || !overtimeValid) {
       return; // Don't proceed with submission if validation fails
@@ -851,7 +914,6 @@ const EmployeeProfile = () => {
         console.error("API Errors:", errors);
         return false;
       } else {
-        console.log("All updates successful");
         setIsModalOpen(false); // Close the modal only on successful submission
         return true;
       }
@@ -861,6 +923,45 @@ const EmployeeProfile = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReset = () => {
+    // Reset bank accounts state
+    setBankAccountsState([
+      {
+        idEmployeeBankAccount: null,
+        selectedBank: banks.length > 0 ? banks[0].value : "",
+        selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+        accountNumber: "",
+        salaryPercentageDistributed: "",
+        currencyCode: "GYD",
+      },
+    ]);
+  
+    // Reset overtime details state
+    setOvertimeDetails([
+      {
+        type: "",
+        hourlyRate: "",
+        appliedRate: "",
+      },
+    ]);
+  
+    // Reset selected budget code
+    setSelectedBudgetCode("");
+  
+    // Reset child count
+    setChildCount(0);
+  
+    // Clear errors
+    setBankAccountErrors({});
+    setOvertimeErrors({});
+  
+    // Optionally, reset other states if needed
+    // setSelectedEmployee(null);
+    // setProfileData("");
+    // setBankData("");
+    // setOverTimeData("");
   };
 
 
@@ -913,6 +1014,7 @@ const EmployeeProfile = () => {
                   idKey="editId"
                   modalId="Add_EMP_Account"
                   popUpId="EMP_profileView"
+
                 />
               )}
               <div className="text-end pt-2">
@@ -930,10 +1032,14 @@ const EmployeeProfile = () => {
           id="EMP_profileView"
           tabIndex="-1"
           aria-hidden="true"
+          data-bs-backdrop="static" // Prevents closing on outside click
+          data-bs-keyboard="false" // Prevents closing on Esc key p
         >
           <div
             className="modal-dialog modal-xl modal-dialog-centered"
             role="document"
+            data-bs-backdrop="static" // Prevents closing on outside click
+          data-bs-keyboard="false" // Prevents closing on Esc key p
           >
             <div className="modal-content">
               <div className="modal-header">
@@ -965,9 +1071,12 @@ const EmployeeProfile = () => {
                       <p className="m-0">{profileData?.fullName}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
-                      <label className="form-label mb-1">Date of Birth, Gender</label>
+                      <label className="form-label mb-1">
+                        Date of Birth, Gender
+                      </label>
                       <p className="m-0">
-                        {profileData?.dob ? profileData.dob : "N/A"} - {profileData?.gender ? profileData?.gender : "N/A"}
+                        {profileData?.dob ? profileData.dob : "N/A"} -{" "}
+                        {profileData?.gender ? profileData?.gender : "N/A"}
                       </p>
                     </div>
 
@@ -994,11 +1103,12 @@ const EmployeeProfile = () => {
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Joining Date</label>
-                      <p className="m-0">{new Date(
-                        profileData?.joiningDate
-                      ).toLocaleDateString()}</p>
+                      <p className="m-0">
+                        {new Date(
+                          profileData?.joiningDate
+                        ).toLocaleDateString()}
+                      </p>
                     </div>
-
 
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Address</label>
@@ -1010,7 +1120,11 @@ const EmployeeProfile = () => {
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Current Status</label>
-                      <p className="m-0"><span className="badge bg-label-success">{profileData?.currentStatus}</span></p>
+                      <p className="m-0">
+                        <span className="badge bg-label-success">
+                          {profileData?.currentStatus}
+                        </span>
+                      </p>
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
@@ -1079,7 +1193,6 @@ const EmployeeProfile = () => {
                       onClick={() => {
                         handleButtonClick(profileData?.idEmployee); // Set the selected employee ID
                         setIsModalOpen(true); // Open the modal
-                      
                       }}
                       data-bs-toggle="modal"
                       data-bs-target="#Add_EMP_Account" // Add # prefix
@@ -1119,6 +1232,7 @@ const EmployeeProfile = () => {
         isSubmitting={isSubmitting}
         isOpen={isModalOpen}
         employeeId={selectedEmployeeId}
+        onReset={handleReset} // Pass the handleReset function here
       >
         <div className="row m-0 mb-3">
           {selectedEmployee && (
@@ -1137,7 +1251,6 @@ const EmployeeProfile = () => {
           <strong>Bank Account Details</strong>
         </h6>
 
-
         {/* Bank Account Details Table Component Starts */}
         <table className="table table-sm mb-0 border">
           <thead>
@@ -1154,79 +1267,125 @@ const EmployeeProfile = () => {
             {bankAccountsState.length > 0 ? (
               bankAccountsState.map((bank, index) => (
                 <React.Fragment key={index}>
-                  <tr>
+                  <tr className="custom-row">
                     <td className="col-md-3">
-                        <Dropdown
-                          options={[ ...bankOptions]}
-                          name="bankName"
-                          value={bank.selectedBank}
-                          onChange={(e) => handleBankChange(e.target.value, index)}
-                        />
-                      </td>
-                      <td className="col-md-3">
-                        <Dropdown
-                          options={[...branchOptions]}
-                          name="branchName"
-                          value={bank.selectedBranch}
-                          onChange={(e) => handleBranchChange(e.target.value, index)}
-                        />
-                      </td>
-                      <td className="col-md-3">
-                        <input
-                            type="text"
-                            className="form-control"
-                            name="accountNumber"
-                            value={bank.accountNumber}
-                            maxLength="25"
-                            onChange={(e) => handleInputChange(e, index, "accountNumber")}
-                          />
+                      <Dropdown
+                        options={[...bankOptions]}
+                        name="bankName"
+                        value={bank.selectedBank}
+                        onChange={(e) =>
+                          handleBankChange(e.target.value, index)
+                        }
+                        
+                      />
+                    </td>
+                    <td className="col-md-3">
+                      <Dropdown
+                        options={[...branchOptions]}
+                        name="branchName"
+                        value={bank.selectedBranch}
+                        onChange={(e) =>
+                          handleBranchChange(e.target.value, index)
+                        }
+                        
+                      />
+                    </td>
+                    <td className="col-md-3">
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="accountNumber"
+                        value={bank.accountNumber}
+                        maxLength="25"
+                        onChange={(e) =>
+                          handleInputChange(e, index, "accountNumber")
+                        }
+                      />
+                    </td>
 
-                      </td>
+                    <td className="col-md-2">
+                      <input
+                        type="text"
+                        name="salaryPercentage"
+                        className="form-control"
+                        value={bank.salaryPercentageDistributed}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                            handleInputChange(
+                              e,
+                              index,
+                              "salaryPercentageDistributed"
+                            );
+                          }
+                        }}
+                      />
+                    </td>
 
-                      <td className="col-md-2">
-                        <input
-                            type="text"
-                            name="salaryPercentage"
-                            className="form-control"
-                            value={bank.salaryPercentageDistributed}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                                handleInputChange(e, index, "salaryPercentageDistributed");
-                              }
-                            }}
+                    <td className="col-md-3">
+                      <Dropdown
+                        options={[
+                          { value: "GYD", label: "GYD" },
+                          { value: "USD", label: "USD" },
+                        ]}
+                        name="currency"
+                        value={bank.currencyCode}
+                        onChange={(e) =>
+                          handleInputChange(e, index, "currencyCode")
+                        }
+                      />
+                    </td>
+                    <td className="col-md-1">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        {bankAccountsState.length > 1 && (
+                          <DeleteIcon
+                            className="delete-icon"
+                            onClick={() => handleDeleteRow(index)}
                           />
-                      </td>
-                      
-                      <td className="col-md-3">
-                        <Dropdown
-                            options={[{ value: "GYD", label: "GYD" }, { value: "USD", label: "USD" }]}
-                            name="currency"
-                            value={bank.currencyCode}
-                            onChange={(e) => handleInputChange(e, index, "currencyCode")}
+                        )}
+                        {index === bankAccountsState.length - 1 && (
+                          <AddIcon
+                            className="add-icon"
+                            onClick={handleAddRow}
                           />
-                          
-                      </td>
-                      <td className="col-md-1">
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            {bankAccountsState.length > 1 && (
-                              <DeleteIcon className="delete-icon" onClick={() => handleDeleteRow(index)} />
-                            )}
-                            {index === bankAccountsState.length - 1 && (
-                              <AddIcon className="add-icon" onClick={handleAddRow} />
-                            )}
-                        </div>
-                      </td>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                  {Object.keys(bankAccountErrors).some((key) => key.endsWith(`_${index}`)) && (
+                  {Object.keys(bankAccountErrors).some((key) =>
+                    key.endsWith(`_${index}`)
+                  ) && (
                     <tr>
                       <td className="col-md-3">
                         <div style={{ color: "red" }}>
-                          {bankAccountErrors[`idBank_${index}`] && <div>{bankAccountErrors[`idBank_${index}`]}</div>}
-                          {bankAccountErrors[`idBankBranch_${index}`] && <div>{bankAccountErrors[`idBankBranch_${index}`]}</div>}
-                          {bankAccountErrors[`accountNumber_${index}`] && <div>{bankAccountErrors[`accountNumber_${index}`]}</div>}
-                          {bankAccountErrors[`salaryPercentage_${index}`] && <div>{bankAccountErrors[`salaryPercentage_${index}`]}</div>}
-                          {bankAccountErrors[`currencyCode_${index}`] && <div>{bankAccountErrors[`currencyCode_${index}`]}</div>}
+                          {bankAccountErrors[`idBank_${index}`] && (
+                            <div>{bankAccountErrors[`idBank_${index}`]}</div>
+                          )}
+                          {bankAccountErrors[`idBankBranch_${index}`] && (
+                            <div>
+                              {bankAccountErrors[`idBankBranch_${index}`]}
+                            </div>
+                          )}
+                          {bankAccountErrors[`accountNumber_${index}`] && (
+                            <div>
+                              {bankAccountErrors[`accountNumber_${index}`]}
+                            </div>
+                          )}
+                          {bankAccountErrors[`salaryPercentage_${index}`] && (
+                            <div>
+                              {bankAccountErrors[`salaryPercentage_${index}`]}
+                            </div>
+                          )}
+                          {bankAccountErrors[`currencyCode_${index}`] && (
+                            <div>
+                              {bankAccountErrors[`currencyCode_${index}`]}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1234,18 +1393,26 @@ const EmployeeProfile = () => {
                 </React.Fragment>
               ))
             ) : (
-              <tr >
-                <td className="text-center col-md-6">No bank accounts found. Click '+' to add one.</td>
+              <tr>
+                <td className="text-center col-md-6">
+                  No bank accounts found. Click '+' to add one.
+                </td>
               </tr>
             )}
           </tbody>
         </table>
-
-
+        {bankAccountErrors.salaryPercentageTotal && (
+          <div className="text-danger mb-3">
+            {bankAccountErrors.salaryPercentageTotal}
+          </div>
+        )}
+        {bankAccountErrors.bankAccountCombination && (
+  <div className="text-danger mb-3">
+    {bankAccountErrors.bankAccountCombination}
+  </div>
+)}
 
         {/* Bank Account Details Table Component Ends */}
-
-      
 
         {/* Overtime Details & Budget Code */}
         <div className="row mt-4">
@@ -1254,106 +1421,115 @@ const EmployeeProfile = () => {
               <strong>Add Overtime Details</strong>
             </h6>
 
-
-
-           {/* Table Component Begins*/}
-           <table className="table table-sm mb-0 border">
-            <thead>
-              <tr>
-                <th>Days</th>
-                <th className="text-nowrap">Hourly Rate</th>
-                <th className="text-nowrap">Applied Rate</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {overtimeDetails.map((detail, index) => (
-                <React.Fragment key={index}>
-                  <tr>
-                    <td className="col-md-3">
-                    <Dropdown
-                      options={overtimeOptions}
-                      name="overtimeDays"
-                      value={
-                          overtimeOptions.find(
-                          (option) => option.label === detail.type
-                          )?.value || ""
-                      }
-                      onChange={(e) =>
-                          handleOvertimeChange(index, "type", e.target.value)
-                      }
-                      />
-                    </td>
-                    <td className="col-md-3">
-                      <input
-                        type="text"
-                        className="form-control"
-                        maxLength="10"
-                        name="hourlyRate"
-                        value={detail.hourlyRate}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d{0,10}$/.test(value)) {
-                            handleOvertimeChange(index, "hourlyRate", value);
+            {/* Table Component Begins*/}
+            <table className="table table-sm mb-0 border">
+              <thead>
+                <tr>
+                  <th>Days</th>
+                  <th className="text-nowrap">Hourly Rate</th>
+                  <th className="text-nowrap">Applied Rate</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {overtimeDetails.map((detail, index) => (
+                  <React.Fragment key={index}>
+                    <tr>
+                      <td className="col-md-3">
+                        <Dropdown
+                          options={overtimeOptions}
+                          name="overtimeDays"
+                          value={
+                            overtimeOptions.find(
+                              (option) => option.label === detail.type
+                            )?.value || ""
                           }
-                        }}
-                      />
-                    </td>
-                    <td className="col-md-3">
-                      <input
-                        type="text"
-                        maxLength="5"
-                        name="appliedRate"
-                        className="form-control"
-                        value={detail.appliedRate}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
-                            handleOvertimeChange(index, "appliedRate", value);
+                          onChange={(e) =>
+                            handleOvertimeChange(index, "type", e.target.value)
                           }
-                        }}
-                      />
-                    </td>
-                    <td className="col-md-1">
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        />
+                      </td>
+                      <td className="col-md-3">
+                        <input
+                          type="text"
+                          className="form-control"
+                          maxLength="10"
+                          name="hourlyRate"
+                          value={detail.hourlyRate}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d{0,10}$/.test(value)) {
+                              handleOvertimeChange(index, "hourlyRate", value);
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="col-md-3">
+                        <input
+                          type="text"
+                          maxLength="5"
+                          name="appliedRate"
+                          className="form-control"
+                          value={detail.appliedRate}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
+                              handleOvertimeChange(index, "appliedRate", value);
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="col-md-1">
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
                           {overtimeDetails.length > 1 && (
-                            <DeleteIcon className="delete-icon"  onClick={() => handleDeleteOvertimeRow(index)} />
+                            <DeleteIcon
+                              className="delete-icon"
+                              onClick={() => handleDeleteOvertimeRow(index)}
+                            />
                           )}
                           {index === overtimeDetails.length - 1 && (
-                            <AddIcon className="add-icon" onClick={handleAddOvertimeRow} />
-                          )}
-                      </div>
-                    </td>
-                  </tr>
-                  {Object.keys(overtimeErrors).some((key) =>
-                    key.endsWith(`_${index}`)
-                  ) && (
-                    <tr>
-                      <td colSpan="4">
-                        <div style={{ color: "red" }}>
-                          {overtimeErrors[`overtimeType_${index}`] && (
-                            <div>{overtimeErrors[`overtimeType_${index}`]}</div>
-                          )}
-                          {overtimeErrors[`hourlyRate_${index}`] && (
-                            <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
-                          )}
-                          {overtimeErrors[`appliedRate_${index}`] && (
-                            <div>{overtimeErrors[`appliedRate_${index}`]}</div>
+                            <AddIcon
+                              className="add-icon"
+                              onClick={handleAddOvertimeRow}
+                            />
                           )}
                         </div>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+                    {Object.keys(overtimeErrors).some((key) =>
+                      key.endsWith(`_${index}`)
+                    ) && (
+                      <tr>
+                        <td colSpan="4">
+                          <div style={{ color: "red" }}>
+                            {overtimeErrors[`overtimeType_${index}`] && (
+                              <div>
+                                {overtimeErrors[`overtimeType_${index}`]}
+                              </div>
+                            )}
+                            {overtimeErrors[`hourlyRate_${index}`] && (
+                              <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
+                            )}
+                            {overtimeErrors[`appliedRate_${index}`] && (
+                              <div>
+                                {overtimeErrors[`appliedRate_${index}`]}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
 
-
-          {/* Table Component Ends*/}
-
-
-          
+            {/* Table Component Ends*/}
           </div>
           <div className="col-md-4">
             <h6>
@@ -1361,19 +1537,15 @@ const EmployeeProfile = () => {
             </h6>
             <Dropdown
               label="Budget Code"
-              options={[
-                ...budgetCodeOptions,
-              ]}
+              options={[...budgetCodeOptions]}
               name="budgetCode"
               value={selectedBudgetCode}
               onChange={(e) => {
                 const value = e.target.value;
-                console.log("Budget Code Dropdown changed:", value);
                 setSelectedBudgetCode(value);
                 const selectedOption = budgetCodeOptions.find(
                   (option) => option.value === value
                 );
-                console.log("Selected Option:", selectedOption.label);
                 if (selectedOption) {
                   setBudgetCodeLabel(selectedOption.label);
                 }

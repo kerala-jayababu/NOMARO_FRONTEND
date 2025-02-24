@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
-const Modal = ({ id, title, children, onClose, onSubmit, isSubmitting, isOpen }) => {
+const Modal = ({ id, title, children, onClose, onSubmit, isSubmitting, isOpen, onReset }) => {
   useEffect(() => {
     const modal = document.getElementById(id);
     if (modal) {
@@ -33,28 +33,40 @@ const Modal = ({ id, title, children, onClose, onSubmit, isSubmitting, isOpen })
   };
 
   return (
-    <div className={`modal fade ${isOpen ? 'show' : ''}`} id={id} tabIndex="-1" aria-hidden="true">
+    <div
+      className={`modal fade ${isOpen ? "show" : ""}`}
+      id={id}
+      tabIndex="-1"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
       <div className="modal-dialog modal-xl modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{title}</h5>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
           <div className="modal-body">{children}</div>
           <div className="modal-footer">
-            <button 
-              type="button" 
-              className="btn btn-primary btn-sm py-2 px-4 me-2" 
+            <button
+              type="button"
+              className="btn btn-primary btn-sm py-2 px-4 me-2"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary btn-sm py-2 px-4" 
-              data-bs-dismiss="modal"
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm py-2 px-4"
               disabled={isSubmitting}
+              onClick={onReset} // Call onReset here
             >
               Reset
             </button>
@@ -75,4 +87,5 @@ Modal.propTypes = {
   onSubmit: PropTypes.func,
   isSubmitting: PropTypes.bool,
   isOpen: PropTypes.bool,
+  onReset: PropTypes.func,
 };

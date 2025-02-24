@@ -34,25 +34,25 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
 
   return (
     <div className="table-responsive">
-      <table className="table table-sm">
+      <table className="table table-sm custom-multiselect">
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.className || ""}>
-                {column.label}
+              <th key={column.key} className={column.className || ""} style={["Update", "Delete"].includes(column.label) ? { padding: "5px 0px" } : {}}>
+                  {column.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody >
           {tableData.map((parent, parentIndex) => (
             <React.Fragment key={parentIndex}>
               <tr>
-                <td>
+                <td> 
                   <strong>{parent.screenName}</strong>
                 </td>
                 {columns.slice(1).map((column) => (
-                  <td key={column.key} className={column.className || ""} >
+                  <td key={column.key} className={column.className || ""}  >
                     {column.type === "checkbox" && (
                      <>
                       <input

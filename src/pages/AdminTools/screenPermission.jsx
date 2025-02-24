@@ -573,7 +573,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                       </div>
                       <div className="card-body p-0">
                         <div className="table-responsive" style={{
-                            maxHeight: "440px", // Adjust the height as needed
+                            maxHeight: "330px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
@@ -621,7 +621,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                       </div>
                       <div className="card-body p-0">
                         <div className="table-responsive" style={{
-                            maxHeight: "440px", // Adjust the height as needed
+                            maxHeight: "330px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>

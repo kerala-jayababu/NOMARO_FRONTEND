@@ -40,7 +40,7 @@ const SingleSelectTable = ({
       </div>
       <div className="card-body p-0">
         <div className="table-responsive"  style={{
-                            maxHeight: "490px", // Adjust the height as needed
+                            maxHeight: "380px", // Adjust the height as needed
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
