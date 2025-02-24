@@ -236,6 +236,7 @@ function SalaryAdjustments() {
 
               <div className="list_menu">
                 <div className="list_searchbox">
+                  <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                  
@@ -263,7 +264,7 @@ function SalaryAdjustments() {
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Department</th>
-                      <th>Designation</th>
+                      {/* <th>Designation</th> */}
                       <th>Date</th>
                       <th>Type</th>
                       <th>Taxable </th>
@@ -281,7 +282,7 @@ function SalaryAdjustments() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.departmentName}</td>
-                          <td>{item?.designationName}</td>
+                          {/* <td>{item?.designationName}</td> */}
                           <td>{moment(item?.payAdjustmentDate).format("MM/DD/YYYY")}</td>
                           <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
                           <td>{item?.isTaxable ? 'Yes' : 'No'}</td>

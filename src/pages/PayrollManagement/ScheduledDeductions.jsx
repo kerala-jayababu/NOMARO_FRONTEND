@@ -278,6 +278,7 @@ function ScheduledDeductions() {
 
               <div className="list_menu">
                 <div className="list_searchbox">
+                  <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
