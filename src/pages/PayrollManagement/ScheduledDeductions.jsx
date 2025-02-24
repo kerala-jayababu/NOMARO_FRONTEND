@@ -170,6 +170,8 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
+    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
+    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Scheduled deductions added successfully', {
@@ -195,6 +197,8 @@ function ScheduledDeductions() {
       return;
     }
     let passData = newData;
+    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
+    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
     ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
       if (res.data.status === 200) {
         toast.success('Scheduled deductions updated successfully', {
@@ -373,6 +377,7 @@ function ScheduledDeductions() {
                     onChange={handleChange}
                     value={selectedEmployee}
                     placeholder={'Select Employee'}
+                    className="textSize"
                   />
                 </div>
                 <div className="mb-2">

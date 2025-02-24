@@ -81,11 +81,13 @@ function OvertimeTransaction() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    console.log(file)
     setNewData(prevState => ({
-        ...prevState,
-        file: file,
+      ...prevState,
+      file: file,
+      attachmentDescription: file.name
     }));
-};
+  };
 
   const getEmployeesHeirarchy = () => {
     CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
@@ -144,11 +146,11 @@ function OvertimeTransaction() {
     setShowModal(true);
   }
 
-  const saveOvertimeTransactions = (e) => {    
+  const saveOvertimeTransactions = (e) => {
     e.preventDefault();
     if (!newData.idEmployee || !newData.startDate) {
-        setValidated(true);
-        return;
+      setValidated(true);
+      return;
     }
 
     // Create a FormData object to handle file upload
@@ -166,9 +168,9 @@ function OvertimeTransaction() {
 
     // Append the file if it exists
     if (newData.file) {
-        formData.append('file', newData.file);
+      formData.append('file', newData.file);
     }
-   
+
     OvertimeService.saveOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
         toast.success('Overtime transactions added successfully', {
@@ -208,7 +210,7 @@ function OvertimeTransaction() {
 
     // Append the file if it exists
     if (newData.file) {
-        formData.append('file', newData.file);
+      formData.append('file', newData.file);
     }
     OvertimeService.updateOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
@@ -257,6 +259,32 @@ function OvertimeTransaction() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.attachmentDescription || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -296,7 +324,7 @@ function OvertimeTransaction() {
               </div>
             </div>
             <div className="card-body">
-              
+
               <div className="table-responsive ">
                 <table className="table table-sm">
                   <thead>
@@ -338,7 +366,7 @@ function OvertimeTransaction() {
                             {
                               item.attachment &&
                               <button className="btn btn-outline-primary border-0 btn-sm">
-                                <i className="bx bx-paperclip"></i>
+                                <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
                               </button>
                             }
                           </td>
@@ -360,7 +388,7 @@ function OvertimeTransaction() {
                     )}
                   </tbody>
                 </table>
-               
+
               </div>
               <div className="text-end pt-2">
                 <Pagination
@@ -390,13 +418,14 @@ function OvertimeTransaction() {
                     <div className="row m-0 mt-3">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
-                      
+
                         <Select
                           options={employeesListOption}
                           isSearchable
                           onChange={handleChange}
                           value={selectedEmployee}
                           placeholder={'Select Employee'}
+                          className="textSize"
                         />
                       </div>
                       <div className="col-md-6 p-2">

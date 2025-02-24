@@ -89,9 +89,25 @@
 }
 
 .staticWidth {
-  max-width: 110px !important;
+  min-width: 110px !important;
 }
 
 .datePicker {
   width: 100%;
+}
+
+.textSize {
+  font-size: 11px;
+}
+
+.controlHeight {
+  height: 38px;
+}
+
+.footerCalcMat {
+  display: flex;
+  gap: 20px;
+  padding-left: 10px;
+  padding-top: 10px;
+  list-style-type: none;
 }
