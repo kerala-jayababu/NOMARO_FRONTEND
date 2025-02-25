@@ -139,10 +139,11 @@ const salaryHeadSlice = createSlice({
     salaryHeadList: [],
     loading: false,
     error: null,
+    currentSalaryHead: null,  
   },
   reducers: {
-    clearError(state) {
-      state.error = null;
+    clearCurrentSalaryHead: (state) => {
+      state.currentSalaryHead = null;
     },
   },
   extraReducers: (builder) => {
@@ -211,7 +212,7 @@ const salaryHeadSlice = createSlice({
       state.error = action.payload;
     });
     builder.addCase(getSalaryHeadById.pending, (state) => {
-      state.status = "loading";
+      state.status = null;
       state.error = null;
     });
     builder.addCase(getSalaryHeadById.fulfilled, (state, action) => {

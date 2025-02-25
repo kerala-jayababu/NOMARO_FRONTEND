@@ -40,25 +40,82 @@ const BudgetCodes = () => {
     { key: "actions", label: "" },
   ];
 
+
+
   const validateInputs = (field, value) => {
     let validationErrors = { ...errors };
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
-    if (field === "budgetCode") {
-      if (!value.match(alphanumericRegex)) {
-        validationErrors.budgetCode =
-          "Budget Code must contain only alphanumeric characters.";
-      } else if (options?.data?.some((item) => item.budgetCode === value)) {
-        validationErrors.budgetCode = "Budget Code already exists.";
+      // Check if the field is empty, and show the required message
+  if (field === "budgetCode" && !value) {
+    validationErrors.budgetCode = "Budget Code is required.";
+  } else if (field === "budgetName" && !value) {
+    validationErrors.budgetName = "Budget Name is required.";
+  }
+
+  
+    if (field === "budgetCode" && value ) {
+      if (value.length === 0) {
+        validationErrors.budgetCode = null;
+      } else if (value.length > 10) {
+        validationErrors.budgetCode = "Budget Code must be 10 characters or less.";
+      } else if (!value.match(alphanumericRegex)) {
+        validationErrors.budgetCode = "Budget Code must contain only alphanumeric characters.";
       } else {
-        delete validationErrors.budgetCode;
+        // Check for duplicates, excluding the current editing item
+        console.log("Checking for duplicates:", localBudgetCodes);
+        const isDuplicate = localBudgetCodes?.some((item) => {
+          console.log("Checking for duplicates:");
+          console.log("Current item:", item);
+          console.log("Editing ID:", editingId);
+          console.log("Item ID:", item.idBudgetCode);
+          console.log("Item Budget Code:", item.budgetCode);
+          console.log("Input Budget Code:", value);
+  
+          return (
+            value &&
+            item.budgetCode.toLowerCase() === value.toLowerCase() &&
+            item.idBudgetCode !== editingId
+          );
+        });
+  
+        console.log("Is Duplicate:", isDuplicate);
+  
+        if (isDuplicate) {
+          validationErrors.budgetCode = "Budget Code Already Exists.";
+        } else {
+          delete validationErrors.budgetCode;
+        }
       }
     }
-
-
+  
+    if (field === "budgetName") {
+      if (value.length === 0) {
+        delete validationErrors.budgetName;
+      } else if (value.length > 50) {
+        validationErrors.budgetName = "Budget Name must be 50 characters or less.";
+      } else {
+        const isDuplicate = budgetCodeState.options?.data?.some(
+          (item) =>
+            item.budgetCodeName.toLowerCase() === value.toLowerCase() &&
+            item.idBudgetCode !== editingId
+        );
+  
+        if (isDuplicate) {
+          validationErrors.budgetName = "Budget Name Already Exists.";
+        } else {
+          delete validationErrors.budgetName;
+        }
+      }
+    }
+  
+    console.log("Validation Errors:", validationErrors);
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   };
+
+
+  
 
   const handleChange = (field, value) => {
     if (field === "budgetCode") setBudgetCode(value);
@@ -69,6 +126,18 @@ const BudgetCodes = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+      // Validate inputs before submitting
+  const isBudgetCodeValid = validateInputs("budgetCode", budgetCode);
+  const isBudgetNameValid = validateInputs("budgetName", budgetName);
+
+  console.log("Validation Results:", {
+    isBudgetCodeValid,
+    isBudgetNameValid,
+    errors,
+  });
+
+
     if (
       !validateInputs("budgetCode", budgetCode) ||
       !validateInputs("budgetName", budgetName)
@@ -120,6 +189,8 @@ const BudgetCodes = () => {
     setBudgetCode("");
     setBudgetName("");
     setErrors({});
+    setIsEditing(false);
+    setEditingId(null);
   };
 
   const handleEdit = (id) => {
@@ -156,7 +227,7 @@ const BudgetCodes = () => {
                 name="budgetCode"
                 value={budgetCode}
                 onChange={(e) => handleChange("budgetCode", e.target.value)}
-                maxLength="10"
+                maxLength="11"
               />
               {errors.budgetCode && (
                 <p className="text-danger">{errors.budgetCode}</p>

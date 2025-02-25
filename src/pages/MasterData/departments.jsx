@@ -13,7 +13,7 @@ import {
 
 const Departments = () => {
   const dispatch = useDispatch();
-  const { departments, loading, error } = useSelector(
+  const { departments, error } = useSelector(
     (state) => state.department
   );
 
@@ -34,27 +34,31 @@ const Departments = () => {
     { key: "actions", label: "" },
   ];
 
-  // Function to validate the input fields
-  // Function to validate the input fields
   const validateInputs = (field, value) => {
     const validationErrors = {};
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
     if (field === "deptCode") {
-      // If deptCode is not empty, apply validation
       if (value && !value.match(alphanumericRegex)) {
         validationErrors.deptCode =
           "Department Code must contain only alphanumeric characters.";
       } else if (
         value &&
-        departments.data?.some((dept) => dept.departmentCode === value && dept.idDepartment !== editingDepartmentId)
+        departments.data?.some((dept) => dept.departmentCode.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)
       ) {
-        validationErrors.deptCode = "Department Code already exists.";
+        validationErrors.deptCode = "Department Code Already Exists.";
       } else {
         delete validationErrors.deptCode;
       }
     }
 
+    if (field === "deptName") {
+      if (value && departments.data?.some((dept) => dept.departmentName.toLowerCase() === value.toLowerCase() && dept.idDepartment !== editingDepartmentId)) {
+        validationErrors.deptName = "Department Name Already Exists.";
+      } else {
+        delete validationErrors.deptName;
+      }
+    }
 
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
@@ -70,23 +74,34 @@ const Departments = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (
-      !validateInputs("deptCode", deptCode) ||
-      !validateInputs("deptName", deptName)
-    ) {
+  
+    // Clear previous validation errors
+    setErrors({});
+  
+    // Check if both deptCode and deptName are provided
+    const errors = {};
+    if (!deptCode) {
+      errors.deptCode = "Department code is required";
+    }
+    if (!deptName) {
+      errors.deptName = "Department name is required";
+    }
+  
+    // If there are validation errors, set them and return
+    if (Object.keys(errors).length > 0) {
+      setErrors(errors);
       return;
     }
-
+  
     const departmentData = {
       departmentCode: deptCode,
       departmentName: deptName,
     };
-
+  
     try {
       setIsSubmitting(true);
       let resultAction;
-
+  
       if (editingDepartmentId) {
         console.log("Updating department with ID:", editingDepartmentId);
         // Updating existing department
@@ -100,7 +115,7 @@ const Departments = () => {
         // Adding new department
         resultAction = await dispatch(addMasterDepartment(departmentData));
       }
-
+  
       if (resultAction.payload && resultAction.payload.success) {
         setDeptCode("");
         setDeptName("");
@@ -153,9 +168,7 @@ const Departments = () => {
       <div className="row">
         <div className="col-lg-8">
           <Card title="List of Departments">
-            {loading ? (
-              <div>Loading...</div>
-            ) : error ? (
+            {error ? (
               <div className="text-danger">{error}</div>
             ) : (
               <Grid

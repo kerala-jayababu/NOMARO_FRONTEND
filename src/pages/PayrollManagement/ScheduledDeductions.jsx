@@ -1,6 +1,273 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import ScheduledDeductionService from "../../core/services/ScheduledDeductionService";
+import CommonService from "../../core/services/CommonService";
+import { Form, Modal } from "react-bootstrap";
+import { Months } from "../../core/constants/commons";
+import { toast } from "react-toastify";
+import moment from "moment";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import Utils from "../../utils/Utils";
+import Select from 'react-select';
+import Pagination from "../../components/pagination";
 
 function ScheduledDeductions() {
+  const [scheduledDeductions, setScheduledDeductions] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
+  const [salaryHeadList, setSalaryHeadList] = useState([]);
+  const [salaryMonthsListFrom, setSalaryMonthsListFrom] = useState([]);
+  const [salaryMonthsListTo, setSalaryMonthsListTo] = useState([]);
+  const optionsMonth = Months;
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [searchText, setSearchText] = useState('');
+  const [newData, setNewData] = useState({
+    idScheduledSalaryDeduction: 0,
+    idEmployee: 0,
+    totalAmount: null,
+    deductionFromSalaryMonthDate: null,
+    deductionToSalaryMonthDate: null,
+    allocatingSalaryHead: 0,
+    monthCount: 0,
+    monthlyDeductableAmount: 0,
+  });
+  const [validated, setValidated] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(scheduledDeductions.length / rowsPerPage);
+
+  useEffect(() => {
+    getSalaryHeadData();
+    getEmployeesData();
+    getSalaryMonths();
+  }, []);
+
+  useEffect(() => {
+    getScheduledDeductions();
+  }, [startDate]);
+
+  useEffect(() => {
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+  }, [newData.idEmployee]);
+
+  useEffect(() => {
+    const monthCount = calculateMonthCount(
+      newData.deductionFromSalaryMonthDate,
+      newData.deductionToSalaryMonthDate
+    );
+    const monthlyDeductableAmount = calculateMonthlyDeductableAmount(
+      newData.totalAmount,
+      monthCount
+    );
+
+    setNewData((prevData) => ({
+      ...prevData,
+      monthCount,
+      monthlyDeductableAmount,
+    }));
+  }, [
+    newData.deductionFromSalaryMonthDate,
+    newData.deductionToSalaryMonthDate,
+    newData.totalAmount,
+  ]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return scheduledDeductions.slice(startIndex, endIndex);
+  }, [scheduledDeductions, currentPage, rowsPerPage]);
+
+  const getScheduledDeductions = () => {
+    const date = moment(startDate).format("YYYY-MM-DD");
+    ScheduledDeductionService.getScheduledDeductionsData(date, searchText).then(res => {
+      setScheduledDeductions(res.data.data);
+    }).catch(err => {
+      setScheduledDeductions([]);
+    });
+  }
+
+  const getEmployeesData = () => {
+    CommonService.getEmployeeList().then(res => {
+      setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
+    }).catch(err => {
+    });
+  }
+
+  const getSalaryHeadData = () => {
+    CommonService.getSalaryHeadList().then(res => {
+      const salHead = res.data.data;
+      const filterred = salHead.filter(el => el.headType === "DEDUCTION");
+      setSalaryHeadList(filterred);
+    }).catch(err => {
+    });
+  }
+
+  const getSalaryMonths = () => {
+    CommonService.getAllSalaryMonths().then(res => {
+      const salMonths = res.data;
+      // const filterredFrom = salMonths.slice(0, 12);
+      // const filterredTo = salMonths.slice(0, 60);
+      // setSalaryMonthsListFrom(filterredFrom);
+      // setSalaryMonthsListTo(filterredTo);
+      setSalaryMonthsList(salMonths);
+    }).catch(err => {
+    });
+  }
+
+  const setupEdit = (item) => {
+    setIsEdit(true);
+    setNewData({
+      idScheduledSalaryDeduction: item.idScheduledSalaryDeduction,
+      idEmployee: item.idEmployee,
+      totalAmount: item.totalAmount,
+      deductionFromSalaryMonthDate: item.deductionFromSalaryMonthDate,
+      deductionToSalaryMonthDate: item.deductionToSalaryMonthDate,
+      allocatingSalaryHead: item.allocatingSalaryHead,
+      monthCount: item.monthCount,
+      monthlyDeductableAmount: item.monthlyDeductableAmount,
+    });
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+    setShowModal(true);
+  }
+
+  const calculateMonthCount = (fromDate, toDate) => {
+    if (fromDate && toDate) {
+      const fromDateObj = new Date(fromDate);
+      const toDateObj = new Date(toDate);
+
+      let monthCount =
+        (toDateObj.getFullYear() - fromDateObj.getFullYear()) * 12 +
+        (toDateObj.getMonth() - fromDateObj.getMonth());
+
+      return monthCount + 1;
+    }
+    return 0;
+  };
+
+  const calculateMonthlyDeductableAmount = (totalAmount, monthCount) => {
+    if (totalAmount && monthCount) {
+      return parseFloat((totalAmount / monthCount).toFixed(2));
+    }
+    return 0;
+  };
+
+  const saveScheduledDeductions = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.allocatingSalaryHead) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
+    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
+    ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Scheduled deductions added successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getScheduledDeductions();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const updateScheduledDeductions = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.allocatingSalaryHead) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
+    passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
+    ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Scheduled deductions updated successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getScheduledDeductions();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const resetValues = () => {
+    setValidated(false);
+    setIsEdit(false);
+    setNewData({
+      idScheduledSalaryDeduction: 0,
+      idEmployee: 0,
+      totalAmount: null,
+      deductionFromSalaryMonthDate: null,
+      deductionToSalaryMonthDate: null,
+      allocatingSalaryHead: 0,
+      monthCount: 0,
+      monthlyDeductableAmount: 0,
+    });
+    setSelectedEmployee(null)
+  }
+
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
+
+  const handleMonthFromChange = (e) => {
+    const selectedDate = e.target.value;
+    const selectedId = (salaryMonthsList.find(el => el.salaryMonthDate == selectedDate)).idSalaryMonth;
+    setNewData({
+      ...newData,
+      deductionFromSalaryMonthDate: selectedDate,
+      deductionToSalaryMonthDate: '',
+    });
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
+
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthToChange = (e) => {
+    setNewData({
+      ...newData,
+      deductionToSalaryMonthDate: e.target.value,
+    });
+  };
+
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -8,19 +275,27 @@ function ScheduledDeductions() {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Scheduled Deductions</h5>
+
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" />
-                  <i className="bx bx-search"></i>
+                  <label className='p-2'>From Date</label>
+                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
-                <button
-                  className="btn btn-primary btn-sm px-4"
-                  data-bs-toggle="modal"
-                  data-bs-target="#Add_MaternityLeaveSalary"
-                >
-                  Add
-                </button>
+                <div className="list_searchbox">
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getScheduledDeductions();
+                      }
+                    }}
+                    onKeyDown={e => e.key === 'Enter' ? getScheduledDeductions() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getScheduledDeductions()}></i>
+                </div>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
               </div>
+
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
@@ -32,208 +307,168 @@ function ScheduledDeductions() {
                       <th>Designation</th>
                       <th>Date From</th>
                       <th>Date To</th>
-                      <th>No. of Months </th>
+                      <th className="text-center">No. of Months </th>
                       <th className="text-end">Monthly Deduction</th>
                       <th className="text-end">Total Deduction</th>
-                      <th></th>
+                      <th className="text-end"></th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    <tr>
-                      <td>Emp001</td>
-                      <td>John</td>
-                      <td>Sr. Teacher </td>
-                      <td>10/12/2024</td>
-                      <td>10/01/2025</td>
-                      <td>5</td>
-                      <td className="text-end">3,000</td>
-                      <td className="text-end">15,000</td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                          data-bs-toggle="modal"
-                          data-bs-target="#Add_MaternityLeaveSalary"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Emp002</td>
-                      <td>William</td>
-                      <td>Sr. Teacher </td>
-                      <td>21/12/2024</td>
-                      <td>05/01/2025</td>
-                      <td>6</td>
-                      <td className="text-end">4,000</td>
-                      <td className="text-end">24,000</td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                          data-bs-toggle="modal"
-                          data-bs-target="#Add_MaternityLeaveSalary"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Emp003</td>
-                      <td>Charles</td>
-                      <td>Dept Head</td>
-                      <td>25/12/2024</td>
-                      <td>02/01/2025</td>
-                      <td>9</td>
-                      <td className="text-end">3,500</td>
-                      <td className="text-end">31,500</td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                          data-bs-toggle="modal"
-                          data-bs-target="#Add_MaternityLeaveSalary"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Emp004</td>
-                      <td>David</td>
-                      <td>Director</td>
-                      <td>28/12/2024</td>
-                      <td>09/01/2025</td>
-                      <td>12</td>
-                      <td className="text-end">2,000</td>
-                      <td className="text-end">48,000</td>
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                          data-bs-toggle="modal"
-                          data-bs-target="#Add_MaternityLeaveSalary"
-                        >
-                          <span className="tf-icons bx bx-pencil"></span>
-                        </button>
-                      </td>
-                    </tr>
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
+                        <tr>
+                          <td>{item?.employeeCode}</td>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.designationName}</td>
+                          <td>{item?.deductionFromSalaryMonthText}</td>
+                          <td>{item?.deductionToSalaryMonthText}</td>
+                          <td className="text-center">{item.monthCount}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.monthlyDeductableAmount)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.totalAmount)}</td>
+                          <td className="text-end">
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
+                              <span className="tf-icons bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="12" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
-        <div
-          className="modal fade"
-          id="Add_MaternityLeaveSalary"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div
-            className="modal-dialog modal-md  modal-dialog-centered"
-            role="document"
-          >
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="modalCenterTitle">
-                  Add/Update Scheduled Deductions
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div className="modal-body  accountDetail_card">
-                <form>
-                  {/* <!-- <div className="mb-2">
-                  <label className="form-label mb-1">Employee Code</label>
-                  <select className="form-select">
-                    <option>Select Employee Code</option>
-                    <option>Emp01</option>
-                    <option>Emp02</option>
-                    <option>Emp03</option>
-                    <option>Emp04</option>
-                    <option>Emp05</option>
+
+        <Modal
+          show={showModal} onHide={() => { setShowModal(false); resetValues() }} size='md'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Add/Update Scheduled Deductions</h5>
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <div className="accountDetail_card">
+              <Form noValidate validated={validated}>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Employee Name</label>
+
+                  <Select
+                    options={employeesListOption}
+                    isSearchable
+                    onChange={handleChange}
+                    value={selectedEmployee}
+                    placeholder={'Select Employee'}
+                    className="textSize"
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Total Deduction</label>
+                  <input className="form-control" type="number" value={newData.totalAmount} min="0" max="999999999999"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d{0,12}$/.test(value)) {
+                        setNewData({ ...newData, totalAmount: value });
+                      }
+                    }} required />
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Salary Month From</label>
+
+                  <select
+                    className="form-select"
+                    value={newData.deductionFromSalaryMonthDate}
+                    onChange={handleMonthFromChange}
+                    required
+                  >
+                    <option value={''}>Select</option>
+                    {salaryMonthsList.map((el) => (
+                      <option value={el.salaryMonthDate} key={el.salaryMonthDate}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
                   </select>
-                </div> --> */}
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Employee Name</label>
-                    <select className="form-select">
-                      <option>Select Employee</option>
-                      <option>John</option>
-                      <option>William</option>
-                      <option>Charles</option>
-                      <option>David</option>
-                      <option>Thomas</option>
-                    </select>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Total Deduction</label>
-                    <input className="form-control" type="text" value="" />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Salary Month From</label>
-                    <input
-                      type="month"
-                      className="form-control"
-                      value="January-2025"
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Salary Month To</label>
-                    <input
-                      type="month"
-                      className="form-control"
-                      value="December-2025"
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">
-                      Allocating Salary Head
-                    </label>
-                    <input
-                      type="month"
-                      className="form-control"
-                      value="December-2025"
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">No of Months</label>
-                    <input
-                      className="form-control"
-                      type="text"
-                      value="5"
-                      readonly
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label mb-1">Monthly Deduction</label>
-                    <input className="form-control" type="text" readonly />
-                  </div>
-                </form>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm py-2 px-4 me-2"
-                >
-                  Submit
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-outline-secondary  btn-sm py-2 px-4"
-                  data-bs-dismiss="modal"
-                >
-                  Reset
-                </button>
-              </div>
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Salary Month To</label>
+
+                  <select
+                    className="form-select"
+                    value={newData.deductionToSalaryMonthDate}
+                    onChange={handleMonthToChange}
+                    required
+                  >
+                    <option value={''}>Select</option>
+                    {filteredMonthsList.map((el) => (
+                      <option value={el.salaryMonthDate} key={el.salaryMonthDate}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">
+                    Allocating Salary Head
+                  </label>
+                  <select className="form-select" value={newData.allocatingSalaryHead}
+                    onChange={(e) => setNewData({ ...newData, allocatingSalaryHead: e.target.value })} required>
+                    <option value={''}>Select</option>
+                    {
+                      salaryHeadList?.map((el) => (
+                        <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">No of Months</label>
+                  <input className="form-control" type="number" disabled={true}
+                    value={newData.monthCount}
+                    required
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Monthly Deduction</label>
+                  <input className="form-control" type="number" disabled={true}
+                    value={newData.monthlyDeductableAmount.toFixed(2)}
+                    required />
+                </div>
+
+              </Form>
             </div>
-          </div>
-        </div>
+            <div className="modal-footer">
+              {
+                isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateScheduledDeductions(e)}>Update</button>
+              }
+              {
+                !isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveScheduledDeductions(e)}>Submit</button>
+              }
+              <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+            </div>
+          </Modal.Body>
+        </Modal>
+
       </div>
     </div>
   );

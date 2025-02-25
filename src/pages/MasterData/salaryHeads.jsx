@@ -34,6 +34,7 @@ const SalaryHeads = () => {
     salaryHeadCode: "",
     salaryHeadName: "",
     orderNumber: "",
+    customFormula: "",
   });
 
   const dispatch = useDispatch();
@@ -50,6 +51,7 @@ const SalaryHeads = () => {
   const columns = [
     { key: "salaryHeadCode", label: "S. H. Code" },
     { key: "salaryHeadName", label: "Salary Head Name" },
+    { key: "orderNumber", label: "Order Number" },
     { key: "isActive", label: "Active Status" },
     { key: "actions", label: "" },
   ];
@@ -61,7 +63,7 @@ const SalaryHeads = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentSalaryHead) {
+    if (currentSalaryHead && Object.keys(currentSalaryHead).length > 0) {
       setFormData({
         salaryHeadCode: currentSalaryHead.salaryHeadCode,
         salaryHeadName: currentSalaryHead.salaryHeadName,
@@ -83,9 +85,24 @@ const SalaryHeads = () => {
     }
   }, [currentSalaryHead]);
 
-  const handleEditClick = (id) => {
-    dispatch(getSalaryHeadById(id));
-  };
+  // const handleEditClick = (id) => {
+  //   dispatch(getSalaryHeadById(id));
+  // };
+  const [isEditing, setIsEditing] = useState(false);
+
+const handleEditClick = (id) => {
+  if (!isEditing) {
+    setIsEditing(true);
+    dispatch(getSalaryHeadById(id))
+      .then(() => {
+        setIsEditing(false);
+      })
+      .catch(() => {
+        setIsEditing(false);
+      });
+  }
+};
+
 
   const handleReset = () => {
     setFormData({
@@ -105,135 +122,265 @@ const SalaryHeads = () => {
       salaryHeadCode: "",
       salaryHeadName: "",
       orderNumber: "",
+      customFormula: "",
     });
+    dispatch({ type: "salaryHead/clearCurrentSalaryHead" });
   };
+
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+
+  //   // Allow only numeric values for "orderNumber"
+  //   if (name === "orderNumber" && isNaN(value)) {
+  //     return; // Do nothing if the value is not a number
+  //   }
+
+  //   setFormData({
+  //     ...formData,
+  //     type: currentSalaryHead.headType === "EARNING" ? "E" : "D",
+  //     [name]: value,
+  //   });
+
+  //   // Clear errors when the user starts typing
+  //   setErrors({
+  //     ...errors,
+  //     [name]: "",
+  //   });
+  // };
+  const validateField = (name, value) => {
+    let error = "";
+  
+    switch (name) {
+      case "salaryHeadCode":
+        if (!value.trim()) {
+          error = "Salary Head Code is required.";
+        } else if (
+          (!currentSalaryHead?.idSalaryHead ||
+            currentSalaryHead.salaryHeadCode !== value) &&
+          salaryHeadList.some(
+            (head) => head.salaryHeadCode.toLowerCase() === value.toLowerCase()
+          )
+        ) {
+          error = "Salary Head Code Already Exists.";
+        }
+        break;
+  
+      case "salaryHeadName":
+        if (!value.trim()) {
+          error = "Salary Head Name is required.";
+        } else if (
+          (!currentSalaryHead?.idSalaryHead ||
+            currentSalaryHead.salaryHeadName !== value) &&
+          salaryHeadList.some(
+            (head) => head.salaryHeadName.toLowerCase() === value.toLowerCase()
+          )
+        ) {
+          error = "Salary Head Name Already Exists.";
+        }
+        break;
+  
+      case "orderNumber":
+        if (!value) {
+          error = "Order Number is required.";
+        } else if (
+          !currentSalaryHead?.idSalaryHead &&
+          salaryHeadList.some(
+            (head) => Number(head.orderNumber) === Number(value)
+          )
+        ) {
+          error = "Order Number Already Exists.";
+        }
+        break;
+  
+      case "customFormula":
+        if (formData.calculationMethod === "Custom Formula") {
+          if (!value.trim()) {
+            error = "Custom Formula is required.";
+          } else if (!isValidCustomFormula(value, salaryHeadList)) {
+            error = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
+          }
+        }
+        break;
+  
+      default:
+        break;
+    }
+  
+    return error;
+  };
+  
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  
+  //   // Allow only numeric values for "orderNumber"
+  //   if (name === "orderNumber" && isNaN(value)) {
+  //     return; // Do nothing if the value is not a number
+  //   }
+  
+  //   // Update the formData state
+  //   setFormData((prevFormData) => ({
+  //     ...prevFormData,
+  //     [name]: value,
+  //   }));
+  
+  //   // Clear errors when the user starts typing
+  //   setErrors((prevErrors) => ({
+  //     ...prevErrors,
+  //     [name]: "",
+  //   }));
+  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+  
+    // Allow only numeric values for "orderNumber"
+    if (name === "orderNumber" && isNaN(value)) {
+      return; // Do nothing if the value is not a number
+    }
+  
+    // Update the formData state
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       [name]: value,
-    });
-    // Clear errors when the user starts typing
-    setErrors({
-      ...errors,
-      [name]: "",
-    });
+    }));
+  
+    // Validate the field
+    const fieldError = validateField(name, value);
+  
+    // Update the errors state
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: fieldError,
+    }));
   };
+  
 
+
+  // const handleRadioChange = (value, name) => {
+  //   setFormData({
+  //     ...formData,
+  //     [name]: value,
+  //   });
+  // };
   const handleRadioChange = (value, name) => {
-    setFormData({
-      ...formData,
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       [name]: value,
-    });
+    }));
+  
+    if (name === "calculationMethod" && value === "Custom Formula") {
+      const formulaError = validateField("customFormula", formData.customFormula);
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        customFormula: formulaError,
+      }));
+    }
   };
 
+  
+  // const validateForm = () => {
+  //   const newErrors = {};
+  
+  //   // Validate mandatory fields
+  //   if (!formData.salaryHeadCode.trim()) {
+  //     newErrors.salaryHeadCode = "Salary Head Code is required.";
+  //   } else if (
+  //     // Only check for existing Salary Head Code if it's a new salary head or updated code is different
+  //     (!currentSalaryHead?.idSalaryHead ||
+  //       currentSalaryHead.salaryHeadCode !== formData.salaryHeadCode) &&
+  //     salaryHeadList.some(
+  //       (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
+  //     )
+  //   ) {
+  //     newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
+  //   }
+  
+  //   // Validate Salary Head Name
+  //   if (!formData.salaryHeadName.trim()) {
+  //     newErrors.salaryHeadName = "Salary Head Name is required.";
+  //   } else if (
+  //     // Only check for existing Salary Head Name if it's a new salary head or updated name is different
+  //     (!currentSalaryHead?.idSalaryHead ||
+  //       currentSalaryHead.salaryHeadName !== formData.salaryHeadName) &&
+  //     salaryHeadList.some(
+  //       (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
+  //     )
+  //   ) {
+  //     newErrors.salaryHeadName = "Salary Head Name Already Exists.";
+  //   }
+  
+  //   // Validate mandatory orderNumber
+  //   if (!formData.orderNumber) {
+  //     newErrors.orderNumber = "Order Number is required.";
+  //   } else {
+  //     // Validate unique orderNumber
+  //     if (
+  //       !currentSalaryHead?.idSalaryHead &&
+  //       salaryHeadList.some(
+  //         (head) => Number(head.orderNumber) === Number(formData.orderNumber)
+  //       )
+  //     ) {
+  //       newErrors.orderNumber = "Order Number Already Exists.";
+  //     }
+  //   }
+  
+  //   // Validate Custom Formula
+  //   if (formData.calculationMethod === "Custom Formula") {
+  //     if (!formData.customFormula.trim()) {
+  //       newErrors.customFormula = "Custom Formula is required.";
+  //     } else if (!isValidCustomFormula(formData.customFormula, salaryHeadList)) {
+  //       newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
+  //     }
+  //   }
+  
+  //   setErrors(newErrors);
+  //   return Object.keys(newErrors).length === 0; // Return true if no errors
+  // };
 
   const validateForm = () => {
     const newErrors = {};
   
-    // Validate mandatory fields
-    if (!formData.salaryHeadCode.trim()) {
-      newErrors.salaryHeadCode = "Salary Head Code is required.";
-    } else if (
-      // Only check for existing Salary Head Code if it's a new salary head
-      !currentSalaryHead?.idSalaryHead &&
-      salaryHeadList.some(
-        (head) =>
-          head.salaryHeadCode === formData.salaryHeadCode
-      )
-    ) {
-      newErrors.salaryHeadCode = "Salary Head Code already exists.";
-    }
-  
-    if (!formData.salaryHeadName.trim()) {
-      newErrors.salaryHeadName = "Salary Head Name is required.";
-    }
-  
-    // Validate mandatory orderNumber
-    if (!formData.orderNumber) {
-      newErrors.orderNumber = "Order Number is required.";
-    } else {
-      // Validate unique orderNumber
-      if (
-        !currentSalaryHead?.idSalaryHead &&
-        salaryHeadList.some(
-          (head) =>
-            head.orderNumber === formData.orderNumber
-        )
-      ) {
-        newErrors.orderNumber = "Order Number must be unique.";
+    // Validate all fields
+    Object.keys(formData).forEach((field) => {
+      const fieldError = validateField(field, formData[field]);
+      if (fieldError) {
+        newErrors[field] = fieldError;
       }
-    }
+    });
   
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
   
+  
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
+  const isValidCustomFormula = (formula, salaryHeadList) => {
+    console.log("Formula:", formula);
+    const salaryHeadCodes = salaryHeadList.map((head) => head.salaryHeadCode);
+    console.log("Salary Head Codes:", salaryHeadCodes);
 
-  //   if (!validateForm()) {
-  //     return; // Stop submission if validation fails
-  //   }
+    const escapedSalaryHeadCodes = salaryHeadCodes.map(code => code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    console.log("Escaped Salary Head Codes:", escapedSalaryHeadCodes);
+    const regex = new RegExp(`\\b(${escapedSalaryHeadCodes.join("|")})\\b`, "g");
+    console.log("Regex:", regex);
 
-  //   // Prepare the data to be sent to the API
-  //   const data = {
-  //     salaryHeadCode: formData.salaryHeadCode,
-  //     salaryHeadName: formData.salaryHeadName,
-  //     headType: formData.type === "E" ? "Earning" : "Deduction",
-  //     isTaxable: formData.taxability === "Taxable",
-  //     calculationMethod:
-  //       formData.calculationMethod === "Custom Formula"
-  //         ? "FORMULA"
-  //         : formData.calculationMethod === "Percentage of"
-  //         ? "PERCENTAGE"
-  //         : "FIXEDAMOUNT",
-  //     idPercentageSalaryHead: formData.percentageOf || null,
-  //     percentageValue: formData.value || 0,
-  //     customFormula: formData.customFormula || "",
-  //     fixedValue: formData.defaultValue || 0,
-  //     isActive: formData.activeStatus,
-  //     orderNumber: formData.orderNumber,
-  //   };
+    const validFormula = formula.replace(regex, '').replace(/[0-9+\-*/()\s]/g, '').trim();
+    console.log("Remaining after replacements:", validFormula);
 
-  //   // Dispatch the addSalaryHead action
-  //   dispatch(addSalaryHead(data))
-  //     .then((response) => {
-  //       if (response.payload) {
-  //         console.log("Salary Head added successfully:", response.payload);
-  //         setFormData({
-  //           salaryHeadCode: "",
-  //           salaryHeadName: "",
-  //           type: "",
-  //           taxability: "",
-  //           calculationMethod: "",
-  //           percentageOf: "",
-  //           value: "",
-  //           customFormula: "",
-  //           defaultValue: "",
-  //           activeStatus: true,
-  //           orderNumber: "",
-  //         });
-  //       }
-  //       dispatch(fetchSalaryHead());
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error adding salary head:", error);
-  //     });
-  // };
+    return validFormula === '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
       return; // Stop submission if validation fails
     }
-  
+
     const data = {
       salaryHeadCode: formData.salaryHeadCode,
       salaryHeadName: formData.salaryHeadName,
-      headType: formData.type === "E" ? "Earning" : "Deduction",
+      headType: formData.type === "E" ? "EARNING" : "DEDUCTION",
       isTaxable: formData.taxability === "Taxable",
       calculationMethod:
         formData.calculationMethod === "Custom Formula"
@@ -248,11 +395,13 @@ const SalaryHeads = () => {
       isActive: formData.activeStatus,
       orderNumber: formData.orderNumber,
     };
-  
+
     // Check if it's an update
     if (currentSalaryHead?.idSalaryHead) {
       // Update existing salary head
-      dispatch(updateSalaryHead({ ...data, idSalaryHead: currentSalaryHead.idSalaryHead }))
+      dispatch(
+        updateSalaryHead({ ...data, idSalaryHead: currentSalaryHead.idSalaryHead })
+      )
         .then((response) => {
           if (response.payload) {
             console.log("Salary Head updated successfully:", response.payload);
@@ -278,7 +427,6 @@ const SalaryHeads = () => {
         });
     }
   };
-  
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -286,14 +434,27 @@ const SalaryHeads = () => {
         {/* Salary Head List */}
         <div className="col-lg-8">
           <Card title="List of Salary Heads">
-            {status === "loading" && <div>Loading...</div>}
-            {status === "failed" && <div>Error: {error}</div>}
-            {status === "succeeded" && (
               <Grid
                 columns={columns}
                 data={salaryHeadList.map((head) => ({
-                  salaryHeadCode: head.salaryHeadCode,
-                  salaryHeadName: head.salaryHeadName,
+                  salaryHeadCode: (
+                    <span className="bold">
+                      {head.salaryHeadCode}
+                    </span>
+                  ),
+                  salaryHeadName: (
+                    <div className="salary-head-name">
+                      <span className="badge-headtype" style={{ backgroundColor: head?.headType === "EARNING" ? "#5d8b1b" : "#701c21" }}>
+                          {head?.headType === "EARNING" ? "E" : "D"}
+                      </span>
+                      <span className="name">{head.salaryHeadName}</span>
+                    </div>
+                  ),
+                  orderNumber: (
+                    <span>
+                      {head.orderNumber}
+                    </span>
+                  ),
                   isActive: (
                     <StatusBadge
                       status={head.isActive ? "Active" : "Inactive"}
@@ -305,7 +466,6 @@ const SalaryHeads = () => {
                 idKey="id"
                 modalId="editSalaryHeadModal"
               />
-            )}
           </Card>
         </div>
 
@@ -334,11 +494,11 @@ const SalaryHeads = () => {
                 name="orderNumber"
                 value={formData.orderNumber}
                 onChange={handleChange}
-                maxLength="50"
+                maxLength="3"
                 error={errors.orderNumber}
               />
               <div className="mb-2">
-                <label className="form-label mb-1">Type of Salary Head</label>
+                {/* <label className="form-label mb-1">Type of Salary Head</label> */}
                 <RadioButton
                   name="type"
                   options={[
@@ -350,7 +510,7 @@ const SalaryHeads = () => {
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label mb-1">Taxability</label>
+                {/* <label className="form-label mb-1">Taxability</label> */}
                 <RadioButton
                   name="taxability"
                   options={[
@@ -387,33 +547,51 @@ const SalaryHeads = () => {
                     />
                   </div>
                   <div className="col-md-4 mb-2">
-                    <Input
-                      label="Value"
-                      name="value"
-                      value={formData.value}
-                      onChange={handleChange}
-                      maxLength="5"
-                    />
+                  <Input
+                    label="Default Value"
+                    name="defaultValue"
+                    value={formData.defaultValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d{0,2}$/.test(value)) {
+                        handleChange(e);
+                      }
+                    }}
+                    maxLength="9"
+                    pattern="^\d*\.?\d{0,2}$"
+                  />
                   </div>
                 </div>
               )}
               {formData.calculationMethod === "Custom Formula" && (
+                <>
+                  <Input
+                    label="Custom Formula"
+                    name="customFormula"
+                    value={formData.customFormula}
+                    onChange={handleChange}
+                    maxLength="100"
+                    placeholder="(BP + DA) / 10"
+                    error={errors.customFormula}
+                  />
+                  {/* <Input
+                    label="Value"
+                    name="value"
+                    value={formData.value}
+                    onChange={handleChange}
+                    maxLength="5"
+                  /> */}
+                </>
+              )}
+              {formData.calculationMethod === "Fixed Amount" && (
                 <Input
-                  label="Custom Formula"
-                  name="customFormula"
-                  value={formData.customFormula}
+                  label="Default Value"
+                  name="defaultValue"
+                  value={formData.defaultValue}
                   onChange={handleChange}
-                  maxLength="100"
-                  placeholder="(BP + DA) / 10"
+                  maxLength="9"
                 />
               )}
-              <Input
-                label="Default Value"
-                name="defaultValue"
-                value={formData.defaultValue}
-                onChange={handleChange}
-                maxLength="9"
-              />
               <div className="mb-3 pt-2">
                 <div className="form-check form-switch">
                   <label
@@ -442,7 +620,7 @@ const SalaryHeads = () => {
                   {currentSalaryHead?.idSalaryHead ? "Update" : "Submit"}
                 </Button>
                 <Button
-                  type="button" // Change type to "button" to prevent default form reset
+                  type="button"
                   className="btn btn-outline-secondary px-4"
                   onClick={handleReset}
                 >

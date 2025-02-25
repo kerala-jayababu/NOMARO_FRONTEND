@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const Grid = ({ columns, data, onEditClick, idKey, modalId }) => {
+const Grid = ({ columns, data, onEditClick, idKey, modalId, popUpId, onEmpCodeClick }) => {
   return (
     <div className="table-responsive text-nowrap">
       <table className="table table-sm">
@@ -18,26 +18,47 @@ const Grid = ({ columns, data, onEditClick, idKey, modalId }) => {
               <tr key={row[idKey]}>
                 {columns?.map((column) => (
                   <td key={column.key}>
-                    {column.key === "actions" ? (
-                      <div className="text-end"> {/* Align button to right */}
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+
+                      {column.key === "empCode" ? (
+                        window.location.href.includes("employee-profile") ? (
+                        <a
+                          href="#{popUpId}"
                           data-bs-toggle="modal"
-                          data-bs-target={`#${modalId}`} // Dynamic modal ID
-                          onClick={() => {
-                            console.log(`Editing row with ID: ${row[idKey]}`);
-                            onEditClick(row[idKey]);
+                          data-bs-target={`#${popUpId}`}
+                          style={{ color: "#1893cf", cursor: "pointer" }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onEmpCodeClick(row[idKey]);
                           }}
                         >
-                          <span className="bx bx-pencil"></span>
-                        </button>
-                      </div>
-                    ) : column.render ? (
-                      column.render(row[column.key])
-                    ) : (
-                      row[column.key]
-                    )}
+                            {row[column.key]}
+                          </a>
+                        ) : (
+                          <span style={{  textDecoration: "none" }}>
+                            {row[column.key]}
+                          </span>
+                        )
+                      ) : column.key === "actions" ? (
+                        <div className="text-end">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                            data-bs-toggle="modal"
+                            data-bs-target={`#${modalId}`}
+                            onClick={() => {
+                              console.log(`Editing row with ID: ${row[idKey]}`);
+                              onEditClick(row[idKey]);
+                            }}
+                          >
+                            <span className="bx bx-pencil"></span>
+                          </button>
+                        </div>
+                      ) : column.render ? (
+                        column.render(row[column.key])
+                      ) : (
+                        row[column.key]
+                      )}
+                    
                   </td>
                 ))}
               </tr>
@@ -64,8 +85,10 @@ Grid.propTypes = {
   ).isRequired,
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
   onEditClick: PropTypes.func.isRequired,
+  onEmpCodeClick: PropTypes.func.isRequired,
   idKey: PropTypes.string.isRequired,
-  modalId: PropTypes.string.isRequired, // Ensure modal ID is passed
+  modalId: PropTypes.string.isRequired,
+  popUpId: PropTypes.string.isRequired,
 };
 
 export default Grid;

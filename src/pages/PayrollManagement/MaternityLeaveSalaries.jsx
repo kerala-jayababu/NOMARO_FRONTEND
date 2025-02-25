@@ -1,163 +1,694 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from "react";
+import MaternityService from '../../core/services/MaternityService';
+import moment from "moment";
+import CommonService from "../../core/services/CommonService";
+import { Form, Modal } from "react-bootstrap";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { toast } from "react-toastify";
+import Utils from "../../utils/Utils";
+import Select from 'react-select';
+import Pagination from "../../components/pagination";
 
 function MaternityLeaveSalaries() {
+  const [employeesList, setEmployeesList] = useState([]);
+  const [maternityLeaveSalaries, setMaternityLeaveSalaries] = useState([]);
+  const [salaryHeadList, setSalaryHeadList] = useState([]);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const [salaryStructure, setSalaryStructure] = useState([]);
+  const [salaryStructureToDisplay, setSalaryStructureToDisplay] = useState(null);
+  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [searchText, setSearchText] = useState('');
+  const [newData, setNewData] = useState({
+    idMaternityLeaveSalary: 0,
+    idEmployee: 0,
+    maternityLeaveFrom: "",
+    maternityLeaveTo: "",
+    idSalaryMonthFrom: 0,
+    idSalaryMonthTo: 0,
+    netSalary: 0,
+    totalEarnings: 0,
+    totalDeductions: 0,
+  });
+  const [salaryDetails, setSalaryDetails] = useState([
+    {
+      idSalaryHead: 0,
+      salaryHeadType: "",
+      amount: null,
+      amountInUSD: 0
+    },
+  ]);
+  const [validated, setValidated] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [filteredMonthsList, setFilteredMonthsList] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
+
+  useEffect(() => {
+    getSalaryHeadData();
+    getEmployeesData();
+    getSalaryMonths();
+    getSalaryStructure();
+  }, []);
+
+  useEffect(() => {
+    getMaternityLeaveSalaries();
+  }, [startDate]);
+
+  useEffect(() => {
+    if (newData.idEmployee == 0) {
+      setSalaryStructureToDisplay(null)
+      return;
+    }
+    const empSalaryStructure = salaryStructure.find(emp => emp.idEmployee == newData.idEmployee);
+    const earnings = empSalaryStructure?.salaryComponents.filter(el => el.headType == 'EARNING');
+    const deductions = empSalaryStructure?.salaryComponents.filter(el => el.headType == 'DEDUCTION');
+    setSalaryStructureToDisplay({
+      earnings: earnings ?? [],
+      deductions: deductions ?? []
+    });
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+  }, [newData.idEmployee]);
+
+  useEffect(() => {
+    if (newData.idSalaryMonthFrom == '' || newData.idSalaryMonthFrom == 0) {
+      setNewData(prevState => ({
+        ...prevState,
+        maternityLeaveFrom: ""
+      }));
+      return;
+    }
+    const salaryMonthById = salaryMonthsList.find(el => el.idSalaryMonth == newData.idSalaryMonthFrom);
+    setNewData(prevState => ({
+      ...prevState,
+      maternityLeaveFrom: salaryMonthById.salaryMonthDate
+    }));
+  }, [newData.idSalaryMonthFrom]);
+
+  useEffect(() => {
+    if (newData.idSalaryMonthTo == '' || newData.idSalaryMonthTo == 0) {
+      setNewData(prevState => ({
+        ...prevState,
+        maternityLeaveTo: ""
+      }));
+      return;
+    }
+    const salaryMonthById = salaryMonthsList.find(el => el.idSalaryMonth == newData.idSalaryMonthTo);
+    setNewData(prevState => ({
+      ...prevState,
+      maternityLeaveTo: salaryMonthById.salaryMonthDate
+    }));
+  }, [newData.idSalaryMonthTo]);
+
+  useEffect(() => {
+    calculateEarningsDeductionsTotal();
+  }, [salaryDetails]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return maternityLeaveSalaries.slice(startIndex, endIndex);
+  }, [maternityLeaveSalaries, currentPage, rowsPerPage]);
+
+  const getEmployeesData = () => {
+    CommonService.getEmployeeList().then(res => {
+      // setEmployeesList(res.data.data);
+      const females = res.data.data.filter(em => em.gender == 'FEMALE');
+      const options = females.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
+    }).catch(err => {
+    });
+  }
+
+  const getSalaryHeadData = () => {
+    CommonService.getSalaryHeadList().then(res => {
+      const salHead = res.data.data;
+      // const filterred = salHead.filter(el => el.headType === "Deduction");
+      setSalaryHeadList(salHead);
+    }).catch(err => {
+    });
+  }
+
+  const getSalaryMonths = () => {
+    CommonService.getAllSalaryMonths().then(res => {
+      const salMonths = res.data;
+      // const filterred = salMonths.slice(0, 12);
+      setSalaryMonthsList(salMonths);
+    }).catch(err => {
+    });
+  }
+
+  const getSalaryStructure = () => {
+    CommonService.getSalaryStructure().then(res => {
+      setSalaryStructure(res.data);
+    }).catch(err => {
+    });
+  }
+
+  const getMaternityLeaveSalaries = () => {
+    const date = moment(startDate).format("YYYY-MM-DD");
+    MaternityService.getMaternityLeaveSalariesData(date, searchText).then(res => {
+      setMaternityLeaveSalaries(res.data.data);
+    }).catch(err => {
+      setMaternityLeaveSalaries([]);
+    });
+  }
+
+  const getMaternityLeaveSalById = (id) => {
+    MaternityService.getMaternityLeaveSalaryById(id).then(res => {
+      setupEdit(res.data.data);
+    }).catch(err => {
+      setMaternityLeaveSalaries([]);
+    });
+  }
+
+  const getSalaryHeadTypeName = (id) => {
+    if (id == '' || id == 0) return "";
+    const salHeadData = salaryHeadList.find(el => el.idSalaryHead == id);
+    return salHeadData?.headType ?? ""
+  }
+
+  const addRow = () => {
+    setSalaryDetails([
+      ...salaryDetails,
+      { idSalaryHead: 0, salaryHeadType: 0, amount: 0, amountInUSD: 0 }
+    ]);
+  };
+
+  const removeRow = (index) => {
+    const newSalaryDetails = salaryDetails.filter((_, i) => i !== index);
+    setSalaryDetails(newSalaryDetails);
+  };
+
+  const handleSelectChange = (index, event) => {
+    const { value } = event.target;
+    const newSalaryDetails = [...salaryDetails];
+    newSalaryDetails[index]['idSalaryHead'] = value;
+    newSalaryDetails[index]['salaryHeadType'] = getSalaryHeadTypeName(value);
+    setSalaryDetails(newSalaryDetails);
+  };
+
+  const handleInputChange = (index, event) => {
+    const { value } = event.target;
+    const newSalaryDetails = [...salaryDetails];
+    newSalaryDetails[index]['amount'] = value;
+    setSalaryDetails(newSalaryDetails);
+  };
+
+  const setupEdit = (item) => {
+    setIsEdit(true);
+    setNewData({
+      idMaternityLeaveSalary: item.idMaternityLeaveSalary,
+      idEmployee: item.idEmployee,
+      maternityLeaveFrom: item.maternityLeaveFrom,
+      maternityLeaveTo: item.maternityLeaveTo,
+      idSalaryMonthFrom: item.idSalaryMonthFrom,
+      idSalaryMonthTo: item.idSalaryMonthTo,
+      netSalary: item.maternityLeaveNetSalary,
+      totalEarnings: item.totalEarnings,
+      totalDeductions: item.totalDeductions,
+    });
+    setSalaryDetails(item.maternityLeaveSalaryDetailDto);
+    const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+    setShowModal(true);
+  }
+
+  const calculateEarningsDeductionsTotal = () => {
+    const totalEarnings = salaryDetails.reduce((total, item) => {
+      if (item.salaryHeadType && item.salaryHeadType.toLowerCase() === 'earning') {
+        return total + parseFloat(item.amount);
+      }
+      return total;
+    }, 0);
+
+    const totalDeductions = salaryDetails.reduce((total, item) => {
+      if (item.salaryHeadType && item.salaryHeadType.toLowerCase() === 'deduction') {
+        return total + parseFloat(item.amount);
+      }
+      return total;
+    }, 0);
+
+    setNewData(prevState => ({
+      ...prevState,
+      totalEarnings: totalEarnings,
+      totalDeductions: totalDeductions,
+      netSalary: totalEarnings - totalDeductions,
+    }));
+  }
+
+  const saveMaternityLeaveSalaries = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.idSalaryMonthFrom) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
+
+    // const netSalary = totalEarnings - totalDeductions;
+    // passData['totalEarnings'] = totalEarnings;
+    // passData['totalDeductions'] = totalDeductions;
+    // passData['netSalary'] = netSalary;
+
+    delete passData['totalEarnings'];
+    delete passData['totalDeductions'];
+    delete passData['netSalary'];
+
+    MaternityService.saveMaternityLeaveSalariesData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Maternity leave salaries added successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getMaternityLeaveSalaries();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const updateMaternityLeaveSalaries = (e) => {
+    e.preventDefault();
+    if (!newData.idEmployee || !newData.netSalary) {
+      setValidated(true);
+      return;
+    }
+    let passData = newData;
+    passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
+
+    // const netSalary = totalEarnings - totalDeductions;
+    // passData['totalEarnings'] = totalEarnings;
+    // passData['totalDeductions'] = totalDeductions;
+    // passData['netSalary'] = netSalary;
+
+    delete passData['totalEarnings'];
+    delete passData['totalDeductions'];
+    delete passData['netSalary'];
+
+    MaternityService.updateMaternityLeaveSalariesData(passData).then(res => {
+      if (res.data.status === 200) {
+        toast.success('Maternity leave salaries updated successfully', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        getMaternityLeaveSalaries();
+        resetValues();
+        setShowModal(false);
+      }
+    }).catch(err => {
+      toast.error('Something went wrong!', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+    });
+  }
+
+  const resetValues = () => {
+    setValidated(false);
+    setIsEdit(false);
+    setNewData({
+      idMaternityLeaveSalary: 0,
+      idEmployee: 0,
+      maternityLeaveFrom: "",
+      maternityLeaveTo: "",
+      idSalaryMonthFrom: 0,
+      idSalaryMonthTo: 0,
+      netSalary: 0,
+      totalEarnings: 0,
+      totalDeductions: 0,
+    });
+    setSalaryDetails([
+      {
+        idSalaryHead: 0,
+        salaryHeadType: "",
+        amount: 0,
+        amountInUSD: 0
+      },
+    ]);
+    setSelectedEmployee(null);
+    setFilteredMonthsList([]);
+  }
+
+  const handleChange = (selectedOption) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      idEmployee: selectedOption.value
+    }));
+  };
+
+  const handleMonthFromChange = (e) => {
+    const selectedId = e.target.value;
+    setNewData({
+      ...newData,
+      idSalaryMonthFrom: selectedId,
+      idSalaryMonthTo: '',
+    });
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
+
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthToChange = (e) => {
+    setNewData({
+      ...newData,
+      idSalaryMonthTo: e.target.value,
+    });
+  };
+
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
-    <div className="row">
-      <div className="col-lg-12">
-        <div className="card">
-          <div className="card-header d-flex align-items-center justify-content-between pb-3">
-            <h5 className="m-0">List of Maternity Leave Salaries</h5>
-            <div className="list_menu">
-              <div className="list_searchbox">
-                <input type="search" className="form-control" />
-                <i className='bx bx-search'></i>
+      <div className="row">
+        <div className="col-lg-12">
+          <div className="card">
+            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+              <h5 className="m-0">List of Maternity Leave Salaries</h5>
+
+              <div className="list_menu">
+                <div className="list_searchbox">
+                  <label className='p-2'>From Date</label>
+                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
+                </div>
+                <div className="list_searchbox">
+                  <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      if (e.target.value === "") {
+                        getMaternityLeaveSalaries();
+                      }
+                    }}
+                    onKeyDown={e => e.key === 'Enter' ? getMaternityLeaveSalaries() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getMaternityLeaveSalaries()}></i>
+                </div>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
               </div>
-              <button className="btn btn-primary btn-sm px-4" data-bs-toggle="modal"
-                data-bs-target="#Add_MaternityLeaveSalary">Add</button>
+
             </div>
-          </div>
-          <div className="card-body">
-            <div className="table-responsive text-nowrap">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Emp. Code</th>
-                    <th>Employee Name</th>
-                    <th>Designation</th>
-                    <th>Date From</th>
-                    <th>Date To</th>
-                    <th className="text-end">Net Salary</th>
-                    <th className="text-end">Maternity Salary</th>
-                    <th className="text-end"></th>
-                  </tr>
-                </thead>
-                <tbody className="table-border-bottom-0">
-                  <tr>
-                    <td>Emp001</td>
-                    <td>John</td>
-                    <td>Sr. Teacher </td>
-                    <td>10/12/2024</td>
-                    <td>10/01/2025</td>
-                    <td className="text-end">15,000</td>
-                    <td className="text-end">2,000</td>
-                    <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        data-bs-toggle="modal" data-bs-target="#Add_MaternityLeaveSalary">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Emp002</td>
-                    <td>William</td>
-                    <td>Sr. Teacher </td>
-                    <td>21/12/2024</td>
-                    <td>05/01/2025</td>
-                    <td className="text-end">20,000</td>
-                    <td className="text-end">1,500</td>
-                    <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        data-bs-toggle="modal" data-bs-target="#Add_MaternityLeaveSalary">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Emp003</td>
-                    <td>Charles</td>
-                    <td>Dept Head</td>
-                    <td>25/12/2024</td>
-                    <td>02/01/2025</td>
-                    <td className="text-end">25,000</td>
-                    <td className="text-end">1,800</td>
-                    <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        data-bs-toggle="modal" data-bs-target="#Add_MaternityLeaveSalary">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Emp004</td>
-                    <td>David</td>
-                    <td>Director</td>
-                    <td>28/12/2024</td>
-                    <td>09/01/2025</td>
-                    <td className="text-end">25,000</td>
-                    <td className="text-end">1,800</td>
-                    <td className="text-end">
-                      <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                        data-bs-toggle="modal" data-bs-target="#Add_MaternityLeaveSalary">
-                        <span className="tf-icons bx bx-pencil"></span>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="card-body">
+              <div className="table-responsive text-nowrap">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Emp. Code</th>
+                      <th>Employee Name</th>
+                      <th>Designation</th>
+                      <th>Date From</th>
+                      <th>Date To</th>
+                      <th className="text-end">Net Salary</th>
+                      <th className="text-end">Maternity Salary</th>
+                      <th className="text-end"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-border-bottom-0">
+                    {paginatedData?.length > 0 ? (
+                      paginatedData?.map((item, index) => (
+                        <tr>
+                          <td>{item?.employeeCode}</td>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.designationName}</td>
+                          <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
+                          <td className="text-end">
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
+                              <span className="tf-icons bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="12" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-end pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="modal fade" id="Add_MaternityLeaveSalary" tabindex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-md  modal-dialog-centered" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="modalCenterTitle">Add/Update Maternity Leave Salaries</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body  accountDetail_card">
-              <form>
-                {/* <!-- <div className="mb-2">
-                  <label className="form-label mb-1">Employee Code</label>
-                  <select className="form-select">
-                    <option>Select Employee Code</option>
-                    <option>Emp01</option>
-                    <option>Emp02</option>
-                    <option>Emp03</option>
-                    <option>Emp04</option>
-                    <option>Emp05</option>
-                  </select>
-                </div> --> */}
-                <div className="mb-2">
-                  <label className="form-label mb-1">Employee Name</label>
-                  <select className="form-select">
-                    <option>Select Employee</option>
-                    <option>John</option>
-                    <option>William</option>
-                    <option>Charles</option>
-                    <option>David</option>
-                    <option>Thomas</option>
-                  </select>
+
+        <Modal
+          show={showModal} onHide={() => { setShowModal(false); resetValues() }} size='xl'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Add/Update Maternity Leave Salaries</h5>
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <div className="accountDetail_card">
+              <Form noValidate validated={validated}>
+                <div class="row m-0">
+                  <div class="col-md-5 p-2">
+                    <label class="form-label mb-1">Employee Name</label>
+
+                    <Select
+                      options={employeesListOption}
+                      isSearchable
+                      onChange={handleChange}
+                      value={selectedEmployee}
+                      placeholder={'Select Employee'}
+                      className="textSize"
+                    />
+                  </div>
+
+                  <div class="col-md-3 p-2">
+                    <label class="form-label mb-1">Month From</label>
+
+                    <select
+                      className="form-select controlHeight"
+                      value={newData.idSalaryMonthFrom}
+                      onChange={handleMonthFromChange}
+                      required
+                    >
+                      <option value={''}>Select</option>
+                      {salaryMonthsList.map((el) => (
+                        <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                          {el.salaryMonthText}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div class="col-md-3 p-2">
+                    <label class="form-label mb-1">Month To</label>
+
+                    <select
+                      className="form-select controlHeight"
+                      value={newData.idSalaryMonthTo}
+                      onChange={handleMonthToChange}
+                      required
+                    >
+                      <option value={''}>Select</option>
+                      {filteredMonthsList.map((el) => (
+                        <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                          {el.salaryMonthText}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div class="col-md-5 p-2">
+                    <div class="border rounded">
+                      <table class="table table-sm  m-0">
+                        <thead>
+                          <tr>
+                            <th colspan="2">
+                              <h6 class="m-0">Current Salary Structure</h6>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                          {
+                            salaryStructureToDisplay &&
+                            <>
+                              <tr>
+                                <td><b>Earnings</b></td>
+                                <td class="text-end"></td>
+                              </tr>
+                              {salaryStructureToDisplay.earnings?.length > 0 ? (
+                                salaryStructureToDisplay.earnings?.map((item, index) => (
+                                  <tr>
+                                    <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
+                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td style={{ paddingLeft: '30px' }}>No data</td>
+                                </tr>
+                              )}
+
+                              <tr>
+                                <td><b>Deductions</b></td>
+                                <td class="text-end"></td>
+                              </tr>
+                              {salaryStructureToDisplay.deductions?.length > 0 ? (
+                                salaryStructureToDisplay.deductions?.map((item, index) => (
+                                  <tr>
+                                    <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
+                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td style={{ paddingLeft: '30px' }}>No data</td>
+                                </tr>
+                              )}
+                            </>
+                          }
+                          {
+                            salaryStructureToDisplay == null &&
+                            <tr>
+                              <td colSpan="12" className="text-center">
+                                <div className="Nodatafound_box">
+                                  <h6><i className="bx bx-search"></i> No salary structure available!</h6>
+                                </div>
+                              </td>
+                            </tr>
+
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-md-7 p-2">
+                    <div class="border rounded">
+                      <table class="table m-0 table-sm  MLSS_table">
+                        <thead>
+                          <tr>
+                            <th colspan="4">
+                              <h6 class="m-0">Maternity Leave Salary Structure</h6>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                          {salaryDetails.map((detail, index) => (
+                            <tr key={index}>
+                              <td>
+                                <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
+                                  onChange={(e) => handleSelectChange(index, e)} required>
+                                  <option value={''}>Select</option>
+                                  {
+                                    salaryHeadList?.map((el) => (
+                                      <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                                    ))
+                                  }
+                                </select>
+                              </td>
+                              <td>
+                                <label className="staticWidth">{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
+                              </td>
+                              <td>
+                                <input type="number" class="form-control" value={detail.amount} name="amount"
+                                  // onChange={(e) => { handleInputChange(index, e); }} 
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^\d{0,12}$/.test(value)) {
+                                      handleInputChange(index, e);
+                                    }
+                                  }}
+                                  min="0" max="999999999999"
+                                  placeholder="Amount" required />
+                              </td>
+                              <td>
+                                <div class="d-flex">
+                                  {(index == salaryDetails.length - 1) &&
+                                    <button type="button" class="btn btn-outline-primary border-0 btn-sm me-2" onClick={() => addRow()}>
+                                      <i class="bx bx-plus"></i>
+                                    </button>
+                                  }
+                                  {(salaryDetails.length > 1) &&
+                                    <button type="button" class="btn btn-outline-danger btn-sm border-0" onClick={() => removeRow(index)}>
+                                      <i class="bx bx-trash"></i>
+                                    </button>
+                                  }
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {/* <div className="p-2">
+                        <label className="badge bg-label-primary staticWidth">Earnings: {Utils.formattedNumber(newData.totalEarnings) ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-warning staticWidth">Deductions: {Utils.formattedNumber(newData.totalDeductions) ?? 0}</label> &nbsp;&nbsp;
+                        <label className="badge bg-label-info staticWidth">Net Total: {Utils.formattedNumber(newData.netSalary) ?? 0}</label>
+                      </div> */}
+
+                      <div className="total_salarycard">
+                        <ul className="footerCalcMat">
+                          <li>
+                            <b>Total Earnings:</b> {Utils.formattedNumber(newData.totalEarnings) ?? 0}
+                          </li>
+                          <li>
+                            <b>Total Deductions:</b> {Utils.formattedNumber(newData.totalDeductions) ?? 0}
+                          </li>
+                          <li>
+                            <b>Net Salary:</b> {Utils.formattedNumber(newData.netSalary) ?? 0}
+                          </li>
+                        </ul>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Month From</label>
-                  <input type="month" className="form-control" value="January-2025"/>
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Month To</label>
-                  <input type="month" className="form-control" value="December-2025"/>
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Net Salary</label>
-                  <input className="form-control" type="text" value="2000" readonly />
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Salary During Maternity Leave</label>
-                  <input className="form-control" type="text" value="" />
-                </div>
-              </form>
+              </Form>
             </div>
             <div className="modal-footer">
-              <button type="submit" className="btn btn-primary btn-sm py-2 px-4 me-2">Submit</button>
-              <button type="submit" className="btn btn-outline-secondary  btn-sm py-2 px-4"
-                data-bs-dismiss="modal">Reset</button>
+              {
+                isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateMaternityLeaveSalaries(e)}>Update</button>
+              }
+              {
+                !isEdit &&
+                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveMaternityLeaveSalaries(e)}>Submit</button>
+              }
+              <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
             </div>
-          </div>
-        </div>
+          </Modal.Body>
+        </Modal>
       </div>
     </div>
-  </div>
   )
 }
 

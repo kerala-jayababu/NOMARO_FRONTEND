@@ -18,6 +18,7 @@ import { manageEmployeeBankAccount } from "../../redux/reducers/employeeProfiles
 import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
+import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ const EmployeeProfile = () => {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const { banks, bankBranches, budgetCode, overTimesTypes } = useSelector(
     (state) => state.getAllOptions
   );
@@ -47,8 +49,13 @@ const EmployeeProfile = () => {
   const [budgetCodeLabel, setBudgetCodeLabel] = useState("");
   const [bankAccountErrors, setBankAccountErrors] = useState({});
   const [overtimeErrors, setOvertimeErrors] = useState({});
+  const [childCount, setChildCount] = useState(0);
 
   const [selectedBudgetCode, setSelectedBudgetCode] = useState("");
+  const [profileData, setProfileData] = useState("");
+  const [bankData, setBankData] = useState("");
+  const [overTimeData, setOverTimeData] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
       type: "",
@@ -94,14 +101,13 @@ const EmployeeProfile = () => {
     [overTimesTypes]
   );
 
-
-
-  const totalPages = 5;
+ 
 
   useEffect(() => {
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
 
+  
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEditClick = (id) => {
@@ -114,7 +120,144 @@ const EmployeeProfile = () => {
       setSelectedEmployee(employee);
 
       // Fetch employee details
-      dispatch(getEmployeeDetailsByID(id));
+      // dispatch(getEmployeeDetailsByID(id));
+      dispatch(getEmployeeDetailsByID(id)).then((response) => {
+        if (response.payload && response.payload.data) {
+          setChildCount(response.payload.data.childrenCount || 0); // Update child count state
+        }
+      });
+
+      // dispatch(getEmployeeProfileByID(id)).then((response) => {
+      //   if (response.payload && response.payload.data && response.payload.data.length > 0) {
+      //     const employeeData = response.payload.data[0];
+      //     setProfileData(employeeData);
+      //     // Open the modal
+
+      //   }
+      // });
+
+      // Fetch bank accounts and overtime configs simultaneously
+      Promise.all([
+        dispatch(getEmployeeBankAccountsByID(id)),
+        dispatch(getEmployeeOvertimeConfigsByID(id)),
+      ])
+        .then(([bankAccountsResult, overtimeConfigsResult]) => {
+          console.log("Bank Accounts Result:", bankAccountsResult);
+          // Handle bank accounts
+          if (
+            bankAccountsResult.payload &&
+            bankAccountsResult.payload.data &&
+            bankAccountsResult.payload.data.length > 0
+          ) {
+            const mappedBankAccounts = bankAccountsResult.payload.data.map(
+              (account) => ({
+                ...account,
+                selectedBank:
+                  account.idBank != null ? account.idBank.toString() : "",
+                selectedBranch:
+                  account.idBankBranch != null
+                    ? account.idBankBranch.toString()
+                    : "",
+                accountNumber: account.accountNumber || "",
+                salaryPercentageDistributed:
+                  account.salaryPercentageDistributed != null
+                    ? account.salaryPercentageDistributed.toString()
+                    : "",
+                currencyCode: account.currencyCode || "GYD",
+              })
+            );
+            console.log("Mapped Bank Accounts:", mappedBankAccounts);
+            setBankAccountsState(mappedBankAccounts);
+          } else {
+            setBankAccountsState([
+              {
+                idEmployeeBankAccount: null,
+                selectedBank: banks.length > 0 ? banks[0].value : "",
+                selectedBranch:
+                  bankBranches.length > 0 ? bankBranches[0].value : "",
+                accountNumber: "",
+                salaryPercentageDistributed: "",
+                currencyCode: "GYD",
+              },
+            ]);
+          }
+
+          // Handle overtime configs
+          if (
+            overtimeConfigsResult.payload &&
+            overtimeConfigsResult.payload.data &&
+            overtimeConfigsResult.payload.data.length > 0
+          ) {
+            const mappedOvertimeDetails =
+              overtimeConfigsResult.payload.data.map((config) => {
+                let dayType = config.dayType;
+                if (dayType === "Working Day") {
+                  dayType = "Workday";
+                }
+                const matchingOption = overtimeOptions.find(
+                  (option) => option.label === dayType
+                );
+                return {
+                  type: matchingOption ? matchingOption.label : dayType,
+                  hourlyRate:
+                    config.standardRate != null
+                      ? config.standardRate.toString()
+                      : "",
+                  appliedRate:
+                    config.dayRate != null ? config.dayRate.toString() : "",
+                  idEmployeeOvertimeConfig:
+                    config.idEmployeeOvertimeConfig || 0,
+                };
+              });
+            setOvertimeDetails(mappedOvertimeDetails);
+          } else {
+            setOvertimeDetails([
+              {
+                type: "",
+                hourlyRate: "",
+                appliedRate: "",
+              },
+            ]);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching employee data:", error);
+        });
+
+      if (employee.idBudgetCode) {
+        const budgetCodeValue = employee.idBudgetCode.toString();
+        setSelectedBudgetCode(budgetCodeValue);
+      }
+    }
+    setIsModalOpen(true);
+  };
+
+
+  const handleButtonClick = (id) => {
+    setSelectedEmployee(null);
+    setBankAccountsState([]);
+    setOvertimeDetails([]);
+
+    const employee = employees?.find((emp) => emp.idEmployee === id);
+    if (employee) {
+      setSelectedEmployee(employee);
+
+      // Fetch employee details
+      // dispatch(getEmployeeDetailsByID(id));
+      dispatch(getEmployeeDetailsByID(id)).then((response) => {
+        if (response.payload && response.payload.data) {
+          setChildCount(response.payload.data.childrenCount || 0); // Update child count state
+        }
+      });
+
+      // dispatch(getEmployeeProfileByID(id)).then((response) => {
+      //   if (response.payload && response.payload.data && response.payload.data.length > 0) {
+      //     const employeeData = response.payload.data[0];
+      //     setProfileData(employeeData);
+      //     // Open the modal
+
+      //   }
+      // });
 
       // Fetch bank accounts and overtime configs simultaneously
       Promise.all([
@@ -204,11 +347,37 @@ const EmployeeProfile = () => {
 
       if (employee.idBudgetCode) {
         const budgetCodeValue = employee.idBudgetCode.toString();
-        console.log("Setting selectedBudgetCode:", budgetCodeValue);
         setSelectedBudgetCode(budgetCodeValue);
       }
     }
     setIsModalOpen(true);
+  };
+
+
+  const handleEmpCodeClick = (empCode) => {
+    // Dispatch the action to get employee profile by emp code
+    dispatch(getEmployeeProfileByID(empCode)).then((response) => {
+      if (
+        response.payload &&
+        response.payload.data &&
+        response.payload.data.length > 0
+      ) {
+        const employeeData = response.payload.data[0];
+        setProfileData(employeeData);
+        // Open the modal or handle other actions here
+      }
+    });
+    dispatch(getEmployeeBankAccountsByID(empCode)).then((response) => {
+      if (response.payload && response.payload.data) {
+        setBankData(response.payload.data || 0); // Update child count state
+      }
+    });
+
+    dispatch(getEmployeeOvertimeConfigsByID(empCode)).then((response) => {
+      if (response.payload && response.payload.data) {
+        setOverTimeData(response.payload.data || 0); // Update child count state
+      }
+    });
   };
 
   useEffect(() => {
@@ -241,7 +410,7 @@ const EmployeeProfile = () => {
       setSelectedEmployee(employeeDetails.data);
       if (employeeDetails.data.idBudgetCode) {
         const budgetCodeValue = employeeDetails.data.idBudgetCode.toString();
-        console.log("Setting selectedBudgetCode from employeeDetails:", budgetCodeValue);
+
         setSelectedBudgetCode(budgetCodeValue);
         // Fetch the budget code label if needed
         dispatch(getBudgetCodeById(employeeDetails.data.idBudgetCode));
@@ -308,23 +477,49 @@ const EmployeeProfile = () => {
     dispatch(getAllOptions());
   }, [dispatch]);
 
-  useEffect(() => {
-  }, [bankAccountsState]);
+  useEffect(() => {}, [bankAccountsState]);
 
-  useEffect(() => {
-  }, [selectedEmployee]);
+  useEffect(() => {}, [selectedEmployee]);
 
   const employeeData =
-    employees?.map((employee) => ({
-      editId: employee.idEmployee,
-      empCode: employee.employeeCode,
-      name: employee.fullName,
-      designation: employee.designation,
-      department: employee.department,
-      joiningDate: new Date(employee.joiningDate).toLocaleDateString(),
-      status: employee.currentStatus,
-      childCount: employee.childrenCount,
-    })) || [];
+  employees?.map((employee) => ({
+    editId: employee.idEmployee,
+    empCode: employee.employeeCode,
+    name: employee.fullName,
+    designation: employee.designation,
+    department: employee.department,
+    joiningDate: new Date(employee.joiningDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }),
+    status: employee.currentStatus,
+    childCount: employee.childrenCount,
+  })) || [];
+
+  const filteredEmployeeData = useMemo(() => {
+    if (!searchTerm) return employeeData;
+  
+    return employeeData.filter((employee) => {
+      return (
+        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        employee.designation.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [employeeData, searchTerm]);
+  
+
+  const rowsPerPage = 10; // Number of rows per page
+
+  const totalPages = Math.ceil(filteredEmployeeData.length / rowsPerPage);
+
+  const paginatedEmployeeData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredEmployeeData.slice(startIndex, endIndex);
+  }, [filteredEmployeeData, currentPage, rowsPerPage]);
 
   const handleBankChange = (value, index) => {
     setBankAccountsState((prevState) => {
@@ -345,11 +540,27 @@ const EmployeeProfile = () => {
 
   const handleInputChange = (e, index, field) => {
     const { value } = e.target;
+    
+    if (field === "accountNumber") {
+      // Allow only alphanumeric values and enforce max length of 25
+      if (!/^[a-zA-Z0-9]{0,25}$/.test(value)) {
+        return; // Do nothing if the input is invalid
+      }
+    }
+
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index][field] = value;
       return newState;
     });
+     // Revalidate total salary percentage when salaryPercentageDistributed changes
+  if (field === "salaryPercentageDistributed") {
+    const salaryPercentageValidation = validateSalaryPercentage();
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: salaryPercentageValidation.error,
+    }));
+  }
   };
 
   const handleAddRow = () => {
@@ -364,6 +575,11 @@ const EmployeeProfile = () => {
         currencyCode: "GYD",
       },
     ]);
+      // Clear total salary percentage error when adding a new row
+  setBankAccountErrors((prevErrors) => ({
+    ...prevErrors,
+    salaryPercentageTotal: "",
+  }));
   };
 
   const handleDeleteRow = (index) => {
@@ -383,20 +599,83 @@ const EmployeeProfile = () => {
       }
       return prevState.filter((_, i) => i !== index);
     });
+      // Revalidate total salary percentage when deleting a row
+  const salaryPercentageValidation = validateSalaryPercentage();
+  setBankAccountErrors((prevErrors) => ({
+    ...prevErrors,
+    salaryPercentageTotal: salaryPercentageValidation.error,
+  }));
+  };
+
+  // const handleAddOvertimeRow = () => {
+  //   setOvertimeDetails([
+  //     ...overtimeDetails,
+  //     {
+  //       type: "",
+  //       hourlyRate: "",
+  //       appliedRate: "",
+  //     },
+  //   ]);
+  // };
+
+  const isDuplicateDayType = (dayType, index) => {
+   
+
+    const dayTypeMapping = {
+      1: "Workday",
+      2: "Holiday",
+    };
+
+    const mappedDayType = dayTypeMapping[dayType];
+
+    return overtimeDetails.some(
+      (detail, i) => i !== index && detail.type === mappedDayType
+    );
   };
 
   const handleAddOvertimeRow = () => {
-    setOvertimeDetails([
+    const newOvertimeDetails = [
       ...overtimeDetails,
       {
         type: "",
         hourlyRate: "",
         appliedRate: "",
       },
-    ]);
+    ];
+
+    // Check for duplicates in the new row
+    const lastIndex = newOvertimeDetails.length - 1;
+    const newDayType = newOvertimeDetails[lastIndex].type;
+
+
+
+    if (isDuplicateDayType(newDayType, lastIndex)) {
+      setOvertimeErrors((prevErrors) => ({
+        ...prevErrors,
+        [`overtimeType_${lastIndex}`]:
+          "Duplicate DayType values are not allowed.",
+      }));
+      return; // Prevent adding the row if duplicate is found
+    }
+
+    setOvertimeDetails(newOvertimeDetails);
   };
 
   const handleOvertimeChange = (index, field, value) => {
+    if (field === "type" && isDuplicateDayType(value, index)) {
+      setOvertimeErrors((prevErrors) => ({
+        ...prevErrors,
+        [`overtimeType_${index}`]: "Duplicate DayType values are not allowed.",
+      }));
+      return; // Prevent updating the state if duplicate is found
+    }
+
+    // Clear any existing error for this field
+    setOvertimeErrors((prevErrors) => ({
+      ...prevErrors,
+      [`overtimeType_${index}`]: "",
+    }));
+
     const newOvertimeDetails = [...overtimeDetails];
     if (field === "type") {
       // Find the corresponding label (displayName) for the selected value
@@ -430,6 +709,17 @@ const EmployeeProfile = () => {
       // Remove the item at the specified index
       return prevState.filter((_, i) => i !== index);
     });
+
+    // Clear errors for the deleted row
+    setOvertimeErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+      Object.keys(newErrors).forEach((key) => {
+        if (key.endsWith(`_${index}`)) {
+          delete newErrors[key];
+        }
+      });
+      return newErrors;
+    });
   };
 
   const validateBankAccounts = () => {
@@ -453,7 +743,7 @@ const EmployeeProfile = () => {
         !account.salaryPercentageDistributed ||
         isNaN(parseFloat(account.salaryPercentageDistributed)) ||
         parseFloat(account.salaryPercentageDistributed) <= 0 ||
-        parseFloat(account.salaryPercentageDistributed) >= 100
+        parseFloat(account.salaryPercentageDistributed) > 100
       ) {
         isValid = false;
         errors[`salaryPercentage_${index}`] =
@@ -502,11 +792,69 @@ const EmployeeProfile = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const validateSalaryPercentage = () => {
+    const totalPercentage = bankAccountsState.reduce((sum, account) => {
+      const percentage = parseFloat(account.salaryPercentageDistributed) || 0;
+      return sum + percentage;
+    }, 0);
+  
+    if (totalPercentage > 100) {
+      return {
+        isValid: false,
+        error: "The total Salary Percentage Distributed must be less than or equal to 100.",
+      };
+    } 
+  
+    return { isValid: true, error: "" };
+  };
+
+  const validateBankAccountCombinations = () => {
+    const combinations = new Set();
+  
+    for (let i = 0; i < bankAccountsState.length; i++) {
+      const account = bankAccountsState[i];
+      const combinationKey = `${account.selectedBank}-${account.selectedBranch}`;
+      console.log("Combination Key:", combinationKey);
+      if (combinations.has(combinationKey)) {
+        return {
+          isValid: false,
+          error: "Duplicate Bank and BankBranch combination found.",
+        };
+      }
+  
+      combinations.add(combinationKey);
+    }
+  
+    return { isValid: true, error: "" };
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+      // Validate bank account combinations
+  const bankAccountCombinationValidation = validateBankAccountCombinations();
+  console.log("Bank Account Combination Validation:", bankAccountCombinationValidation);
+  if (!bankAccountCombinationValidation.isValid) {
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      bankAccountCombination: bankAccountCombinationValidation.error,
+    }));
+    return; // Stop submission if validation fails
+  }
+
     const bankAccountsValid = validateBankAccounts();
     const overtimeValid = validateOvertimeDetails();
+
+      // Validate salary percentage distribution
+  const salaryPercentageValidation = validateSalaryPercentage();
+  if (!salaryPercentageValidation.isValid) {
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: salaryPercentageValidation.error,
+    }));
+    return; // Stop submission if validation fails
+  }
+
 
     if (!bankAccountsValid || !overtimeValid) {
       return; // Don't proceed with submission if validation fails
@@ -564,10 +912,10 @@ const EmployeeProfile = () => {
 
       if (errors.length > 0) {
         console.error("API Errors:", errors);
-        // Don't close the modal if there are API errors
+        return false;
       } else {
-        console.log("All updates successful");
         setIsModalOpen(false); // Close the modal only on successful submission
+        return true;
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -576,6 +924,47 @@ const EmployeeProfile = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleReset = () => {
+    // Reset bank accounts state
+    setBankAccountsState([
+      {
+        idEmployeeBankAccount: null,
+        selectedBank: banks.length > 0 ? banks[0].value : "",
+        selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+        accountNumber: "",
+        salaryPercentageDistributed: "",
+        currencyCode: "GYD",
+      },
+    ]);
+  
+    // Reset overtime details state
+    setOvertimeDetails([
+      {
+        type: "",
+        hourlyRate: "",
+        appliedRate: "",
+      },
+    ]);
+  
+    // Reset selected budget code
+    setSelectedBudgetCode("");
+  
+    // Reset child count
+    setChildCount(0);
+  
+    // Clear errors
+    setBankAccountErrors({});
+    setOvertimeErrors({});
+  
+    // Optionally, reset other states if needed
+    // setSelectedEmployee(null);
+    // setProfileData("");
+    // setBankData("");
+    // setOverTimeData("");
+  };
+
+
 
   const columns = [
     { key: "empCode", label: "Emp. Code" },
@@ -600,7 +989,13 @@ const EmployeeProfile = () => {
               <h5 className="m-0">List of Employee Profile View</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <input type="search" className="form-control" />
+                  <input
+                    type="search"
+                    className="form-control"
+                    placeholder="Search by Emp. Code or Name"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                   <i className="bx bx-search"></i>
                 </div>
               </div>
@@ -613,10 +1008,13 @@ const EmployeeProfile = () => {
               ) : (
                 <Grid
                   columns={columns}
-                  data={employeeData}
+                  data={paginatedEmployeeData}
                   onEditClick={handleEditClick}
+                  onEmpCodeClick={handleEmpCodeClick}
                   idKey="editId"
                   modalId="Add_EMP_Account"
+                  popUpId="EMP_profileView"
+
                 />
               )}
               <div className="text-end pt-2">
@@ -625,6 +1023,184 @@ const EmployeeProfile = () => {
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="modal fade"
+          id="EMP_profileView"
+          tabIndex="-1"
+          aria-hidden="true"
+          data-bs-backdrop="static" // Prevents closing on outside click
+          data-bs-keyboard="false" // Prevents closing on Esc key p
+        >
+          <div
+            className="modal-dialog modal-xl modal-dialog-centered"
+            role="document"
+            data-bs-backdrop="static" // Prevents closing on outside click
+          data-bs-keyboard="false" // Prevents closing on Esc key p
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="modalCenterTitle">
+                  Employee Profile View
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body pt-1 accountDetail_card">
+                <div className="accountDetail_cardProfile">
+                  <div className="avatar-upload">
+                    <div className="avatar-preview">
+                      <img src="src/assets/avatar.jpg" />
+                    </div>
+                  </div>
+
+                  <div className="row m-0 mt-3">
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Employee Code</label>
+                      <p className="m-0">{profileData?.employeeCode}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Employee Name</label>
+                      <p className="m-0">{profileData?.fullName}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">
+                        Date of Birth, Gender
+                      </label>
+                      <p className="m-0">
+                        {profileData?.dob ? profileData.dob : "N/A"} -{" "}
+                        {profileData?.gender ? profileData?.gender : "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Email ID</label>
+                      <p className="m-0">{profileData?.emailId}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Work Phone</label>
+                      <p className="m-0">{profileData?.phoneNumber1}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Mobile Number</label>
+                      <p className="m-0">{profileData?.phoneNumber2}</p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Department</label>
+                      <p className="m-0">{profileData?.department}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Designation</label>
+                      <p className="m-0">{profileData?.designation}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Joining Date</label>
+                      <p className="m-0">
+                        {new Date(
+                          profileData?.joiningDate
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Address</label>
+                      <p className="m-0">{profileData?.address}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Reporting To</label>
+                      <p className="m-0">{profileData?.reportingTo}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Current Status</label>
+                      <p className="m-0">
+                        <span className="badge bg-label-success">
+                          {profileData?.currentStatus}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">SSN</label>
+                      <p className="m-0">{profileData?.ssn || "N/A"}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Tax ID Number</label>
+                      <p className="m-0">{profileData?.taxIdNumber || "N/A"}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">Budget Code </label>
+                      <p className="m-0">{profileData?.budgetCode}</p>
+                    </div>
+                  </div>
+
+                  <div className="row m-0">
+                    <div className="col-md-10 p-2">
+                      <div className="py-2">
+                        <h6 className="fw-bold mb-0">Overtime Configuration</h6>
+                      </div>
+                      <Table
+                        headers={["Days", "Hourly Rate", "Applied Rate"]}
+                        rows={(Array.isArray(overTimeData)
+                          ? overTimeData
+                          : []
+                        ).map((config, index) => (
+                          <tr key={index}>
+                            <td className="col-md-6">{config.dayType}</td>
+                            <td className="col-md-3">{config.standardRate}</td>
+                            <td className="col-md-3">{config.dayRate}</td>
+                          </tr>
+                        ))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <div className="py-2">
+                    <h6 className="fw-bold mb-0">Bank Account Details</h6>
+                  </div>
+                  <Table
+                    headers={[
+                      "Bank Name",
+                      "Branch Name",
+                      "Account Number",
+                      "% Salary",
+                      "Currency",
+                    ]}
+                    rows={(Array.isArray(bankData) ? bankData : []).map(
+                      (account, index) => (
+                        <tr key={index}>
+                          <td>{account.bankName}</td>
+                          <td>{account.branchName}</td>
+                          <td>{account.accountNumber}</td>
+                          <td>{account.salaryPercentageDistributed}%</td>
+                          <td>{account.currencyCode}</td>
+                        </tr>
+                      )
+                    )}
+                  />
+                  <div className="text-end py-2">
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => {
+                        handleButtonClick(profileData?.idEmployee); // Set the selected employee ID
+                        setIsModalOpen(true); // Open the modal
+                      }}
+                      data-bs-toggle="modal"
+                      data-bs-target="#Add_EMP_Account" // Add # prefix
+                    >
+                      <i className="bx bx-user"></i> Update Profile
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -655,6 +1231,8 @@ const EmployeeProfile = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         isOpen={isModalOpen}
+        employeeId={selectedEmployeeId}
+        onReset={handleReset} // Pass the handleReset function here
       >
         <div className="row m-0 mb-3">
           {selectedEmployee && (
@@ -673,91 +1251,108 @@ const EmployeeProfile = () => {
           <strong>Bank Account Details</strong>
         </h6>
 
-        <Table
-          headers={[
-            "Bank Name",
-            "Branch Name",
-            "Account Number",
-            "% Salary",
-            "Currency",
-            "",
-          ]}
-          rows={
-            bankAccountsState.length > 0 ? (
+        {/* Bank Account Details Table Component Starts */}
+        <table className="table table-sm mb-0 border">
+          <thead>
+            <tr>
+              <th>Bank Name</th>
+              <th className="text-nowrap">Branch Name</th>
+              <th className="text-nowrap">Account Number</th>
+              <th className="text-nowrap">% Salary</th>
+              <th className="text-nowrap">Currency</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {bankAccountsState.length > 0 ? (
               bankAccountsState.map((bank, index) => (
-                <React.Fragment
-                  key={bank.idEmployeeBankAccount || `new-${index}`}
-                >
-                  <tr>
-                    <td colSpan="6">
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "19px",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Dropdown
-                          options={[
-                            { value: "", label: "Select an option" },
-                            ...bankOptions,
-                          ]}
-                          name="bankName"
-                          value={bank.selectedBank}
-                          onChange={(e) =>
-                            handleBankChange(e.target.value, index)
-                          }
-                          style={{ width: "20%" }}
-                        />
-                        <Dropdown
-                          options={[
-                            { value: "", label: "Select an option" },
-                            ...branchOptions,
-                          ]}
-                          name="branchName"
-                          value={bank.selectedBranch}
-                          onChange={(e) =>
-                            handleBranchChange(e.target.value, index)
-                          }
-                          style={{ width: "20%" }}
-                        />
-                        <Input
-                          type="text"
-                          name="accountNumber"
-                          value={bank.accountNumber}
-                          onChange={(e) =>
-                            handleInputChange(e, index, "accountNumber")
-                          }
-                          style={{ width: "15%" }}
-                        />
-                        <Input
-                          type="text"
-                          name="salaryPercentage"
-                          value={bank.salaryPercentageDistributed}
-                          onChange={(e) =>
+                <React.Fragment key={index}>
+                  <tr className="custom-row">
+                    <td className="col-md-3">
+                      <Dropdown
+                        options={[...bankOptions]}
+                        name="bankName"
+                        value={bank.selectedBank}
+                        onChange={(e) =>
+                          handleBankChange(e.target.value, index)
+                        }
+                        
+                      />
+                    </td>
+                    <td className="col-md-3">
+                      <Dropdown
+                        options={[...branchOptions]}
+                        name="branchName"
+                        value={bank.selectedBranch}
+                        onChange={(e) =>
+                          handleBranchChange(e.target.value, index)
+                        }
+                        
+                      />
+                    </td>
+                    <td className="col-md-3">
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="accountNumber"
+                        value={bank.accountNumber}
+                        maxLength="25"
+                        onChange={(e) =>
+                          handleInputChange(e, index, "accountNumber")
+                        }
+                      />
+                    </td>
+
+                    <td className="col-md-2">
+                      <input
+                        type="text"
+                        name="salaryPercentage"
+                        className="form-control"
+                        value={bank.salaryPercentageDistributed}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^[0-9]*\.?[0-9]*$/.test(value)) {
                             handleInputChange(
                               e,
                               index,
                               "salaryPercentageDistributed"
-                            )
+                            );
                           }
-                          style={{ width: "15%" }}
-                        />
-                        <Dropdown
-                          options={[
-                            { value: "GYD", label: "GYD" },
-                            { value: "USD", label: "USD" },
-                          ]}
-                          name="currency"
-                          value={bank.currencyCode}
-                          onChange={(e) =>
-                            handleInputChange(e, index, "currencyCode")
-                          }
-                          style={{ width: "10%" }}
-                        />
-                        <AddIcon onClick={handleAddRow} />
+                        }}
+                      />
+                    </td>
+
+                    <td className="col-md-3">
+                      <Dropdown
+                        options={[
+                          { value: "GYD", label: "GYD" },
+                          { value: "USD", label: "USD" },
+                        ]}
+                        name="currency"
+                        value={bank.currencyCode}
+                        onChange={(e) =>
+                          handleInputChange(e, index, "currencyCode")
+                        }
+                      />
+                    </td>
+                    <td className="col-md-1">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         {bankAccountsState.length > 1 && (
-                          <DeleteIcon onClick={() => handleDeleteRow(index)} />
+                          <DeleteIcon
+                            className="delete-icon"
+                            onClick={() => handleDeleteRow(index)}
+                          />
+                        )}
+                        {index === bankAccountsState.length - 1 && (
+                          <AddIcon
+                            className="add-icon"
+                            onClick={handleAddRow}
+                          />
                         )}
                       </div>
                     </td>
@@ -766,7 +1361,7 @@ const EmployeeProfile = () => {
                     key.endsWith(`_${index}`)
                   ) && (
                     <tr>
-                      <td colSpan="6">
+                      <td className="col-md-3">
                         <div style={{ color: "red" }}>
                           {bankAccountErrors[`idBank_${index}`] && (
                             <div>{bankAccountErrors[`idBank_${index}`]}</div>
@@ -799,13 +1394,25 @@ const EmployeeProfile = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center">
-                  No bank accounts found. Click &apos;+&apos; to add one.
+                <td className="text-center col-md-6">
+                  No bank accounts found. Click '+' to add one.
                 </td>
               </tr>
-            )
-          }
-        />
+            )}
+          </tbody>
+        </table>
+        {bankAccountErrors.salaryPercentageTotal && (
+          <div className="text-danger mb-3">
+            {bankAccountErrors.salaryPercentageTotal}
+          </div>
+        )}
+        {bankAccountErrors.bankAccountCombination && (
+  <div className="text-danger mb-3">
+    {bankAccountErrors.bankAccountCombination}
+  </div>
+)}
+
+        {/* Bank Account Details Table Component Ends */}
 
         {/* Overtime Details & Budget Code */}
         <div className="row mt-4">
@@ -813,88 +1420,116 @@ const EmployeeProfile = () => {
             <h6>
               <strong>Add Overtime Details</strong>
             </h6>
-            <Table
-              headers={["Days", "Hourly Rate", "Applied Rate", ""]}
-              rows={overtimeDetails.map((detail, index) => (
-                <React.Fragment key={index}>
-                  <tr>
-                    <td>
-                      <Dropdown
-                        options={overtimeOptions}
-                        name="overtimeDays"
-                        value={
-                          overtimeOptions.find(
-                            (option) => option.label === detail.type
-                          )?.value || ""
-                        }
-                        onChange={(e) =>
-                          handleOvertimeChange(index, "type", e.target.value)
-                        }
-                      />
-                    </td>
-                    <td>
-                      <Input
-                        type="text"
-                        maxLength="12"
-                        name="hourlyRate"
-                        value={detail.hourlyRate}
-                        onChange={(e) =>
-                          handleOvertimeChange(
-                            index,
-                            "hourlyRate",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <Input
-                        type="text"
-                        maxLength="12"
-                        name="appliedRate"
-                        value={detail.appliedRate}
-                        onChange={(e) =>
-                          handleOvertimeChange(
-                            index,
-                            "appliedRate",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      {index === overtimeDetails.length - 1 && (
-                        <AddIcon onClick={handleAddOvertimeRow} />
-                      )}
-                      {overtimeDetails.length > 1 && (
-                        <DeleteIcon
-                          onClick={() => handleDeleteOvertimeRow(index)}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                  {Object.keys(overtimeErrors).some((key) =>
-                    key.endsWith(`_${index}`)
-                  ) && (
+
+            {/* Table Component Begins*/}
+            <table className="table table-sm mb-0 border">
+              <thead>
+                <tr>
+                  <th>Days</th>
+                  <th className="text-nowrap">Hourly Rate</th>
+                  <th className="text-nowrap">Applied Rate</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {overtimeDetails.map((detail, index) => (
+                  <React.Fragment key={index}>
                     <tr>
-                      <td colSpan="4">
-                        <div style={{ color: "red" }}>
-                          {overtimeErrors[`overtimeType_${index}`] && (
-                            <div>{overtimeErrors[`overtimeType_${index}`]}</div>
+                      <td className="col-md-3">
+                        <Dropdown
+                          options={overtimeOptions}
+                          name="overtimeDays"
+                          value={
+                            overtimeOptions.find(
+                              (option) => option.label === detail.type
+                            )?.value || ""
+                          }
+                          onChange={(e) =>
+                            handleOvertimeChange(index, "type", e.target.value)
+                          }
+                        />
+                      </td>
+                      <td className="col-md-3">
+                        <input
+                          type="text"
+                          className="form-control"
+                          maxLength="10"
+                          name="hourlyRate"
+                          value={detail.hourlyRate}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d{0,10}$/.test(value)) {
+                              handleOvertimeChange(index, "hourlyRate", value);
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="col-md-3">
+                        <input
+                          type="text"
+                          maxLength="5"
+                          name="appliedRate"
+                          className="form-control"
+                          value={detail.appliedRate}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
+                              handleOvertimeChange(index, "appliedRate", value);
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="col-md-1">
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          {overtimeDetails.length > 1 && (
+                            <DeleteIcon
+                              className="delete-icon"
+                              onClick={() => handleDeleteOvertimeRow(index)}
+                            />
                           )}
-                          {overtimeErrors[`hourlyRate_${index}`] && (
-                            <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
-                          )}
-                          {overtimeErrors[`appliedRate_${index}`] && (
-                            <div>{overtimeErrors[`appliedRate_${index}`]}</div>
+                          {index === overtimeDetails.length - 1 && (
+                            <AddIcon
+                              className="add-icon"
+                              onClick={handleAddOvertimeRow}
+                            />
                           )}
                         </div>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            />
+                    {Object.keys(overtimeErrors).some((key) =>
+                      key.endsWith(`_${index}`)
+                    ) && (
+                      <tr>
+                        <td colSpan="4">
+                          <div style={{ color: "red" }}>
+                            {overtimeErrors[`overtimeType_${index}`] && (
+                              <div>
+                                {overtimeErrors[`overtimeType_${index}`]}
+                              </div>
+                            )}
+                            {overtimeErrors[`hourlyRate_${index}`] && (
+                              <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
+                            )}
+                            {overtimeErrors[`appliedRate_${index}`] && (
+                              <div>
+                                {overtimeErrors[`appliedRate_${index}`]}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Table Component Ends*/}
           </div>
           <div className="col-md-4">
             <h6>
@@ -902,20 +1537,15 @@ const EmployeeProfile = () => {
             </h6>
             <Dropdown
               label="Budget Code"
-              options={[
-                { value: "", label: "Select an option" },
-                ...budgetCodeOptions
-              ]}
+              options={[...budgetCodeOptions]}
               name="budgetCode"
               value={selectedBudgetCode}
               onChange={(e) => {
                 const value = e.target.value;
-                console.log("Budget Code Dropdown changed:", value);
                 setSelectedBudgetCode(value);
                 const selectedOption = budgetCodeOptions.find(
                   (option) => option.value === value
                 );
-                console.log("Selected Option:", selectedOption.label);  
                 if (selectedOption) {
                   setBudgetCodeLabel(selectedOption.label);
                 }
@@ -927,15 +1557,13 @@ const EmployeeProfile = () => {
                 type="text"
                 name="childCount"
                 label="Child Count"
-                value={employeeDetails.data.childrenCount}
-                onChange={(e) =>
-                  dispatch(
-                    getEmployeeDetailsByID({
-                      ...employeeDetails.data,
-                      childrenCount: e.target.value,
-                    })
-                  )
-                }
+                value={childCount}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    setChildCount(value);
+                  }
+                }}
               />
             )}
           </div>

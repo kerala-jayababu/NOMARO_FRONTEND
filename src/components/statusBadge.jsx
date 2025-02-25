@@ -8,6 +8,8 @@ const StatusBadge = ({ status }) => {
       : "bg-label-warning";
   };
 
+  console.log(status)
+
   return <span className={`badge ${getBadgeClass(status)}`}>{status}</span>;
 };
 
