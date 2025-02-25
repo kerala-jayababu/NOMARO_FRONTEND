@@ -426,7 +426,7 @@ function OvertimeTransaction() {
                           onChange={handleChange}
                           value={selectedEmployee}
                           placeholder={'Select Employee'}
-                          className="textSize"
+                          className="textSize" required
                         />
                       </div>
                       <div className="col-md-6 p-2">

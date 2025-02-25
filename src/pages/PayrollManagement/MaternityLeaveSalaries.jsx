@@ -487,7 +487,7 @@ function MaternityLeaveSalaries() {
                       onChange={handleChange}
                       value={selectedEmployee}
                       placeholder={'Select Employee'}
-                      className="textSize"
+                      className="textSize" required
                     />
                   </div>
 

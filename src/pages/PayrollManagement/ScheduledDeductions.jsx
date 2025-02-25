@@ -378,7 +378,7 @@ function ScheduledDeductions() {
                     onChange={handleChange}
                     value={selectedEmployee}
                     placeholder={'Select Employee'}
-                    className="textSize"
+                    className="textSize" required
                   />
                 </div>
                 <div className="mb-2">
