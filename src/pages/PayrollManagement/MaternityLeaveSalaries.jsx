@@ -415,8 +415,8 @@ function MaternityLeaveSalaries() {
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Designation</th>
-                      <th>Date From</th>
-                      <th>Date To</th>
+                      <th>Salary Month From</th>
+                      <th>Salary Month To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
                       <th className="text-end"></th>
