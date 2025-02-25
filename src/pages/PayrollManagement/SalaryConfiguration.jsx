@@ -921,9 +921,9 @@ function SalaryConfiguration() {
       console.log(row.finalSalaryAmount, "row.finalSalaryAmount");
   
       // Add to earnings or deductions based on the row type
-      if (row.type.toUpperCase() === "EARNING") {
+      if (row.type === "EARNING") {
         earnings += row.finalSalaryAmount;
-      } else if (row.type.toUpperCase() === "DEDUCTION") {
+      } else if (row.type === "DEDUCTION") {
         deductions += row.finalSalaryAmount;
       }
     });
@@ -1012,7 +1012,7 @@ function SalaryConfiguration() {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="modalCenterTitle">
-                {selectedEmployee ? "Update" : "Add"} Employee Salary Template
+                Add / Update Employee Salary Template
               </h5>
               <button
                 type="button"

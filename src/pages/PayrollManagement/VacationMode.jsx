@@ -376,7 +376,7 @@ const VacationMode = () => {
                   className="btn btn-outline-secondary px-4"
                   onClick={resetForm}
                 >
-                  Cancel
+                  Reset
                 </Button>
               </div>
             </form>

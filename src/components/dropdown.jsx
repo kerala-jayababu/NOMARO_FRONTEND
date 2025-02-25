@@ -24,7 +24,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
             WebkitAppearance: "none",
             MozAppearance: "none",
             width: "100%",
-            height: "38px", // Match the input field height
+            height: "32px", // Match the input field height
             padding: "8px 30px 8px 10px",
             border: "1px solid #ccc",
             borderRadius: "4px",
