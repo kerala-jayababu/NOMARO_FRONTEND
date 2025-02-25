@@ -29,7 +29,6 @@
 
     const handleDeleteRow = (index) => {
       const updatedRows = rows.filter((_, i) => i !== index);
-      console.log(updatedRows, "updatedRows-19859605");
       setRows(updatedRows);
       if (onDeleteRow) onDeleteRow(index);
       if(updatedRows) calculateTotal(updatedRows);
@@ -51,6 +50,7 @@
         const selectedOption = column.percentageOfOptions.find(
           (option) => option.value === e.target.value
         );
+        console.log(selectedOption, "ejwknkjnrkjwebd");
         updatedRows[index].percentageOf = selectedOption ? selectedOption.label : "";
       }
 
@@ -77,10 +77,6 @@
               >
                 <option value="">Select</option>
                 {column.percentageOfOptions.map((option) => {
-                  console.log(option.value); // Log each option
-                  if(row.percentageOf && row.percentageOfIdSalaryHead === option.value) {
-                   console.log("kjwnrjtnjtmgt njgrnjhntesttee"); // Log the selected option
-                  }
                   return (
                     <option key={option.value} value={option.value}>
                       {option.label}

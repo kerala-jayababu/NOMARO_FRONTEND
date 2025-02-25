@@ -38,8 +38,8 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.className || ""} style={["Update", "Delete"].includes(column.label) ? { padding: "5px 0px" } : {}}>
-                  {column.label}
+              <th key={column.key} className={column.className || ""}>
+                {column.label}
               </th>
             ))}
           </tr>
