@@ -973,7 +973,7 @@ const [rowsPerPage, setRowsPerPage] = useState(10); // Number of rows per page
               return processedDetail;
             }
           );
-
+          console.log(processedDetails, "processedDetails");
           setSalaryRows(processedDetails);
         }
       } catch (error) {
