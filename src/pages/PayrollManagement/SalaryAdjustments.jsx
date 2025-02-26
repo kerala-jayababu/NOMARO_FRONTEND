@@ -147,7 +147,8 @@ function SalaryAdjustments() {
 
   const saveSalaryAdjustments = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryMonth) {
+    if (!newData.idEmployee || !newData.allocatingSalaryMonth || !newData.payAdjustmentDate || !newData.payAdjustmentDetails
+      || !newData.earningOrDeduction || !newData.isTaxable || !newData.allocatingSalaryHead || !newData.amount) {
       setValidated(true);
       return;
     }
@@ -173,7 +174,8 @@ function SalaryAdjustments() {
 
   const updateSalaryAdjustments = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryMonth) {
+    if (!newData.idEmployee || !newData.allocatingSalaryMonth || !newData.payAdjustmentDate || !newData.payAdjustmentDetails
+      || !newData.earningOrDeduction || !newData.isTaxable || !newData.allocatingSalaryHead || !newData.amount) {
       setValidated(true);
       return;
     }
@@ -469,7 +471,7 @@ function SalaryAdjustments() {
                     <label className="form-label mb-1">Remarks</label>
                     <textarea className="form-control" rows="4" maxlength="100" value={newData.remarks}
                       onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
-                      required placeholder='Add remarks here'></textarea>
+                      placeholder='Add remarks here'></textarea>
                     <small>{100 - newData.remarks.length} / 100 characters remaining</small>
                   </div>
                 </div>

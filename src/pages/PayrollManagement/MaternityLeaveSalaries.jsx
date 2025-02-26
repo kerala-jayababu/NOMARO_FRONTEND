@@ -429,8 +429,8 @@ function MaternityLeaveSalaries() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
-                          <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
-                          <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveFrom).format("MMMM, YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
@@ -606,7 +606,7 @@ function MaternityLeaveSalaries() {
                             <tr key={index}>
                               <td>
                                 <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
-                                  onChange={(e) => handleSelectChange(index, e)} required>
+                                  onChange={(e) => handleSelectChange(index, e)} required style={{width:'230px'}}>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (

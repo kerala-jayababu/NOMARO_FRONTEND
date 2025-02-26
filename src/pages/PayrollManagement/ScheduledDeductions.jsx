@@ -166,7 +166,8 @@ function ScheduledDeductions() {
 
   const saveScheduledDeductions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryHead) {
+    if (!newData.idEmployee || !newData.allocatingSalaryHead || !newData.totalAmount || !newData.deductionFromSalaryMonthDate
+      || !newData.deductionToSalaryMonthDate) {
       setValidated(true);
       return;
     }
