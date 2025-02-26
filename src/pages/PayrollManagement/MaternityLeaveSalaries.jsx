@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
+import { NumericFormat } from "react-number-format";
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -197,8 +198,7 @@ function MaternityLeaveSalaries() {
     setSalaryDetails(newSalaryDetails);
   };
 
-  const handleInputChange = (index, event) => {
-    const { value } = event.target;
+  const handleInputChange = (index, value) => {
     const newSalaryDetails = [...salaryDetails];
     newSalaryDetails[index]['amount'] = value;
     setSalaryDetails(newSalaryDetails);
@@ -619,7 +619,7 @@ function MaternityLeaveSalaries() {
                                 <label className="staticWidth">{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
                               </td>
                               <td>
-                                <input type="number" class="form-control" value={detail.amount} name="amount"
+                                {/* <input type="number" class="form-control" value={detail.amount} name="amount"
                                   // onChange={(e) => { handleInputChange(index, e); }} 
                                   onChange={(e) => {
                                     const value = e.target.value;
@@ -628,7 +628,22 @@ function MaternityLeaveSalaries() {
                                     }
                                   }}
                                   min="0" max="999999999999"
-                                  placeholder="Amount" required />
+                                  placeholder="Amount" required /> */}
+                                <NumericFormat
+                                  className="form-control"
+                                  value={detail.amount}
+                                  onValueChange={(values) => {
+                                    const { value } = values;
+                                    handleInputChange(index, value);
+                                  }}
+                                  decimalScale={2} // Allow up to 2 decimal places
+                                  allowNegative={false} // Disallow negative numbers
+                                  thousandSeparator={true} // Disable thousand separators
+                                  allowLeadingZeros={false}
+                                  placeholder="Add amount"
+                                  maxLength={12}
+                                  required
+                                />
                               </td>
                               <td>
                                 <div class="d-flex">
