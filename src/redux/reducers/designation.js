@@ -135,7 +135,7 @@ const slice = createSlice({
   reducers: {
     resetError: (state) => {
       state.error = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder.addCase(fetchDesignations.pending, (state) => {
@@ -204,5 +204,5 @@ const slice = createSlice({
   },
 });
 
-export const { resetError } = slice.actions;
+export const { clearDesignation } = slice.actions;
 export default slice.reducer;
