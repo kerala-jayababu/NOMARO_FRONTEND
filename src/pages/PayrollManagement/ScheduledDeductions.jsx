@@ -10,6 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
+import { NumericFormat } from "react-number-format";
 
 function ScheduledDeductions() {
   const [scheduledDeductions, setScheduledDeductions] = useState([]);
@@ -165,7 +166,8 @@ function ScheduledDeductions() {
 
   const saveScheduledDeductions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryHead) {
+    if (!newData.idEmployee || !newData.allocatingSalaryHead || !newData.totalAmount || !newData.deductionFromSalaryMonthDate
+      || !newData.deductionToSalaryMonthDate) {
       setValidated(true);
       return;
     }
@@ -378,18 +380,33 @@ function ScheduledDeductions() {
                     onChange={handleChange}
                     value={selectedEmployee}
                     placeholder={'Select Employee'}
-                    className="textSize"
+                    className="textSize" required
                   />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Total Deduction</label>
-                  <input className="form-control" type="number" value={newData.totalAmount} min="0" max="999999999999"
+                  {/* <input className="form-control" type="number" value={newData.totalAmount} min="0" max="999999999999"
                     onChange={(e) => {
                       const value = e.target.value;
                       if (/^\d{0,12}$/.test(value)) {
                         setNewData({ ...newData, totalAmount: value });
                       }
-                    }} required />
+                    }} required /> */}
+                  <NumericFormat
+                    className="form-control"
+                    value={newData.totalAmount}
+                    onValueChange={(values) => {
+                      const { value } = values;
+                      setNewData({ ...newData, totalAmount: value });
+                    }}
+                    decimalScale={2} // Allow up to 2 decimal places
+                    allowNegative={false} // Disallow negative numbers
+                    thousandSeparator={true} // Disable thousand separators
+                    allowLeadingZeros={false}
+                    placeholder="Add amount"
+                    maxLength={12}
+                    required
+                  />
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Salary Month From</label>
@@ -448,9 +465,22 @@ function ScheduledDeductions() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Monthly Deduction</label>
-                  <input className="form-control" type="number" disabled={true}
+                  {/* <input className="form-control" type="number" disabled={true}
                     value={newData.monthlyDeductableAmount.toFixed(2)}
-                    required />
+                    required /> */}
+                  <NumericFormat
+                    className="form-control"
+                    value={newData.monthlyDeductableAmount}
+                    decimalScale={2} // Allow up to 2 decimal places
+                    allowNegative={false} // Disallow negative numbers
+                    thousandSeparator={true} // Disable thousand separators
+                    allowLeadingZeros={false}
+                    fixedDecimalScale={2}
+                    placeholder="Deduction"
+                    maxLength={12}
+                    disabled={true}
+                    required
+                  />
                 </div>
 
               </Form>

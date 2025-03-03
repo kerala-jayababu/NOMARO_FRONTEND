@@ -60,6 +60,15 @@ function OvertimeTransaction() {
     calculateDuration();
   }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
 
+  useEffect(() => {
+    if (newData.idOvertimeType == "") return;
+    const overtimeTypeName = overtimeTypes.find(el=> el.value==newData.idOvertimeType);
+    setNewData(prevState => ({
+      ...prevState,
+      overtimeTypeName: overtimeTypeName.displayName ?? ""
+    }));
+  }, [newData.idOvertimeType]);
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -131,6 +140,7 @@ function OvertimeTransaction() {
       idOvertimeTransaction: item.idOvertimeTransaction,
       idEmployee: item.idEmployee,
       idOvertimeType: item.idOvertimeType,
+      overtimeTypeName: item.overtimeTypeName,
       startDate: moment(item.startDate),
       startTime: moment(item.startTime, 'hh:mm:ss').format('HH:mm'),
       endDate: moment(item.endDate),
@@ -158,6 +168,7 @@ function OvertimeTransaction() {
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
     formData.append('idEmployee', newData.idEmployee);
     formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('overtimeTypeName', newData.overtimeTypeName);
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
     formData.append('startTime', newData.startTime);
     formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
@@ -200,6 +211,7 @@ function OvertimeTransaction() {
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
     formData.append('idEmployee', newData.idEmployee);
     formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('overtimeTypeName', newData.overtimeTypeName);
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
     formData.append('startTime', newData.startTime);
     formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
@@ -426,13 +438,13 @@ function OvertimeTransaction() {
                           onChange={handleChange}
                           value={selectedEmployee}
                           placeholder={'Select Employee'}
-                          className="textSize"
+                          className="textSize" required
                         />
                       </div>
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Type</label>
                         <select className="form-select" value={newData.idOvertimeType}
-                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value })} required>
+                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value, overtimeTypeName: e.target.name })} required>
                           <option value={''}>Select</option>
                           {
                             overtimeTypes?.map((el) => (
@@ -480,7 +492,7 @@ function OvertimeTransaction() {
 
                       <div class="col-md-6 p-0">
                         <div class="p-2">
-                          <label class="form-label mb-1">Duration</label>
+                          <label class="form-label mb-1">Duration in Hrs</label>
                           <input
                             type="number"
                             className="form-control"
@@ -499,7 +511,7 @@ function OvertimeTransaction() {
                         <label class="form-label mb-1">Reason for Overtime</label>
                         <textarea className="form-control" rows={5}
                           value={newData.reasonForOvertime} maxlength="100"
-                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })} required>
+                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })}>
                         </textarea>
                         <small>{100 - newData.reasonForOvertime.length} / 100 characters remaining</small>
                       </div>

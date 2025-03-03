@@ -10,6 +10,7 @@ import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
 import Select from 'react-select';
 import Pagination from '../../components/pagination';
+import { NumericFormat } from "react-number-format";
 
 function SalaryAdjustments() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -32,7 +33,7 @@ function SalaryAdjustments() {
     earningOrDeduction: "",
     allocatingSalaryMonth: 0,
     isTaxable: "",
-    amount: 0,
+    amount: null,
     remarks: ""
   });
   const [validated, setValidated] = useState(false);
@@ -146,7 +147,8 @@ function SalaryAdjustments() {
 
   const saveSalaryAdjustments = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryMonth) {
+    if (!newData.idEmployee || !newData.allocatingSalaryMonth || !newData.payAdjustmentDate || !newData.payAdjustmentDetails
+      || !newData.earningOrDeduction || !newData.isTaxable || !newData.allocatingSalaryHead || !newData.amount) {
       setValidated(true);
       return;
     }
@@ -172,7 +174,8 @@ function SalaryAdjustments() {
 
   const updateSalaryAdjustments = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryMonth) {
+    if (!newData.idEmployee || !newData.allocatingSalaryMonth || !newData.payAdjustmentDate || !newData.payAdjustmentDetails
+      || !newData.earningOrDeduction || !newData.isTaxable || !newData.allocatingSalaryHead || !newData.amount) {
       setValidated(true);
       return;
     }
@@ -211,7 +214,7 @@ function SalaryAdjustments() {
       earningOrDeduction: "",
       allocatingSalaryMonth: 0,
       isTaxable: "",
-      amount: 0,
+      amount: null,
       remarks: ""
     });
     setSelectedEmployee(null)
@@ -239,7 +242,7 @@ function SalaryAdjustments() {
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
-                 
+
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -337,18 +340,18 @@ function SalaryAdjustments() {
                 <div className="row m-0">
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Employee Name</label>
-                    
+
                     <Select
                       options={employeesListOption}
                       isSearchable
                       onChange={handleChange}
                       value={selectedEmployee}
                       placeholder={'Select Employee'}
-                      className='textSize'
+                      className='textSize' required
                     />
                   </div>
 
-                  
+
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Department, Designation</label>
                     <input className='form-control' value={empDescDept} disabled />
@@ -363,7 +366,7 @@ function SalaryAdjustments() {
                           required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
                           placeholderText='Select Date' showYearDropdown />
-                       
+
                       </div>
                     </div>
                   </div>
@@ -438,7 +441,7 @@ function SalaryAdjustments() {
                   </div>
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Amount</label>
-                    <input className="form-control" type="number" value={newData.amount}
+                    {/* <input className="form-control" type="number" value={newData.amount}
                       // onChange={(e) => setNewData({ ...newData, amount: e.target.value })}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -446,14 +449,29 @@ function SalaryAdjustments() {
                           setNewData({ ...newData, amount: value });
                         }
                       }}
-                      required placeholder='Add amount' min="0" max="999999999999" />
+                      required placeholder='Add amount' min="0" max="999999999999" /> */}
+                    <NumericFormat
+                      className="form-control"
+                      value={newData.amount}
+                      onValueChange={(values) => {
+                        const { value } = values;
+                        setNewData({ ...newData, amount: value });
+                      }}
+                      decimalScale={2} // Allow up to 2 decimal places
+                      allowNegative={false} // Disallow negative numbers
+                      thousandSeparator={true} // Disable thousand separators
+                      allowLeadingZeros={false}
+                      placeholder="Add amount"
+                      maxLength={12}
+                      required
+                    />
                   </div>
 
                   <div className="col-md-12 p-2">
                     <label className="form-label mb-1">Remarks</label>
                     <textarea className="form-control" rows="4" maxlength="100" value={newData.remarks}
                       onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
-                      required placeholder='Add remarks here'></textarea>
+                      placeholder='Add remarks here'></textarea>
                     <small>{100 - newData.remarks.length} / 100 characters remaining</small>
                   </div>
                 </div>

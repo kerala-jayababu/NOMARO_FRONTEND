@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
+import { NumericFormat } from "react-number-format";
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -197,8 +198,7 @@ function MaternityLeaveSalaries() {
     setSalaryDetails(newSalaryDetails);
   };
 
-  const handleInputChange = (index, event) => {
-    const { value } = event.target;
+  const handleInputChange = (index, value) => {
     const newSalaryDetails = [...salaryDetails];
     newSalaryDetails[index]['amount'] = value;
     setSalaryDetails(newSalaryDetails);
@@ -415,8 +415,8 @@ function MaternityLeaveSalaries() {
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Designation</th>
-                      <th>Date From</th>
-                      <th>Date To</th>
+                      <th>Salary Month From</th>
+                      <th>Salary Month To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
                       <th className="text-end"></th>
@@ -429,8 +429,8 @@ function MaternityLeaveSalaries() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
-                          <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
-                          <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveFrom).format("MMMM, YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
@@ -487,7 +487,7 @@ function MaternityLeaveSalaries() {
                       onChange={handleChange}
                       value={selectedEmployee}
                       placeholder={'Select Employee'}
-                      className="textSize"
+                      className="textSize" required
                     />
                   </div>
 
@@ -606,7 +606,7 @@ function MaternityLeaveSalaries() {
                             <tr key={index}>
                               <td>
                                 <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
-                                  onChange={(e) => handleSelectChange(index, e)} required>
+                                  onChange={(e) => handleSelectChange(index, e)} required style={{width:'230px'}}>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (
@@ -619,7 +619,7 @@ function MaternityLeaveSalaries() {
                                 <label className="staticWidth">{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
                               </td>
                               <td>
-                                <input type="number" class="form-control" value={detail.amount} name="amount"
+                                {/* <input type="number" class="form-control" value={detail.amount} name="amount"
                                   // onChange={(e) => { handleInputChange(index, e); }} 
                                   onChange={(e) => {
                                     const value = e.target.value;
@@ -628,7 +628,22 @@ function MaternityLeaveSalaries() {
                                     }
                                   }}
                                   min="0" max="999999999999"
-                                  placeholder="Amount" required />
+                                  placeholder="Amount" required /> */}
+                                <NumericFormat
+                                  className="form-control"
+                                  value={detail.amount}
+                                  onValueChange={(values) => {
+                                    const { value } = values;
+                                    handleInputChange(index, value);
+                                  }}
+                                  decimalScale={2} // Allow up to 2 decimal places
+                                  allowNegative={false} // Disallow negative numbers
+                                  thousandSeparator={true} // Disable thousand separators
+                                  allowLeadingZeros={false}
+                                  placeholder="Add amount"
+                                  maxLength={12}
+                                  required
+                                />
                               </td>
                               <td>
                                 <div class="d-flex">
