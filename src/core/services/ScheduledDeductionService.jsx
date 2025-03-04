@@ -11,6 +11,15 @@ export default class ScheduledDeductionService {
     } 
   }
 
+  static getScheduledDeductionsDataById = async (id) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetScheduledSalaryDeductionserviceById?id=" + id);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    } 
+  }
+
   static saveScheduledDeductionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddscheduledSalaryDeductionservice", payload);
