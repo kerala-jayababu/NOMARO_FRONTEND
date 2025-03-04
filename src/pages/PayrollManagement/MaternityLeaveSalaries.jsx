@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 import Utils from "../../utils/Utils";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
-import { NumericFormat } from "react-number-format";
 
 function MaternityLeaveSalaries() {
   const [employeesList, setEmployeesList] = useState([]);
@@ -45,7 +44,7 @@ function MaternityLeaveSalaries() {
   const [errors, setErrors] = useState([]);
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [filteredMonthsList, setFilteredMonthsList] = useState([]);
+  const [filteredMonthsList, setFilteredMonthsList] = useState(salaryMonthsList);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
@@ -67,12 +66,7 @@ function MaternityLeaveSalaries() {
       return;
     }
     const empSalaryStructure = salaryStructure.find(emp => emp.idEmployee == newData.idEmployee);
-    const earnings = empSalaryStructure?.salaryComponents.filter(el => el.headType == 'EARNING');
-    const deductions = empSalaryStructure?.salaryComponents.filter(el => el.headType == 'DEDUCTION');
-    setSalaryStructureToDisplay({
-      earnings: earnings ?? [],
-      deductions: deductions ?? []
-    });
+    setSalaryStructureToDisplay(empSalaryStructure?.salaryComponents ?? null);
     const selected = employeesListOption.find(option => option.value === newData.idEmployee);
     setSelectedEmployee(selected);
   }, [newData.idEmployee]);
@@ -198,7 +192,8 @@ function MaternityLeaveSalaries() {
     setSalaryDetails(newSalaryDetails);
   };
 
-  const handleInputChange = (index, value) => {
+  const handleInputChange = (index, event) => {
+    const { value } = event.target;
     const newSalaryDetails = [...salaryDetails];
     newSalaryDetails[index]['amount'] = value;
     setSalaryDetails(newSalaryDetails);
@@ -340,8 +335,7 @@ function MaternityLeaveSalaries() {
         amountInUSD: 0
       },
     ]);
-    setSelectedEmployee(null);
-    setFilteredMonthsList([]);
+    setSelectedEmployee(null)
   }
 
   const handleChange = (selectedOption) => {
@@ -388,7 +382,6 @@ function MaternityLeaveSalaries() {
 
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
@@ -415,8 +408,8 @@ function MaternityLeaveSalaries() {
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Designation</th>
-                      <th>Salary Month From</th>
-                      <th>Salary Month To</th>
+                      <th>Date From</th>
+                      <th>Date To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
                       <th className="text-end"></th>
@@ -429,8 +422,8 @@ function MaternityLeaveSalaries() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
-                          <td>{moment(item?.maternityLeaveFrom).format("MMMM, YYYY")}</td>
-                          <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveFrom).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.maternityLeaveTo).format("MM/DD/YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
@@ -487,7 +480,6 @@ function MaternityLeaveSalaries() {
                       onChange={handleChange}
                       value={selectedEmployee}
                       placeholder={'Select Employee'}
-                      className="textSize" required
                     />
                   </div>
 
@@ -495,7 +487,7 @@ function MaternityLeaveSalaries() {
                     <label class="form-label mb-1">Month From</label>
 
                     <select
-                      className="form-select controlHeight"
+                      className="form-select"
                       value={newData.idSalaryMonthFrom}
                       onChange={handleMonthFromChange}
                       required
@@ -512,7 +504,7 @@ function MaternityLeaveSalaries() {
                     <label class="form-label mb-1">Month To</label>
 
                     <select
-                      className="form-select controlHeight"
+                      className="form-select"
                       value={newData.idSalaryMonthTo}
                       onChange={handleMonthToChange}
                       required
@@ -543,36 +535,34 @@ function MaternityLeaveSalaries() {
                               <tr>
                                 <td><b>Earnings</b></td>
                                 <td class="text-end"></td>
+                                {/* {salaryStructureToDisplay?.totalEarnings ? Utils.formattedNumber(salaryStructureToDisplay?.totalEarnings) : 0} */}
                               </tr>
-                              {salaryStructureToDisplay.earnings?.length > 0 ? (
-                                salaryStructureToDisplay.earnings?.map((item, index) => (
-                                  <tr>
-                                    <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
-                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td style={{ paddingLeft: '30px' }}>No data</td>
-                                </tr>
-                              )}
+                              <tr>
+                                <td style={{ paddingLeft: '30px' }}>Amount</td>
+                                <td class="text-end">{salaryStructureToDisplay ? salaryStructureToDisplay[0]?.salaryAmount : 0}</td>
+                              </tr>
+                              {/* <tr>
+                                <td style={{ paddingLeft: '30px' }}>Allowance</td>
+                                <td class="text-end"></td>
+                              </tr> */}
 
                               <tr>
-                                <td><b>Deductions</b></td>
+                                <td><b>Deduction</b></td>
                                 <td class="text-end"></td>
+                                {/* {salaryStructureToDisplay?.totalDeductions ? Utils.formattedNumber(salaryStructureToDisplay?.totalDeductions) : 0} */}
                               </tr>
-                              {salaryStructureToDisplay.deductions?.length > 0 ? (
-                                salaryStructureToDisplay.deductions?.map((item, index) => (
-                                  <tr>
-                                    <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
-                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td style={{ paddingLeft: '30px' }}>No data</td>
-                                </tr>
-                              )}
+                              <tr>
+                                <td style={{ paddingLeft: '30px' }}>Amount</td>
+                                <td class="text-end">{salaryStructureToDisplay ? salaryStructureToDisplay[1]?.salaryAmount : 0}</td>
+                              </tr>
+                              {/* <tr>
+                                <td style={{ paddingLeft: '30px' }}>Provident Fund</td>
+                                <td class="text-end"></td>
+                              </tr> */}
+                              {/* <tr>
+                                <td><b>Net Salary</b></td>
+                                <td class="text-end"><b>{salaryStructureToDisplay?.netSalary}</b></td>
+                              </tr> */}
                             </>
                           }
                           {
@@ -606,7 +596,7 @@ function MaternityLeaveSalaries() {
                             <tr key={index}>
                               <td>
                                 <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
-                                  onChange={(e) => handleSelectChange(index, e)} required style={{width:'230px'}}>
+                                  onChange={(e) => handleSelectChange(index, e)} required>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (
@@ -616,10 +606,10 @@ function MaternityLeaveSalaries() {
                                 </select>
                               </td>
                               <td>
-                                <label className="staticWidth">{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
+                                <label>{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
                               </td>
                               <td>
-                                {/* <input type="number" class="form-control" value={detail.amount} name="amount"
+                                <input type="number" class="form-control" value={detail.amount} name="amount"
                                   // onChange={(e) => { handleInputChange(index, e); }} 
                                   onChange={(e) => {
                                     const value = e.target.value;
@@ -628,22 +618,7 @@ function MaternityLeaveSalaries() {
                                     }
                                   }}
                                   min="0" max="999999999999"
-                                  placeholder="Amount" required /> */}
-                                <NumericFormat
-                                  className="form-control"
-                                  value={detail.amount}
-                                  onValueChange={(values) => {
-                                    const { value } = values;
-                                    handleInputChange(index, value);
-                                  }}
-                                  decimalScale={2} // Allow up to 2 decimal places
-                                  allowNegative={false} // Disallow negative numbers
-                                  thousandSeparator={true} // Disable thousand separators
-                                  allowLeadingZeros={false}
-                                  placeholder="Add amount"
-                                  maxLength={12}
-                                  required
-                                />
+                                  placeholder="Amount" required />
                               </td>
                               <td>
                                 <div class="d-flex">
@@ -664,24 +639,10 @@ function MaternityLeaveSalaries() {
                         </tbody>
                       </table>
 
-                      {/* <div className="p-2">
+                      <div className="p-2">
                         <label className="badge bg-label-primary staticWidth">Earnings: {Utils.formattedNumber(newData.totalEarnings) ?? 0}</label> &nbsp;&nbsp;
                         <label className="badge bg-label-warning staticWidth">Deductions: {Utils.formattedNumber(newData.totalDeductions) ?? 0}</label> &nbsp;&nbsp;
                         <label className="badge bg-label-info staticWidth">Net Total: {Utils.formattedNumber(newData.netSalary) ?? 0}</label>
-                      </div> */}
-
-                      <div className="total_salarycard">
-                        <ul className="footerCalcMat">
-                          <li>
-                            <b>Total Earnings:</b> {Utils.formattedNumber(newData.totalEarnings) ?? 0}
-                          </li>
-                          <li>
-                            <b>Total Deductions:</b> {Utils.formattedNumber(newData.totalDeductions) ?? 0}
-                          </li>
-                          <li>
-                            <b>Net Salary:</b> {Utils.formattedNumber(newData.netSalary) ?? 0}
-                          </li>
-                        </ul>
                       </div>
 
                     </div>

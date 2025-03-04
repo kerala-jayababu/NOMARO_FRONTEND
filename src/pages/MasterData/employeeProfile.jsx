@@ -1256,7 +1256,7 @@ const EmployeeProfile = () => {
           <thead>
             <tr>
               <th>Bank Name</th>
-              <th className="text-nowrap">Branch Name</th>
+              <th className="text-nowrap">Routing Number</th>
               <th className="text-nowrap">Account Number</th>
               <th className="text-nowrap">% Salary</th>
               <th className="text-nowrap">Currency</th>

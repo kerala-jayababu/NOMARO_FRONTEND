@@ -19,13 +19,9 @@ const VacationMode = () => {
   const vacationModeState = useSelector(
     (state) => state.vacationMode.vacationModeList
   );
-  // const employeeDetailsState = useSelector((state) => state.getEmployeeDetails);
   const getAllEmployeesState = useSelector(
     (state) => state.getAllEmployeeDetails
   );
-  console.log("getAllEmployeesState", getAllEmployeesState);
-  // console.log("vacationModeState.data", vacationModeState.data);
-  // console.log("employeeDetailsState.options", employeeDetailsState.options);
   const [formData, setFormData] = useState({
     employeeName: "",
     vacationFrom: "",
@@ -35,9 +31,6 @@ const VacationMode = () => {
   });
   const [editingVacationMode, setEditingVacationMode] = useState(null);
 
-  console.log("editingVacationMode", editingVacationMode);
-
-  console.log("formData", formData);
   const [errors, setErrors] = useState({
     reasonForVacation: "",
   });
@@ -83,26 +76,15 @@ const VacationMode = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Changing ${name} to ${value}`);
 
-    // Check if employeeName and approvalAuthoritySubstitute are the same
-    // Check if employeeName and approvalAuthoritySubstitute are the same
+    // Clear the error message if the field is updated
     if (name === "approvalAuthoritySubstitute") {
-      if (value === formData.employeeName) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          approvalAuthoritySubstitute:
-            "Employee name cannot be the same as the Approval Authority Substitute.",
-        }));
-      } else {
-        // Clear the error message if the condition is no longer true
-        setErrors((prevErrors) => {
-          const { approvalAuthoritySubstitute, ...restErrors } = prevErrors;
-          return restErrors; // Remove the error for 'approvalAuthoritySubstitute'
-        });
-      }
+      setErrors((prevErrors) => {
+        const { approvalAuthoritySubstitute, ...restErrors } = prevErrors;
+        return restErrors; // Remove the error for 'approvalAuthoritySubstitute'
+      });
     }
-
+  
     if (name === "vacationFrom" || name === "vacationTo") {
       const vacationFromDate = new Date(formData.vacationFrom);
       const vacationToDate = new Date(value);
@@ -120,12 +102,12 @@ const VacationMode = () => {
         });
       }
     }
-
+  
     setFormData({
       ...formData,
       [name]: value,
     });
-    console.log("Updated formData:", formData);
+
     if (name === "reasonForVacation" && value.trim() !== "") {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -136,29 +118,43 @@ const VacationMode = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     let newErrors = {};
-
-    if (!formData.reasonForVacation) {
-      setErrors({
-        ...errors,
-        reasonForVacation: "Reason for vacation is required.",
-      });
-      return;
+  
+    // Validate required fields
+    if (!formData.employeeName) {
+      newErrors.employeeName = "Employee Name is required.";
     }
-
+    if (!formData.vacationFrom) {
+      newErrors.vacationFrom = "Vacation From date is required.";
+    }
+    if (!formData.vacationTo) {
+      newErrors.vacationTo = "Vacation To date is required.";
+    }
+    if (!formData.approvalAuthoritySubstitute) {
+      newErrors.approvalAuthoritySubstitute = "Approval Authority Substitute is required.";
+    }
+    if (!formData.reasonForVacation) {
+      newErrors.reasonForVacation = "Reason for vacation is required.";
+    }
+  
     // Validate if vacationTo is later than vacationFrom
     const vacationFromDate = new Date(formData.vacationFrom);
     const vacationToDate = new Date(formData.vacationTo);
     if (vacationFromDate > vacationToDate) {
       newErrors.vacationTo = "Vacation To date must be later than Vacation From date.";
     }
-
+  
+    // Check if employeeName and approvalAuthoritySubstitute are the same
+    if (formData.employeeName === formData.approvalAuthoritySubstitute) {
+      newErrors.approvalAuthoritySubstitute = "Employee name cannot be the same as the Approval Authority Substitute.";
+    }
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
+  
     const data = {
       idEmployee: formData.employeeName,
       vacationFrom: formData.vacationFrom,
@@ -166,7 +162,7 @@ const VacationMode = () => {
       idSubstitueEmployee: formData.approvalAuthoritySubstitute,
       reasonForVacation: formData.reasonForVacation,
     };
-
+  
     if (editingVacationMode) {
       // Update existing vacation mode
       dispatch(
@@ -207,7 +203,6 @@ const VacationMode = () => {
     dispatch(getVacationModeById(idVacationMode)).then((action) => {
       if (action.payload && action.payload.success) {
         const vacationData = action.payload.data;
-        console.log("vacationData", vacationData);
         setEditingVacationMode(vacationData);
         const formatDate = (dateStr) => {
           const date = new Date(dateStr);
@@ -232,8 +227,6 @@ const VacationMode = () => {
   const vacationList = React.useMemo(() => {
     return Array.isArray(vacationModeState.data)
       ? vacationModeState.data.map((vacation) => {
-          console.log("vacation", vacation);
-
           const empCode = vacation ? vacation.employeeCode : "N/A";
           const employeeName = vacation ? vacation.employeeName : "N/A";
           const substitute = vacation ? vacation.substituteEmployeeName : "N/A";
@@ -268,18 +261,6 @@ const VacationMode = () => {
       return vacationDateObj >= selectedDateObj;
     });
   }, [vacationList, selectedDate]);
-
-  // if (!vacationModeState.data || vacationModeState.data.length === 0) {
-  //   return <div>No vacation data available.</div>;
-  // }
-
-  // if (vacationModeState.loading) {
-  //   return <div>Loading...</div>;
-  // }
-
-  // if (vacationModeState.error) {
-  //   return <div>Error: {vacationModeState.error}</div>;
-  // }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -319,13 +300,13 @@ const VacationMode = () => {
         <div className="col-lg-4">
           <Card title="Add/Update Vacation Mode">
             <form onSubmit={handleSubmit}>
+              
               <Dropdown
                 label="Employee Name"
                 name="employeeName"
                 options={employeeOptions}
                 value={formData.employeeName}
                 onChange={handleInputChange}
-                style={{ maxWidth: "331px" }}
               />
 
               <DatePicker
@@ -334,6 +315,7 @@ const VacationMode = () => {
                 value={formData.vacationFrom}
                 onChange={handleInputChange}
                 min={today}
+                style={{ marginTop: "1rem" }}
               />
               <DatePicker
                 label="Vacation To"
@@ -349,7 +331,6 @@ const VacationMode = () => {
                 options={employeeOptions}
                 value={formData.approvalAuthoritySubstitute}
                 onChange={handleInputChange}
-                style={{ maxWidth: "331px" }}
               />
               {/* <div className="mb-2"> */}
               {errors.approvalAuthoritySubstitute && (
@@ -364,7 +345,6 @@ const VacationMode = () => {
                 onChange={handleInputChange}
                 maxLength="150"
                 error={errors.reasonForVacation}
-                style={{ maxWidth: "331px" }}
               />
               {/* </div> */}
               <div className="text-center">

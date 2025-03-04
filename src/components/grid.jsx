@@ -11,12 +11,12 @@ const Grid = ({
   onEmpCodeClick,
 }) => {
   return (
-    <div className="table-responsive text-nowrap">
+    <div className="table-responsive text-nowrap" style={{maxHeight:'400px', overflowY:'auto'}}>
       <table className="table table-sm">
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key}>{column.label}</th>
+              <th key={column.key} style={{position:'sticky',top:0,backgroundColor:'white',zIndex:1}}>{column.label}</th>
             ))}
           </tr>
         </thead>

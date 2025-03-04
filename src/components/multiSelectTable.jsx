@@ -38,7 +38,7 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.className || ""}>
+              <th key={column.key} className={column.className || ""} style={{textAlign: 'left'}}>
                 {column.label}
               </th>
             ))}
@@ -48,7 +48,7 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
           {tableData.map((parent, parentIndex) => (
             <React.Fragment key={parentIndex}>
               <tr>
-                <td> 
+                <td style={{textAlign: 'left'}}>  
                   <strong>{parent.screenName}</strong>
                 </td>
                 {columns.slice(1).map((column) => (
@@ -69,7 +69,7 @@ const MultiSelectTable = ({ data, columns, onSelectionChange }) => {
               {parent.subMenus &&
                 parent.subMenus.map((subMenu, subMenuIndex) => (
                   <tr key={`${parentIndex}-${subMenuIndex}`}>
-                    <td style={{ paddingLeft: "20px" }}>{subMenu.screenName}</td>
+                    <td style={{ paddingLeft: "30px", textAlign: 'left' }}>{subMenu.screenName}</td>
                     {columns.slice(1).map((column) => (
                       <td key={column.key} className={column.className || ""}>
                         {column.type === "checkbox" && (

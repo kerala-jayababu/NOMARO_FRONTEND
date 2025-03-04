@@ -588,8 +588,14 @@ const handleEditClick = (id) => {
                   label="Default Value"
                   name="defaultValue"
                   value={formData.defaultValue}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*\.?\d{0,2}$/.test(value)) {
+                      handleChange(e);
+                    }
+                  }}
                   maxLength="9"
+                  pattern="^\d*\.?\d{0,2}$"
                 />
               )}
               <div className="mb-3 pt-2">

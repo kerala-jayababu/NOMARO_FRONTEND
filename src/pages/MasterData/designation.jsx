@@ -29,7 +29,6 @@ const Designation = () => {
     setFormData({ ...formData, [name]: value });
   
     let errors = { ...validationErrors };
-    console.log("error")
 
     if (name === "code") {
       if (!value.length) {
