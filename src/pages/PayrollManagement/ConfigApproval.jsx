@@ -119,7 +119,7 @@ function ConfigApproval() {
                     value={entityType}
                     onChange={(e) => setEntityType(e.target.value)}
                   >
-                    <option>Select</option>
+                    <option value={''}>Select</option>
                     <option value={"SALTEM"}>Salary Template</option>
                     <option value={"EMPSALCONFIG"}>
                       Employee Salary Configuration
@@ -134,7 +134,7 @@ function ConfigApproval() {
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
                   >
-                    <option>Select Status</option>
+                    <option value={''}>Select Status</option>
                     <option>Submitted</option>
                     <option>Approved</option>
                     <option>Rejected</option>
@@ -155,14 +155,14 @@ function ConfigApproval() {
                   <thead>
                     <tr>
                       <th>
-                        <input
+                        {/* <input
                           type="checkbox"
                           class="form-check-input"
                           checked={
                             selectedItems.length === configApprovalList?.length
                           }
                           onChange={handleSelectAll}
-                        />
+                        /> */}
                       </th>
                       <th>Entity Type</th>
                       <th>Details</th>
@@ -176,7 +176,7 @@ function ConfigApproval() {
                       <tr key={item.idApprovalWorkFlow}>
                         <td>
                           <input
-                            disabled={item.actionStatus.toLowerCase() === "approved"}
+                            disabled={item.actionStatus.toLowerCase() === "approved" || item.actionStatus.toLowerCase() === "rejected"}
                             type="checkbox"
                             class="form-check-input data-checkbox"
                             onChange={(e) => {
@@ -193,8 +193,8 @@ function ConfigApproval() {
                         <td class="cursor">{item.entityName}</td>
                         <td>{item.entityName + " " + item.details}</td>
                         <td>
-                          {item.createdBy || "user"} <br />
-                          {new Date(item.sentDate).toLocaleString("en-GB", {
+                          {item.createdBy || "user"} <br />                         
+                          {new Date(item.sentDate).toLocaleString("en-US", {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
@@ -204,7 +204,7 @@ function ConfigApproval() {
                           })}
                         </td>
                         <td>{item.actionStatus}</td>
-                        <td></td>
+                        <td>{item.rejectionRemarks}</td>
                       </tr>
                     ))}
                   </tbody>
