@@ -1,4 +1,4 @@
-import { API } from "../../redux/api/utils";
+import { API, handleApiError } from "../../redux/api/utils";
 
 export default class CommonService {
 

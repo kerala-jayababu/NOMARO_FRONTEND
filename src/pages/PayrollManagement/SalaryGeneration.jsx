@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getSalaryGenerations,
-} from "../../redux/reducers/salaryGeneration";
+import { getSalaryGenerations } from "../../redux/reducers/salaryGeneration";
 import { fetchDepartments } from "../../redux/reducers/department";
 import { fetchDesignations } from "../../redux/reducers/designation";
 import CommonService from "../../core/services/CommonService";
@@ -31,6 +29,10 @@ const statusColor = [
     status: "not generated",
     color: "bg-label-info",
   },
+  {
+    status: "rejected",
+    color: "bg-label-danger",
+  },
 ];
 
 const months = [
@@ -54,10 +56,14 @@ function SalaryGeneration() {
   const [salaryDraft, setSalaryDraft] = useState([]);
   const optionsRef = useRef();
   const statusRef = useRef();
+  const filterRef = useRef();
   const [filter, setFilter] = useState("");
   const [option, setOption] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
-  const [statusFilter, setStatusFilter] = useState({ value: "All", label: "Select Status" });
+  const [statusFilter, setStatusFilter] = useState({
+    value: "All",
+    label: "Select Status",
+  });
   const { salaryGenerationList } = useSelector(
     (state) => state.salaryGeneration
   );
@@ -68,7 +74,7 @@ function SalaryGeneration() {
     CommonService.getAllSalaryMonths().then((res) => {
       const salMonths = res.data;
       const currentMonth = res.data
-        .filter((month) =>
+        ?.filter((month) =>
           month.salaryMonthText.includes(new Date().getFullYear().toString())
         )
         .find((month) =>
@@ -84,37 +90,44 @@ function SalaryGeneration() {
 
   useEffect(() => {
     const params = {
-      idSalaryMonth:currentMonth?.value,
-      status:"All"
-    }
+      idSalaryMonth: currentMonth?.value,
+      status: "All",
+    };
     dispatch(getSalaryGenerations(params));
-  }, [dispatch, filter,currentMonth]);
+  }, [dispatch, filter, currentMonth]);
 
   useEffect(() => {
     getSalaryMonths();
-  },[])
+  }, []);
 
   async function populateOptions(option) {
-    if (option === "designation") {
-      await dispatch(fetchDesignations());
-    } else {
-      await dispatch(fetchDepartments());
+    if (option) {
+      if (option.value === "designation") {
+        await dispatch(fetchDesignations());
+      } else {
+        await dispatch(fetchDepartments());
+      }
+      if (optionsRef.current) optionsRef.current.clearValue();
+      setOption(option.value);
+      setFilter("");
     }
-    if (optionsRef.current) optionsRef.current.clearValue();
-    setOption(option);
-    setFilter("");
   }
 
   async function handleStatusChange(status) {
-    const params = {
-      idSalaryMonth: currentMonth?.value,
-      status: status.value
+    if (status.value) {
+      const params = {
+        idSalaryMonth: currentMonth?.value,
+        status: status?.value,
+      };
+      dispatch(getSalaryGenerations(params));
     }
-    dispatch(getSalaryGenerations(params));
   }
 
   const handleMonthFromChange = (option) => {
-    setCurrentMonth(option)
+    setCurrentMonth(option);
+    if (filterRef.current) filterRef.current.clearValue();
+    if (optionsRef.current) optionsRef.current.clearValue();
+    if (statusRef.current) statusRef.current.clearValue();
   };
 
   function disableCheckBox(item) {
@@ -132,32 +145,65 @@ function SalaryGeneration() {
 
   const generateSalaryDraft = async () => {
     const params = {
-      idSalaryMonth:currentMonth?.value,
-      status:"All"
-    }
+      idSalaryMonth: currentMonth?.value,
+      status: "All",
+    };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    await SalaryGenerationService.generateDraftSalary(employeeIds,currentMonth.value)
-    await dispatch(getSalaryGenerations(params));
+    const response = await SalaryGenerationService.generateDraftSalary(
+      employeeIds,
+      currentMonth.value
+    );
+
+    if (!response.error) {
+      toast.success("Draft Salary Generated Successfully");
+      await dispatch(getSalaryGenerations(params));
+    } else {
+      toast.error(response.error);
+    }
+    setSalaryDraft([]);
+    uncheckCheckBox();
   };
 
   const undoSalaryDraft = async () => {
     const params = {
-      idSalaryMonth:currentMonth?.value,
-      status:"All"
-    }
+      idSalaryMonth: currentMonth?.value,
+      status: "All",
+    };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    await SalaryGenerationService.undoGeneratedDraftSalary(employeeIds,currentMonth.value)
-    await dispatch(getSalaryGenerations(params));
+    const response = await SalaryGenerationService.undoGeneratedDraftSalary(
+      employeeIds,
+      currentMonth.value
+    );
+
+    if (!response.error) {
+      toast.success("Draft Salary Generation Undone Successfully");
+      await dispatch(getSalaryGenerations(params));
+    } else {
+      toast.error(response.error);
+    }
+    setSalaryDraft([]);
+    uncheckCheckBox();
   };
 
   const submitForApproval = async () => {
     const params = {
-      idSalaryMonth:currentMonth?.value,
-      status:"All"
-    }
+      idSalaryMonth: currentMonth?.value,
+      status: "All",
+    };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    await SalaryGenerationService.submitSalaryDetails(employeeIds,currentMonth.value)
-    await dispatch(getSalaryGenerations(params));
+    const response = await SalaryGenerationService.submitSalaryDetails(
+      employeeIds,
+      currentMonth.value
+    );
+
+    if (!response.error) {
+      toast.success("Salary Submitted for Approval Successfully");
+      await dispatch(getSalaryGenerations(params));
+    } else {
+      toast.error(response.error);
+    }
+    setSalaryDraft([]);
+    uncheckCheckBox();
   };
 
   const statusOptions = [
@@ -165,8 +211,21 @@ function SalaryGeneration() {
     { value: "APPROVED", label: "Approved" },
     { value: "DRAFT GENERATED", label: "Draft Generated" },
     { value: "SUBMITTED", label: "Submitted" },
-    { value: "NOT GENERATED", label: "Not Generated" }
+    { value: "NOT GENERATED", label: "Not Generated" },
   ];
+
+  const disableApprovalbtn = () => {
+    return (
+      salaryDraft.filter((x) => x.approvalStatus.toLowerCase() === "draft")
+        .length === 0
+    );
+  };
+
+  const uncheckCheckBox = () => {
+    Array.from(document.querySelectorAll(".form-check-input")).map((item) => {
+      item.checked = false;
+    });
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -198,7 +257,7 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange(statusFilter)}
+                        onClick={() => handleStatusChange({ value: "All" })}
                       >
                         <h5>Total Employees</h5>
                         <div className="count">
@@ -211,7 +270,9 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange(statusFilter)}
+                        onClick={() =>
+                          handleStatusChange({ value: "APPROVED" })
+                        }
                       >
                         <h5>Approved</h5>
                         <div className="count text-success">
@@ -226,7 +287,9 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange(statusFilter)}
+                        onClick={() =>
+                          handleStatusChange({ value: "SUBMITTED" })
+                        }
                       >
                         <h5>Submitted</h5>
                         <div className="count text-">
@@ -242,7 +305,9 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange(statusFilter)}
+                        onClick={() =>
+                          handleStatusChange({ value: "DRAFT GENERATED" })
+                        }
                       >
                         <h5>Draft Generated</h5>
                         <div className="count text-warning">
@@ -258,7 +323,9 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange(statusFilter)}
+                        onClick={() =>
+                          handleStatusChange({ value: "NOT GENERATED" })
+                        }
                       >
                         <h5>Pending</h5>
                         <div className="count text-info">
@@ -277,11 +344,15 @@ function SalaryGeneration() {
                   <Select
                     options={[
                       { value: "", label: "All Employees" },
-                      { value: "designation", label: "Filter Designation Based" },
-                      { value: "department", label: "Filter Department Based" }
+                      {
+                        value: "designation",
+                        label: "Filter Designation Based",
+                      },
+                      { value: "department", label: "Filter Department Based" },
                     ]}
                     isSearchable
-                    onChange={(option) => populateOptions(option.value)}
+                    ref={filterRef}
+                    onChange={(option) => populateOptions(option)}
                     placeholder="All Employees"
                     className="textSize"
                   />
@@ -297,7 +368,7 @@ function SalaryGeneration() {
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
-                        setFilter(option?.value);
+                        setFilter(option?.value || "");
                       }}
                       placeholder={"Select Department"}
                       className="textSize"
@@ -312,7 +383,7 @@ function SalaryGeneration() {
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
-                        setFilter(option?.value);
+                        setFilter(option?.value || "");
                       }}
                       placeholder={"Select Designations"}
                       className="textSize"
@@ -372,8 +443,7 @@ function SalaryGeneration() {
                                   setSalaryDraft((prev) =>
                                     prev.filter(
                                       (x) =>
-                                        x.employeeCode !==
-                                        item.employeeCode
+                                        x.employeeCode !== item.employeeCode
                                     )
                                   );
                                 }
@@ -387,9 +457,7 @@ function SalaryGeneration() {
                           <td>{item.designationName}</td>
                           <td className="text-end">{item.totalEarnings}</td>
                           <td className="text-end">{item.totalDeductions}</td>
-                          <td className="text-end">
-                            {item.netSalary}
-                          </td>
+                          <td className="text-end">{item.netSalary}</td>
                           <td>
                             <span
                               className={`badge ${
@@ -446,13 +514,12 @@ function SalaryGeneration() {
                     Import from Excel
                   </button>
                   <button
-                  onClick={() => submitForApproval()}
-                    disabled={
-                      salaryDraft.filter(
-                        (x) => x.approvalStatus.toLowerCase() === "draft"
-                      ).length === 0
-                    }
+                    onClick={() => submitForApproval()}
+                    disabled={disableApprovalbtn()}
                     type="button"
+                    style={{
+                      backgroundColor: disableApprovalbtn() ? "#7dccdc" : "",
+                    }}
                     className="btn btn-info btn-sm py-2 px-4 me-2 "
                   >
                     Submit for Approval

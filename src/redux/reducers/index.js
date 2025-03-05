@@ -16,6 +16,7 @@ import salaryConfig from "./salaryConfig";
 import salaryTemplate from "./salaryTemplate";
 import screenPermission from "./screenPermission";
 import salaryGeneration from "./salaryGeneration"
+import configApproval from "./ConfigApprovals"
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -34,7 +35,8 @@ const rootReducer = combineReducers({
   salaryConfig : salaryConfig,
   salaryTemplate : salaryTemplate,
   screenPermission: screenPermission,
-  salaryGeneration:salaryGeneration
+  salaryGeneration:salaryGeneration,
+  configApproval:configApproval
 });
 
 export default rootReducer;

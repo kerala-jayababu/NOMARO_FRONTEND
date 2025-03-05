@@ -33,4 +33,16 @@ export default class SalaryGenerationService {
       return handleApiError(error);
     }
   };
+
+  static handleApprovalWorkflow = async (content) => {
+    try {
+      const res = await API.post(
+        `/api/v1/Common/HandleApprovalWorkflow`,
+        content
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }

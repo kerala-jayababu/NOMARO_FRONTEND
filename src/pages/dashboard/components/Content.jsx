@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { useSelector } from "react-redux";
 import ScheduledDeductions from "../../PayrollManagement/ScheduledDeductions";
+import ConfigApproval from "../../PayrollManagement/ConfigApproval";
 
 const SalaryAdjustments = lazy(() =>
   import("../../PayrollManagement/SalaryAdjustments")
@@ -89,6 +90,8 @@ function Content() {
             return <Designations />;
           case "Salary Heads":
             return <SalaryHeads />;  
+          case "Config Approvals":
+            return <ConfigApproval/>
           default:
             return <ComingSoon />;
         }
