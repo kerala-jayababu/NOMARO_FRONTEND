@@ -28,7 +28,7 @@ function ScheduledDeductions() {
     deductionToSalaryMonthDate: null,
     allocatingSalaryHead: 0,
     monthCount: 0,
-    // monthlyDeductableAmount: 0,
+    monthlyDeductableAmount: 10,
   });
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -48,6 +48,7 @@ function ScheduledDeductions() {
     }
   ]);
   const [totalDeductions, setTotalDeductions] = useState(0);
+  const [existingData, setExistingData] = useState([]);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -69,19 +70,23 @@ function ScheduledDeductions() {
       newData.deductionFromSalaryMonthDate,
       newData.deductionToSalaryMonthDate
     );
-    const monthlyDeductableAmount = calculateMonthlyDeductableAmount(
-      newData.totalAmount,
-      monthCount
-    );
+    // const monthlyDeductableAmount = calculateMonthlyDeductableAmount(
+    //   newData.totalAmount,
+    //   monthCount
+    // );
 
     setNewData((prevData) => ({
       ...prevData,
       monthCount,
-      monthlyDeductableAmount,
+      // monthlyDeductableAmount,
     }));
 
     if (newData.deductionFromSalaryMonthDate && newData.deductionToSalaryMonthDate) {
-      generateGrid(newData.deductionFromSalaryMonthDate, newData.deductionToSalaryMonthDate);
+      if(isEdit) {
+        generateGridForEdit(newData.deductionFromSalaryMonthDate, newData.deductionToSalaryMonthDate);
+      } else {
+        generateGrid(newData.deductionFromSalaryMonthDate, newData.deductionToSalaryMonthDate);
+      }
     }
   }, [
     newData.deductionFromSalaryMonthDate,
@@ -112,6 +117,7 @@ function ScheduledDeductions() {
   const getScheduledDeductionsById = (id) => {
     ScheduledDeductionService.getScheduledDeductionsDataById(id).then(res => {
       // setScheduledDeductions(res.data.data);
+      setExistingData(res.data.data.scheduledDeductionDetailsDto);
       setupEdit(res.data.data);
     }).catch(err => {
       setScheduledDeductions([]);
@@ -157,7 +163,7 @@ function ScheduledDeductions() {
       deductionToSalaryMonthDate: item.deductionToSalaryMonthDate,
       allocatingSalaryHead: item.allocatingSalaryHead,
       monthCount: item.monthCount,
-      // monthlyDeductableAmount: item.monthlyDeductableAmount,
+      monthlyDeductableAmount: 10,
     });
     setDeductionGrid(item.scheduledDeductionDetailsDto ?? []);
     const selected = employeesListOption.find(option => option.value === item.idEmployee);
@@ -276,6 +282,7 @@ function ScheduledDeductions() {
     setSelectedEmployee(null);
     setFilteredMonthsList(salaryMonthsList);
     setDeductionGrid([]);
+    setExistingData([]);
   };
 
   const handleChange = (selectedOption) => {
@@ -373,6 +380,29 @@ function ScheduledDeductions() {
       salaryMonthText: month.salaryMonthText,
       amountTobeDeducted: amountPerMonth,
       amountDeducted: 0,
+    }));
+
+    setDeductionGrid(gridData);
+  };
+
+  const generateGridForEdit = (fromDate, toDate) => {
+    const fromIndex = salaryMonthsList.findIndex((el) => el.salaryMonthDate === fromDate);
+    const toIndex = salaryMonthsList.findIndex((el) => el.salaryMonthDate === toDate);
+
+    if (fromIndex === -1 || toIndex === -1 || fromIndex > toIndex) return;
+
+    const selectedMonths = salaryMonthsList.slice(fromIndex, toIndex + 1);
+
+    const numberOfMonths = selectedMonths.length;
+    const amountPerMonth = newData.totalAmount / numberOfMonths;
+
+    const gridData = selectedMonths.map((month, key) => ({
+      idScheduledSalaryDeductionDetail: existingData[key]?.idScheduledSalaryDeductionDetail ?? null,
+      idScheduledSalaryDeduction: existingData[key]?.idScheduledSalaryDeduction ?? newData.idScheduledSalaryDeduction,
+      idSalaryMonth: existingData[key]?.idSalaryMonth ?? month.idSalaryMonth,
+      salaryMonthText: existingData[key]?.salaryMonthText ?? month.salaryMonthText,
+      amountTobeDeducted: existingData[key]?.amountTobeDeducted ?? 0,
+      amountDeducted: existingData[key]?.amountDeducted ?? 0,
     }));
 
     setDeductionGrid(gridData);
@@ -597,20 +627,20 @@ function ScheduledDeductions() {
                 {/* Deduction Grid */}
                 <div className="col-12 mt-2">
                   <label className="form-label mb-1">Deduction Details</label>
-                  <div style={{ maxHeight: '200px', overflow: 'auto' }}>
+                  <div className="deduct-table-container">
                     <table className="table table-bordered">
                       <thead>
                         <tr>
-                          <th>Month, Year</th>
-                          <th>Amount</th>
-                          <th>Status</th>
+                          <th width='30%'>Month, Year</th>
+                          <th width='30%'>Amount</th>
+                          <th width='40%'>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {deductionGrid.map((month) => (
                           <tr key={month.idSalaryMonth}>
                             <td>{month.salaryMonthText}</td>
-                            <td>
+                            <td style={{padding:'4px'}}>
                               {/* <input
                               type="number"
                               className="form-control"

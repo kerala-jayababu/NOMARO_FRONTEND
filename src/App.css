@@ -111,3 +111,27 @@
   padding-top: 10px;
   list-style-type: none;
 }
+
+.deduct-table-container {
+  max-height: 250px;
+  overflow-y: auto; 
+  border: 1px solid #ddd; 
+}
+
+.deduct-table-container table {
+  width: 100%; 
+  border-collapse: collapse;
+}
+
+.deduct-table-container thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa; 
+  z-index: 1; 
+}
+
+.deduct-table-container th,
+.deduct-table-container td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
