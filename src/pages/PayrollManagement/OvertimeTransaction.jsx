@@ -60,6 +60,15 @@ function OvertimeTransaction() {
     calculateDuration();
   }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
 
+  useEffect(() => {
+    if (newData.idOvertimeType == "") return;
+    const overtimeTypeName = overtimeTypes.find(el=> el.value==newData.idOvertimeType);
+    setNewData(prevState => ({
+      ...prevState,
+      overtimeTypeName: overtimeTypeName.displayName ?? ""
+    }));
+  }, [newData.idOvertimeType]);
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -81,12 +90,11 @@ function OvertimeTransaction() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
+    console.log(file)
     setNewData(prevState => ({
       ...prevState,
-      file: formData,
-      attachment: file.name ?? ""
+      file: file,
+      attachmentDescription: file.name
     }));
   };
 
@@ -132,6 +140,7 @@ function OvertimeTransaction() {
       idOvertimeTransaction: item.idOvertimeTransaction,
       idEmployee: item.idEmployee,
       idOvertimeType: item.idOvertimeType,
+      overtimeTypeName: item.overtimeTypeName,
       startDate: moment(item.startDate),
       startTime: moment(item.startTime, 'hh:mm:ss').format('HH:mm'),
       endDate: moment(item.endDate),
@@ -153,10 +162,27 @@ function OvertimeTransaction() {
       setValidated(true);
       return;
     }
-    let passData = newData;
-    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
-    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
-    OvertimeService.saveOvertimeTransactionsData(passData).then(res => {
+
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
+    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('overtimeTypeName', newData.overtimeTypeName);
+    formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
+    formData.append('startTime', newData.startTime);
+    formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
+    formData.append('endTime', newData.endTime);
+    formData.append('durationInHours', newData.durationInHours);
+    formData.append('reasonForOvertime', newData.reasonForOvertime);
+    formData.append('attachmentDescription', newData.attachmentDescription);
+
+    // Append the file if it exists
+    if (newData.file) {
+      formData.append('file', newData.file);
+    }
+
+    OvertimeService.saveOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
         toast.success('Overtime transactions added successfully', {
           position: 'top-right',
@@ -180,10 +206,25 @@ function OvertimeTransaction() {
       setValidated(true);
       return;
     }
-    let passData = newData;
-    passData['startDate'] = moment(passData['startDate']).format('YYYY-MM-DD');
-    passData['endDate'] = moment(passData['endDate']).format('YYYY-MM-DD');
-    OvertimeService.updateOvertimeTransactionsData(passData).then(res => {
+
+    const formData = new FormData();
+    formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
+    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idOvertimeType', newData.idOvertimeType);
+    formData.append('overtimeTypeName', newData.overtimeTypeName);
+    formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
+    formData.append('startTime', newData.startTime);
+    formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
+    formData.append('endTime', newData.endTime);
+    formData.append('durationInHours', newData.durationInHours);
+    formData.append('reasonForOvertime', newData.reasonForOvertime);
+    formData.append('attachmentDescription', newData.attachmentDescription);
+
+    // Append the file if it exists
+    if (newData.file) {
+      formData.append('file', newData.file);
+    }
+    OvertimeService.updateOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
         toast.success('Overtime transactions updated successfully', {
           position: 'top-right',
@@ -230,6 +271,32 @@ function OvertimeTransaction() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.attachmentDescription || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -248,6 +315,7 @@ function OvertimeTransaction() {
                   </select>
                 </div>
                 <div className="list_searchbox">
+                  <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
                 </div>
@@ -269,7 +337,7 @@ function OvertimeTransaction() {
               </div>
             </div>
             <div className="card-body">
-              
+
               <div className="table-responsive ">
                 <table className="table table-sm">
                   <thead>
@@ -309,9 +377,9 @@ function OvertimeTransaction() {
                           </td>
                           <td>
                             {
-                              item.file &&
+                              item.attachment &&
                               <button className="btn btn-outline-primary border-0 btn-sm">
-                                <i className="bx bx-paperclip"></i>
+                                <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
                               </button>
                             }
                           </td>
@@ -333,7 +401,7 @@ function OvertimeTransaction() {
                     )}
                   </tbody>
                 </table>
-               
+
               </div>
               <div className="text-end pt-2">
                 <Pagination
@@ -363,19 +431,20 @@ function OvertimeTransaction() {
                     <div className="row m-0 mt-3">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
-                      
+
                         <Select
                           options={employeesListOption}
                           isSearchable
                           onChange={handleChange}
                           value={selectedEmployee}
                           placeholder={'Select Employee'}
+                          className="textSize" required
                         />
                       </div>
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Type</label>
                         <select className="form-select" value={newData.idOvertimeType}
-                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value })} required>
+                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value, overtimeTypeName: e.target.name })} required>
                           <option value={''}>Select</option>
                           {
                             overtimeTypes?.map((el) => (
@@ -423,7 +492,7 @@ function OvertimeTransaction() {
 
                       <div class="col-md-6 p-0">
                         <div class="p-2">
-                          <label class="form-label mb-1">Duration</label>
+                          <label class="form-label mb-1">Duration in Hrs</label>
                           <input
                             type="number"
                             className="form-control"
@@ -442,7 +511,7 @@ function OvertimeTransaction() {
                         <label class="form-label mb-1">Reason for Overtime</label>
                         <textarea className="form-control" rows={5}
                           value={newData.reasonForOvertime} maxlength="100"
-                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })} required>
+                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })}>
                         </textarea>
                         <small>{100 - newData.reasonForOvertime.length} / 100 characters remaining</small>
                       </div>
