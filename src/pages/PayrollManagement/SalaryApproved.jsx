@@ -50,6 +50,14 @@ const months = [
   "December",
 ];
 
+const STATUS = {
+  ALL: "All",
+  APPROVED: "APPROVED",
+  SUBMITTED: "SUBMITTED",
+  DRAFT_GENERATED: "DRAFT GENERATED",
+  NOT_GENERATED: "NOT GENERATED"
+};
+
 function SalaryApproved() {
   const dispatch = useDispatch();
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
@@ -71,6 +79,7 @@ function SalaryApproved() {
   const { designation } = useSelector((state) => state.designation);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [selectedCard, setSelectedCard] = useState("All");
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then((res) => {
@@ -118,6 +127,7 @@ function SalaryApproved() {
   async function handleStatusChange(status) {
     if (status) {
       setStatusFilter(status);
+      setSelectedCard(status.value);
       const params = {
         idSalaryMonth: currentMonth?.value,
         status: status?.value,
@@ -206,7 +216,7 @@ function SalaryApproved() {
                     value: item.idSalaryMonth,
                     label: item.salaryMonthText,
                   }))}
-                  className="mx-2 w-25 textSize"
+                  className="mx-2 w-25"
                   isSearchable
                   onChange={handleMonthFromChange}
                   value={currentMonth}
@@ -220,7 +230,12 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "All" })}
+                        onClick={() => handleStatusChange({ value: STATUS.ALL })}
+                        style={{
+                          backgroundColor: selectedCard === STATUS.ALL ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Total Employees</h5>
                         <div class="count">
@@ -234,9 +249,12 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "APPROVED" })
-                        }
+                        onClick={() => handleStatusChange({ value: STATUS.APPROVED })}
+                        style={{
+                          backgroundColor: selectedCard === STATUS.APPROVED ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Approved</h5>
                         <div class="count text-success">
@@ -251,9 +269,12 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "SUBMITTED" })
-                        }
+                        onClick={() => handleStatusChange({ value: STATUS.SUBMITTED })}
+                        style={{
+                          backgroundColor: selectedCard === STATUS.SUBMITTED ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Submitted</h5>
                         <div class="count text-">
@@ -269,9 +290,12 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "DRAFT GENERATED" })
-                        }
+                        onClick={() => handleStatusChange({ value: STATUS.DRAFT_GENERATED })}
+                        style={{
+                          backgroundColor: selectedCard === STATUS.DRAFT_GENERATED ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Draft Generated</h5>
                         <div class="count text-warning">
@@ -287,9 +311,12 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "NOT GENERATED" })
-                        }
+                        onClick={() => handleStatusChange({ value: STATUS.NOT_GENERATED })}
+                        style={{
+                          backgroundColor: selectedCard === STATUS.NOT_GENERATED ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Pending</h5>
                         <div class="count text-info">
@@ -326,10 +353,13 @@ function SalaryApproved() {
                   {option === "department" ? (
                     <Select
                       ref={optionsRef}
-                      options={departments?.data?.map((dept) => ({
-                        value: dept.departmentName,
-                        label: dept.departmentName,
-                      }))}
+                      options={[
+                        { value: "", label: "All Departments" },
+                        ...(departments?.data?.map((dept) => ({
+                          value: dept.departmentName,
+                          label: dept.departmentName,
+                        })) || [])
+                      ]}
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
@@ -341,10 +371,13 @@ function SalaryApproved() {
                   ) : (
                     <Select
                       ref={optionsRef}
-                      options={designation?.data?.map((dept) => ({
-                        value: dept.designationName,
-                        label: dept.designationName,
-                      }))}
+                      options={[
+                        { value: "", label: "All Designations" },
+                        ...(designation?.data?.map((dept) => ({
+                          value: dept.designationName,
+                          label: dept.designationName,
+                        })) || [])
+                      ]}
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
@@ -360,7 +393,7 @@ function SalaryApproved() {
                     ref={statusRef}
                     className="textSize"
                     options={[
-                      { value: "All", label: "Select Status" },
+                      { value: "All", label: "All Status" },
                       { value: "APPROVED", label: "Approved" },
                       { value: "DRAFT GENERATED", label: "Draft Generated" },
                       { value: "SUBMITTED", label: "Submitted" },
@@ -425,9 +458,9 @@ function SalaryApproved() {
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
-                          <td className="text-end">{item.totalEarnings}</td>
-                          <td className="text-end">{item.totalDeductions}</td>
-                          <td className="text-end">{item.netSalary}</td>
+                          <td className="text-end">{Number(item.totalEarnings).toFixed(2)}</td>
+                          <td className="text-end">{Number(item.totalDeductions).toFixed(2)}</td>
+                          <td className="text-end">{Number(item.netSalary).toFixed(2)}</td>
                           <td>
                             <span
                               className={`badge ${

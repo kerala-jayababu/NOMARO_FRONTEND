@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"; 
 import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
+import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 
 function Menu() {
   const dispatch = useDispatch();
@@ -10,10 +11,7 @@ function Menu() {
   const navigate = useNavigate();  
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
-  console.log(subMenu, "subMenu");
-
-
-  console.log(payrollScreen, "payrollScreen");
+  
   useEffect(() => {
     dispatch(getAllPayrollScreensAction());
   }, [dispatch]);
@@ -71,11 +69,11 @@ function Menu() {
                       data-i18n="Account"
                       onClick={() => {
                         if (subMenu == menu.screenName) {
-                          console.log("subMenu", menu.screenName);
                           setSubMenu("");
                         } else {
                           setSubMenu(menu.screenName);
                         }
+                        dispatch(setIdPayrollScreen(menu.idPayrollScreen))
                         dispatch(setComponent(menu.screenName));
                         navigate(`/dashboard/${menu.screenName.replace(/\s+/g, '-').toLowerCase()}`);
                       }}

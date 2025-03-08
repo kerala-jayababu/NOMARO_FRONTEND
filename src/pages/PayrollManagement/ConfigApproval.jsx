@@ -7,6 +7,7 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 function ConfigApproval() {
   const dispatch = useDispatch();
   const { configApprovalList } = useSelector((state) => state.configApproval);
+  const  { idPayrollScreen }  = useSelector((state) => state.auth);
   const [dateFrom, setDateFrom] = React.useState(
     new Date().toISOString().split("T")[0]
   );
@@ -15,6 +16,16 @@ function ConfigApproval() {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [selectedCard, setSelectedCard] = useState("All");
+
+  const STATUS = {
+    ALL: "All",
+    APPROVED: "APPROVED",
+    SUBMITTED: "SUBMITTED",
+    DRAFT: "DRAFT",
+    NOT_GENERATED: "NOT GENERATED",
+    REJECTED: "REJECTED"
+  };
 
   useEffect(() => {
     const params = {
@@ -27,7 +38,7 @@ function ConfigApproval() {
 
   const handleSelectAll = (e) => {
     if (e.target.checked && configApprovalList) {
-      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.entityTablePrimaryKeyID));
+      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
     } else {
       setSelectedItems([]);
     }
@@ -44,11 +55,12 @@ function ConfigApproval() {
 
   const handleApproveWorkflow = async () => {
     const content = selectedItems.map((id) => {
-      const item = configApprovalList.find((item) => item.entityTablePrimaryKeyID === id);
+      const item = configApprovalList.find((item) => item.idApprovalWorkFlow === id);
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
         status: "APPROVED",
+        idPayRollScreen
       };
     });
 
@@ -74,11 +86,12 @@ function ConfigApproval() {
     }
 
     const content = selectedItems.map((id) => {
-      const item = configApprovalList.find((item) => item.entityTablePrimaryKeyID === id);
+      const item = configApprovalList.find((item) => item.idApprovalWorkFlow === id);
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
         status: "REJECTED",
+        idPayRollScreen,
         rejectReason: rejectReason,
       };
     });
@@ -98,6 +111,18 @@ function ConfigApproval() {
       toast.error("Error rejecting records");
     }
     handelCheckboxCheck(false)
+  };
+
+  const handleStatusChange = (status) => {
+    if (status.value) {
+      const params = {
+        dateFrom,
+        entityType,
+        status: status.value,
+      };
+      setSelectedCard(status.value);
+      dispatch(getConfigApprovals(params));
+    }
   };
 
   return (
@@ -181,10 +206,10 @@ function ConfigApproval() {
                             class="form-check-input data-checkbox"
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedItems((prev) => [...prev, item.entityTablePrimaryKeyID]);
+                                setSelectedItems((prev) => [...prev, item.idApprovalWorkFlow]);
                               } else {
                                 setSelectedItems((prev) =>
-                                  prev.filter((x) => x !== item.entityTablePrimaryKeyID)
+                                  prev.filter((x) => x !== item.idApprovalWorkFlow)
                                 );
                               }
                             }}
@@ -281,6 +306,87 @@ function ConfigApproval() {
           </div>
         </div>
       )}
+
+      <ul className="SalaryApproveCount_ul">
+        <li>
+          <div className="card SalaryApproveCount">
+            <div
+              className="card-body"
+              onClick={() => handleStatusChange({ value: STATUS.ALL })}
+              style={{
+                backgroundColor: selectedCard === STATUS.ALL ? "#e7e7ff" : "",
+                cursor: "pointer",
+                transition: "background-color 0.3s"
+              }}
+            >
+              <h5>Total Records</h5>
+              <div className="count">
+                {configApprovalList?.length || 0}
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div className="card SalaryApproveCount">
+            <div
+              className="card-body"
+              onClick={() => handleStatusChange({ value: STATUS.APPROVED })}
+              style={{
+                backgroundColor: selectedCard === STATUS.APPROVED ? "#e7e7ff" : "",
+                cursor: "pointer",
+                transition: "background-color 0.3s"
+              }}
+            >
+              <h5>Approved</h5>
+              <div className="count text-success">
+                {configApprovalList?.filter(
+                  (x) => x.actionStatus.toLowerCase() === "approved"
+                )?.length || 0}
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div className="card SalaryApproveCount">
+            <div
+              className="card-body"
+              onClick={() => handleStatusChange({ value: STATUS.SUBMITTED })}
+              style={{
+                backgroundColor: selectedCard === STATUS.SUBMITTED ? "#e7e7ff" : "",
+                cursor: "pointer",
+                transition: "background-color 0.3s"
+              }}
+            >
+              <h5>Submitted</h5>
+              <div className="count">
+                {configApprovalList?.filter(
+                  (x) => x.actionStatus.toLowerCase() === "submitted"
+                )?.length || 0}
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div className="card SalaryApproveCount">
+            <div
+              className="card-body"
+              onClick={() => handleStatusChange({ value: STATUS.REJECTED })}
+              style={{
+                backgroundColor: selectedCard === STATUS.REJECTED ? "#e7e7ff" : "",
+                cursor: "pointer",
+                transition: "background-color 0.3s"
+              }}
+            >
+              <h5>Rejected</h5>
+              <div className="count text-danger">
+                {configApprovalList?.filter(
+                  (x) => x.actionStatus.toLowerCase() === "rejected"
+                )?.length || 0}
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
   );
 }

@@ -50,6 +50,14 @@ const months = [
   "December",
 ];
 
+const STATUS = {
+  ALL: "All",
+  APPROVED: "APPROVED",
+  SUBMITTED: "SUBMITTED",
+  DRAFT_GENERATED: "DRAFT GENERATED",
+  NOT_GENERATED: "NOT GENERATED"
+};
+
 function SalaryGeneration() {
   const dispatch = useDispatch();
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
@@ -69,6 +77,7 @@ function SalaryGeneration() {
   );
   const { departments } = useSelector((state) => state.department);
   const { designation } = useSelector((state) => state.designation);
+  const [selectedCard, setSelectedCard] = useState("All");
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then((res) => {
@@ -113,15 +122,16 @@ function SalaryGeneration() {
     }
   }
 
-  async function handleStatusChange(status) {
+  const handleStatusChange = (status, cardName) => {
     if (status.value) {
       const params = {
         idSalaryMonth: currentMonth?.value,
         status: status?.value,
       };
+      setSelectedCard(status.value);
       dispatch(getSalaryGenerations(params));
     }
-  }
+  };
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
@@ -207,7 +217,7 @@ function SalaryGeneration() {
   };
 
   const statusOptions = [
-    { value: "All", label: "Select Status" },
+    { value: "All", label: "All Status" },
     { value: "APPROVED", label: "Approved" },
     { value: "DRAFT GENERATED", label: "Draft Generated" },
     { value: "SUBMITTED", label: "Submitted" },
@@ -257,7 +267,12 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() => handleStatusChange({ value: "All" })}
+                        onClick={() => handleStatusChange({ value: "All" }, "Total Employees")}
+                        style={{
+                          backgroundColor: selectedCard === "All" ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Total Employees</h5>
                         <div className="count">
@@ -270,9 +285,12 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "APPROVED" })
-                        }
+                        onClick={() => handleStatusChange({ value: "APPROVED" }, "Approved")}
+                        style={{
+                          backgroundColor: selectedCard === "APPROVED" ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Approved</h5>
                         <div className="count text-success">
@@ -287,15 +305,17 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "SUBMITTED" })
-                        }
+                        onClick={() => handleStatusChange({ value: "SUBMITTED" }, "Submitted")}
+                        style={{
+                          backgroundColor: selectedCard === "SUBMITTED" ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Submitted</h5>
-                        <div className="count text-">
+                        <div className="count">
                           {salaryGenerationList?.filter(
-                            (x) =>
-                              x.approvalStatus.toLowerCase() === "submitted"
+                            (x) => x.approvalStatus.toLowerCase() === "submitted"
                           )?.length || 0}
                         </div>
                       </div>
@@ -305,9 +325,12 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "DRAFT GENERATED" })
-                        }
+                        onClick={() => handleStatusChange({ value: "DRAFT GENERATED" }, "Draft Generated")}
+                        style={{
+                          backgroundColor: selectedCard === "DRAFT GENERATED" ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Draft Generated</h5>
                         <div className="count text-warning">
@@ -323,15 +346,17 @@ function SalaryGeneration() {
                     <div className="card SalaryApproveCount">
                       <div
                         className="card-body"
-                        onClick={() =>
-                          handleStatusChange({ value: "NOT GENERATED" })
-                        }
+                        onClick={() => handleStatusChange({ value: "NOT GENERATED" }, "Pending")}
+                        style={{
+                          backgroundColor: selectedCard === "NOT GENERATED" ? "#e7e7ff" : "",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s"
+                        }}
                       >
                         <h5>Pending</h5>
                         <div className="count text-info">
                           {salaryGenerationList?.filter(
-                            (x) =>
-                              x.approvalStatus.toLowerCase() === "not generated"
+                            (x) => x.approvalStatus.toLowerCase() === "not generated"
                           )?.length || 0}
                         </div>
                       </div>
@@ -361,10 +386,13 @@ function SalaryGeneration() {
                   {option === "department" ? (
                     <Select
                       ref={optionsRef}
-                      options={departments?.data?.map((dept) => ({
-                        value: dept.departmentName,
-                        label: dept.departmentName,
-                      }))}
+                      options={[
+                        { value: "", label: "All Departments" },
+                        ...(departments?.data?.map((dept) => ({
+                          value: dept.departmentName,
+                          label: dept.departmentName,
+                        })) || [])
+                      ]}
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
@@ -376,10 +404,13 @@ function SalaryGeneration() {
                   ) : (
                     <Select
                       ref={optionsRef}
-                      options={designation?.data?.map((dept) => ({
-                        value: dept.designationName,
-                        label: dept.designationName,
-                      }))}
+                      options={[
+                        { value: "", label: "All Designations" },
+                        ...(designation?.data?.map((dept) => ({
+                          value: dept.designationName,
+                          label: dept.designationName,
+                        })) || [])
+                      ]}
                       isSearchable
                       onChange={(option) => {
                         if (statusRef.current) statusRef.current.value = "All";
@@ -455,9 +486,9 @@ function SalaryGeneration() {
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
-                          <td className="text-end">{item.totalEarnings}</td>
-                          <td className="text-end">{item.totalDeductions}</td>
-                          <td className="text-end">{item.netSalary}</td>
+                          <td className="text-end">{Number(item.totalEarnings).toFixed(2)}</td>
+                          <td className="text-end">{Number(item.totalDeductions).toFixed(2)}</td>
+                          <td className="text-end">{Number(item.netSalary).toFixed(2)}</td>
                           <td>
                             <span
                               className={`badge ${
