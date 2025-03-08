@@ -41,6 +41,7 @@ function OvertimeTransaction() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(overtimeTransactions.length / rowsPerPage);
+  const today = new Date();
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -62,7 +63,7 @@ function OvertimeTransaction() {
 
   useEffect(() => {
     if (newData.idOvertimeType == "") return;
-    const overtimeTypeName = overtimeTypes.find(el=> el.value==newData.idOvertimeType);
+    const overtimeTypeName = overtimeTypes.find(el => el.value == newData.idOvertimeType);
     setNewData(prevState => ({
       ...prevState,
       overtimeTypeName: overtimeTypeName.displayName ?? ""
@@ -384,9 +385,12 @@ function OvertimeTransaction() {
                             }
                           </td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
+                            {
+                              item.approvalStatus != 'APPROVED' &&
+                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
+                                <span className="tf-icons bx bx-pencil"></span>
+                              </button>
+                            }
                           </td>
                         </tr>
                       ))
@@ -463,7 +467,7 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, startDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' showYearDropdown />
+                              placeholderText='Select Date' showYearDropdown maxDate={today}/>
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -480,7 +484,7 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' minDate={newData.startDate} showYearDropdown />
+                              placeholderText='Select Date' minDate={newData.startDate} showYearDropdown maxDate={today}/>
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"

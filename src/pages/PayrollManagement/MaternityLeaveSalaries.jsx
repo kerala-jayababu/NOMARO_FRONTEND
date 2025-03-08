@@ -120,6 +120,7 @@ function MaternityLeaveSalaries() {
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
       // setEmployeesList(res.data.data);
+      res.data.data.sort((a,b)=> a.fullName - b.fullName);
       const females = res.data.data.filter(em => em.gender == 'FEMALE');
       const options = females.map(employee => ({
         value: employee.idEmployee,
@@ -217,6 +218,7 @@ function MaternityLeaveSalaries() {
       totalEarnings: item.totalEarnings,
       totalDeductions: item.totalDeductions,
     });
+    handleMonthFromChangeEdit(item.idSalaryMonthFrom)
     setSalaryDetails(item.maternityLeaveSalaryDetailDto);
     const selected = employeesListOption.find(option => option.value === newData.idEmployee);
     setSelectedEmployee(selected);
@@ -363,6 +365,18 @@ function MaternityLeaveSalaries() {
         (el) => el.idSalaryMonth > parseInt(selectedId, 10)
       );
 
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthFromChangeEdit = (e) => {
+    const selectedId = e;
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
       setFilteredMonthsList(filteredList);
     } else {
       setFilteredMonthsList(salaryMonthsList);
