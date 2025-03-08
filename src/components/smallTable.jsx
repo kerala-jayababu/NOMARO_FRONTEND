@@ -69,7 +69,7 @@
                 style={{ width: "60%" }}
                 // defaultValue={row.percentageOfIdSalaryHead || ""}
                 {...(isEditing
-                  ? { defaultValue: row.percentageOfIdSalaryHead || "" }
+                  ? { defaultValue: row.percentageOfIdSalaryHead || row.salaryHead }
                   : { value: row.percentageOfIdSalaryHead || "" })}
                 onChange={(e) =>
                   handleInputChange(e, rowIndex, "percentageOfIdSalaryHead")
@@ -89,20 +89,31 @@
                 className="form-control form-control-sm"
                 style={{ width: "40%" }}
                 value={row.value || ""}
-                onChange={(e) => handleInputChange(e, rowIndex, "value")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const regex = /^\d{0,15}(\.\d{0,2})?$/;
+
+                  if (regex.test(value)) {
+                    handleInputChange(e, rowIndex, "value");
+                  }
+                }}
                 placeholder="Value"
+                step="0.01"
               />
             </div>
           );
         case "Fixed Amount":
           return (
             <input
-              type="number"
-              className="form-control form-control-sm"
-              value={row.value || ""}
-              onChange={(e) => handleInputChange(e, rowIndex, "value")}
-              placeholder="Fixed Amount"
-            />
+            type="number"
+            className="form-control form-control-sm"
+            value={row.value || ""}
+            onChange={(e) => handleInputChange(e, rowIndex, "value")}
+            placeholder="Fixed Amount"
+            step="0.01"
+            pattern="^\d{0,9}(\.\d{0,2})?$"
+            maxLength="12"
+          />
           );
         case "Custom Formula":
           return (

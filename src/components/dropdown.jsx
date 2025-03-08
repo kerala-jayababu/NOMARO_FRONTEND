@@ -11,7 +11,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
   };
 
   return (
-    <div className="form-group" style={{ ...style }}>
+    <div className="form-group mb-2" style={{ ...style }}>
       <label className="form-label mb-1">{label}</label>
       <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
         <select

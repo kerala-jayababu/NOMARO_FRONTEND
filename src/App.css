@@ -89,7 +89,7 @@
 }
 
 .staticWidth {
-  min-width: 85px !important;
+  max-width: 110px !important;
 }
 
 .datePicker {

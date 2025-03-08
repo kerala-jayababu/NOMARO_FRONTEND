@@ -759,7 +759,7 @@ const [rowsPerPage, setRowsPerPage] = useState(10); // Number of rows per page
         percentageValue: row.method === "Percentage of" ? row.value : null,
         customFormula: row.method === "Custom Formula" ? row.formula : null,
         percentageOf: row.percentageOf || null, // For "Percentage of" method
-        salaryAmount: row.finalSalaryAmount || 0, // Add the final salary amount
+        finalSalaryAmount: row.finalSalaryAmount || 0, // Add the final salary amount
         type: row.type, // Add the type (EARNING or DEDUCTION)
         percentageOfIdSalaryHead:
           row.method === "Percentage of" && row.percentageOfIdSalaryHead

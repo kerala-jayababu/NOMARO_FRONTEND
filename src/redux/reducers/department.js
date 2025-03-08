@@ -134,7 +134,7 @@ const slice = createSlice({
   reducers: {
     resetError: (state) => {
       state.error = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder.addCase(fetchDepartments.pending, (state) => {
@@ -203,5 +203,5 @@ const slice = createSlice({
   },
 });
 
-export const { resetError } = slice.actions;
+export const { resetError} = slice.actions;
 export default slice.reducer;

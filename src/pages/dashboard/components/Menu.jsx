@@ -3,20 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"; 
 import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
-const icons = [{
-  menu:"Master Data",
-  icon:"bx-box"
-},{
-  menu:"Payroll Management",
-  icon:"bx-layout"
-},
-{
-  menu:"Admin Tools",
-  icon:"bx-cog"
-},{
-  menu:"Reports",
-  icon:"bx-dock-top"
-}]
+import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 
 function Menu() {
   const dispatch = useDispatch();
@@ -24,7 +11,7 @@ function Menu() {
   const navigate = useNavigate();  
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
-
+  
   useEffect(() => {
     dispatch(getAllPayrollScreensAction());
   }, [dispatch]);
@@ -51,8 +38,8 @@ function Menu() {
       <div className="menu-inner-shadow"></div>
 
       <ul className="menu-inner py-1">
-        {payrollScreen.map((screen) => (<>
-          {screen.validPermissions.includes("V") && <li
+        {payrollScreen.map((screen) => (
+          <li
             className={`menu-item ${
               menu === screen.screenName && "open active"
             } cursor-pointer`}
@@ -67,12 +54,12 @@ function Menu() {
                 }
               }}
             >
-              <i className={`menu-icon tf-icons bx ${icons.find(x => x.menu === screen.screenName).icon}`}></i>
+              <i className="menu-icon tf-icons bx bx-dock-top"></i>
               <div data-i18n="Account Settings">{screen.screenName}</div>
             </a>
             <ul className="menu-sub">
-              {screen.subMenus.map((menu) => (<>
-               {menu.validPermissions.includes("V") && <li
+              {screen.subMenus.map((menu) => (
+                <li
                   className={`menu-item ${
                     subMenu == menu.screenName && "active"
                   }`}
@@ -82,11 +69,11 @@ function Menu() {
                       data-i18n="Account"
                       onClick={() => {
                         if (subMenu == menu.screenName) {
-                          console.log("subMenu", menu.screenName);
                           setSubMenu("");
                         } else {
                           setSubMenu(menu.screenName);
                         }
+                        dispatch(setIdPayrollScreen(menu.idPayrollScreen))
                         dispatch(setComponent(menu.screenName));
                         navigate(`/dashboard/${menu.screenName.replace(/\s+/g, '-').toLowerCase()}`);
                       }}
@@ -94,11 +81,11 @@ function Menu() {
                       {menu.screenName}
                     </div>
                   </a>
-                </li>}
-                </>))}
+                </li>
+              ))}
             </ul>
-          </li>}
-        </>))}
+          </li>
+        ))}
       </ul>
     </aside>
   );

@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   user: null,
   signInError: null,
+  idPayrollScreen: null,
 };
 
 const userSlice = createSlice({
@@ -18,8 +19,12 @@ const userSlice = createSlice({
     clearMessage: (state) => {
       state.signInError = null;
     },
+    setIdPayrollScreen: (state, action) => {
+      state.idPayrollScreen = action.payload;
+    },
   },
 });
 
-export const { setUser, setSignInError, clearMessage } = userSlice.actions;
+export const { setUser, setSignInError, clearMessage, setIdPayrollScreen } =
+  userSlice.actions;
 export default userSlice.reducer;

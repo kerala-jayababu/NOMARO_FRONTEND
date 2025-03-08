@@ -17,10 +17,15 @@ import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
 import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
 import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
 import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
+import SalaryGeneration from "./pages/PayrollManagement/SalaryGeneration";
+import { Toaster } from "react-hot-toast";
+import SalaryApproved from "./pages/PayrollManagement/SalaryApproved";
+import ConfigApproval from "./pages/PayrollManagement/ConfigApproval";
 
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
+    <Toaster position="top-center"></Toaster>
       <Routes>
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />}>
@@ -38,6 +43,9 @@ function App() {
             <Route path="maternity-leave-salaries" element={<MaternityLeaveSalaries />} />
             <Route path="scheduled-deductions" element={<ScheduledDeductions />} />
             <Route path="overtime-transactions" element={<OvertimeTransaction />} />
+            <Route path="salary-generation" element={<SalaryGeneration />} />
+            <Route path="salary-generation-approval" element={<SalaryApproved />} />
+            <Route path="config-approvals" element={<ConfigApproval />} />
           </Route>
         </Route>
 
