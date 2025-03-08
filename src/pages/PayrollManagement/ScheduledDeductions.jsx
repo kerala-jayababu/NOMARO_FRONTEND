@@ -126,6 +126,7 @@ function ScheduledDeductions() {
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
+      res.data.data.sort((a,b)=> a.fullName - b.fullName);
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
@@ -165,6 +166,7 @@ function ScheduledDeductions() {
       monthCount: item.monthCount,
       monthlyDeductableAmount: 10,
     });
+    handleMonthFromChangeEdit(item.deductionFromSalaryMonthDate);
     setDeductionGrid(item.scheduledDeductionDetailsDto ?? []);
     const selected = employeesListOption.find(option => option.value === item.idEmployee);
     setSelectedEmployee(selected);
@@ -330,6 +332,20 @@ function ScheduledDeductions() {
       deductionFromSalaryMonthDate: selectedDate,
       deductionToSalaryMonthDate: "",
     });
+
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
+      );
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthFromChangeEdit = (e) => {
+    const selectedDate = e;
+    const selectedId = (salaryMonthsList.find((el) => el.salaryMonthDate === selectedDate))?.idSalaryMonth;
 
     if (selectedId) {
       const filteredList = salaryMonthsList.filter(

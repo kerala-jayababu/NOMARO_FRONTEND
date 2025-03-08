@@ -89,6 +89,7 @@ function SalaryAdjustments() {
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
+      res.data.data.sort((a,b)=> a.fullName - b.fullName);
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
