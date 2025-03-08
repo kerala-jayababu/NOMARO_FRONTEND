@@ -21,6 +21,8 @@ import SalaryGeneration from "./pages/PayrollManagement/SalaryGeneration";
 import { Toaster } from "react-hot-toast";
 import SalaryApproved from "./pages/PayrollManagement/SalaryApproved";
 import ConfigApproval from "./pages/PayrollManagement/ConfigApproval";
+import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
+import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
             <Route path="salary-generation" element={<SalaryGeneration />} />
             <Route path="salary-generation-approval" element={<SalaryApproved />} />
             <Route path="config-approvals" element={<ConfigApproval />} />
+            <Route path="tax-configuration" element={<TaxConfiguration />} /> 
+            <Route path="currency-conversion" element={<CurrencyConversion />} />
           </Route>
         </Route>
 

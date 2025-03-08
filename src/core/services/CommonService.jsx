@@ -83,4 +83,13 @@ export default class CommonService {
     }
   }
 
+  static getAllFinancialYears = async () => {
+    try {
+        const response = await API.get("/api/v1/Common/GetAllFiancialyear");
+        return { error: null, data: response.data };  
+    } catch (error) {
+        return handleApiError(error);
+    }
+}
+
 }
