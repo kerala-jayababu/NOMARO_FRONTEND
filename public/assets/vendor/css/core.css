@@ -4622,8 +4622,7 @@ fieldset:disabled .btn {
   vertical-align: baseline;
   border-radius: 0.25rem;
   width: 100%;
-  max-width: 90px;
-
+  max-width: max-content;
 }
 
 .badge:empty {

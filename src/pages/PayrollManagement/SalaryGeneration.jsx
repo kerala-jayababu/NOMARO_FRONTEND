@@ -33,6 +33,10 @@ const statusColor = [
     status: "rejected",
     color: "bg-label-danger",
   },
+  {
+    status: "interim approved",
+    color: "bg-label-secondary",
+  }
 ];
 
 const months = [
@@ -50,13 +54,14 @@ const months = [
   "December",
 ];
 
-const STATUS = {
-  ALL: "All",
-  APPROVED: "APPROVED",
-  SUBMITTED: "SUBMITTED",
-  DRAFT_GENERATED: "DRAFT GENERATED",
-  NOT_GENERATED: "NOT GENERATED"
-};
+const statusOptions = [
+  { value: "All", label: "All Status" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "DRAFT GENERATED", label: "Draft Generated" },
+  { value: "NOT GENERATED", label: "Not Generated" },
+  { value: "REJECTED", label: "Rejected" }
+];
 
 function SalaryGeneration() {
   const dispatch = useDispatch();
@@ -78,10 +83,12 @@ function SalaryGeneration() {
   const { departments } = useSelector((state) => state.department);
   const { designation } = useSelector((state) => state.designation);
   const [selectedCard, setSelectedCard] = useState("All");
-
+  const [allSalaryList, setAllSalaryList] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState({ type: '', title: '', message: '' });
+  
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then((res) => {
-      const salMonths = res.data;
       const currentMonth = res.data
         ?.filter((month) =>
           month.salaryMonthText.includes(new Date().getFullYear().toString())
@@ -89,21 +96,49 @@ function SalaryGeneration() {
         .find((month) =>
           month.salaryMonthText.includes(months[new Date().getMonth()])
         );
+
+      const filteredMonths = res.data.filter((month) => {
+        const currentDate = new Date();
+        const currentMonthIndex = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        const [monthName, year] = month.salaryMonthText.split(",");
+        const monthIndex = months.indexOf(monthName);
+        
+        if (year.trim() == currentYear) {
+          return monthIndex >= currentMonthIndex - 1 && monthIndex <= currentMonthIndex + 1;
+        }
+        if (year.trim() == currentYear - 1) {
+          return monthIndex === 11 && currentMonthIndex === 0;
+        }
+        if (year.trim() == currentYear + 1) {
+          return monthIndex === 0 && currentMonthIndex === 11;
+        }
+        return false;
+      });
+
       setCurrentMonth({
         value: currentMonth.idSalaryMonth,
         label: currentMonth.salaryMonthText,
       });
-      setSalaryMonthsList(salMonths);
+      setSalaryMonthsList(filteredMonths);
     });
   };
 
   useEffect(() => {
-    const params = {
-      idSalaryMonth: currentMonth?.value,
-      status: "All",
-    };
-    dispatch(getSalaryGenerations(params));
-  }, [dispatch, filter, currentMonth]);
+
+    async function fetchData(){
+      const params = {
+        idSalaryMonth: currentMonth?.value,
+        status: "All",
+      };
+      const { payload } = await dispatch(getSalaryGenerations(params))
+      setAllSalaryList(payload.data);
+    }
+
+    fetchData()
+
+  }, [dispatch, currentMonth]);
 
   useEffect(() => {
     getSalaryMonths();
@@ -129,6 +164,8 @@ function SalaryGeneration() {
         status: status?.value,
       };
       setSelectedCard(status.value);
+      const selectedStatus = statusOptions.find(option => option.value === status.value);
+      setStatusFilter(selectedStatus || { value: "All", label: "All Status" });
       dispatch(getSalaryGenerations(params));
     }
   };
@@ -216,13 +253,7 @@ function SalaryGeneration() {
     uncheckCheckBox();
   };
 
-  const statusOptions = [
-    { value: "All", label: "All Status" },
-    { value: "APPROVED", label: "Approved" },
-    { value: "DRAFT GENERATED", label: "Draft Generated" },
-    { value: "SUBMITTED", label: "Submitted" },
-    { value: "NOT GENERATED", label: "Not Generated" },
-  ];
+
 
   const disableApprovalbtn = () => {
     return (
@@ -235,6 +266,44 @@ function SalaryGeneration() {
     Array.from(document.querySelectorAll(".form-check-input")).map((item) => {
       item.checked = false;
     });
+  };
+
+  const handleConfirmAction = () => {
+    switch (confirmAction.type) {
+      case 'generate':
+        generateSalaryDraft();
+        break;
+      case 'undo':
+        undoSalaryDraft();
+        break;
+      case 'submit':
+        submitForApproval();
+        break;
+    }
+    setShowConfirmModal(false);
+  };
+
+  const showConfirmationModal = (type) => {
+    let title = '';
+    let message = '';
+    
+    switch (type) {
+      case 'generate':
+        title = 'Generate Draft Salary';
+        message = 'Are you sure you want to generate draft salary for selected employees?';
+        break;
+      case 'undo':
+        title = 'Undo Draft Salary';
+        message = 'Are you sure you want to undo draft salary for selected employees?';
+        break;
+      case 'submit':
+        title = 'Submit for Approval';
+        message = 'Are you sure you want to submit selected records for approval?';
+        break;
+    }
+
+    setConfirmAction({ type, title, message });
+    setShowConfirmModal(true);
   };
 
   return (
@@ -276,7 +345,7 @@ function SalaryGeneration() {
                       >
                         <h5>Total Employees</h5>
                         <div className="count">
-                          {salaryGenerationList?.length || 0}
+                          {allSalaryList?.length || 0}
                         </div>
                       </div>
                     </div>
@@ -294,9 +363,7 @@ function SalaryGeneration() {
                       >
                         <h5>Approved</h5>
                         <div className="count text-success">
-                          {salaryGenerationList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "approved"
-                          )?.length || 0}
+                          {allSalaryList?.filter(x => x.approvalStatus.toLowerCase() === "approved")?.length || 0}
                         </div>
                       </div>
                     </div>
@@ -314,9 +381,9 @@ function SalaryGeneration() {
                       >
                         <h5>Submitted</h5>
                         <div className="count">
-                          {salaryGenerationList?.filter(
+                          {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "submitted"
-                          )?.length || 0}
+                          )?.length}
                         </div>
                       </div>
                     </div>
@@ -334,7 +401,7 @@ function SalaryGeneration() {
                       >
                         <h5>Draft Generated</h5>
                         <div className="count text-warning">
-                          {salaryGenerationList?.filter(
+                          {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "draft"
                           )?.length || 0}
                         </div>
@@ -353,9 +420,9 @@ function SalaryGeneration() {
                           transition: "background-color 0.3s"
                         }}
                       >
-                        <h5>Pending</h5>
+                        <h5>Not Generated</h5>
                         <div className="count text-info">
-                          {salaryGenerationList?.filter(
+                          {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "not generated"
                           )?.length || 0}
                         </div>
@@ -508,12 +575,11 @@ function SalaryGeneration() {
                 </table>
                 <div className="text-center pt-3">
                   <button
-                    onClick={() => generateSalaryDraft()}
+                    onClick={() => showConfirmationModal('generate')}
                     type="button"
                     disabled={
                       salaryDraft.filter(
-                        (x) =>
-                          x.approvalStatus.toLowerCase() === "not generated"
+                        (x) => x.approvalStatus.toLowerCase() === "not generated"
                       ).length === 0
                     }
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
@@ -522,7 +588,7 @@ function SalaryGeneration() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => undoSalaryDraft()}
+                    onClick={() => showConfirmationModal('undo')}
                     disabled={
                       salaryDraft.filter(
                         (x) => x.approvalStatus.toLowerCase() === "draft"
@@ -545,13 +611,13 @@ function SalaryGeneration() {
                     Import from Excel
                   </button>
                   <button
-                    onClick={() => submitForApproval()}
+                    onClick={() => showConfirmationModal('submit')}
                     disabled={disableApprovalbtn()}
                     type="button"
                     style={{
                       backgroundColor: disableApprovalbtn() ? "#7dccdc" : "",
                     }}
-                    className="btn btn-info btn-sm py-2 px-4 me-2 "
+                    className="btn btn-info btn-sm py-2 px-4 me-2"
                   >
                     Submit for Approval
                   </button>
@@ -561,6 +627,44 @@ function SalaryGeneration() {
           </div>
         </div>
       </div>
+      {showConfirmModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{confirmAction.title}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowConfirmModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{confirmAction.message}</p>
+              </div>
+              <div className="modal-footer">
+              <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleConfirmAction}
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
