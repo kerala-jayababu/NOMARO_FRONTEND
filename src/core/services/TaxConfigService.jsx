@@ -3,18 +3,18 @@ import { API } from "../../redux/api/utils";
 export default class TaxConfigService {
  
 
-    static getBaseTaxThresholds = async () => {
+    static getBaseTaxThresholds = async (idFinancialYear) => {
         try {
-            const response = await API.get("/api/v1/TaxConfigs/GetAllTaxSlabs");
+            const response = await API.get(`/api/v1/TaxConfigs/GetAllTaxSlabs?idFinancialYear=${idFinancialYear}`);
             return { error: null, data: response.data };  
         } catch (error) {
             return handleApiError(error);
         }
     }
 
-    static getChildTaxThresholds = async () => {
+    static getChildTaxThresholds = async (idFinancialYear) => {
         try {
-            const response = await API.get("/api/v1/TaxConfigs/GetChildTaxThresholdList");
+            const response = await API.get(`/api/v1/TaxConfigs/GetChildTaxThresholdList?idFinancialYear=${idFinancialYear}`);
             return { error: null, data: response.data };
         } catch (error) {
             return handleApiError(error);

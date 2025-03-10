@@ -189,7 +189,7 @@ function CurrencyConversion() {
                           <td>{moment(conversion.rateDate).format("MM/DD/YYYY")}</td>
                           <td>{conversion.fromCurrency}</td>
                           <td>{conversion.toCurrency}</td>
-                          <td className="text-end">{conversion.conversionRate}</td>
+                          <td className="text-end">{Number(conversion.conversionRate).toFixed(2)}</td>
                           <td className="text-end">
                             <button 
                               type="button" 
@@ -271,12 +271,12 @@ function CurrencyConversion() {
                     className="form-control"
                     value={formData.conversionRate}
                     onValueChange={(values) => handleInputChange(values, 'conversionRate')}
-                    decimalScale={4}
+                    decimalScale={5}
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
                     placeholder="Add conversion rate"
-                    maxLength={5}
+                    maxLength={12}
                     required
                   />
                   </div>

@@ -11,20 +11,24 @@ function TaxConfiguration() {
   const [childTaxThresholds, setChildTaxThresholds] = useState([]);
   const [financialYears, setFinancialYears] = useState([]);
   const [loading, setLoading] = useState(false);        
-  const [error, setError] = useState(null);
+  const [baseError, setBaseError] = useState(null);
+  const [childError, setChildError] = useState(null);
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
   const [formData, setFormData] = useState({
     idTaxSlab: 0,
     minAmount: '',
     maxAmount: '',
     taxRate: '',
-    financialYearFrom: moment().format('YYYY-MM-DD')
+    financialYearFrom: moment().format('YYYY-MM-DD'),
+    idFinancialYear: ''
   });
 
   const [childFormData, setChildFormData] = useState({
     idChildTaxThreshold: 0,
     childrenCount: '',
     taxThresholdAmount: '',
-    financialYearFrom: moment().format('YYYY-MM-DD')
+    financialYearFrom: moment().format('YYYY-MM-DD'),
+    idFinancialYear: ''
   });
 
   const [childFormErrors, setChildFormErrors] = useState({
@@ -60,19 +64,19 @@ function TaxConfiguration() {
 
   useEffect(() => {
     getAllFinancialYears();
-    getBaseTaxThresholds();
-    getChildTaxThresholds();
+   
   }, []);
 
-  const getBaseTaxThresholds = () => {
+  const getBaseTaxThresholds = (idFinancialYear) => {
     setLoading(true);
-    TaxConfigService.getBaseTaxThresholds()
+    TaxConfigService.getBaseTaxThresholds(idFinancialYear)
       .then(res => {
         setBaseTaxThresholds(res.data.data);
+        setBaseError(null);
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load tax thresholds');
+        setBaseError('Failed to load tax thresholds');
         setLoading(false);
         toast.error('Something went wrong!', {
           position: 'top-right',
@@ -81,17 +85,20 @@ function TaxConfiguration() {
       });
   };
 
-  const getChildTaxThresholds = () => {
+  const getChildTaxThresholds = (idFinancialYear) => {
     setLoading(true);
-    TaxConfigService.getChildTaxThresholds()
+    TaxConfigService.getChildTaxThresholds(idFinancialYear)
       .then(res => {
+        console.log('res', res);
         setChildTaxThresholds(res.data.data);
+        setChildError(null);
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load child tax thresholds');
+        console.log('err', err);
+        setChildError('Failed to load child tax thresholds');
         setLoading(false);
-        toast.error('Something went wrong!', {
+        toast.error(err.data.message, {
           position: 'top-right',
           autoClose: 2000
         });
@@ -99,13 +106,18 @@ function TaxConfiguration() {
   };
 
   const getAllFinancialYears = () => {
+    setLoading(true);
     CommonService.getAllFinancialYears()
       .then(res => {
-        console.log('res', res.data);
         setFinancialYears(res.data);
+        setSelectedFinancialYear(res.data[0].idFinancialYear);
+        getBaseTaxThresholds(res.data[0].idFinancialYear);
+        getChildTaxThresholds(res.data[0].idFinancialYear);
+        setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load financial years');
+        setBaseError('Failed to load financial years');
+        setChildError('Failed to load financial years');
         toast.error('Failed to load financial years!', {
           position: 'top-right',
           autoClose: 2000
@@ -178,7 +190,8 @@ function TaxConfiguration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setBaseError(null);
+    setChildError(null);
 
     if (!validateForm()) {
       setLoading(false);
@@ -219,7 +232,7 @@ function TaxConfiguration() {
           position: 'top-right',
           autoClose: 2000
         });
-        getBaseTaxThresholds();
+        getBaseTaxThresholds(selectedFinancialYear  );
         setLoading(false);
         handleReset();
       }
@@ -233,7 +246,6 @@ function TaxConfiguration() {
   };
 
   const handleEdit = (threshold) => {
-    console.log('threshold', threshold);
     setFormData({
       idTaxSlab: threshold.idTaxSlab,
       minAmount: threshold.minAmount,
@@ -251,7 +263,7 @@ function TaxConfiguration() {
           position: 'top-right',
           autoClose: 2000
         });
-        getBaseTaxThresholds();
+        getBaseTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleReset();
       }
@@ -270,7 +282,8 @@ function TaxConfiguration() {
       minAmount: '',
       maxAmount: '',
       taxRate: '',
-      financialYearFrom: moment().format('YYYY-MM-DD')
+      financialYearFrom: moment().format('YYYY-MM-DD'),
+      idFinancialYear: ''
     });
 
     setFormErrors({
@@ -343,7 +356,7 @@ function TaxConfiguration() {
   const handleChildSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setChildError(null);
 
     if (!validateChildForm()) {
       setLoading(false);
@@ -359,7 +372,7 @@ function TaxConfiguration() {
 
     
     const matchingYear = financialYears.find(year =>
-      moment(year.financialYearFrom).year() === moment(formData.financialYearFrom).year()
+      moment(year.financialYearFrom).year() === moment(childFormData.financialYearFrom).year()
     );
 
     // If a matching financial year is found, add `idFinancialYear` and `financialYearTo` to the payload
@@ -367,8 +380,6 @@ function TaxConfiguration() {
       payload['idFinancialYear'] = matchingYear.idFinancialYear;
       payload['financialYearTo'] = matchingYear.financialYearTo;
     }
-
-    console.log('payload2', payload);
 
     // return;
     if(childFormData.idChildTaxThreshold!==0){
@@ -389,7 +400,7 @@ function TaxConfiguration() {
           position: 'top-right',
           autoClose: 2000
         });
-        getChildTaxThresholds();
+        getChildTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleChildReset();
       } 
@@ -409,7 +420,7 @@ function TaxConfiguration() {
           position: 'top-right',
           autoClose: 2000
         });
-        getChildTaxThresholds();
+        getChildTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleChildReset();
       }
@@ -433,10 +444,11 @@ function TaxConfiguration() {
 
   const handleChildReset = () => {
     setChildFormData({
-      id: 0,
+      idChildTaxThreshold: 0,
       childrenCount: '',
       taxThresholdAmount: '',
-      financialYearFrom: moment().format('YYYY-MM-DD')
+      financialYearFrom: moment().format('YYYY-MM-DD'),
+      idFinancialYear: ''
     });
     setChildFormErrors({
       childrenCount: '',
@@ -445,9 +457,45 @@ function TaxConfiguration() {
     });
   };
 
+  const handleFinancialYearChange = (e) => {
+    const selectedYear = financialYears.find(year => year.idFinancialYear === parseInt(e.target.value));
+    setSelectedFinancialYear(e.target.value);
+    
+    console.log('selectedYear', e.target.value);
+    getBaseTaxThresholds(e.target.value);
+    getChildTaxThresholds(e.target.value);
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="row align-items-center">
+                <div className="col-md-3">
+                  <label className="form-label mb-1">Financial Year</label>
+                  <select 
+                    className="form-select"
+                    value={selectedFinancialYear}
+                    onChange={handleFinancialYearChange}
+                    required
+                  >
+                    <option value="">Select Financial Year</option>
+                    {financialYears.map((year) => (
+                      <option key={year.idFinancialYear} value={year.idFinancialYear}>
+                        {`${moment(year.financialYearFrom).format('DD/MM/YYYY')} - ${moment(year.financialYearTo).format('DD/MM/YYYY')}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="row">
+        
         <div className="col-lg-8 ">
           <div className="card mb-2">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
@@ -457,8 +505,8 @@ function TaxConfiguration() {
             <div className="card-body">
               <div className="table-responsive text-nowrap">
                 {loading && <div className="text-center p-3">Loading...</div>}
-                {error && <div className="text-danger p-3">{error}</div>}
-                {!loading && !error && (
+                {/* {baseError && <div className="text-danger p-3">{baseError}</div>} */}
+                {!loading  && (
                   <table className="table table-sm">
                     <thead>
                       <tr>
@@ -469,11 +517,11 @@ function TaxConfiguration() {
                         <th></th>
                       </tr>
                     </thead>
-                    <tbody className="table-border-bottom-0">
+                    {!baseError && <tbody className="table-border-bottom-0">
                       {baseTaxThresholds && baseTaxThresholds.map((threshold) => (
                         <tr key={threshold.idTaxSlab}>
-                          <td>{Number(threshold.minAmount).toFixed(2)}</td>
-                          <td>{Number(threshold.maxAmount).toFixed(2)}</td>
+                          <td className="text-end">{Number(threshold.minAmount).toFixed(2)}</td>
+                          <td className="text-end">{Number(threshold.maxAmount).toFixed(2)}</td>
                           <td>{threshold.taxRate}%</td>
                           <td>{moment(threshold.financialYearFrom).format("MM/DD/YYYY")}</td>
                           <td className="text-end">
@@ -487,7 +535,8 @@ function TaxConfiguration() {
                           </td>
                         </tr>
                       ))}
-                    </tbody>
+                    </tbody>}
+                    {baseError && <tbody className="table-border-bottom-0"><tr><td colSpan="5" className="text-center">No records found</td></tr></tbody>}
                   </table>
                 )}
               </div>
@@ -509,11 +558,11 @@ function TaxConfiguration() {
                       <th></th>
                     </tr>
                   </thead>
-                  <tbody className="table-border-bottom-0">
+                  {!childError && <tbody className="table-border-bottom-0">
                     {childTaxThresholds && childTaxThresholds.map((threshold) => (
                       <tr key={threshold.idChildTaxThreshold}>
                         <td>{threshold.childrenCount}</td>
-                        <td>{threshold.taxThresholdAmount}</td>
+                        <td className="text-end">{Number(threshold.taxThresholdAmount).toFixed(2)}</td>
                         <td>{moment(threshold.financialYearFrom).format("MM/DD/YYYY")}</td>
                         <td className="text-end">
                           <button
@@ -531,10 +580,11 @@ function TaxConfiguration() {
                         <td colSpan="4" className="text-center">No records found</td>
                       </tr>
                     )}
-                  </tbody>
+                  </tbody>}
+                  {childError && <tbody className="table-border-bottom-0"><tr><td colSpan="4" className="text-center">No records found</td></tr></tbody>}
                 </table>
                 {loading && <div className="text-center p-3">Loading...</div>}
-                {error && <div className="text-danger p-3">{error}</div>}
+                {/* {childError && <div className="text-danger p-3">{childError}</div>} */}
               </div>
             </div>
           </div>

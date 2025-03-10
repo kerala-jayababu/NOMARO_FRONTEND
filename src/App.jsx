@@ -23,7 +23,7 @@ import SalaryApproved from "./pages/PayrollManagement/SalaryApproved";
 import ConfigApproval from "./pages/PayrollManagement/ConfigApproval";
 import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
-
+import NotificationConfig from "./pages/AdminTools/notificationConfig";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -48,8 +48,9 @@ function App() {
             <Route path="salary-generation" element={<SalaryGeneration />} />
             <Route path="salary-generation-approval" element={<SalaryApproved />} />
             <Route path="config-approvals" element={<ConfigApproval />} />
-            <Route path="tax-configuration" element={<TaxConfiguration />} /> 
+            <Route path="income-tax-config" element={<TaxConfiguration />} /> 
             <Route path="currency-conversion" element={<CurrencyConversion />} />
+            <Route path="notification-types" element={<NotificationConfig />} />
           </Route>
         </Route>
 
