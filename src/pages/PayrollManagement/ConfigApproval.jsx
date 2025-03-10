@@ -17,6 +17,8 @@ function ConfigApproval() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedCard, setSelectedCard] = useState("All");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState({ type: '', title: '', message: '' });
 
   const STATUS = {
     ALL: "All",
@@ -60,7 +62,7 @@ function ConfigApproval() {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
         status: "APPROVED",
-        idPayRollScreen
+        idPayrollScreen
       };
     });
 
@@ -91,7 +93,7 @@ function ConfigApproval() {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
         status: "REJECTED",
-        idPayRollScreen,
+        idPayrollScreen,
         rejectReason: rejectReason,
       };
     });
@@ -123,6 +125,30 @@ function ConfigApproval() {
       setSelectedCard(status.value);
       dispatch(getConfigApprovals(params));
     }
+  };
+
+  const handleConfirmAction = () => {
+    switch (confirmAction.type) {
+      case 'approve':
+        handleApproveWorkflow();
+        break;
+    }
+    setShowConfirmModal(false);
+  };
+
+  const showConfirmationModal = (type) => {
+    let title = '';
+    let message = '';
+    
+    switch (type) {
+      case 'approve':
+        title = 'Approve Records';
+        message = 'Are you sure you want to approve the selected records?';
+        break;
+    }
+
+    setConfirmAction({ type, title, message });
+    setShowConfirmModal(true);
   };
 
   return (
@@ -216,7 +242,7 @@ function ConfigApproval() {
                           />
                         </td>
                         <td class="cursor">{item.entityName}</td>
-                        <td>{item.entityName + " " + item.details}</td>
+                        <td>{item.details}</td>
                         <td>
                           {item.createdBy || "user"} <br />                         
                           {new Date(item.sentDate).toLocaleString("en-US", {
@@ -238,7 +264,7 @@ function ConfigApproval() {
                   <button
                     type="submit"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
-                    onClick={handleApproveWorkflow}
+                    onClick={() => showConfirmationModal('approve')}
                     disabled={selectedItems.length === 0}
                   >
                     Approve Selected Records
@@ -287,19 +313,19 @@ function ConfigApproval() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowRejectModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
+              <button
                   type="button"
                   className="btn btn-danger"
                   onClick={handleRejectWorkflow}
                 >
                   Reject
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowRejectModal(false)}
+                >
+                  Cancel
                 </button>
               </div>
             </div>
@@ -307,86 +333,45 @@ function ConfigApproval() {
         </div>
       )}
 
-      <ul className="SalaryApproveCount_ul">
-        <li>
-          <div className="card SalaryApproveCount">
-            <div
-              className="card-body"
-              onClick={() => handleStatusChange({ value: STATUS.ALL })}
-              style={{
-                backgroundColor: selectedCard === STATUS.ALL ? "#e7e7ff" : "",
-                cursor: "pointer",
-                transition: "background-color 0.3s"
-              }}
-            >
-              <h5>Total Records</h5>
-              <div className="count">
-                {configApprovalList?.length || 0}
+      {/* Add the confirmation modal */}
+      {showConfirmModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{confirmAction.title}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowConfirmModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{confirmAction.message}</p>
+              </div>
+              <div className="modal-footer">
+              <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleConfirmAction}
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
-        </li>
-        <li>
-          <div className="card SalaryApproveCount">
-            <div
-              className="card-body"
-              onClick={() => handleStatusChange({ value: STATUS.APPROVED })}
-              style={{
-                backgroundColor: selectedCard === STATUS.APPROVED ? "#e7e7ff" : "",
-                cursor: "pointer",
-                transition: "background-color 0.3s"
-              }}
-            >
-              <h5>Approved</h5>
-              <div className="count text-success">
-                {configApprovalList?.filter(
-                  (x) => x.actionStatus.toLowerCase() === "approved"
-                )?.length || 0}
-              </div>
-            </div>
-          </div>
-        </li>
-        <li>
-          <div className="card SalaryApproveCount">
-            <div
-              className="card-body"
-              onClick={() => handleStatusChange({ value: STATUS.SUBMITTED })}
-              style={{
-                backgroundColor: selectedCard === STATUS.SUBMITTED ? "#e7e7ff" : "",
-                cursor: "pointer",
-                transition: "background-color 0.3s"
-              }}
-            >
-              <h5>Submitted</h5>
-              <div className="count">
-                {configApprovalList?.filter(
-                  (x) => x.actionStatus.toLowerCase() === "submitted"
-                )?.length || 0}
-              </div>
-            </div>
-          </div>
-        </li>
-        <li>
-          <div className="card SalaryApproveCount">
-            <div
-              className="card-body"
-              onClick={() => handleStatusChange({ value: STATUS.REJECTED })}
-              style={{
-                backgroundColor: selectedCard === STATUS.REJECTED ? "#e7e7ff" : "",
-                cursor: "pointer",
-                transition: "background-color 0.3s"
-              }}
-            >
-              <h5>Rejected</h5>
-              <div className="count text-danger">
-                {configApprovalList?.filter(
-                  (x) => x.actionStatus.toLowerCase() === "rejected"
-                )?.length || 0}
-              </div>
-            </div>
-          </div>
-        </li>
-      </ul>
+        </div>
+      )}
     </div>
   );
 }
