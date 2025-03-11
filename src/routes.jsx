@@ -12,6 +12,9 @@ import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
 import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
 import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
 import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
+import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
+import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
+import NotificationConfig from "./pages/AdminTools/notificationConfig";
 
 export const privateRoutes = [
   {
@@ -70,6 +73,18 @@ export const privateRoutes = [
     path: "/dashboard/overtime-transactions",
     element: <OvertimeTransaction />,
   }, 
+  {
+    path: "/dashboard/income-tax-config",
+    element: <TaxConfiguration />,
+  }, 
+  {
+    path: "/dashboard/currency-conversion",
+    element: <CurrencyConversion />,
+  },
+  {
+    path: "/dashboard/notification-types",
+    element: <NotificationConfig />,
+  },
 ];
 
 export default privateRoutes

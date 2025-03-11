@@ -135,3 +135,12 @@
   padding: 8px;
   border: 1px solid #ddd;
 }
+
+.cursor {
+  cursor: pointer;
+  color: #1893cf;
+}
+
+.cursor:hover {
+  color: #166a93;
+}

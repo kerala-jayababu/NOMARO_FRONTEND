@@ -6,10 +6,10 @@ import Pagination from "../../components/pagination";
 import StatusBadge from "../../components/statusBadge";
 import Modal from "../../components/modal";
 import Table from "../../components/table";
-import Label from "../../components/label";
+import Label from "../../components/Label";
 import { DeleteIcon, AddIcon } from "../../components/icons";
 import Dropdown from "../../components/Dropdown";
-import Input from "../../components/Input";
+import { Input } from "react-select/animated";
 import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 import { getBudgetCodeById } from "../../redux/reducers/budgetCode";
 import { getEmployeeBankAccountsByID } from "../../redux/reducers/employeeProfiles";
@@ -19,7 +19,6 @@ import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
-
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
   const {

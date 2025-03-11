@@ -6,7 +6,6 @@ export const BASE_URL = import.meta.env.VITE_API_URL;
  
 export const authInterceptor = (req) => {
   const user = secureLocalStorage.getItem("user");
-  console.log("Raw user data from storage:", user);
  
   let token = null;
   if (user) {
