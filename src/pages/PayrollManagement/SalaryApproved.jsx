@@ -339,7 +339,7 @@ function SalaryApproved() {
                         <h5>Submitted</h5>
                         <div class="count">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "submitted"
+                            (x) => x.approvalStatus.toLowerCase() === "submitted" || x.approvalStatus.toLowerCase() === 'interim approved'
                           )?.length || 0}
                         </div>
                       </div>

@@ -382,7 +382,7 @@ function SalaryGeneration() {
                         <h5>Submitted</h5>
                         <div className="count">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "submitted"
+                            (x) => x.approvalStatus.toLowerCase() === "submitted" || x.approvalStatus.toLowerCase() === 'interim approved'
                           )?.length}
                         </div>
                       </div>

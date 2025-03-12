@@ -3,31 +3,32 @@ import { useDispatch, useSelector } from "react-redux";
 import { getConfigApprovals } from "../../redux/reducers/ConfigApprovals";
 import { toast } from "react-hot-toast";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
+import EmployeeSalaryConfigApproval from "./Components/EmployeeSalaryConfigApproval";
+import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
+import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
 
 function ConfigApproval() {
   const dispatch = useDispatch();
   const { configApprovalList } = useSelector((state) => state.configApproval);
-  const  { idPayrollScreen }  = useSelector((state) => state.auth);
+  const { idPayrollScreen } = useSelector((state) => state.auth);
   const [dateFrom, setDateFrom] = React.useState(
     new Date().toISOString().split("T")[0]
   );
   const [entityType, setEntityType] = React.useState("");
+  const [entityName, setEntityName] = React.useState("");
+  const [entityId, setEntityId] = useState(0);
   const [status, setStatus] = React.useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [selectedCard, setSelectedCard] = useState("All");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState({ type: '', title: '', message: '' });
-
-  const STATUS = {
-    ALL: "All",
-    APPROVED: "APPROVED",
-    SUBMITTED: "SUBMITTED",
-    DRAFT: "DRAFT",
-    NOT_GENERATED: "NOT GENERATED",
-    REJECTED: "REJECTED"
-  };
+  const [confirmAction, setConfirmAction] = useState({
+    type: "",
+    title: "",
+    message: "",
+  });
+  const [refresh, setRefresh] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
     const params = {
@@ -36,16 +37,16 @@ function ConfigApproval() {
       status,
     };
     dispatch(getConfigApprovals(params));
-  }, [dateFrom, entityType, status]);
+  }, [dateFrom, entityType, status, refresh]);
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked && configApprovalList) {
-      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
-    } else {
-      setSelectedItems([]);
-    }
-    handelCheckboxCheck(e.target.checked)
-  };
+  // const handleSelectAll = (e) => {
+  //   if (e.target.checked && configApprovalList) {
+  //     setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
+  //   } else {
+  //     setSelectedItems([]);
+  //   }
+  //   handelCheckboxCheck(e.target.checked)
+  // };
 
   const handelCheckboxCheck = (checked) => {
     Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
@@ -53,16 +54,18 @@ function ConfigApproval() {
         item.checked = checked;
       }
     });
-  }
+  };
 
   const handleApproveWorkflow = async () => {
     const content = selectedItems.map((id) => {
-      const item = configApprovalList.find((item) => item.idApprovalWorkFlow === id);
+      const item = configApprovalList.find(
+        (item) => item.idApprovalWorkFlow === id
+      );
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
         status: "APPROVED",
-        idPayrollScreen
+        idPayrollScreen,
       };
     });
 
@@ -78,7 +81,7 @@ function ConfigApproval() {
     } catch (error) {
       toast.error("Error approving records");
     }
-    handelCheckboxCheck(false)
+    handelCheckboxCheck(false);
   };
 
   const handleRejectWorkflow = async () => {
@@ -88,7 +91,9 @@ function ConfigApproval() {
     }
 
     const content = selectedItems.map((id) => {
-      const item = configApprovalList.find((item) => item.idApprovalWorkFlow === id);
+      const item = configApprovalList.find(
+        (item) => item.idApprovalWorkFlow === id
+      );
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
         entityCode: item.entityCode,
@@ -112,7 +117,7 @@ function ConfigApproval() {
     } catch (error) {
       toast.error("Error rejecting records");
     }
-    handelCheckboxCheck(false)
+    handelCheckboxCheck(false);
   };
 
   const handleStatusChange = (status) => {
@@ -122,14 +127,13 @@ function ConfigApproval() {
         entityType,
         status: status.value,
       };
-      setSelectedCard(status.value);
       dispatch(getConfigApprovals(params));
     }
   };
 
   const handleConfirmAction = () => {
     switch (confirmAction.type) {
-      case 'approve':
+      case "approve":
         handleApproveWorkflow();
         break;
     }
@@ -137,18 +141,24 @@ function ConfigApproval() {
   };
 
   const showConfirmationModal = (type) => {
-    let title = '';
-    let message = '';
-    
+    let title = "";
+    let message = "";
+
     switch (type) {
-      case 'approve':
-        title = 'Approve Records';
-        message = 'Are you sure you want to approve the selected records?';
+      case "approve":
+        title = "Approve Records";
+        message = "Are you sure you want to approve the selected records?";
         break;
     }
 
     setConfirmAction({ type, title, message });
     setShowConfirmModal(true);
+  };
+
+  const handleSelectEmployee = (item) => {
+    setEntityName(item.entityName);
+    setEntityId(item.entityTablePrimaryKeyID);
+    setSelectedRow(item);
   };
 
   return (
@@ -170,7 +180,7 @@ function ConfigApproval() {
                     value={entityType}
                     onChange={(e) => setEntityType(e.target.value)}
                   >
-                    <option value={''}>Select</option>
+                    <option value={""}>Select</option>
                     <option value={"SALTEM"}>Salary Template</option>
                     <option value={"EMPSALCONFIG"}>
                       Employee Salary Configuration
@@ -185,7 +195,7 @@ function ConfigApproval() {
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
                   >
-                    <option value={''}>Select Status</option>
+                    <option value={""}>Select Status</option>
                     <option>Submitted</option>
                     <option>Approved</option>
                     <option>Rejected</option>
@@ -227,24 +237,38 @@ function ConfigApproval() {
                       <tr key={item.idApprovalWorkFlow}>
                         <td>
                           <input
-                            disabled={item.actionStatus.toLowerCase() === "approved" || item.actionStatus.toLowerCase() === "rejected"}
+                            disabled={
+                              item.actionStatus.toLowerCase() === "approved" ||
+                              item.actionStatus.toLowerCase() === "rejected"
+                            }
                             type="checkbox"
                             class="form-check-input data-checkbox"
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedItems((prev) => [...prev, item.idApprovalWorkFlow]);
+                                setSelectedItems((prev) => [
+                                  ...prev,
+                                  item.idApprovalWorkFlow,
+                                ]);
                               } else {
                                 setSelectedItems((prev) =>
-                                  prev.filter((x) => x !== item.idApprovalWorkFlow)
+                                  prev.filter(
+                                    (x) => x !== item.idApprovalWorkFlow
+                                  )
                                 );
                               }
                             }}
                           />
                         </td>
-                        <td class="cursor">{item.entityName}</td>
+                        <td
+                          class="cursor"
+                          style={{ color: "#1893cf", cursor: "pointer" }}
+                          onClick={() => handleSelectEmployee(item)}
+                        >
+                          {item.entityName}
+                        </td>
                         <td>{item.details}</td>
                         <td>
-                          {item.createdBy || "user"} <br />                         
+                          {item.createdBy || "user"} <br />
                           {new Date(item.sentDate).toLocaleString("en-US", {
                             day: "2-digit",
                             month: "2-digit",
@@ -264,7 +288,7 @@ function ConfigApproval() {
                   <button
                     type="submit"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
-                    onClick={() => showConfirmationModal('approve')}
+                    onClick={() => showConfirmationModal("approve")}
                     disabled={selectedItems.length === 0}
                   >
                     Approve Selected Records
@@ -313,7 +337,7 @@ function ConfigApproval() {
                 </div>
               </div>
               <div className="modal-footer">
-              <button
+                <button
                   type="button"
                   className="btn btn-danger"
                   onClick={handleRejectWorkflow}
@@ -353,7 +377,7 @@ function ConfigApproval() {
                 <p>{confirmAction.message}</p>
               </div>
               <div className="modal-footer">
-              <button
+                <button
                   type="button"
                   className="btn btn-primary"
                   onClick={handleConfirmAction}
@@ -371,6 +395,33 @@ function ConfigApproval() {
             </div>
           </div>
         </div>
+      )}
+
+      {entityName === "Employee Salary Configuration" && (
+        <EmployeeSalaryConfigApproval
+          setEntityType={setEntityName}
+          entityId={entityId}
+          setRefresh={setRefresh}
+          selectedRow={selectedRow}
+        />
+      )}
+
+      {entityName === "Overtime Transactions" && (
+        <OvertimeTransactionApproval
+          setEntityType={setEntityName}
+          entityId={entityId}
+          setRefresh={setRefresh}
+          selectedRow={selectedRow}
+        />
+      )}
+
+      {entityName === "Salary Template" && (
+        <SalaryTemplateApproval
+          setEntityType={setEntityName}
+          entityId={entityId}
+          setRefresh={setRefresh}
+          selectedRow={selectedRow}
+        />
       )}
     </div>
   );
