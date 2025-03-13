@@ -17,11 +17,13 @@ function CurrencyConversion() {
   };
 
   const [currencyConversions, setCurrencyConversions] = React.useState([]);
+  const [currencyConversionsMain, setCurrencyConversionsMain] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [formData, setFormData] = React.useState(initialFormState);
   const [isEditing, setIsEditing] = React.useState(false);
   const datePickerRef = useRef(null);
+  const [fromDate, setFromDate] = React.useState(moment().format("YYYY-MM-DD"));
   
   useEffect(() => {
     getCurrencyConversions();
@@ -33,6 +35,7 @@ function CurrencyConversion() {
       .then(res => {
         console.log(res.data.data);
         setCurrencyConversions(res.data.data);
+        setCurrencyConversionsMain(res.data.data);
         setLoading(false);
       })
       .catch(err => {
@@ -45,13 +48,12 @@ function CurrencyConversion() {
       });
   };
 
-  //     const handleInputChange = (e) => {      
-  //     const { name, value } = e.target;
-  //     setFormData(prev => ({
-  //       ...prev,    
-  //     [name]: value
-  //   }));
-  // };
+  const filterByDate = (date) => {
+    setFromDate(date);
+    let filteredData = currencyConversionsMain.filter(item => moment(item.rateDate).isSameOrAfter(date));
+    setCurrencyConversions(filteredData);
+  }
+
 
   const handleInputChange = (value, field) => {
     let newValue;
@@ -102,6 +104,21 @@ function CurrencyConversion() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Check for duplicate entry
+    const isDuplicate = currencyConversionsMain.some(conversion => 
+      conversion.fromCurrency === formData.fromCurrency &&
+      conversion.toCurrency === formData.toCurrency &&
+      moment(conversion.rateDate).format('YYYY-MM-DD') === moment(formData.rateDate).format('YYYY-MM-DD') &&
+      conversion.idCurrencyConversion !== formData.idCurrencyConversion // Exclude current record when editing
+    );
+
+    if (isDuplicate) {
+      toast.error('A conversion rate for this currency pair and date already exists!', {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      return;
+    }
     
     const payload = {
       idCurrencyConversion: formData.idCurrencyConversion,
@@ -110,7 +127,6 @@ function CurrencyConversion() {
       conversionRate: parseFloat(formData.conversionRate),
       rateDate: moment(formData.rateDate).format()
     };
-    console.log('payload', payload);
     setLoading(true);
     const service = (formData.idCurrencyConversion!==0)
     ? CurrConversionService.updateCurrencyConversion
@@ -159,6 +175,29 @@ function CurrencyConversion() {
 
   return (
       <div className="container-xxl flex-grow-1 container-p-y">
+       <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="row align-items-center">
+                <div className="col-md-3">
+                  <label className="form-label mb-1">From Date</label>  
+                  <br></br>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="From Date"
+                    selected={fromDate} 
+                    onChange={(date) => filterByDate(date)}
+                    showYearDropdown
+                    maxDate={new Date()}
+                    />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
         <div className="row">
           <div className="col-lg-8 ">
             <div className="card">
@@ -270,8 +309,18 @@ function CurrencyConversion() {
                   <NumericFormat
                     className="form-control"
                     value={formData.conversionRate}
-                    onValueChange={(values) => handleInputChange(values, 'conversionRate')}
-                    decimalScale={5}
+                    onValueChange={(values) => {
+                      const numValue = parseFloat(values.value);
+                      if (numValue > 20) {
+                        toast.error('Conversion rate cannot be greater than 20!', {
+                          position: 'top-right',
+                          autoClose: 2000
+                        });
+                        return;
+                      }
+                      handleInputChange(values, 'conversionRate');
+                    }}
+                    decimalScale={4}
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
