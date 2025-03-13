@@ -89,7 +89,6 @@ function TaxConfiguration() {
     setLoading(true);
     TaxConfigService.getChildTaxThresholds(idFinancialYear)
       .then(res => {
-        console.log('res', res);
         setChildTaxThresholds(res.data.data);
         setChildError(null);
         setLoading(false);
@@ -198,14 +197,18 @@ function TaxConfiguration() {
       return;
     };
 
+    const financialYearFromData = moment(formData.financialYearFrom)
+    .startOf('day') 
+    .format('YYYY-MM-DDTHH:mm:ss'); 
     const payload = {
       idTaxSlab: formData.idTaxSlab,
       minAmount: parseFloat(formData.minAmount),
       maxAmount: parseFloat(formData.maxAmount),
       taxRate: parseFloat(formData.taxRate),
-      financialYearFrom: moment(formData.financialYearFrom).format()
+      financialYearFrom: financialYearFromData
     };
-
+    // console.log('payload',  moment(formData.financialYearFrom).format());
+  
     const matchingYear = financialYears.find(year =>
       moment(year.financialYearFrom).year() === moment(formData.financialYearFrom).year()
     );
@@ -296,29 +299,34 @@ function TaxConfiguration() {
 
 
   const handleChildInputChange = (value, field) => {
-    // const newValue = values.value || values;
-
     let newValue;
-  
+    let errorMessage = '';
     // If the value is an object, extract the 'value' property
     if (value && value.hasOwnProperty('value')) {
       value = value.value; // Extract the 'value' property from the object
     }
-  
+
     // If the value is a string (especially for number fields), attempt to parse it to a float
     if (typeof value === 'string' && !isNaN(value)) {
       value = parseFloat(value); // Convert the string to a number
     }
-  
+
     // Check if the field is 'financialYearFrom', which expects a Date object
     if (field === 'financialYearFrom') {
-      // Ensure the value is a valid Date object or null
       newValue = value instanceof Date ? value : null;
     } else if (typeof value === 'number') {
-      // Handle number fields (e.g., minAmount, maxAmount, taxRate)
-      newValue = value;
+      // Handle number fields (e.g., childrenCount)
+      // Enforce the maximum limit for childrenCount
+      if (field === 'childrenCount' && value > 20) {
+        toast.error('Child count must be less than 20', {
+          position: 'top-right',
+          autoClose: 2000
+        });
+        newValue = 20;
+      } else {
+        newValue = value;
+      }
     } else {
-      // For other fields (if any are added in the future), assign the value as-is
       newValue = value;
     }
 
@@ -326,12 +334,12 @@ function TaxConfiguration() {
       ...prev,
       [field]: newValue,
     }));
-
     setChildFormErrors((prevErrors) => ({
       ...prevErrors,
-      [field]: '',
+      [field]: errorMessage,
     }));
   };
+
 
   const validateChildForm = () => {
     console.log('childFormData', childFormData);
@@ -608,7 +616,7 @@ function TaxConfiguration() {
                     thousandSeparator={true}
                     allowLeadingZeros={false}
                     placeholder="Add minimum income"
-                    maxLength={12}
+                    maxLength={15}
                     required
                   />
                   {formErrors.minAmount && (
@@ -626,7 +634,7 @@ function TaxConfiguration() {
                     thousandSeparator={true}
                     allowLeadingZeros={false}
                     placeholder="Add maximum income"
-                    maxLength={12}
+                    maxLength={15}
                     required
                   />
                   {formErrors.maxAmount && (
@@ -695,6 +703,8 @@ function TaxConfiguration() {
                     decimalScale={0}
                     allowNegative={false}
                     allowLeadingZeros={false}
+                    maxLength={2}
+                    maxAmount={20}
                     placeholder="Enter number of children"
                     required
                   />
@@ -709,6 +719,7 @@ function TaxConfiguration() {
                     value={childFormData.taxThresholdAmount}
                     onValueChange={(values) => handleChildInputChange(values, 'taxThresholdAmount')}
                     decimalScale={2}
+                    maxLength={15}
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
