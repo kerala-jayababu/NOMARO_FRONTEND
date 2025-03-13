@@ -76,6 +76,20 @@ function SalaryTemplateApproval({
     }
   };
 
+  function getDetails(item) {
+    if (item.calculationMethod.toLowerCase() === 'percentage') { 
+      return `${item.percentageValue}% of ${item.percentageOfIdSalaryHeadValue}`;
+    }
+
+   if (item.calculationMethod.toLowerCase() === 'fixedamount') { 
+      return "FIXED AMOUNT";
+    }
+
+     if (item.calculationMethod.toLowerCase() === 'formula') { 
+      return 'Formula - ' + item.customFormula;
+    }
+  }
+
   return (
     <div
       className="modal d-block"
@@ -84,7 +98,11 @@ function SalaryTemplateApproval({
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Salary Template Approval</h5>
+            <h5 className="modal-title">
+              Salary Template Approval
+                {selectedRow.actionStatus?.toLowerCase() !== "submitted" ?
+                " (Already Approved)":''}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -135,6 +153,7 @@ function SalaryTemplateApproval({
             <table className="table table-bordered mt-3">
               <thead>
                 <tr>
+                  <th>Salary Head Code</th>
                   <th>Salary Head Name</th>
                   <th>Type</th>
                   <th>Details</th>
@@ -144,10 +163,11 @@ function SalaryTemplateApproval({
               <tbody>
                 {salaryTemplate.salaryTemplateDetails?.map((item) => (
                   <tr>
+                    <td>{item.salaryHeadCode}</td>
                     <td>{item.salaryHeadName}</td>
                     <td>{item.headType}</td>
-                    <td>-</td>
-                    <td>{Number(item.finalSalaryAmount).toFixed(2)}</td>
+                    <td>{getDetails(item)}</td>
+                    <td className="text-end">{Number(item.finalSalaryAmount).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,9 +183,9 @@ function SalaryTemplateApproval({
               </thead>
               <tbody>
                 <tr>
-                  <td>{Number(salaryTemplate.totalEarnings).toFixed(2)}</td>
-                  <td>{Number(salaryTemplate.totalDeductions).toFixed(2)}</td>
-                  <td>{Number(salaryTemplate.netSalary).toFixed(2)}</td>
+                  <td className="text-center">{Number(salaryTemplate.totalEarnings).toFixed(2)}</td>
+                  <td className="text-center">{Number(salaryTemplate.totalDeductions).toFixed(2)}</td>
+                  <td className="text-center">{Number(salaryTemplate.netSalary).toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>

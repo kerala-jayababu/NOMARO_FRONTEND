@@ -76,6 +76,32 @@ function OvertimeTransactionApproval({
     }
   };
 
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.attachmentDescription || "downloaded-file";
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "application/octet-stream" });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       className="modal d-block"
@@ -84,7 +110,12 @@ function OvertimeTransactionApproval({
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Overtime Transaction Approval</h5>
+            <h5 className="modal-title">
+              Overtime Transaction Approval
+              {selectedRow.actionStatus?.toLowerCase() !== "submitted"
+                ? " (Already Approved)"
+                : ""}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -102,9 +133,9 @@ function OvertimeTransactionApproval({
               </thead>
               <tbody>
                 <tr>
-                  <td>{overtimeTransaction.createdBy}</td>
+                  <td>{overtimeTransaction?.createdBy}</td>
                   <td>
-                    {new Date(overtimeTransaction.createdOn).toLocaleString(
+                    {new Date(overtimeTransaction?.createdOn).toLocaleString(
                       "en-US",
                       {
                         day: "2-digit",
@@ -184,23 +215,32 @@ function OvertimeTransactionApproval({
               <tbody>
                 <tr>
                   <td>{overtimeTransaction.durationInHours}</td>
-                  <td>-</td>
+                  <td>{overtimeTransaction.reasonForOvertime}</td>
                 </tr>
               </tbody>
             </table>
 
-            <table className="table table-bordered mt-3">
-              <thead>
-                <tr>
-                  <th>View Attachment</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>-</td>
-                </tr>
-              </tbody>
-            </table>
+            {overtimeTransaction.attachmentBlob && (
+              <table className="table table-bordered mt-3">
+                <thead>
+                  <tr>
+                    <th>View Attachment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <button className="btn btn-outline-primary border-0 btn-sm">
+                        <i
+                          className="bx bx-paperclip cursor"
+                          onClick={() => downloadFile(item)}
+                        ></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
           </div>
 
           {selectedRow.actionStatus?.toLowerCase() === "submitted" && (

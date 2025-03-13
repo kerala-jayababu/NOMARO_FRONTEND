@@ -76,6 +76,21 @@ function EmployeeSalaryConfigApproval({
     }
   };
 
+  function getDetails(item) {
+    if (item.calculationMethod.toLowerCase() === 'percentage') { 
+      return `${item.percentageValue}% of ${item.percentageOfIdSalaryHeadValue}`;
+    }
+
+   if (item.calculationMethod.toLowerCase() === 'fixedamount') { 
+      return "FIXED AMOUNT";
+    }
+
+     if (item.calculationMethod.toLowerCase() === 'formula') { 
+      return 'Formula - ' + item.customFormula;
+    }
+  }
+
+
   return (
     <div
       className="modal d-block"
@@ -84,7 +99,11 @@ function EmployeeSalaryConfigApproval({
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Employee Salary Config Approval</h5>
+            <h5 className="modal-title">
+              Employee Salary Config Approval{" "}
+                {selectedRow.actionStatus?.toLowerCase() !== "submitted" ?
+                " (Already Approved)":''}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -154,6 +173,7 @@ function EmployeeSalaryConfigApproval({
             <table className="table table-bordered mt-3">
               <thead>
                 <tr>
+                  <th>Salary Head Code</th>
                   <th>Salary Head Name</th>
                   <th>Type</th>
                   <th>Details</th>
@@ -162,12 +182,13 @@ function EmployeeSalaryConfigApproval({
               </thead>
               <tbody>
                 {employeeSalaryConfig.employeeSalaryConfigDetails?.map(
-                  (item) => (
-                    <tr>
+                  (item,index) => (
+                    <tr key={index}>
+                      <td>{item.salaryHeadCode}</td>
                       <td>{item.salaryHeadName}</td>
                       <td>{item.salaryHeadType}</td>
-                      <td>-</td>
-                      <td>{Number(item.salaryAmount).toFixed(2)}</td>
+                      <td>{getDetails(item)}</td>
+                      <td className="text-end">{Number(item.salaryAmount).toFixed(2)}</td>
                     </tr>
                   )
                 )}
@@ -184,13 +205,13 @@ function EmployeeSalaryConfigApproval({
               </thead>
               <tbody>
                 <tr>
-                  <td>
+                  <td className="text-center">
                     {Number(employeeSalaryConfig.totalEarnings).toFixed(2)}
                   </td>
-                  <td>
+                  <td className="text-center">
                     {Number(employeeSalaryConfig.totalDeductions).toFixed(2)}
                   </td>
-                  <td>{Number(employeeSalaryConfig.netSalary).toFixed(2)}</td>
+                  <td className="text-center">{Number(employeeSalaryConfig.netSalary).toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
