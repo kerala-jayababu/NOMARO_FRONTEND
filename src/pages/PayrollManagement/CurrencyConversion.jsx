@@ -33,8 +33,8 @@ function CurrencyConversion() {
     setLoading(true);
     CurrConversionService.getAllCurrencyConversions()
       .then(res => {
-        console.log(res.data.data);
-        setCurrencyConversions(res.data.data);
+        let filteredData = res.data.data.filter(item => moment(item.rateDate).isSameOrAfter(fromDate));
+        setCurrencyConversions(filteredData);
         setCurrencyConversionsMain(res.data.data);
         setLoading(false);
       })
@@ -175,14 +175,14 @@ function CurrencyConversion() {
 
   return (
       <div className="container-xxl flex-grow-1 container-p-y">
-       <div className="row mb-4">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-body">
-              <div className="row align-items-center">
-                <div className="col-md-3">
-                  <label className="form-label mb-1">From Date</label>  
-                  <br></br>
+        <div className="row">
+          <div className="col-lg-8 ">
+            <div className="card">
+              <div className="card-header d-flex align-items-center justify-content-between pb-3">
+                <h5 className="m-0">List of Currency Conversion</h5>
+                <div className="list_menu">
+                <div>
+                  <label className='p-2'>From Date</label>
                   <DatePicker
                     className="form-control"
                     dateFormat="MM/dd/yyyy"
@@ -193,22 +193,10 @@ function CurrencyConversion() {
                     maxDate={new Date()}
                     />
                 </div>
+                <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-        <div className="row">
-          <div className="col-lg-8 ">
-            <div className="card">
-              <div className="card-header d-flex align-items-center justify-content-between pb-3">
-                <h5 className="m-0">List of Currency Conversion</h5>
-                <button 
-                  className="btn btn-primary btn-sm px-4"
-                  onClick={handleButtonClick}
-                >
-                  Add New
-                </button>
+
+
               </div>
               <div className="card-body">
                 <div className="table-responsive text-nowrap">
@@ -228,7 +216,7 @@ function CurrencyConversion() {
                           <td>{moment(conversion.rateDate).format("MM/DD/YYYY")}</td>
                           <td>{conversion.fromCurrency}</td>
                           <td>{conversion.toCurrency}</td>
-                          <td className="text-end">{Number(conversion.conversionRate).toFixed(2)}</td>
+                          <td className="text-end">{Number(conversion.conversionRate).toFixed(4)}</td>
                           <td className="text-end">
                             <button 
                               type="button" 
@@ -240,6 +228,11 @@ function CurrencyConversion() {
                           </td>
                         </tr>
                       ))}
+                      {currencyConversions.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="text-center">No data found</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -310,14 +303,6 @@ function CurrencyConversion() {
                     className="form-control"
                     value={formData.conversionRate}
                     onValueChange={(values) => {
-                      const numValue = parseFloat(values.value);
-                      if (numValue > 20) {
-                        toast.error('Conversion rate cannot be greater than 20!', {
-                          position: 'top-right',
-                          autoClose: 2000
-                        });
-                        return;
-                      }
                       handleInputChange(values, 'conversionRate');
                     }}
                     decimalScale={4}
