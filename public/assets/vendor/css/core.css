@@ -18346,3 +18346,22 @@ html:not(.layout-footer-fixed) .content-wrapper {
   /* min-width: 60px;  */
   text-align: center; 
 }
+
+
+/* Hide the scroller arrows for Chrome, Safari, and Edge */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide the scroller arrows for Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.was-validated .form-control:valid, .form-control.is-valid,
+.was-validated .form-select:valid, .form-select.is-valid{
+  border-color: #d9dee3 !important; /* Remove the green border */
+  box-shadow: none !important; /* Remove the green glow */
+}

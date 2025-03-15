@@ -24,6 +24,7 @@ import ConfigApproval from "./pages/PayrollManagement/ConfigApproval";
 import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
+import BankAndBranches from "./pages/MasterData/bankAndBranches";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -51,6 +52,7 @@ function App() {
             <Route path="income-tax-config" element={<TaxConfiguration />} /> 
             <Route path="currency-conversion" element={<CurrencyConversion />} />
             <Route path="notification-types" element={<NotificationConfig />} />
+            <Route path='bank-and-branches' element={<BankAndBranches/>} />
           </Route>
         </Route>
 

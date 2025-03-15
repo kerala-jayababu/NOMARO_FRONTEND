@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import moment from 'moment';    
 import DatePicker from 'react-datepicker';
 import { NumericFormat } from 'react-number-format';
+import { Form } from 'react-bootstrap';
 
 function CurrencyConversion() {
   const currencies = ["GYD", "USD"];
@@ -246,7 +247,7 @@ function CurrencyConversion() {
                 <h5 className="mb-0">{isEditing ? 'Update' : 'Add'} Currency Conversion</h5>
               </div>
               <div className="card-body">
-                <form onSubmit={handleSubmit}>
+                <Form onSubmit={handleSubmit}>
                   <div className="mb-2">
                     <label className="form-label mb-1">Date</label>
                     <br></br>
@@ -330,7 +331,7 @@ function CurrencyConversion() {
                       Reset
                     </button>
                   </div>
-                </form>
+                </Form>
               </div>
             </div>
           </div>
