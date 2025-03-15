@@ -100,8 +100,10 @@ function SalaryTemplateApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Salary Template Approval
-                {selectedRow.actionStatus?.toLowerCase() !== "submitted" ?
+              {selectedRow.actionStatus?.toLowerCase() === "approved" ?
                 " (Already Approved)":''}
+                {selectedRow.actionStatus?.toLowerCase() === "rejected" ?
+                " (Rejected)":''}
             </h5>
             <button
               type="button"

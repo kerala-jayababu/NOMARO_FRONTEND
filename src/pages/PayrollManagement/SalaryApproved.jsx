@@ -149,6 +149,8 @@ function SalaryApproved() {
       if (optionsRef.current) optionsRef.current.clearValue();
       setOption(option.value);
       setFilter("");
+      setSalaryDraft([])
+      handelCheckboxCheck(false)
     }
   }
 
@@ -170,6 +172,8 @@ function SalaryApproved() {
         status: status?.value,
       };
       dispatch(getSalaryGenerations(params));
+      setSalaryDraft([])
+      handelCheckboxCheck(false)
     }
   };
 
@@ -179,6 +183,8 @@ function SalaryApproved() {
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
     setStatusFilter({ value: "All", label: "Select Status" });
+    setSalaryDraft([])
+    handelCheckboxCheck(false)
   };
 
   const uncheckCheckBox = () => {
@@ -215,7 +221,7 @@ function SalaryApproved() {
     }
 
     const content = salaryDraft.map((item) => ({
-      entityTablePrimaryKeyID: item.idEmployeeSalary,
+      entityTablePrimaryKeyID: item.idEmployeeSalary ,
       entityCode: "EMPSALGEN",
       status: "REJECTED",
       remarks: rejectReason,
@@ -260,6 +266,26 @@ function SalaryApproved() {
 
     setConfirmAction({ type, title, message });
     setShowConfirmModal(true);
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked && salaryGenerationList) {
+      setSalaryDraft(
+        salaryGenerationList
+          .filter((x) => x.approvalStatus.toLowerCase() === statusFilter.value)
+      );
+    } else {
+      setSalaryDraft([]);
+    }
+    handelCheckboxCheck(e.target.checked);
+  };
+
+  const handelCheckboxCheck = (checked) => {
+    Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
+      if (!item.disabled) {
+        item.checked = checked;
+      }
+    });
   };
 
   return (
@@ -460,7 +486,16 @@ function SalaryApproved() {
                 <table class="table table-sm">
                   <thead>
                     <tr>
-                      <td></td>
+                    <th>
+                        {statusFilter.value.toLowerCase() === 'submitted' && <input
+                          type="checkbox"
+                          class="form-check-input"
+                          checked={
+                            salaryDraft.length === salaryGenerationList?.length
+                          }
+                          onChange={handleSelectAll}
+                        />}
+                      </th>
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Department</th>
@@ -486,7 +521,7 @@ function SalaryApproved() {
                           <td>
                             <input
                               type="checkbox"
-                              className="form-check-input cursor-pointer"
+                              className="form-check-input cursor-pointer data-checkbox"
                               value={item.approvalStatus}
                               onChange={(e) => {
                                 if (e.target.checked) {
