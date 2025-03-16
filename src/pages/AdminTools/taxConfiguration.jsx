@@ -17,6 +17,7 @@ function TaxConfiguration() {
   const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
   const [validated, setValidated] = useState(false);
   const [childValidated, setChildValidated] = useState(false);
+  const [idFinancialYear, setIdFinancialYear] = useState('');
   const [formData, setFormData] = useState({
     idTaxSlab: 0,
     minAmount: '',
@@ -112,6 +113,15 @@ function TaxConfiguration() {
     CommonService.getAllFinancialYears()
       .then(res => {
         setFinancialYears(res.data);
+        setIdFinancialYear(res.data[0].idFinancialYear);
+        setFormData((prevData) => ({
+          ...prevData,
+          idFinancialYear: res.data[0].idFinancialYear 
+        }));
+        setChildFormData((prevData) => ({
+          ...prevData,
+          idFinancialYear: res.data[0].idFinancialYear 
+        }));
         setSelectedFinancialYear(res.data[0].idFinancialYear);
         getBaseTaxThresholds(res.data[0].idFinancialYear);
         getChildTaxThresholds(res.data[0].idFinancialYear);
@@ -191,6 +201,7 @@ function TaxConfiguration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('formData', formData);
     if(checkEmptyDataInObject(formData)){
       setValidated(true);
       return;
@@ -294,7 +305,7 @@ function TaxConfiguration() {
       maxAmount: '',
       taxRate: '',
       financialYearFrom: moment().format('YYYY-MM-DD'),
-      idFinancialYear: ''
+      idFinancialYear: idFinancialYear
     });
 
     setFormErrors({
@@ -370,23 +381,22 @@ function TaxConfiguration() {
   };
 
   const checkEmptyDataInObject = (obj) => {
-    return Object.values(obj).some(value => value === '');
-  }
+    return Object.values(obj).some(value => !value && value !== 0);
+  };
 
   const handleChildSubmit = async (e) => {
-
     e.preventDefault();
     if(checkEmptyDataInObject(childFormData)){
       setChildValidated(true);
+      return;
+    } else if (!validateChildForm()) {
+      setLoading(false);
       return;
     }
     setLoading(true);
     setChildError(null);
 
-    if (!validateChildForm()) {
-      setLoading(false);
-      return;
-    }
+   
 
     const payload = {
       idChildTaxThreshold: childFormData.idChildTaxThreshold,
@@ -474,7 +484,7 @@ function TaxConfiguration() {
       childrenCount: '',
       taxThresholdAmount: '',
       financialYearFrom: moment().format('YYYY-MM-DD'),
-      idFinancialYear: ''
+      idFinancialYear: idFinancialYear
     });
     setChildFormErrors({
       childrenCount: '',
