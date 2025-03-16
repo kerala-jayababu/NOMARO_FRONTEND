@@ -1,5 +1,4 @@
 import { API } from "../../redux/api/utils";
-import handleApiResponse from "../../utils/apiResponseHandler";
 import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class BankAndBranchService {
@@ -33,11 +32,3 @@ export default class BankAndBranchService {
     }
     
 }
-
-// const handleApiError = (error) => {
-//     handleApiResponse(error);
-//     return {
-//         error: error.response?.data?.message || 'An error occurred',
-//         data: null
-//     };
-// };

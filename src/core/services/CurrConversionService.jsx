@@ -1,5 +1,4 @@
 import { API } from "../../redux/api/utils";
-import handleApiResponse from "../../utils/apiResponseHandler";
 import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class CurrConversionService {
