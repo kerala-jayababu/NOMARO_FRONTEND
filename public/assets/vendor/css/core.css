@@ -2280,10 +2280,10 @@ progress {
   display: block;
   width: 100%;
   padding: 0.4375rem 0.875rem;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.53;
-  color: #697a8d;
+  color: #4d5975;
   background-color: #fff;
   background-clip: padding-box;
   border: 1px solid #d9dee3;
@@ -2488,10 +2488,10 @@ textarea.form-control-lg {
   padding: 0.4375rem 1.875rem 0.4375rem 0.875rem;
   -moz-padding-start: calc(0.875rem - 3px);
   /* font-size: 0.9375rem; */
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.53;
-  color: #697a8d;
+  color: #4d5975;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%2867, 89, 113, 0.6%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
