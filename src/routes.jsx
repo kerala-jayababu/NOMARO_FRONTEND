@@ -87,7 +87,7 @@ export const privateRoutes = [
     element: <NotificationConfig />,
   },
   {
-    path: "/dashboard/bank-and-branches",
+    path: "/dashboard/bank-branches",
     element: <BankAndBranches />,
   },
 ];

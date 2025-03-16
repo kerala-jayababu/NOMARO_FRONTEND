@@ -1,4 +1,4 @@
-import React, { useEffect,useRef } from 'react'
+import React, { useEffect,useRef, useState } from 'react'
 import CurrConversionService from '../../core/services/CurrConversionService' 
 import { toast } from 'react-toastify';   
 import moment from 'moment';    
@@ -25,6 +25,7 @@ function CurrencyConversion() {
   const [isEditing, setIsEditing] = React.useState(false);
   const datePickerRef = useRef(null);
   const [fromDate, setFromDate] = React.useState(moment().format("YYYY-MM-DD"));
+  const [validated, setValidated] = useState(false);
   
   useEffect(() => {
     getCurrencyConversions();
@@ -105,6 +106,11 @@ function CurrencyConversion() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if(formData.conversionRate === ''){
+      setValidated(true);
+      return;
+    }
+
     // Check for duplicate entry
     const isDuplicate = currencyConversionsMain.some(conversion => 
       conversion.fromCurrency === formData.fromCurrency &&
@@ -112,6 +118,7 @@ function CurrencyConversion() {
       moment(conversion.rateDate).format('YYYY-MM-DD') === moment(formData.rateDate).format('YYYY-MM-DD') &&
       conversion.idCurrencyConversion !== formData.idCurrencyConversion // Exclude current record when editing
     );
+    
 
     if (isDuplicate) {
       toast.error('A conversion rate for this currency pair and date already exists!', {
@@ -138,6 +145,7 @@ function CurrencyConversion() {
       if (response.error) {
         throw new Error(response.error);
       }
+      
       toast.success(`${formData.idCurrencyConversion!==0 ? 'Updated' : 'Added'} successfully!`, {
         position: 'top-right',
         autoClose: 2000
@@ -165,6 +173,7 @@ function CurrencyConversion() {
   const handleReset = () => {
     setFormData(initialFormState);
     setIsEditing(false);
+    setValidated(false);
   };
 
   const handleButtonClick = () => {
@@ -190,8 +199,10 @@ function CurrencyConversion() {
                     placeholderText="From Date"
                     selected={fromDate} 
                     onChange={(date) => filterByDate(date)}
-                    showYearDropdown
                     maxDate={new Date()}
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
                     />
                 </div>
                 <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button>
@@ -231,7 +242,11 @@ function CurrencyConversion() {
                       ))}
                       {currencyConversions.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="text-center">No data found</td>
+                          <td colSpan="5" className="text-center">
+                            <div className="Nodatafound_box">
+                              <h6><i className="bx bx-search"></i> No data available!</h6>
+                            </div>
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -247,7 +262,7 @@ function CurrencyConversion() {
                 <h5 className="mb-0">{isEditing ? 'Update' : 'Add'} Currency Conversion</h5>
               </div>
               <div className="card-body">
-                <Form onSubmit={handleSubmit}>
+                <Form onSubmit={handleSubmit} noValidate validated={validated}>
                   <div className="mb-2">
                     <label className="form-label mb-1">Date</label>
                     <br></br>
@@ -258,7 +273,9 @@ function CurrencyConversion() {
                     placeholderText="Date"
                     selected={formData.rateDate} 
                     onChange={(date) => handleInputChange(date, 'rateDate')}
+                    showMonthDropdown
                     showYearDropdown
+                    dropdownMode="select"
                     maxDate={new Date()}
                     />
                   </div>
