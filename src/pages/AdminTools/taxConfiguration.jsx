@@ -5,6 +5,7 @@ import moment from 'moment';
 import { NumericFormat } from 'react-number-format';
 import DatePicker from 'react-datepicker';
 import CommonService from '../../core/services/CommonService';
+import { Form } from 'react-bootstrap';
 
 function TaxConfiguration() {
   const [baseTaxThresholds, setBaseTaxThresholds] = useState([]);
@@ -14,6 +15,8 @@ function TaxConfiguration() {
   const [baseError, setBaseError] = useState(null);
   const [childError, setChildError] = useState(null);
   const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
+  const [validated, setValidated] = useState(false);
+  const [childValidated, setChildValidated] = useState(false);
   const [formData, setFormData] = useState({
     idTaxSlab: 0,
     minAmount: '',
@@ -188,6 +191,10 @@ function TaxConfiguration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(checkEmptyDataInObject(formData)){
+      setValidated(true);
+      return;
+    }
     setLoading(true);
     setBaseError(null);
     setChildError(null);
@@ -280,6 +287,7 @@ function TaxConfiguration() {
   }
 
   const handleReset = () => {
+    setValidated(false);
     setFormData({
       idTaxSlab: 0,
       minAmount: '',
@@ -361,8 +369,17 @@ function TaxConfiguration() {
     return Object.keys(errors).length === 0;
   };
 
+  const checkEmptyDataInObject = (obj) => {
+    return Object.values(obj).some(value => value === '');
+  }
+
   const handleChildSubmit = async (e) => {
+
     e.preventDefault();
+    if(checkEmptyDataInObject(childFormData)){
+      setChildValidated(true);
+      return;
+    }
     setLoading(true);
     setChildError(null);
 
@@ -451,6 +468,7 @@ function TaxConfiguration() {
     };
 
   const handleChildReset = () => {
+    setChildValidated(false);
     setChildFormData({
       idChildTaxThreshold: 0,
       childrenCount: '',
@@ -544,7 +562,11 @@ function TaxConfiguration() {
                         </tr>
                       ))}
                     </tbody>}
-                    {baseError && <tbody className="table-border-bottom-0"><tr><td colSpan="5" className="text-center">No records found</td></tr></tbody>}
+                    {baseError && <tbody className="table-border-bottom-0"><tr><td colSpan="5" className="text-center">
+                      <div className="Nodatafound_box">
+                        <h6><i className="bx bx-search"></i> No data available!</h6>
+                      </div>
+                      </td></tr></tbody>}
                   </table>
                 )}
               </div>
@@ -585,11 +607,19 @@ function TaxConfiguration() {
                     ))}
                     {!loading && childTaxThresholds.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="text-center">No records found</td>
+                        <td colSpan="4" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
                       </tr>
                     )}
                   </tbody>}
-                  {childError && <tbody className="table-border-bottom-0"><tr><td colSpan="4" className="text-center">No records found</td></tr></tbody>}
+                  {childError && <tbody className="table-border-bottom-0"><tr><td colSpan="4" className="text-center">
+                    <div className="Nodatafound_box">
+                      <h6><i className="bx bx-search"></i> No data available!</h6>
+                    </div>
+                    </td></tr></tbody>}
                 </table>
                 {loading && <div className="text-center p-3">Loading...</div>}
                 {/* {childError && <div className="text-danger p-3">{childError}</div>} */}
@@ -603,7 +633,7 @@ function TaxConfiguration() {
               <h5 className="mb-0">Add/Update Income Tax Threshold</h5>
             </div>
             <div className="card-body">
-              <form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} noValidate validated={validated}>
                 <div className="mb-2">
                   <label className="form-label mb-1">Min Income</label>
                   <NumericFormat
@@ -667,7 +697,9 @@ function TaxConfiguration() {
                     placeholderText="Start Date"
                     selected={formData.financialYearFrom} 
                     onChange={(date) => handleInputChange(date, 'financialYearFrom')}
+                    showMonthDropdown
                     showYearDropdown
+                    dropdownMode="select"
                   />
                   {formErrors.financialYearFrom && (
                     <div className="text-danger">{formErrors.financialYearFrom}</div>
@@ -684,7 +716,7 @@ function TaxConfiguration() {
                     Reset
                   </button>
                 </div>
-              </form>
+              </Form>
             </div>
           </div>
           <div className="card mt-2">
@@ -692,7 +724,7 @@ function TaxConfiguration() {
               <h5 className="mb-0">Add/Update Children Tax Threshold</h5>
             </div>
             <div className="card-body">
-              <form onSubmit={handleChildSubmit}>
+              <Form onSubmit={handleChildSubmit} noValidate validated={childValidated}>
                 <div className="mb-2">
                   <label className="form-label mb-1">Child Count</label>
                   <NumericFormat
@@ -739,7 +771,9 @@ function TaxConfiguration() {
                     placeholderText="Select date"
                     selected={moment(childFormData.financialYearFrom).toDate()}
                     onChange={(date) => handleChildInputChange(date, 'financialYearFrom')}
+                    showMonthDropdown
                     showYearDropdown
+                    dropdownMode="select"                    
                     required
                   />
                   {childFormErrors.financialYearFrom && (
@@ -760,7 +794,7 @@ function TaxConfiguration() {
                     Reset
                   </button>
                 </div>
-              </form>
+              </Form>
             </div>
           </div>
         </div>

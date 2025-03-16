@@ -52,7 +52,7 @@ function App() {
             <Route path="income-tax-config" element={<TaxConfiguration />} /> 
             <Route path="currency-conversion" element={<CurrencyConversion />} />
             <Route path="notification-types" element={<NotificationConfig />} />
-            <Route path='bank-and-branches' element={<BankAndBranches/>} />
+            <Route path='bank-branches' element={<BankAndBranches/>} />
           </Route>
         </Route>
 
