@@ -1,3 +1,5 @@
+import handleApiResponse from "../../utils/apiResponseHandler";
+
 export const EarningsOrDeductions = [
     { value: 'E', text: "Earnings" },
     { value: 'D', text: "Deductions" },
@@ -17,3 +19,14 @@ export const Months = [
     { value: 11, text: "November" },
     { value: 12, text: "December" },
 ];
+
+
+export const handleApiSuccessOrError = (responseData,isError) => {
+    handleApiResponse(responseData);     
+    if(isError){          
+        return {
+            error: responseData.response?.data?.message || 'An error occurred',
+            data: null
+        };
+    }
+};
