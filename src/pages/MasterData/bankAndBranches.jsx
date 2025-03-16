@@ -5,7 +5,6 @@ import DatePicker from 'react-datepicker';
 import { NumericFormat } from 'react-number-format';
 import BankAndBranchService from '../../core/services/BankAndBranchService';
 import { Form } from 'react-bootstrap';
-import handleApiResponse from '../../utils/apiResponseHandler';
 
 function BankAndBranches() {
     const [banks, setBanks] = useState([]);
