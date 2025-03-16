@@ -157,19 +157,19 @@ function SalaryAdjustments() {
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     SalaryAdjustmentService.saveSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Salary adjustments added successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Salary adjustments added successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getSalaryAdjustments();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
@@ -184,19 +184,19 @@ function SalaryAdjustments() {
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     SalaryAdjustmentService.updateSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Salary adjustments updated successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Salary adjustments updated successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getSalaryAdjustments();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
@@ -242,7 +242,8 @@ function SalaryAdjustments() {
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                    showYearDropdown />
 
                 </div>
                 <div className="list_searchbox">
@@ -366,7 +367,8 @@ function SalaryAdjustments() {
                           onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
                           required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
-                          placeholderText='Select Date' showYearDropdown />
+                          placeholderText='Select Date' showMonthDropdown
+                          showYearDropdown />
 
                       </div>
                     </div>

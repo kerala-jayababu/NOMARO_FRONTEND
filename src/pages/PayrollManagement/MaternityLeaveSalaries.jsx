@@ -120,7 +120,7 @@ function MaternityLeaveSalaries() {
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
       // setEmployeesList(res.data.data);
-      res.data.data.sort((a,b)=> a.fullName - b.fullName);
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
       const females = res.data.data.filter(em => em.gender == 'FEMALE');
       const options = females.map(employee => ({
         value: employee.idEmployee,
@@ -248,12 +248,27 @@ function MaternityLeaveSalaries() {
     }));
   }
 
+  const validateSalaryDetails = (salaryDetails) => {
+    return salaryDetails.every(detail => {
+      return detail.salaryHeadType !== "" && detail.amount !== null && detail.amount !== 0;
+    });
+  };
+
   const saveMaternityLeaveSalaries = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.idSalaryMonthFrom) {
+    if (!newData.idEmployee || !newData.idSalaryMonthFrom || !newData.idSalaryMonthTo) {
       setValidated(true);
       return;
     }
+
+    if (!validateSalaryDetails(salaryDetails)) {
+      toast.warning('Please fill out all required fields in the leave salary details.', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+      return;
+    }
+
     let passData = newData;
     passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
 
@@ -268,28 +283,36 @@ function MaternityLeaveSalaries() {
 
     MaternityService.saveMaternityLeaveSalariesData(passData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Maternity leave salaries added successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Maternity leave salaries added successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getMaternityLeaveSalaries();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
   const updateMaternityLeaveSalaries = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.netSalary) {
+    if (!newData.idEmployee || !newData.idSalaryMonthFrom || !newData.idSalaryMonthTo) {
       setValidated(true);
       return;
     }
+    if (!validateSalaryDetails(salaryDetails)) {
+      toast.error('Please fill out all required fields in the salary details.', {
+        position: 'top-right',
+        autoClose: 2000
+      });
+      return;
+    }
+
     let passData = newData;
     passData['maternityLeaveSalaryDetailDto'] = salaryDetails;
 
@@ -304,19 +327,19 @@ function MaternityLeaveSalaries() {
 
     MaternityService.updateMaternityLeaveSalariesData(passData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Maternity leave salaries updated successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Maternity leave salaries updated successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getMaternityLeaveSalaries();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
@@ -404,7 +427,8 @@ function MaternityLeaveSalaries() {
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                    showYearDropdown />
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -620,7 +644,7 @@ function MaternityLeaveSalaries() {
                             <tr key={index}>
                               <td>
                                 <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
-                                  onChange={(e) => handleSelectChange(index, e)} required style={{width:'230px'}}>
+                                  onChange={(e) => handleSelectChange(index, e)} required style={{ width: '230px' }}>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (

@@ -42,6 +42,7 @@ function OvertimeTransaction() {
   const rowsPerPage = 10;
   const totalPages = Math.ceil(overtimeTransactions.length / rowsPerPage);
   const today = new Date();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -159,7 +160,7 @@ function OvertimeTransaction() {
 
   const saveOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate) {
+    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
       setValidated(true);
       return;
     }
@@ -185,25 +186,25 @@ function OvertimeTransaction() {
 
     OvertimeService.saveOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Overtime transactions added successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Overtime transactions added successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getOTTranasactions();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
   const updateOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate) {
+    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
       setValidated(true);
       return;
     }
@@ -227,19 +228,19 @@ function OvertimeTransaction() {
     }
     OvertimeService.updateOvertimeTransactionsData(formData).then(res => {
       if (res.data.status === 200) {
-        toast.success('Overtime transactions updated successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Overtime transactions updated successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getOTTranasactions();
         resetValues();
         setShowModal(false);
       }
     }).catch(err => {
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
@@ -298,6 +299,16 @@ function OvertimeTransaction() {
     window.URL.revokeObjectURL(url);
   }
 
+  const removeFile = () => {
+    setNewData((prevData) => ({
+      ...prevData,
+      file: null,
+      attachment: "",
+      attachmentDescription: "",
+    }));
+    setShowConfirmModal(false);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -318,7 +329,8 @@ function OvertimeTransaction() {
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                    showYearDropdown />
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -348,9 +360,10 @@ function OvertimeTransaction() {
                       </th> */}
                       <th>ID</th>
                       <th>Name</th>
-                      <th>Type</th>
+                      {/* <th>Type</th> */}
                       <th>Date</th>
                       <th>Start Time</th>
+                      <th>End Time</th>
                       <th className="text-center">Duration</th>
                       {/* <th>Reason</th> */}
                       <th>Status</th>
@@ -368,13 +381,14 @@ function OvertimeTransaction() {
                           </td> */}
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
-                          <td>{item?.overtimeTypeName}</td>
+                          {/* <td>{item?.overtimeTypeName}</td> */}
                           <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
+                          <td>{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td className="text-center">{item.durationInHours} Hr</td>
                           {/* <td>{item.reasonForOvertime}</td> */}
                           <td>
-                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : 'bg-label-danger'}`}>{item.approvalStatus}</span>
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : ''}`}>{item.approvalStatus}</span>
                           </td>
                           <td>
                             {
@@ -467,7 +481,8 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, startDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' showYearDropdown maxDate={today}/>
+                              placeholderText='Select Date' showMonthDropdown
+                              showYearDropdown maxDate={today} />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -484,7 +499,8 @@ function OvertimeTransaction() {
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
                               dateFormat="MM/dd/yyyy"
-                              placeholderText='Select Date' minDate={newData.startDate} showYearDropdown maxDate={today}/>
+                              placeholderText='Select Date' minDate={newData.startDate} showMonthDropdown
+                              showYearDropdown maxDate={today} />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -508,6 +524,12 @@ function OvertimeTransaction() {
                         <div class="p-2">
                           <label class="form-label mb-1"> Attachments </label>
                           <input type="file" className="form-control" onChange={handleFileChange} />
+                          {
+                            newData.attachment &&
+                            <span className="badge bg-label-info p-1">{newData.attachmentDescription} &nbsp;&nbsp;
+                              <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                            </span>
+                          }
                         </div>
                       </div>
 
@@ -533,6 +555,43 @@ function OvertimeTransaction() {
                   <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveOvertimeTransactions(e)}>Submit</button>
                 }
                 <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+              </div>
+            </Modal.Body>
+          </Modal>
+
+          <Modal
+            show={showConfirmModal} onHide={() => { setShowConfirmModal(false); }} size='md'
+            aria-labelledby="contained-modal-title-vcenter"
+            centered backdrop="static"
+            keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <h5>Confirm Delete</h5>
+              </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <div className="modal-body pt-1 text-center">
+                <div className="text-center mb-5">
+                  <div className="mb-4 text-danger">
+                    <i className="bx bx-x-circle fs-2"></i>
+                  </div>
+                  <h6> Are you sure to remove this file?</h6>
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm py-2 px-4 me-2"
+                  onClick={() => removeFile()}
+                >
+                  Confirm
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-outline-secondary  btn-sm py-2 px-4"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </Modal.Body>
           </Modal>
@@ -632,6 +691,7 @@ function OvertimeTransaction() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
