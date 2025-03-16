@@ -231,3 +231,7 @@ body {
 .cursor:hover {
   color: #166a93;
 }
+
+.bs-bg-warning {
+  color:#ffc107;
+}

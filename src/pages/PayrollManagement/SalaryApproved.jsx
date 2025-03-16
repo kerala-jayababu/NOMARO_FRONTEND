@@ -11,11 +11,11 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 const statusColor = [
   {
     status: "approved",
-    color: "bg-label-success",
+    color: "bg-success",
   },
   {
     status: "submitted",
-    color: "bg-label-primary",
+    color: "bg-warning",
   },
   {
     status: "draft generated",
@@ -27,15 +27,15 @@ const statusColor = [
   },
   {
     status: "not generated",
-    color: "bg-label-info",
+    color: "bg-dark",
   },
   {
     status: "rejected",
-    color: "bg-label-danger",
+    color: "bg-danger",
   },
   {
     status: "interim approved",
-    color: "bg-label-secondary",
+    color: "bg-info",
   },
 ];
 
@@ -79,6 +79,7 @@ function SalaryApproved() {
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState({ type: '', title: '', message: '' });
+  const { idPayrollScreen } = useSelector((state) => state.auth);
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then((res) => {
@@ -198,6 +199,7 @@ function SalaryApproved() {
       entityTablePrimaryKeyID: item.idEmployeeSalary,
       entityCode: "EMPSALGEN",
       status: "APPROVED",
+      idPayrollScreen
     }));
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
     if (res.error) {
@@ -225,6 +227,7 @@ function SalaryApproved() {
       entityCode: "EMPSALGEN",
       status: "REJECTED",
       remarks: rejectReason,
+      idPayrollScreen
     }));
 
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
@@ -363,7 +366,7 @@ function SalaryApproved() {
                         }}
                       >
                         <h5>Submitted</h5>
-                        <div class="count">
+                        <div className="count bs-bg-warning">
                           {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "submitted" || x.approvalStatus.toLowerCase() === 'interim approved'
                           )?.length || 0}
@@ -383,7 +386,7 @@ function SalaryApproved() {
                         }}
                       >
                         <h5>Draft Generated</h5>
-                        <div class="count text-warning">
+                        <div class="count text-secondary">
                           {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "draft"
                           )?.length || 0}
@@ -403,7 +406,7 @@ function SalaryApproved() {
                         }}
                       >
                         <h5>Not Generated</h5>
-                        <div class="count text-info">
+                        <div class="count text-dark">
                           {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "not generated"
                           )?.length || 0}

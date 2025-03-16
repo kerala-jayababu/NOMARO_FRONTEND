@@ -11,11 +11,11 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 const statusColor = [
   {
     status: "approved",
-    color: "bg-label-success",
+    color: "bg-success",
   },
   {
     status: "submitted",
-    color: "bg-label-primary",
+    color: "bg-warning",
   },
   {
     status: "draft generated",
@@ -27,15 +27,15 @@ const statusColor = [
   },
   {
     status: "not generated",
-    color: "bg-label-info",
+    color: "bg-dark",
   },
   {
     status: "rejected",
-    color: "bg-label-danger",
+    color: "bg-danger",
   },
   {
     status: "interim approved",
-    color: "bg-label-secondary",
+    color: "bg-info",
   },
 ];
 
@@ -94,8 +94,12 @@ function SalaryGeneration() {
   const handleSelectAll = (e) => {
     if (e.target.checked && salaryGenerationList) {
       setSalaryDraft(
-        salaryGenerationList
-          .filter((x) => x.approvalStatus.toLowerCase() === statusFilter.value.toLowerCase())
+        salaryGenerationList.filter(
+          (x) =>
+            statusFilter.value
+              .toLowerCase()
+              .search(x.approvalStatus.toLowerCase()) >= 0
+        )
       );
     } else {
       setSalaryDraft([]);
@@ -178,8 +182,8 @@ function SalaryGeneration() {
       }
       if (optionsRef.current) optionsRef.current.clearValue();
       setOption(option.value);
-      setSalaryDraft([])
-      handelCheckboxCheck(false)
+      setSalaryDraft([]);
+      handelCheckboxCheck(false);
       setFilter("");
     }
   }
@@ -194,8 +198,8 @@ function SalaryGeneration() {
       const selectedStatus = statusOptions.find(
         (option) => option.value === status.value
       );
-      setSalaryDraft([])
-      handelCheckboxCheck(false)
+      setSalaryDraft([]);
+      handelCheckboxCheck(false);
       setStatusFilter(selectedStatus || { value: "All", label: "All Status" });
       dispatch(getSalaryGenerations(params));
     }
@@ -203,8 +207,8 @@ function SalaryGeneration() {
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
-    setSalaryDraft([])
-    handelCheckboxCheck(false)
+    setSalaryDraft([]);
+    handelCheckboxCheck(false);
     if (filterRef.current) filterRef.current.clearValue();
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
@@ -431,7 +435,7 @@ function SalaryGeneration() {
                         }}
                       >
                         <h5>Submitted</h5>
-                        <div className="count">
+                        <div className="count bs-bg-warning">
                           {
                             allSalaryList?.filter(
                               (x) =>
@@ -463,7 +467,7 @@ function SalaryGeneration() {
                         }}
                       >
                         <h5>Draft Generated</h5>
-                        <div className="count text-warning">
+                        <div className="count text-secondary">
                           {allSalaryList?.filter(
                             (x) => x.approvalStatus.toLowerCase() === "draft"
                           )?.length || 0}
@@ -490,7 +494,7 @@ function SalaryGeneration() {
                         }}
                       >
                         <h5>Not Generated</h5>
-                        <div className="count text-info">
+                        <div className="count text-dark">
                           {allSalaryList?.filter(
                             (x) =>
                               x.approvalStatus.toLowerCase() === "not generated"
@@ -576,19 +580,21 @@ function SalaryGeneration() {
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                        <th>
-                          {["not generated","draft generated"].includes(statusFilter.value.toLowerCase())&& (
-                            <input
-                              type="checkbox"
-                              class="form-check-input" 
-                              checked={
-                                salaryDraft.length ===
-                                salaryGenerationList?.length
-                              }
-                              onChange={handleSelectAll}
-                            />
-                          )}
-                        </th>
+                      <th>
+                        {["not generated", "draft generated"].includes(
+                          statusFilter?.value?.toLowerCase()
+                        ) && (
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            checked={
+                              salaryDraft.length ===
+                              salaryGenerationList?.length
+                            }
+                            onChange={handleSelectAll}
+                          />
+                        )}
+                      </th>
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Department</th>
