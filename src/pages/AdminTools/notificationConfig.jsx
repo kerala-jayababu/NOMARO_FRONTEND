@@ -68,12 +68,12 @@ function NotificationConfig() {
     const handleSubmit = () => {
         NotificationService.updateNotificationType(formData)
             .then(res => {
-                toast.success('Notification updated successfully');
+                // toast.success('Notification updated successfully');
                 handleReset();
                 getNotificationTypes();
             })
             .catch(err => {
-                toast.error('Failed to update notification');
+                // toast.error('Failed to update notification');
             });
     };
 

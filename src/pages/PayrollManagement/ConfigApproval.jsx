@@ -6,6 +6,26 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 import EmployeeSalaryConfigApproval from "./Components/EmployeeSalaryConfigApproval";
 import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
 import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
+import DatePicker from "react-datepicker";
+
+const statusColor = [
+    {
+        status:"approved",
+        class:"bg-success"
+    },
+    {
+        status: "submitted",
+        class: "bs-bg-warning"
+    },
+    {
+        status: "interim approved",
+        class: "bg-secondary"
+    },
+    {
+        status: "rejected",
+        class: "bg-danger"
+    }
+]
 
 function ConfigApproval() {
   const dispatch = useDispatch();
@@ -205,12 +225,24 @@ function ConfigApproval() {
                 </div>
                 <div class="col-md-3 p-2">
                   <label>Date From</label>
-                  <input
+                  <br/>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="Date"
+                    selected={dateFrom} 
+                    onChange={(date) => {
+                      setDateFrom(date.toISOString().slice(0,10))
+                    }}
+                    showYearDropdown
+                    maxDate={new Date()}
+                    />
+                  {/* <input
                     type="date"
                     class="form-control form-control-sm"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                  />
+                  /> */}
                 </div>
               </div>
               <div class="table-responsive ">
@@ -280,7 +312,11 @@ function ConfigApproval() {
                             hour12: true,
                           })}
                         </td>
-                        <td>{item.actionStatus}</td>
+                        <td > 
+                          <p className={`badge ${statusColor.find(x => x.status == item?.actionStatus?.toLowerCase()).class}`}>
+                          {item.actionStatus}
+                            </p> 
+                          </td>
                         <td>{item.rejectionRemarks}</td>
                       </tr>
                     ))}
