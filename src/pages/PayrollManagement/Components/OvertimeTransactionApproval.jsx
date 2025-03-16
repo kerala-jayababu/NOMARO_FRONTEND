@@ -112,8 +112,11 @@ function OvertimeTransactionApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Overtime Transaction Approval
-              {selectedRow.actionStatus?.toLowerCase() !== "submitted"
+              {selectedRow.actionStatus?.toLowerCase() === "approved"
                 ? " (Already Approved)"
+                : ""}
+              {selectedRow.actionStatus?.toLowerCase() === "rejected"
+                ? " (Rejected)"
                 : ""}
             </h5>
             <button

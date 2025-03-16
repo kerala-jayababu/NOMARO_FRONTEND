@@ -37,16 +37,18 @@ function ConfigApproval() {
       status,
     };
     dispatch(getConfigApprovals(params));
+    setSelectedItems([])
+    handelCheckboxCheck(false)
   }, [dateFrom, entityType, status, refresh]);
 
-  // const handleSelectAll = (e) => {
-  //   if (e.target.checked && configApprovalList) {
-  //     setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
-  //   } else {
-  //     setSelectedItems([]);
-  //   }
-  //   handelCheckboxCheck(e.target.checked)
-  // };
+  const handleSelectAll = (e) => {
+    if (e.target.checked && configApprovalList) {
+      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
+    } else {
+      setSelectedItems([]);
+    }
+    handelCheckboxCheck(e.target.checked)
+  };
 
   const handelCheckboxCheck = (checked) => {
     Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
@@ -216,14 +218,14 @@ function ConfigApproval() {
                   <thead>
                     <tr>
                       <th>
-                        {/* <input
+                        {status.toLowerCase() === 'submitted' && <input
                           type="checkbox"
                           class="form-check-input"
                           checked={
                             selectedItems.length === configApprovalList?.length
                           }
                           onChange={handleSelectAll}
-                        /> */}
+                        />}
                       </th>
                       <th>Entity Type</th>
                       <th>Details</th>
