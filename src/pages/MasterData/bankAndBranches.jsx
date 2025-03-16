@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import { NumericFormat } from 'react-number-format';
 import BankAndBranchService from '../../core/services/BankAndBranchService';
 import { Form } from 'react-bootstrap';
+import handleApiResponse from '../../utils/apiResponseHandler';
 
 function BankAndBranches() {
     const [banks, setBanks] = useState([]);
@@ -21,33 +22,27 @@ function BankAndBranches() {
         setLoading(true);
         BankAndBranchService.getAllBanks()
             .then(res => {
-                console.log(res.data.data);
                 setBanks(res.data.data);
                 setLoading(false);
             })
             .catch(err => {
                 setError('Failed to load banks and branches');
                 setLoading(false);
-                toast.error('Something went wrong!', {
-                    position: 'top-right',
-                    autoClose: 2000
-                });
             });
     };
 
 
 
     const getBranches = async (idBank) => {
+        setBranches([]);
         setChoosedBankId(idBank);
         if (idBank == '') {
-            setBranches([]);
+            // setBranches([]);
             return;
         }
         setLoading(true);
         BankAndBranchService.getBranches(idBank)
             .then(res => {
-                console.log(res.data.data);
-               
                 if(res.data.data.length == 0){
                     setBranches([
                         {
@@ -66,12 +61,13 @@ function BankAndBranches() {
 
             })
             .catch(err => {
+                // console.log('err',err);
                 setError('Failed to load branches');
                 setLoading(false);
-                toast.error('Something went wrong!', {
-                    position: 'top-right',
-                    autoClose: 2000
-                });
+                // toast.error('Something went wrong!', {
+                //     position: 'top-right',
+                //     autoClose: 2000
+                // });
             });
     }
 
@@ -113,12 +109,10 @@ function BankAndBranches() {
             branch.isNew ? { ...branch, idBankBranches: 0 } : branch
           );
         BankAndBranchService.saveBankAndBranch(passData).then(res => {
-            console.log(res);
-            toast.success(res.data.message);
             getBranches(choosedBankId);
         }).catch(err => {
             console.log(err);
-            toast.error('Something went wrong');
+            // toast.error('Something went wrong');
         });
         
     };

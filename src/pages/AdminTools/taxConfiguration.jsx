@@ -81,10 +81,10 @@ function TaxConfiguration() {
       .catch(err => {
         setBaseError('Failed to load tax thresholds');
         setLoading(false);
-        toast.error('Something went wrong!', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error('Something went wrong!', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
   };
 
@@ -97,13 +97,13 @@ function TaxConfiguration() {
         setLoading(false);
       })
       .catch(err => {
-        console.log('err', err);
+        // console.log('err', err);
         setChildError('Failed to load child tax thresholds');
         setLoading(false);
-        toast.error(err.data.message, {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error(err.data.message, {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
   };
 
@@ -120,10 +120,10 @@ function TaxConfiguration() {
       .catch(err => {
         setBaseError('Failed to load financial years');
         setChildError('Failed to load financial years');
-        toast.error('Failed to load financial years!', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error('Failed to load financial years!', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
   };
 
@@ -238,20 +238,20 @@ function TaxConfiguration() {
   const addTaxThreshold = (payload) => {
     TaxConfigService.createTaxThreshold(payload).then(res => {
       if (res.data.success) {
-        toast.success('Tax threshold added successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Tax threshold added successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getBaseTaxThresholds(selectedFinancialYear  );
         setLoading(false);
         handleReset();
       }
     }).catch(err => {
       setLoading(false);
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   };
 
@@ -269,20 +269,20 @@ function TaxConfiguration() {
   const updateTaxThreshold = (payload) => {
     TaxConfigService.updateTaxThreshold(payload).then(res => {
       if (res.data.success) {
-        toast.success('Tax threshold updated successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Tax threshold updated successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getBaseTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleReset();
       }
     }).catch(err => {
       setLoading(false);
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     });
   }
 
@@ -421,40 +421,40 @@ function TaxConfiguration() {
   const updateChildTaxThreshold = (payload) => {
     TaxConfigService.updateChildTaxThreshold(payload).then(res => {
       if (res.data.success) {
-        toast.success('Child tax threshold updated successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Child tax threshold updated successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getChildTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleChildReset();
       } 
     }).catch(err => {
       setLoading(false);
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     }); 
   }   
 
   const addChildTaxThreshold = (payload) => {
     TaxConfigService.createChildTaxThreshold(payload).then(res => {
       if (res.data.success) {
-        toast.success('Child tax threshold added successfully', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.success('Child tax threshold added successfully', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
         getChildTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleChildReset();
       }
     }).catch(err => { 
       setLoading(false);
-      toast.error('Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error('Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     }); 
   };
 

@@ -43,10 +43,10 @@ function CurrencyConversion() {
       .catch(err => {
         setError('Failed to load currency conversions');
         setLoading(false);
-        toast.error('Something went wrong!', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error('Something went wrong!', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
   };
 
@@ -142,21 +142,21 @@ function CurrencyConversion() {
 
     try {
       const response = await service(payload);
-      if (response.error) {
-        throw new Error(response.error);
-      }
+      // if (response.error) {
+      //   throw new Error(response.error);
+      // }
       
-      toast.success(`${formData.idCurrencyConversion!==0 ? 'Updated' : 'Added'} successfully!`, {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.success(`${formData.idCurrencyConversion!==0 ? 'Updated' : 'Added'} successfully!`, {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
       getCurrencyConversions();
       handleReset();
     } catch (err) {
-      toast.error(err.message || 'Something went wrong!', {
-        position: 'top-right',
-        autoClose: 2000
-      });
+      // toast.error(err.message || 'Something went wrong!', {
+      //   position: 'top-right',
+      //   autoClose: 2000
+      // });
     } finally {
       setLoading(false);
     }
