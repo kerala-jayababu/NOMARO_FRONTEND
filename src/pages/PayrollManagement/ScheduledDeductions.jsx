@@ -209,19 +209,19 @@ function ScheduledDeductions() {
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
       ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
         if (res.data.status === 200) {
-          toast.success('Scheduled deductions added successfully', {
-            position: 'top-right',
-            autoClose: 2000
-          });
+          // toast.success('Scheduled deductions added successfully', {
+          //   position: 'top-right',
+          //   autoClose: 2000
+          // });
           getScheduledDeductions();
           resetValues();
           setShowModal(false);
         }
       }).catch(err => {
-        toast.error('Something went wrong!', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error('Something went wrong!', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
     } else {
       toast.warning('Total amount and deductions total should be same', {
@@ -234,7 +234,8 @@ function ScheduledDeductions() {
 
   const updateScheduledDeductions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.allocatingSalaryHead) {
+    if (!newData.idEmployee || !newData.allocatingSalaryHead || !newData.totalAmount || !newData.deductionFromSalaryMonthDate
+      || !newData.deductionToSalaryMonthDate) {
       setValidated(true);
       return;
     }
@@ -246,19 +247,19 @@ function ScheduledDeductions() {
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
       ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
         if (res.data.status === 200) {
-          toast.success('Scheduled deductions updated successfully', {
-            position: 'top-right',
-            autoClose: 2000
-          });
+          // toast.success('Scheduled deductions updated successfully', {
+          //   position: 'top-right',
+          //   autoClose: 2000
+          // });
           getScheduledDeductions();
           resetValues();
           setShowModal(false);
         }
       }).catch(err => {
-        toast.error('Something went wrong!', {
-          position: 'top-right',
-          autoClose: 2000
-        });
+        // toast.error('Something went wrong!', {
+        //   position: 'top-right',
+        //   autoClose: 2000
+        // });
       });
     } else {
       toast.warning('Total amount and deductions total should be same', {
@@ -451,7 +452,8 @@ function ScheduledDeductions() {
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showYearDropdown />
+                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                    showYearDropdown />
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}

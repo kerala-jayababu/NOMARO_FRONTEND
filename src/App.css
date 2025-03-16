@@ -29,7 +29,7 @@ body {
 
 .list_searchbox .bx-search {
   position: absolute;
-  top: 6px;
+  top: 10px;
   right: 6px;
 }
 
@@ -139,7 +139,8 @@ body {
 }
 
 .textSize {
-  font-size: 11px;
+  font-size: 14px;
+  color:#4d5975 !important
 }
 
 .controlHeight {
@@ -155,9 +156,9 @@ body {
 }
 
 .deduct-table-container {
+  position: relative;
   max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
+  overflow: auto;
 }
 
 .deduct-table-container table {
@@ -169,7 +170,8 @@ body {
   position: sticky;
   top: 0;
   background-color: var(--primary-light);
-  /* z-index: 1;  */
+  z-index: 100; 
+  transform: translateZ(0);
 }
 
 .deduct-table-container th,

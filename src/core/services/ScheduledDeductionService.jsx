@@ -1,4 +1,5 @@
 import { API } from "../../redux/api/utils";
+import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class ScheduledDeductionService {
 
@@ -7,7 +8,7 @@ export default class ScheduledDeductionService {
       const res = await API.get("/api/v1/PayRollManagement/GetAllScheduledSalaryDeductionservice?fromDate=" + date + '&searchText=' + searchText);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiError(error);
+      return handleApiSuccessOrError(error,true);
     } 
   }
 
@@ -16,25 +17,27 @@ export default class ScheduledDeductionService {
       const res = await API.get("/api/v1/PayRollManagement/GetScheduledSalaryDeductionserviceById?id=" + id);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiError(error);
+      return handleApiSuccessOrError(error,true);
     } 
   }
 
   static saveScheduledDeductionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddscheduledSalaryDeductionservice", payload);
+      handleApiSuccessOrError(response.data,false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiError(error);
+      return handleApiSuccessOrError(error,true);
     } 
   }
 
   static updateScheduledDeductionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdatescheduledSalaryDeductionservice", payload);
+      handleApiSuccessOrError(response.data,false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiError(error);
+      return handleApiSuccessOrError(error,true);
     } 
   }
 }
