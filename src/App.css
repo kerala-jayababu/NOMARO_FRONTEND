@@ -29,7 +29,7 @@ body {
 
 .list_searchbox .bx-search {
   position: absolute;
-  top: 6px;
+  top: 10px;
   right: 6px;
 }
 
@@ -139,7 +139,8 @@ body {
 }
 
 .textSize {
-  font-size: 11px;
+  font-size: 14px;
+  color:#4d5975 !important
 }
 
 .controlHeight {

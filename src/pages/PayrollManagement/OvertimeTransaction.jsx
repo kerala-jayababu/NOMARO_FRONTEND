@@ -21,7 +21,7 @@ function OvertimeTransaction() {
   const [newData, setNewData] = useState({
     idOvertimeTransaction: 0,
     idEmployee: 0,
-    idOvertimeType: "",
+    // idOvertimeType: "",
     startDate: "",
     startTime: 0,
     endDate: "",
@@ -61,14 +61,14 @@ function OvertimeTransaction() {
     calculateDuration();
   }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
 
-  useEffect(() => {
-    if (newData.idOvertimeType == "") return;
-    const overtimeTypeName = overtimeTypes.find(el => el.value == newData.idOvertimeType);
-    setNewData(prevState => ({
-      ...prevState,
-      overtimeTypeName: overtimeTypeName.displayName ?? ""
-    }));
-  }, [newData.idOvertimeType]);
+  // useEffect(() => {
+  //   if (newData.idOvertimeType == "") return;
+  //   const overtimeTypeName = overtimeTypes.find(el => el.value == newData.idOvertimeType);
+  //   setNewData(prevState => ({
+  //     ...prevState,
+  //     overtimeTypeName: overtimeTypeName.displayName ?? ""
+  //   }));
+  // }, [newData.idOvertimeType]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -140,7 +140,7 @@ function OvertimeTransaction() {
     setNewData({
       idOvertimeTransaction: item.idOvertimeTransaction,
       idEmployee: item.idEmployee,
-      idOvertimeType: item.idOvertimeType,
+      // idOvertimeType: item.idOvertimeType,
       overtimeTypeName: item.overtimeTypeName,
       startDate: moment(item.startDate),
       startTime: moment(item.startTime, 'hh:mm:ss').format('HH:mm'),
@@ -168,8 +168,8 @@ function OvertimeTransaction() {
     const formData = new FormData();
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
     formData.append('idEmployee', newData.idEmployee);
-    formData.append('idOvertimeType', newData.idOvertimeType);
-    formData.append('overtimeTypeName', newData.overtimeTypeName);
+    formData.append('idOvertimeType', 0);
+    formData.append('overtimeTypeName', 'NA');
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
     formData.append('startTime', newData.startTime);
     formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
@@ -211,8 +211,8 @@ function OvertimeTransaction() {
     const formData = new FormData();
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
     formData.append('idEmployee', newData.idEmployee);
-    formData.append('idOvertimeType', newData.idOvertimeType);
-    formData.append('overtimeTypeName', newData.overtimeTypeName);
+    formData.append('idOvertimeType', 0);
+    formData.append('overtimeTypeName', 'NA');
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
     formData.append('startTime', newData.startTime);
     formData.append('endDate', moment(newData.endDate).format('YYYY-MM-DD'));
@@ -249,7 +249,7 @@ function OvertimeTransaction() {
     setNewData({
       idOvertimeTransaction: 0,
       idEmployee: 0,
-      idOvertimeType: "",
+      // idOvertimeType: "",
       startDate: "",
       startTime: 0,
       endDate: "",
@@ -307,7 +307,7 @@ function OvertimeTransaction() {
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <select className="form-select-sm" value={statusType}
+                  <select className="form-select" value={statusType}
                     onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
                     <option value={''}>All Status</option>
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
@@ -445,7 +445,7 @@ function OvertimeTransaction() {
                           className="textSize" required
                         />
                       </div>
-                      <div className="col-md-6 p-2">
+                      {/* <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Type</label>
                         <select className="form-select" value={newData.idOvertimeType}
                           onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value, overtimeTypeName: e.target.name })} required>
@@ -456,7 +456,7 @@ function OvertimeTransaction() {
                             ))
                           }
                         </select>
-                      </div>
+                      </div> */}
                     </div>
                     <div className="row m-0">
                       <div className="col-md-6 p-2">
