@@ -330,7 +330,7 @@ function OvertimeTransaction() {
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                    showYearDropdown />
+                    showYearDropdown dropdownMode="select" />
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -482,7 +482,7 @@ function OvertimeTransaction() {
                               required
                               dateFormat="MM/dd/yyyy"
                               placeholderText='Select Date' showMonthDropdown
-                              showYearDropdown maxDate={today} />
+                              showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"
@@ -500,7 +500,7 @@ function OvertimeTransaction() {
                               required
                               dateFormat="MM/dd/yyyy"
                               placeholderText='Select Date' minDate={newData.startDate} showMonthDropdown
-                              showYearDropdown maxDate={today} />
+                              showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>
                           <div className="col-md-6 p-0 pe-2">
                             <input type="time" className="form-control ms-2"

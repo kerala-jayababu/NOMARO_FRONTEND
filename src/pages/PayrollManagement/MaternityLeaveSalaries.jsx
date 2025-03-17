@@ -428,7 +428,7 @@ function MaternityLeaveSalaries() {
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                    showYearDropdown />
+                    showYearDropdown dropdownMode="select" />
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}

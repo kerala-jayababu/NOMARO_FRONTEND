@@ -243,7 +243,7 @@ function SalaryAdjustments() {
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                    showYearDropdown />
+                    showYearDropdown dropdownMode="select" />
 
                 </div>
                 <div className="list_searchbox">
@@ -368,7 +368,7 @@ function SalaryAdjustments() {
                           required wrapperClassName="datePicker"
                           dateFormat="MM/dd/yyyy"
                           placeholderText='Select Date' showMonthDropdown
-                          showYearDropdown />
+                          showYearDropdown dropdownMode="select" />
 
                       </div>
                     </div>
