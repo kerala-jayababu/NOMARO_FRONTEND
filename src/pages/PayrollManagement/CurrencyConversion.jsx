@@ -205,7 +205,7 @@ function CurrencyConversion() {
                     dropdownMode="select"
                   />
                 </div>
-                <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button>
+                {/* <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button> */}
               </div>
 
 
