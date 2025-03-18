@@ -550,7 +550,7 @@ function TaxConfiguration() {
           <div className="card mb-2">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">Base Tax Threshold</h5>
-              <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button>
+              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button> */}
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
@@ -599,7 +599,7 @@ function TaxConfiguration() {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">Children Based Tax Threshold</h5>
-              <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button>
+              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button> */}
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
