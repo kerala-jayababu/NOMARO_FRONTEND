@@ -18365,3 +18365,33 @@ input[type=number] {
   border-color: #d9dee3 !important; /* Remove the green border */
   box-shadow: none !important; /* Remove the green glow */
 }
+
+.date-picker-container .react-datepicker-wrapper,
+.date-picker-container .react-datepicker__input-container {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+}
+
+
+
+.custom-label {
+  margin-bottom: 0 !important;  
+}
+
+
+.custom-select {
+  margin-top: -5px; 
+  width: auto;  
+}
+
+.custom-card {
+  padding: 5px; 
+  height: auto;
+}
+
+.custom-card-body {
+  padding: 10px; 
+}
