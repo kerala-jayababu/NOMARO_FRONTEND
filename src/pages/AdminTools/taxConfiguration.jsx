@@ -607,7 +607,7 @@ function TaxConfiguration() {
                   <thead>
                     <tr>
                       <th>Child Count</th>
-                      <th>Amount</th>
+                      <th className="text-end">Amount</th>
                       <th>Effective From</th>
                       <th></th>
                     </tr>
@@ -658,7 +658,8 @@ function TaxConfiguration() {
             </div>
             <div className="card-body">
               <Form onSubmit={handleSubmit} noValidate validated={validated}>
-                <div className="mb-2">
+              <div className="row mb-2">
+              <div className="col-md-6">
                   <label className="form-label mb-1">Min Income</label>
                   <NumericFormat
                     getInputRef={maxAmountRef}
@@ -669,7 +670,7 @@ function TaxConfiguration() {
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
-                    placeholder="Add minimum income"
+                    placeholder="Add min income"
                     maxLength={15}
                     required
                   />
@@ -677,7 +678,7 @@ function TaxConfiguration() {
                     <div className="text-danger">{formErrors.minAmount}</div>
                   )}
                 </div>
-                <div className="mb-2">
+                <div className="col-md-6">
                   <label className="form-label mb-1">Max Income</label>
                   <NumericFormat
                     className="form-control"
@@ -687,7 +688,7 @@ function TaxConfiguration() {
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
-                    placeholder="Add maximum income"
+                    placeholder="Add max income"
                     maxLength={15}
                     required
                   />
@@ -695,10 +696,10 @@ function TaxConfiguration() {
                     <div className="text-danger">{formErrors.maxAmount}</div>
                   )}
                 </div>
+                </div>
+                
 
-                {/* Tax Rate and Effective From in the same line */}
-                <div className="row mb-2">
-                  <div className="col-md-6">
+                <div className="mb-2">
                     <label className="form-label mb-1">Tax Rate (%)</label>
                     <NumericFormat
                       className="form-control"
@@ -715,11 +716,11 @@ function TaxConfiguration() {
                     )}
                   </div>
 
-                  <div className="col-md-6">
+                  <div className="mb-2 date-picker-container">
                     <label className="form-label mb-1">Effective From</label>
                     <br />
                     <DatePicker
-                      className="form-control"
+                      className="form-control w-100"
                       dateFormat="MM/dd/yyyy"
                       placeholderText="Start Date"
                       selected={formData.financialYearFrom}
@@ -732,7 +733,6 @@ function TaxConfiguration() {
                       <div className="text-danger">{formErrors.financialYearFrom}</div>
                     )}
                   </div>
-                </div>
 
                 <div className="text-center">
                   <button type="submit" className="btn btn-primary px-4 me-2">
@@ -756,7 +756,11 @@ function TaxConfiguration() {
             </div>
             <div className="card-body">
               <Form onSubmit={handleChildSubmit} noValidate validated={childValidated}>
-                <div className="mb-2">
+                
+
+                {/* Flex container for Amount and Effective From fields */}
+                <div className="d-flex mb-2">
+                <div className="flex-fill me-2">
                   <label className="form-label mb-1">Child Count</label>
                   <NumericFormat
                     getInputRef={childAmountRef}
@@ -776,8 +780,6 @@ function TaxConfiguration() {
                   )}
                 </div>
 
-                {/* Flex container for Amount and Effective From fields */}
-                <div className="d-flex mb-2">
                   <div className="flex-fill me-2">
                     <label className="form-label mb-1">Amount</label>
                     <NumericFormat
@@ -797,11 +799,14 @@ function TaxConfiguration() {
                     )}
                   </div>
 
-                  <div className="flex-fill">
+                  
+                </div>
+
+                <div className="mb-2 date-picker-container">
                     <label className="form-label mb-1">Effective From</label>
                     <br />
                     <DatePicker
-                      className="form-control"
+                      className="form-control w-100"
                       dateFormat="MM/dd/yyyy"
                       placeholderText="Select date"
                       selected={moment(childFormData.financialYearFrom).toDate()}
@@ -815,8 +820,6 @@ function TaxConfiguration() {
                       <div className="text-danger">{childFormErrors.financialYearFrom}</div>
                     )}
                   </div>
-                </div>
-
                 <div className="text-center">
                   <button type="submit" className="btn btn-primary px-4 me-2" disabled={loading}>
                     {loading ? 'Saving...' : 'Submit'}

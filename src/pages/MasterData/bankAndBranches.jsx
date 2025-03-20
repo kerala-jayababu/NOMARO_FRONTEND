@@ -166,7 +166,7 @@ function BankAndBranches() {
                                                     <td>
                                                         <input
                                                             type="text"
-                                                            maxLength="200"
+                                                            maxLength="100"
                                                             className="form-control"
                                                             value={data.bankAddress}
                                                             onChange={(e) => handleInputChange(data.idBankBranches, 'bankAddress', e.target.value)}
@@ -175,10 +175,15 @@ function BankAndBranches() {
                                                     <td>
                                                         <input
                                                             type="number"
-                                                            maxLength="15"
+                                                            maxLength="20"
                                                             className="form-control"
                                                             value={data.phoneNumber}
-                                                            onChange={(e) => handleInputChange(data.idBankBranches, 'phoneNumber', e.target.value)}
+                                                            onChange={(e) => {
+                                                                const newValue = e.target.value;
+                                                                if (newValue.length <= 20) {
+                                                                    handleInputChange(data.idBankBranches, 'phoneNumber', newValue);
+                                                                }
+                                                            }}
                                                         />
                                                     </td>
                                                     <td>
