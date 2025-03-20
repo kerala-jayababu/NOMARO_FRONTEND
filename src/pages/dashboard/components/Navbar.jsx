@@ -1,6 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import secureLocalStorage from "react-secure-storage";
 
 function Navbar() {
+   const [profilePic,setProfilePic] = useState("/assets/img/avatars/1.png")
+   const userData = JSON.parse(secureLocalStorage.getItem("user"));
+   const navigate = useNavigate();
+   
+   useEffect(() => {
+    function getProfilePic() {
+      if(userData?.attachmentBlob) {
+        setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`)
+      }
+    }
+    getProfilePic()
+   },[])
+   
+   const logout = () => {
+      secureLocalStorage.clear()
+      navigate("/login")
+   }
+
   return (
     <nav
       className="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme bg-drak"
@@ -226,7 +246,7 @@ function Navbar() {
             >
               <div className="avatar avatar-online">
                 <img
-                  src="/assets/img/avatars/1.png"
+                  src={profilePic}
                   alt=""
                   className="w-px-40 h-auto rounded-circle"
                 />
@@ -239,15 +259,15 @@ function Navbar() {
                     <div className="flex-shrink-0 me-3">
                       <div className="avatar avatar-online">
                         <img
-                          src="/assets/img/avatars/1.png"
+                          src={profilePic}
                           alt=""
                           className="w-px-40 h-auto rounded-circle"
                         />
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <span className="fw-semibold d-block">John Doe</span>
-                      <small className="text-muted">Admin</small>
+                      <span className="fw-semibold d-block">{userData?.name}</span>
+                      <small className="text-muted">{userData?.role}</small>
                     </div>
                   </div>
                 </a>
@@ -256,7 +276,7 @@ function Navbar() {
                 <div className="dropdown-divider"></div>
               </li>
               <li>
-                <a className="dropdown-item" href="/">
+                <a className="dropdown-item" onClick={() => logout()}>
                   <i className="bx bx-power-off me-2"></i>
                   <span className="align-middle">Log Out</span>
                 </a>

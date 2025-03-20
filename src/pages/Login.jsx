@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signIn } from "../redux/api/authAPI";
 import secureLocalStorage from "react-secure-storage";
@@ -31,6 +31,13 @@ function Login() {
       console.error("Sign in error:", error);
     }
   };
+
+  useEffect(()=>{
+    secureLocalStorage.getItem("user");
+    if(secureLocalStorage.getItem("user")) {
+      navigate("/dashboard");
+    }
+  },[])
  
   return (
     <div className="container-xxl">

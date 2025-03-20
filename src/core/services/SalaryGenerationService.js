@@ -57,4 +57,16 @@ export default class SalaryGenerationService {
     }
   };
 
+  static UploadSalaryGenerationDetails = async (content) => {
+    try {
+      const res = await API.post(
+        `/api/v1/SalaryGeneration/UploadSalaryGenerationDetails`,
+        content
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
 }

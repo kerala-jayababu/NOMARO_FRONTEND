@@ -1056,7 +1056,7 @@ const EmployeeProfile = () => {
                 <div className="accountDetail_cardProfile">
                   <div className="avatar-upload">
                     <div className="avatar-preview">
-                      <img src="src/assets/avatar.jpg" />
+                      <img src={profileData?.attachmentBlob != null ? `data:image/jpeg;base64,${profileData?.attachmentBlob}` : "src/assets/avatar.jpg"} />
                     </div>
                   </div>
 

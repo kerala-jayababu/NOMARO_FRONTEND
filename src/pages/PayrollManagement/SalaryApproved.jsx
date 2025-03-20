@@ -169,7 +169,7 @@ function SalaryApproved() {
   ];
 
   const handleStatusChange = (status) => {
-    if (status.value) {
+    if (status) {
       setStatusFilter(status);
       setSelectedCard(status.value);
       const params = {
@@ -188,6 +188,7 @@ function SalaryApproved() {
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
     setStatusFilter({ value: "All", label: "Select Status" });
+    setSelectedCard("All");
     setSalaryDraft([]);
     handelCheckboxCheck(false);
   };
