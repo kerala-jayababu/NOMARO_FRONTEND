@@ -259,7 +259,7 @@ function CurrencyConversion() {
         <div className="col-lg-4">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">{isEditing ? 'Update' : 'Add'} Currency Conversion</h5>
+              <h5 className="mb-0">Add/Update Currency Conversion</h5>
             </div>
             <div className="card-body">
               <Form onSubmit={handleSubmit} noValidate validated={validated}>
