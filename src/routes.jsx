@@ -16,6 +16,7 @@ import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
+import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 
 export const privateRoutes = [
   {
@@ -48,7 +49,7 @@ export const privateRoutes = [
   }, 
   {
     path: "/dashboard/salary-templates",
-    element: <SalaryTemplate />,
+    element: <SalaryTemplateNew />,
   },
   {
     path: "/dashboard/employee-salary-config",
