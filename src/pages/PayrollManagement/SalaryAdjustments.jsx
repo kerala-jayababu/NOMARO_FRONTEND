@@ -63,7 +63,6 @@ function SalaryAdjustments() {
       }));
       return;
     }
-    console.log(newData.idEmployee);
     const empDetails = employeesList.find(emp => emp.idEmployee == newData.idEmployee);
     setNewData((prevData) => ({
       ...prevData,
