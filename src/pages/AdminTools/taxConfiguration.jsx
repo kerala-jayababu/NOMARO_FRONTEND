@@ -11,7 +11,7 @@ function TaxConfiguration() {
   const [baseTaxThresholds, setBaseTaxThresholds] = useState([]);
   const [childTaxThresholds, setChildTaxThresholds] = useState([]);
   const [financialYears, setFinancialYears] = useState([]);
-  const [loading, setLoading] = useState(false);        
+  const [loading, setLoading] = useState(false);
   const [baseError, setBaseError] = useState(null);
   const [childError, setChildError] = useState(null);
   const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
@@ -52,6 +52,9 @@ function TaxConfiguration() {
   const maxAmountRef = useRef(null); // Create a ref for the NumericFormat input
   const childAmountRef = useRef(null); // Create a ref for the NumericFormat input  
 
+  const currentYear = moment().year();
+  const nextYear = currentYear + 1;
+
   const handleButtonClick = (type) => {
     console.log('type', type);
     // Focus on the input when the button is clicked
@@ -68,7 +71,7 @@ function TaxConfiguration() {
 
   useEffect(() => {
     getAllFinancialYears();
-   
+
   }, []);
 
   const getBaseTaxThresholds = (idFinancialYear) => {
@@ -116,11 +119,11 @@ function TaxConfiguration() {
         setIdFinancialYear(res.data[0].idFinancialYear);
         setFormData((prevData) => ({
           ...prevData,
-          idFinancialYear: res.data[0].idFinancialYear 
+          idFinancialYear: res.data[0].idFinancialYear
         }));
         setChildFormData((prevData) => ({
           ...prevData,
-          idFinancialYear: res.data[0].idFinancialYear 
+          idFinancialYear: res.data[0].idFinancialYear
         }));
         setSelectedFinancialYear(res.data[0].idFinancialYear);
         getBaseTaxThresholds(res.data[0].idFinancialYear);
@@ -139,17 +142,17 @@ function TaxConfiguration() {
 
   const handleInputChange = (value, field) => {
     let newValue;
-  
+
     // If the value is an object, extract the 'value' property
     if (value && value.hasOwnProperty('value')) {
       value = value.value; // Extract the 'value' property from the object
     }
-  
+
     // If the value is a string (especially for number fields), attempt to parse it to a float
     if (typeof value === 'string' && !isNaN(value)) {
       value = parseFloat(value); // Convert the string to a number
     }
-  
+
     // Check if the field is 'financialYearFrom', which expects a Date object
     if (field === 'financialYearFrom') {
       // Ensure the value is a valid Date object or null
@@ -161,20 +164,20 @@ function TaxConfiguration() {
       // For other fields (if any are added in the future), assign the value as-is
       newValue = value;
     }
-    
+
     // Update form data
     setFormData((prev) => ({
       ...prev,
       [field]: newValue,
     }));
-  
+
     // Clear error for the specific field
     setFormErrors((prevErrors) => ({
       ...prevErrors,
       [field]: '',
     }));
   };
-  
+
 
   const validateForm = () => {
     const errors = {};
@@ -202,7 +205,7 @@ function TaxConfiguration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('formData', formData);
-    if(checkEmptyDataInObject(formData)){
+    if (checkEmptyDataInObject(formData)) {
       setValidated(true);
       return;
     }
@@ -216,8 +219,8 @@ function TaxConfiguration() {
     };
 
     const financialYearFromData = moment(formData.financialYearFrom)
-    .startOf('day') 
-    .format('YYYY-MM-DDTHH:mm:ss'); 
+      .startOf('day')
+      .format('YYYY-MM-DDTHH:mm:ss');
     const payload = {
       idTaxSlab: formData.idTaxSlab,
       minAmount: parseFloat(formData.minAmount),
@@ -226,7 +229,7 @@ function TaxConfiguration() {
       financialYearFrom: financialYearFromData
     };
     // console.log('payload',  moment(formData.financialYearFrom).format());
-  
+
     const matchingYear = financialYears.find(year =>
       moment(year.financialYearFrom).year() === moment(formData.financialYearFrom).year()
     );
@@ -239,9 +242,9 @@ function TaxConfiguration() {
 
     console.log('payload', payload);
 
-    if(formData.idTaxSlab!==0){
+    if (formData.idTaxSlab !== 0) {
       updateTaxThreshold(payload);
-    }else{
+    } else {
       addTaxThreshold(payload);
     }
   };
@@ -253,7 +256,7 @@ function TaxConfiguration() {
         //   position: 'top-right',
         //   autoClose: 2000
         // });
-        getBaseTaxThresholds(selectedFinancialYear  );
+        getBaseTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleReset();
       }
@@ -386,7 +389,7 @@ function TaxConfiguration() {
 
   const handleChildSubmit = async (e) => {
     e.preventDefault();
-    if(checkEmptyDataInObject(childFormData)){
+    if (checkEmptyDataInObject(childFormData)) {
       setChildValidated(true);
       return;
     } else if (!validateChildForm()) {
@@ -396,7 +399,7 @@ function TaxConfiguration() {
     setLoading(true);
     setChildError(null);
 
-   
+
 
     const payload = {
       idChildTaxThreshold: childFormData.idChildTaxThreshold,
@@ -405,7 +408,7 @@ function TaxConfiguration() {
       financialYearFrom: moment(childFormData.financialYearFrom).format()
     };
 
-    
+
     const matchingYear = financialYears.find(year =>
       moment(year.financialYearFrom).year() === moment(childFormData.financialYearFrom).year()
     );
@@ -417,11 +420,11 @@ function TaxConfiguration() {
     }
 
     // return;
-    if(childFormData.idChildTaxThreshold!==0){
+    if (childFormData.idChildTaxThreshold !== 0) {
       updateChildTaxThreshold(payload);
-    }else{
+    } else {
       addChildTaxThreshold(payload);
-    } 
+    }
   };
 
 
@@ -438,15 +441,15 @@ function TaxConfiguration() {
         getChildTaxThresholds(selectedFinancialYear);
         setLoading(false);
         handleChildReset();
-      } 
+      }
     }).catch(err => {
       setLoading(false);
       // toast.error('Something went wrong!', {
       //   position: 'top-right',
       //   autoClose: 2000
       // });
-    }); 
-  }   
+    });
+  }
 
   const addChildTaxThreshold = (payload) => {
     TaxConfigService.createChildTaxThreshold(payload).then(res => {
@@ -459,13 +462,13 @@ function TaxConfiguration() {
         setLoading(false);
         handleChildReset();
       }
-    }).catch(err => { 
+    }).catch(err => {
       setLoading(false);
       // toast.error('Something went wrong!', {
       //   position: 'top-right',
       //   autoClose: 2000
       // });
-    }); 
+    });
   };
 
   const handleEditChildThreshold = (threshold) => {
@@ -475,7 +478,7 @@ function TaxConfiguration() {
       taxThresholdAmount: threshold.taxThresholdAmount,
       financialYearFrom: moment(threshold.financialYearFrom).format('YYYY-MM-DD')
     });
-    };
+  };
 
   const handleChildReset = () => {
     setChildValidated(false);
@@ -496,29 +499,38 @@ function TaxConfiguration() {
   const handleFinancialYearChange = (e) => {
     const selectedYear = financialYears.find(year => year.idFinancialYear === parseInt(e.target.value));
     setSelectedFinancialYear(e.target.value);
-    
+
     console.log('selectedYear', e.target.value);
     getBaseTaxThresholds(e.target.value);
     getChildTaxThresholds(e.target.value);
   };
 
+  // Filter the financial years to only show the current year and next year
+  const filteredFinancialYears = financialYears.filter(year => {
+    const yearFrom = moment(year.financialYearFrom);
+    const yearTo = moment(year.financialYearTo);
+    return yearFrom.year() === currentYear || yearFrom.year() === nextYear;
+  });
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
-      <div className="row mb-4">
+      <div className="row mb-3">
         <div className="col-12">
-          <div className="card">
-            <div className="card-body">
+          <div className="card custom-card">
+            <div className="card-body custom-card-body">
               <div className="row align-items-center">
-                <div className="col-md-3">
-                  <label className="form-label mb-1">Financial Year</label>
-                  <select 
-                    className="form-select"
+                <div className="col-md-2">
+                  <label className="form-label mb-0 custom-label">Financial Year</label>
+                </div>
+                <div className="col-md-10">
+                  <select
+                    className="form-select w-25 custom-select"
                     value={selectedFinancialYear}
                     onChange={handleFinancialYearChange}
                     required
                   >
                     <option value="">Select Financial Year</option>
-                    {financialYears.map((year) => (
+                    {filteredFinancialYears.map((year) => (
                       <option key={year.idFinancialYear} value={year.idFinancialYear}>
                         {`${moment(year.financialYearFrom).format('DD/MM/YYYY')} - ${moment(year.financialYearTo).format('DD/MM/YYYY')}`}
                       </option>
@@ -530,19 +542,21 @@ function TaxConfiguration() {
           </div>
         </div>
       </div>
+
+
       <div className="row">
-        
+
         <div className="col-lg-8 ">
           <div className="card mb-2">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">Base Tax Threshold</h5>
-              <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button>
+              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button> */}
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
                 {loading && <div className="text-center p-3">Loading...</div>}
                 {/* {baseError && <div className="text-danger p-3">{baseError}</div>} */}
-                {!loading  && (
+                {!loading && (
                   <table className="table table-sm">
                     <thead>
                       <tr>
@@ -576,7 +590,7 @@ function TaxConfiguration() {
                       <div className="Nodatafound_box">
                         <h6><i className="bx bx-search"></i> No data available!</h6>
                       </div>
-                      </td></tr></tbody>}
+                    </td></tr></tbody>}
                   </table>
                 )}
               </div>
@@ -585,7 +599,7 @@ function TaxConfiguration() {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">Children Based Tax Threshold</h5>
-              <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button>
+              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button> */}
             </div>
             <div className="card-body">
               <div className="table-responsive text-nowrap">
@@ -593,7 +607,7 @@ function TaxConfiguration() {
                   <thead>
                     <tr>
                       <th>Child Count</th>
-                      <th>Amount</th>
+                      <th className="text-end">Amount</th>
                       <th>Effective From</th>
                       <th></th>
                     </tr>
@@ -629,7 +643,7 @@ function TaxConfiguration() {
                     <div className="Nodatafound_box">
                       <h6><i className="bx bx-search"></i> No data available!</h6>
                     </div>
-                    </td></tr></tbody>}
+                  </td></tr></tbody>}
                 </table>
                 {loading && <div className="text-center p-3">Loading...</div>}
                 {/* {childError && <div className="text-danger p-3">{childError}</div>} */}
@@ -644,7 +658,8 @@ function TaxConfiguration() {
             </div>
             <div className="card-body">
               <Form onSubmit={handleSubmit} noValidate validated={validated}>
-                <div className="mb-2">
+              <div className="row mb-2">
+              <div className="col-md-6">
                   <label className="form-label mb-1">Min Income</label>
                   <NumericFormat
                     getInputRef={maxAmountRef}
@@ -655,7 +670,7 @@ function TaxConfiguration() {
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
-                    placeholder="Add minimum income"
+                    placeholder="Add min income"
                     maxLength={15}
                     required
                   />
@@ -663,7 +678,7 @@ function TaxConfiguration() {
                     <div className="text-danger">{formErrors.minAmount}</div>
                   )}
                 </div>
-                <div className="mb-2">
+                <div className="col-md-6">
                   <label className="form-label mb-1">Max Income</label>
                   <NumericFormat
                     className="form-control"
@@ -673,7 +688,7 @@ function TaxConfiguration() {
                     allowNegative={false}
                     thousandSeparator={true}
                     allowLeadingZeros={false}
-                    placeholder="Add maximum income"
+                    placeholder="Add max income"
                     maxLength={15}
                     required
                   />
@@ -681,43 +696,48 @@ function TaxConfiguration() {
                     <div className="text-danger">{formErrors.maxAmount}</div>
                   )}
                 </div>
+                </div>
+                
 
                 <div className="mb-2">
-                  <label className="form-label mb-1">Tax Rate (%)</label>
-                  <NumericFormat
-                    className="form-control"
-                    value={formData.taxRate}
-                    onValueChange={(values) => handleInputChange(values, 'taxRate')}
-                    decimalScale={4}
-                    allowNegative={false}
-                    allowLeadingZeros={false}
-                    maxLength={5}
-                    required
-                  />
-                  {formErrors.taxRate && (
-                    <div className="text-danger">{formErrors.taxRate}</div>
-                  )}
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Effective From</label>
-                  <br></br>
-                  <DatePicker
-                    className="form-control"
-                    dateFormat="MM/dd/yyyy"
-                    placeholderText="Start Date"
-                    selected={formData.financialYearFrom} 
-                    onChange={(date) => handleInputChange(date, 'financialYearFrom')}
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                  />
-                  {formErrors.financialYearFrom && (
-                    <div className="text-danger">{formErrors.financialYearFrom}</div>
-                  )}
-                </div>
+                    <label className="form-label mb-1">Tax Rate (%)</label>
+                    <NumericFormat
+                      className="form-control"
+                      value={formData.taxRate}
+                      onValueChange={(values) => handleInputChange(values, 'taxRate')}
+                      decimalScale={4}
+                      allowNegative={false}
+                      allowLeadingZeros={false}
+                      maxLength={5}
+                      required
+                    />
+                    {formErrors.taxRate && (
+                      <div className="text-danger">{formErrors.taxRate}</div>
+                    )}
+                  </div>
+
+                  <div className="mb-2 date-picker-container">
+                    <label className="form-label mb-1">Effective From</label>
+                    <br />
+                    <DatePicker
+                      className="form-control w-100"
+                      dateFormat="MM/dd/yyyy"
+                      placeholderText="Start Date"
+                      selected={formData.financialYearFrom}
+                      onChange={(date) => handleInputChange(date, 'financialYearFrom')}
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                    />
+                    {formErrors.financialYearFrom && (
+                      <div className="text-danger">{formErrors.financialYearFrom}</div>
+                    )}
+                  </div>
 
                 <div className="text-center">
-                  <button type="submit" className="btn btn-primary px-4 me-2">Submit</button>
+                  <button type="submit" className="btn btn-primary px-4 me-2">
+                    Submit
+                  </button>
                   <button
                     type="button"
                     className="btn btn-outline-secondary px-4"
@@ -729,13 +749,18 @@ function TaxConfiguration() {
               </Form>
             </div>
           </div>
+
           <div className="card mt-2">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Add/Update Children Tax Threshold</h5>
             </div>
             <div className="card-body">
               <Form onSubmit={handleChildSubmit} noValidate validated={childValidated}>
-                <div className="mb-2">
+                
+
+                {/* Flex container for Amount and Effective From fields */}
+                <div className="d-flex mb-2">
+                <div className="flex-fill me-2">
                   <label className="form-label mb-1">Child Count</label>
                   <NumericFormat
                     getInputRef={childAmountRef}
@@ -754,43 +779,47 @@ function TaxConfiguration() {
                     <div className="text-danger">{childFormErrors.childrenCount}</div>
                   )}
                 </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Amount</label>
-                  <NumericFormat
-                    className="form-control"
-                    value={childFormData.taxThresholdAmount}
-                    onValueChange={(values) => handleChildInputChange(values, 'taxThresholdAmount')}
-                    decimalScale={2}
-                    maxLength={15}
-                    allowNegative={false}
-                    thousandSeparator={true}
-                    allowLeadingZeros={false}
-                    placeholder="Enter amount"
-                    required
-                  />
-                  {childFormErrors.taxThresholdAmount && (
-                    <div className="text-danger">{childFormErrors.taxThresholdAmount}</div>
-                  )}
-                </div>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Effective From</label>
-                  <br />
-                  <DatePicker
-                    className="form-control"
-                    dateFormat="MM/dd/yyyy"
-                    placeholderText="Select date"
-                    selected={moment(childFormData.financialYearFrom).toDate()}
-                    onChange={(date) => handleChildInputChange(date, 'financialYearFrom')}
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"                    
-                    required
-                  />
-                  {childFormErrors.financialYearFrom && (
-                    <div className="text-danger">{childFormErrors.financialYearFrom}</div>
-                  )}
+
+                  <div className="flex-fill me-2">
+                    <label className="form-label mb-1">Amount</label>
+                    <NumericFormat
+                      className="form-control"
+                      value={childFormData.taxThresholdAmount}
+                      onValueChange={(values) => handleChildInputChange(values, 'taxThresholdAmount')}
+                      decimalScale={2}
+                      maxLength={15}
+                      allowNegative={false}
+                      thousandSeparator={true}
+                      allowLeadingZeros={false}
+                      placeholder="Enter amount"
+                      required
+                    />
+                    {childFormErrors.taxThresholdAmount && (
+                      <div className="text-danger">{childFormErrors.taxThresholdAmount}</div>
+                    )}
+                  </div>
+
+                  
                 </div>
 
+                <div className="mb-2 date-picker-container">
+                    <label className="form-label mb-1">Effective From</label>
+                    <br />
+                    <DatePicker
+                      className="form-control w-100"
+                      dateFormat="MM/dd/yyyy"
+                      placeholderText="Select date"
+                      selected={moment(childFormData.financialYearFrom).toDate()}
+                      onChange={(date) => handleChildInputChange(date, 'financialYearFrom')}
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                      required
+                    />
+                    {childFormErrors.financialYearFrom && (
+                      <div className="text-danger">{childFormErrors.financialYearFrom}</div>
+                    )}
+                  </div>
                 <div className="text-center">
                   <button type="submit" className="btn btn-primary px-4 me-2" disabled={loading}>
                     {loading ? 'Saving...' : 'Submit'}
@@ -807,6 +836,7 @@ function TaxConfiguration() {
               </Form>
             </div>
           </div>
+
         </div>
       </div>
     </div>

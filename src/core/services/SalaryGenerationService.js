@@ -45,4 +45,28 @@ export default class SalaryGenerationService {
       return handleApiError(error);
     }
   };
+
+  static  exportSalaryGeneration = async (employeeIds, month) => {
+    try {
+      const res = await API.get(
+        `/api/v1/SalaryGeneration/ExportSalaryGenerationDetails?employeeIds=${employeeIds}&idSalaryMonth=${month}`
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static UploadSalaryGenerationDetails = async (content) => {
+    try {
+      const res = await API.post(
+        `/api/v1/SalaryGeneration/UploadSalaryGenerationDetails`,
+        content
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
 }

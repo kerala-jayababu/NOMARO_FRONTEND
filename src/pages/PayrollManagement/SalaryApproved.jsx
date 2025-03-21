@@ -78,7 +78,11 @@ function SalaryApproved() {
   const [selectedCard, setSelectedCard] = useState("All");
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState({ type: '', title: '', message: '' });
+  const [confirmAction, setConfirmAction] = useState({
+    type: "",
+    title: "",
+    message: "",
+  });
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
   const getSalaryMonths = () => {
@@ -150,8 +154,8 @@ function SalaryApproved() {
       if (optionsRef.current) optionsRef.current.clearValue();
       setOption(option.value);
       setFilter("");
-      setSalaryDraft([])
-      handelCheckboxCheck(false)
+      setSalaryDraft([]);
+      handelCheckboxCheck(false);
     }
   }
 
@@ -161,11 +165,11 @@ function SalaryApproved() {
     { value: "SUBMITTED", label: "Submitted" },
     { value: "DRAFT GENERATED", label: "Draft Generated" },
     { value: "NOT GENERATED", label: "Not Generated" },
-    { value: "REJECTED", label: "Rejected" }
+    { value: "REJECTED", label: "Rejected" },
   ];
 
   const handleStatusChange = (status) => {
-    if (status.value) {
+    if (status) {
       setStatusFilter(status);
       setSelectedCard(status.value);
       const params = {
@@ -173,8 +177,8 @@ function SalaryApproved() {
         status: status?.value,
       };
       dispatch(getSalaryGenerations(params));
-      setSalaryDraft([])
-      handelCheckboxCheck(false)
+      setSalaryDraft([]);
+      handelCheckboxCheck(false);
     }
   };
 
@@ -184,8 +188,9 @@ function SalaryApproved() {
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
     setStatusFilter({ value: "All", label: "Select Status" });
-    setSalaryDraft([])
-    handelCheckboxCheck(false)
+    setSelectedCard("All");
+    setSalaryDraft([]);
+    handelCheckboxCheck(false);
   };
 
   const uncheckCheckBox = () => {
@@ -199,7 +204,7 @@ function SalaryApproved() {
       entityTablePrimaryKeyID: item.idEmployeeSalary,
       entityCode: "EMPSALGEN",
       status: "APPROVED",
-      idPayrollScreen
+      idPayrollScreen,
     }));
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
     if (res.error) {
@@ -223,11 +228,11 @@ function SalaryApproved() {
     }
 
     const content = salaryDraft.map((item) => ({
-      entityTablePrimaryKeyID: item.idEmployeeSalary ,
+      entityTablePrimaryKeyID: item.idEmployeeSalary,
       entityCode: "EMPSALGEN",
       status: "REJECTED",
       remarks: rejectReason,
-      idPayrollScreen
+      idPayrollScreen,
     }));
 
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
@@ -249,7 +254,7 @@ function SalaryApproved() {
 
   const handleConfirmAction = () => {
     switch (confirmAction.type) {
-      case 'approve':
+      case "approve":
         handleApprovalWorkflow();
         break;
     }
@@ -257,13 +262,13 @@ function SalaryApproved() {
   };
 
   const showConfirmationModal = (type) => {
-    let title = '';
-    let message = '';
-    
+    let title = "";
+    let message = "";
+
     switch (type) {
-      case 'approve':
-        title = 'Approve Records';
-        message = 'Are you sure you want to approve the selected records?';
+      case "approve":
+        title = "Approve Records";
+        message = "Are you sure you want to approve the selected records?";
         break;
     }
 
@@ -274,8 +279,9 @@ function SalaryApproved() {
   const handleSelectAll = (e) => {
     if (e.target.checked && salaryGenerationList) {
       setSalaryDraft(
-        salaryGenerationList
-          .filter((x) => x.approvalStatus.toLowerCase() === statusFilter.value)
+        salaryGenerationList.filter(
+          (x) => x.approvalStatus.toLowerCase() === statusFilter.value
+        )
       );
     } else {
       setSalaryDraft([]);
@@ -299,7 +305,7 @@ function SalaryApproved() {
             <div class="card-header d-flex align-items-center justify-content-between pb-1">
               <h5 class="m-0 d-flex col-md-11 items-center justify-center">
                 <span class="d-flex items-center justify-center pt-2">
-                  Salary Generation Approval for the month of
+                  Salary Approval for the month of
                 </span>
                 <Select
                   options={salaryMonthsList.map((item) => ({
@@ -320,17 +326,21 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "All", label: "All Status" })}
+                        onClick={() =>
+                          handleStatusChange({
+                            value: "All",
+                            label: "All Status",
+                          })
+                        }
                         style={{
-                          backgroundColor: selectedCard === "All" ? "#e7e7ff" : "",
+                          backgroundColor:
+                            selectedCard === "All" ? "#e7e7ff" : "",
                           cursor: "pointer",
-                          transition: "background-color 0.3s"
+                          transition: "background-color 0.3s",
                         }}
                       >
                         <h5>Total Employees</h5>
-                        <div class="count">
-                          {allSalaryList?.length || 0}
-                        </div>
+                        <div class="count">{allSalaryList?.length || 0}</div>
                       </div>
                     </div>
                   </li>
@@ -338,11 +348,17 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "APPROVED", label: "Approved" })}
+                        onClick={() =>
+                          handleStatusChange({
+                            value: "APPROVED",
+                            label: "Approved",
+                          })
+                        }
                         style={{
-                          backgroundColor: selectedCard === "APPROVED" ? "#e7e7ff" : "",
+                          backgroundColor:
+                            selectedCard === "APPROVED" ? "#e7e7ff" : "",
                           cursor: "pointer",
-                          transition: "background-color 0.3s"
+                          transition: "background-color 0.3s",
                         }}
                       >
                         <h5>Approved</h5>
@@ -358,17 +374,26 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "SUBMITTED", label: "Submitted" })}
+                        onClick={() =>
+                          handleStatusChange({
+                            value: "SUBMITTED",
+                            label: "Submitted",
+                          })
+                        }
                         style={{
-                          backgroundColor: selectedCard === "SUBMITTED" ? "#e7e7ff" : "",
+                          backgroundColor:
+                            selectedCard === "SUBMITTED" ? "#e7e7ff" : "",
                           cursor: "pointer",
-                          transition: "background-color 0.3s"
+                          transition: "background-color 0.3s",
                         }}
                       >
                         <h5>Submitted</h5>
                         <div className="count bs-bg-warning">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "submitted" || x.approvalStatus.toLowerCase() === 'interim approved'
+                            (x) =>
+                              x.approvalStatus.toLowerCase() === "submitted" ||
+                              x.approvalStatus.toLowerCase() ===
+                                "interim approved"
                           )?.length || 0}
                         </div>
                       </div>
@@ -378,11 +403,17 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "DRAFT GENERATED", label: "Draft Generated" })}
+                        onClick={() =>
+                          handleStatusChange({
+                            value: "DRAFT GENERATED",
+                            label: "Draft Generated",
+                          })
+                        }
                         style={{
-                          backgroundColor: selectedCard === "DRAFT GENERATED" ? "#e7e7ff" : "",
+                          backgroundColor:
+                            selectedCard === "DRAFT GENERATED" ? "#e7e7ff" : "",
                           cursor: "pointer",
-                          transition: "background-color 0.3s"
+                          transition: "background-color 0.3s",
                         }}
                       >
                         <h5>Draft Generated</h5>
@@ -398,17 +429,24 @@ function SalaryApproved() {
                     <div class="card SalaryApproveCount">
                       <div
                         class="card-body"
-                        onClick={() => handleStatusChange({ value: "NOT GENERATED", label: "Not Generated" })}
+                        onClick={() =>
+                          handleStatusChange({
+                            value: "NOT GENERATED",
+                            label: "Not Generated",
+                          })
+                        }
                         style={{
-                          backgroundColor: selectedCard === "NOT GENERATED" ? "#e7e7ff" : "",
+                          backgroundColor:
+                            selectedCard === "NOT GENERATED" ? "#e7e7ff" : "",
                           cursor: "pointer",
-                          transition: "background-color 0.3s"
+                          transition: "background-color 0.3s",
                         }}
                       >
                         <h5>Not Generated</h5>
                         <div class="count text-dark">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "not generated"
+                            (x) =>
+                              x.approvalStatus.toLowerCase() === "not generated"
                           )?.length || 0}
                         </div>
                       </div>
@@ -489,15 +527,18 @@ function SalaryApproved() {
                 <table class="table table-sm">
                   <thead>
                     <tr>
-                    <th>
-                        {statusFilter.value.toLowerCase() === 'submitted' && <input
-                          type="checkbox"
-                          class="form-check-input"
-                          checked={
-                            salaryDraft.length === salaryGenerationList?.length
-                          }
-                          onChange={handleSelectAll}
-                        />}
+                      <th>
+                        {statusFilter.value.toLowerCase() === "submitted" && (
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            checked={
+                              salaryDraft.length ===
+                              salaryGenerationList?.length
+                            }
+                            onChange={handleSelectAll}
+                          />
+                        )}
                       </th>
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
@@ -549,13 +590,22 @@ function SalaryApproved() {
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
                           <td className="text-end">
-                            {Number(item.totalEarnings).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.totalEarnings)}
                           </td>
                           <td className="text-end">
-                            {Number(item.totalDeductions).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.totalDeductions)}
                           </td>
                           <td className="text-end">
-                            {Number(item.netSalary).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.netSalary)}
                           </td>
                           <td>
                             <span
@@ -593,7 +643,7 @@ function SalaryApproved() {
                     type="button"
                     disabled={salaryDraft.length === 0}
                     class="btn btn-info btn-sm py-2 px-4 me-2"
-                    onClick={() => showConfirmationModal('approve')}
+                    onClick={() => showConfirmationModal("approve")}
                   >
                     Approve Selected Records
                   </button>
@@ -623,7 +673,7 @@ function SalaryApproved() {
                 <p>{confirmAction.message}</p>
               </div>
               <div className="modal-footer">
-              <button
+                <button
                   type="button"
                   className="btn btn-primary"
                   onClick={handleConfirmAction}
@@ -671,7 +721,7 @@ function SalaryApproved() {
                 </div>
               </div>
               <div className="modal-footer">
-              <button
+                <button
                   type="button"
                   className="btn btn-danger"
                   onClick={handleRejectWorkflow}

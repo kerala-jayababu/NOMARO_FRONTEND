@@ -122,7 +122,7 @@ function BankAndBranches() {
                 <div className="col-lg-12 ">
                     <div className="card">
                         <div className="card-header d-flex align-items-center justify-content-between pb-3">
-                            <h5 className="m-0">Bank and Branches</h5>
+                            <h5 className="m-0">Bank Branches</h5>
                             <div className="list_menu">
                                 <div>
                                     {/* <label className='p-2'>Select Bank</label> */}
@@ -146,8 +146,8 @@ function BankAndBranches() {
                                                 <th>Branch Name</th>
                                                 <th>Bank Address</th>
                                                 <th>Phone Number</th>
-                                                <th>ABA Routing Number</th>
-                                                <th></th>
+                                                <th className='w-25'>ABA Routing Number</th>
+                                                <th className='w-auto'></th>
                                             </tr>
                                         </thead>
                                         <tbody className="table-border-bottom-0">
@@ -166,7 +166,7 @@ function BankAndBranches() {
                                                     <td>
                                                         <input
                                                             type="text"
-                                                            maxLength="200"
+                                                            maxLength="100"
                                                             className="form-control"
                                                             value={data.bankAddress}
                                                             onChange={(e) => handleInputChange(data.idBankBranches, 'bankAddress', e.target.value)}
@@ -175,10 +175,15 @@ function BankAndBranches() {
                                                     <td>
                                                         <input
                                                             type="number"
-                                                            maxLength="15"
+                                                            maxLength="20"
                                                             className="form-control"
                                                             value={data.phoneNumber}
-                                                            onChange={(e) => handleInputChange(data.idBankBranches, 'phoneNumber', e.target.value)}
+                                                            onChange={(e) => {
+                                                                const newValue = e.target.value;
+                                                                if (newValue.length <= 20) {
+                                                                    handleInputChange(data.idBankBranches, 'phoneNumber', newValue);
+                                                                }
+                                                            }}
                                                         />
                                                     </td>
                                                     <td>

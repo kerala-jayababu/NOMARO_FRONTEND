@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getSalaryGenerations } from "../../redux/reducers/salaryGeneration";
 import { fetchDepartments } from "../../redux/reducers/department";
@@ -7,6 +7,9 @@ import CommonService from "../../core/services/CommonService";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
+import { Modal } from "react-bootstrap";
+import Utils from "../../utils/Utils";
+import { getSalaryHeadList } from "../../utils/service";
 
 const statusColor = [
   {
@@ -67,12 +70,17 @@ function SalaryGeneration() {
   const dispatch = useDispatch();
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryDraft, setSalaryDraft] = useState([]);
+  const [draftSalary, setDraftSalary] = useState([]);
+  const [importedData, setImportedData] = useState([]);
+  const [showImportData, setShowImportData] = useState(false);
+  const [show, setShow] = useState(false);
   const optionsRef = useRef();
   const statusRef = useRef();
   const filterRef = useRef();
   const [filter, setFilter] = useState("");
   const [option, setOption] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
+  const [file, setFile] = useState();
   const [statusFilter, setStatusFilter] = useState({
     value: "All",
     label: "Select Status",
@@ -85,6 +93,7 @@ function SalaryGeneration() {
   const [selectedCard, setSelectedCard] = useState("All");
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState({
     type: "",
     title: "",
@@ -209,6 +218,7 @@ function SalaryGeneration() {
     setCurrentMonth(option);
     setSalaryDraft([]);
     handelCheckboxCheck(false);
+    setSelectedCard("All");
     if (filterRef.current) filterRef.current.clearValue();
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
@@ -239,7 +249,8 @@ function SalaryGeneration() {
     );
 
     if (!response.error) {
-      toast.success("Draft Salary Generated Successfully");
+      setDraftSalary(response.data.data);
+      setShow(true);
       await dispatch(getSalaryGenerations(params));
     } else {
       toast.error(response.error);
@@ -247,6 +258,97 @@ function SalaryGeneration() {
     setSalaryDraft([]);
     uncheckCheckBox();
   };
+
+  const ShowDraft = useCallback(
+    ({ show, setShow }) => {
+      return (
+        <Modal
+          show={show}
+          onHide={() => {
+            setDraftSalary([]);
+            setShow(false);
+          }}
+          size="lg"
+          aria-labelledby="contained-modal-title-vcenter"
+          backdrop="static"
+          keyboard={false}
+          position="top-center"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Draft Salary Details</h5>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div
+              style={{ width: "47rem", height: "50vh", overflowY: "scroll" }}
+            >
+              <table className="table">
+                <tr>
+                  <th className="p-2">Employee Code</th>
+                  <th className="p-2">Employee Name</th>
+                  <th className="p-2">Designation Name</th>
+                  <th className="p-2">Salary Generation Status</th>
+                </tr>
+                {draftSalary.map((item) => (
+                  <tr key={item.idEmployee}>
+                    <td className="p-2">{item.employeeCode}</td>
+                    <td className="p-2">{item.employeeName}</td>
+                    <td className="p-2">{item.designationName}</td>
+                    <td className="p-2">{item.salaryGenerationStatus}</td>
+                  </tr>
+                ))}
+              </table>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    },
+    [draftSalary]
+  );
+
+  const ShowImport = useCallback(
+    ({ setShowImportData, showImportData }) => {
+      return (
+        <Modal
+          show={showImportData}
+          onHide={() => {
+            setShowImportData(false);
+          }}
+          size="lg"
+          aria-labelledby="contained-modal-title-vcenter"
+          backdrop="static"
+          keyboard={false}
+          position="top-center"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Imported Salary Details</h5>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div
+              style={{ width: "47rem", height: "50vh", overflowY: "scroll" }}
+            >
+              <table className="table">
+                <tr>
+                  <th className="p-2">Upload Status</th>
+                  <th className="p-2">Employee Code</th>
+                </tr>
+                {importedData?.map((item) => (
+                  <tr key={item.idEmployee}>
+                    <td className="p-2">{item.uploadStatus}</td>
+                    <td className="p-2">{item.employeeCode}</td>
+                  </tr>
+                ))}
+              </table>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    },
+    [importedData]
+  );
 
   const undoSalaryDraft = async () => {
     const params = {
@@ -342,6 +444,87 @@ function SalaryGeneration() {
 
     setConfirmAction({ type, title, message });
     setShowConfirmModal(true);
+  };
+
+  const ExportSalaryGeneration = async () => {
+    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    const response = await SalaryGenerationService.exportSalaryGeneration(
+      employeeIds,
+      currentMonth.value
+    );
+
+    if (response.error) {
+      toast.error(response.error);
+    } else {
+      downloadFile(response.data);
+    }
+    uncheckCheckBox();
+    setSalaryDraft([]);
+  };
+
+  const downloadFile = (item) => {
+    const base64Data = item.fileContent;
+    const fileName = item.fileName || "downloaded-file";
+
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: item.fileType });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      toast.error("Please select a file");
+      return;
+    }
+    try {
+      const salaryHeadList = await getSalaryHeadList();
+      console.log(salaryHeadList);
+      const data = await Utils.processExcelFile(file, salaryHeadList.data);
+      const content = {
+        idSalaryMonth: currentMonth.value,
+        employeeSalaryJsonData: data,
+      };
+      const response =
+        await SalaryGenerationService.UploadSalaryGenerationDetails(content);
+      if (response.error) {
+        toast.error(response.error);
+      } else {
+        setImportedData(response.data.data);
+        setShowImportData(true);
+        setShowImportModal(false);
+      }
+    } catch (error) {
+      console.error("Error processing Excel file:", error);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files;
+
+    if (!file) {
+      toast.error("Please select a file");
+      return;
+    }
+
+    if (file[0].name.split(".").pop() !== "xlsx") {
+      toast.error("Please select an Excel file");
+      return;
+    }
+    setFile(file[0]);
   };
 
   return (
@@ -642,13 +825,22 @@ function SalaryGeneration() {
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
                           <td className="text-end">
-                            {Number(item.totalEarnings).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.totalEarnings)}
                           </td>
                           <td className="text-end">
-                            {Number(item.totalDeductions).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.totalDeductions)}
                           </td>
                           <td className="text-end">
-                            {Number(item.netSalary).toFixed(2)}
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.netSalary)}
                           </td>
                           <td>
                             <span
@@ -694,13 +886,18 @@ function SalaryGeneration() {
                     Undo Draft Salary Generation
                   </button>
                   <button
-                    type="submit"
+                    disabled={
+                      salaryDraft.filter(
+                        (x) => x.approvalStatus.toLowerCase() === "draft"
+                      ).length === 0
+                    }
+                    onClick={() => ExportSalaryGeneration()}
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
                   >
                     Export to Excel for Review
                   </button>
                   <button
-                    type="submit"
+                    onClick={() => setShowImportModal(true)}
                     className="btn btn-primary btn-sm py-2 px-4 me-2"
                   >
                     Import from Excel
@@ -760,6 +957,50 @@ function SalaryGeneration() {
           </div>
         </div>
       )}
+
+      {showImportModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Import from Excel</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowImportModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <input type="file" onChange={handleFileChange} />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleImport}
+                >
+                  upload
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowImportModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <ShowDraft show={show} setShow={setShow} />
+      <ShowImport
+        showImportData={showImportData}
+        setShowImportData={setShowImportData}
+      />
     </div>
   );
 }

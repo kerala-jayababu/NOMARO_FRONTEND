@@ -48,7 +48,7 @@ function App() {
             <Route path="scheduled-deductions" element={<ScheduledDeductions />} />
             <Route path="overtime-transactions" element={<OvertimeTransaction />} />
             <Route path="salary-generation" element={<SalaryGeneration />} />
-            <Route path="salary-generation-approval" element={<SalaryApproved />} />
+            <Route path="salary-approval" element={<SalaryApproved />} />
             <Route path="config-approvals" element={<ConfigApproval />} />
             <Route path="income-tax-config" element={<TaxConfiguration />} /> 
             <Route path="currency-conversion" element={<CurrencyConversion />} />
