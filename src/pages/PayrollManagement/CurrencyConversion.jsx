@@ -142,14 +142,6 @@ function CurrencyConversion() {
 
     try {
       const response = await service(payload);
-      // if (response.error) {
-      //   throw new Error(response.error);
-      // }
-
-      // toast.success(`${formData.idCurrencyConversion!==0 ? 'Updated' : 'Added'} successfully!`, {
-      //   position: 'top-right',
-      //   autoClose: 2000
-      // });
       getCurrencyConversions();
       handleReset();
     } catch (err) {
