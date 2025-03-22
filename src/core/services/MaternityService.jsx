@@ -24,7 +24,7 @@ export default class MaternityService {
   static saveMaternityLeaveSalariesData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddMaternityLeaveSalary", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);
@@ -34,7 +34,7 @@ export default class MaternityService {
   static updateMaternityLeaveSalariesData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdateMaternityLeaveSalary", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);

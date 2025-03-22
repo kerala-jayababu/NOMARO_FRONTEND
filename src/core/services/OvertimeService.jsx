@@ -24,7 +24,7 @@ export default class OvertimeService {
   static saveOvertimeTransactionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddOvertimeTransaction", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);
@@ -34,7 +34,7 @@ export default class OvertimeService {
   static updateOvertimeTransactionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdateOvertimeTransaction", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);
