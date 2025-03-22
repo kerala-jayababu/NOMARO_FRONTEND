@@ -18395,3 +18395,41 @@ input[type=number] {
 .custom-card-body {
   padding: 10px; 
 }
+
+
+/* Custom table wrapper for table with sticky header and scrollable body */
+.custom-table-wrapper {
+  display: block;
+  max-height: 400px;  
+  overflow-y: auto;
+  padding-bottom: 50px; 
+}
+
+.custom-table-wrapper thead {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 1;
+}
+
+.custom-table-wrapper .table th, .custom-table-wrapper .table td {
+  padding: 0.5rem;
+}
+
+/* Fixed Submit Button */
+.custom-submit-btn-wrapper {
+  bottom: 20px;
+  left: 50%;
+  z-index: 2;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+
+.custom-date-picker-wrapper {
+  position: relative;
+  z-index: 2;  /* Make sure it's above the sticky header */
+}
+
+

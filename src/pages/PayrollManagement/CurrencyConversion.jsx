@@ -190,7 +190,7 @@ function CurrencyConversion() {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Currency Conversion</h5>
-              <div className="list_menu">
+              <div className="custom-date-picker-wrapper">
                 <div>
                   <label className='p-2'>From Date</label>
                   <DatePicker
@@ -211,55 +211,56 @@ function CurrencyConversion() {
 
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>From Currency</th>
-                      <th>To Currency</th>
-                      <th className="text-end">Rate</th>
-                      <th className="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {currencyConversions && currencyConversions.map((conversion) => (
-                      <tr key={conversion.idCurrencyConversion}>
-                        <td>{moment(conversion.rateDate).format("MM/DD/YYYY")}</td>
-                        <td>{conversion.fromCurrency}</td>
-                        <td>{conversion.toCurrency}</td>
-                        <td className="text-end">{Number(conversion.conversionRate).toFixed(4)}</td>
-                        <td className="text-end">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                            onClick={() => handleEdit(conversion)}
-                          >
-                            <span className="tf-icons bx bx-pencil"></span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {currencyConversions.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="text-center">
-                          <div className="Nodatafound_box">
-                            <h6><i className="bx bx-search"></i> No data available!</h6>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+  <div className="custom-table-wrapper">
+    <table className="table table-sm">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>From Currency</th>
+          <th>To Currency</th>
+          <th className="text-end">Rate</th>
+          <th className="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody className="table-border-bottom-0">
+        {currencyConversions && currencyConversions.map((conversion) => (
+          <tr key={conversion.idCurrencyConversion}>
+            <td>{moment(conversion.rateDate).format("MM/DD/YYYY")}</td>
+            <td>{conversion.fromCurrency}</td>
+            <td>{conversion.toCurrency}</td>
+            <td className="text-end">{Number(conversion.conversionRate).toFixed(4)}</td>
+            <td className="text-end">
+              <button
+                type="button"
+                className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                onClick={() => handleEdit(conversion)}
+              >
+                <span className="tf-icons bx bx-pencil"></span>
+              </button>
+            </td>
+          </tr>
+        ))}
+        {currencyConversions.length === 0 && (
+          <tr>
+            <td colSpan="5" className="text-center">
+              <div className="Nodatafound_box">
+                <h6><i className="bx bx-search"></i> No data available!</h6>
               </div>
-            </div>
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
           </div>
         </div>
 
         <div className="col-lg-4">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Add/Update Currency Conversion</h5>
+              <h5 className="mb-0">Add/Update Conversion Rate</h5>
             </div>
             <div className="card-body">
               <Form onSubmit={handleSubmit} noValidate validated={validated}>

@@ -16,6 +16,7 @@ import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
+import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 
 export const privateRoutes = [
   {
@@ -89,6 +90,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/bank-branches",
     element: <BankAndBranches />,
+  },
+  {
+    path: "/dashboard/rent-free-quarters",
+    element: <RentFreeQuarters />,
   },
 ];
 

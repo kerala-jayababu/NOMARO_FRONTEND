@@ -42,7 +42,7 @@ function BankAndBranches() {
         setLoading(true);
         BankAndBranchService.getBranches(idBank)
             .then(res => {
-                if(res.data.data.length == 0){
+                if (res.data.data.length == 0) {
                     setBranches([
                         {
                             idBankBranches: 0,
@@ -53,7 +53,7 @@ function BankAndBranches() {
                             abaRoutingNumber: '',
                             isNew: true,
                         },
-                    ]); 
+                    ]);
                 } else {
                     setBranches(res.data.data);
                 }
@@ -98,22 +98,22 @@ function BankAndBranches() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('branches',branches);
+        console.log('branches', branches);
         const hasEmptyBranchName = branches.some(branch => !branch.branchName);
-        if(hasEmptyBranchName){
+        if (hasEmptyBranchName) {
             setValidated(true);
             return;
         }
-        let passData = branches.map((branch) => 
+        let passData = branches.map((branch) =>
             branch.isNew ? { ...branch, idBankBranches: 0 } : branch
-          );
+        );
         BankAndBranchService.saveBankAndBranch(passData).then(res => {
             getBranches(choosedBankId);
         }).catch(err => {
             console.log(err);
             // toast.error('Something went wrong');
         });
-        
+
     };
 
     return (
@@ -138,8 +138,8 @@ function BankAndBranches() {
 
                         </div>
                         <div className="card-body">
-                            <div className="table-responsive text-nowrap">
-                                <Form onSubmit={handleSubmit} noValidate validated={validated}>
+                            <div className="custom-table-wrapper">
+                                <Form noValidate validated={validated}>
                                     <table className="table table-sm">
                                         <thead>
                                             <tr>
@@ -197,18 +197,24 @@ function BankAndBranches() {
                                                     </td>
                                                     <td className="text-end">
                                                         <div className="d-flex">
-                                                            {(index == branches.length - 1) &&
-                                                                <button type="button" className="btn btn-outline-primary border-0 btn-sm me-2"
-                                                                    onClick={() => handleAddRow()}>
+                                                            {(index === branches.length - 1) && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-outline-primary border-0 btn-sm me-2"
+                                                                    onClick={() => handleAddRow()}
+                                                                >
                                                                     <i className="bx bx-plus"></i>
                                                                 </button>
-                                                            }
-                                                            {(branches.length > 1) &&
-                                                                <button type="button" className="btn btn-outline-danger btn-sm border-0"
-                                                                    onClick={() => handleDeleteRow(data.idBankBranches)}>
+                                                            )}
+                                                            {(branches.length > 1) && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-outline-danger btn-sm border-0"
+                                                                    onClick={() => handleDeleteRow(data.idBankBranches)}
+                                                                >
                                                                     <i className="bx bx-trash"></i>
                                                                 </button>
-                                                            }
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -224,13 +230,23 @@ function BankAndBranches() {
                                             )}
                                         </tbody>
                                     </table>
-                                    {branches.length !=0 && <div className="text-center mt-3">
-                                        <button type="submit"
-                                            className="btn btn-primary px-4 me-2 mr">Submit</button>
-                                    </div>}
                                 </Form>
                             </div>
+
+                            {/* Fixed Submit Button */}
+                            {branches.length !== 0 && (
+                                <div className="custom-submit-btn-wrapper text-center">
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary px-4"
+                                        onClick={(e) => handleSubmit(e)}
+                                    >
+                                        Submit
+                                    </button>
+                                </div>
+                            )}
                         </div>
+
                     </div>
                 </div>
 

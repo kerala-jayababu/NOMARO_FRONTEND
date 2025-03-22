@@ -25,6 +25,7 @@ import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
+import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -53,6 +54,7 @@ function App() {
             <Route path="currency-conversion" element={<CurrencyConversion />} />
             <Route path="notification-types" element={<NotificationConfig />} />
             <Route path='bank-branches' element={<BankAndBranches/>} />
+            <Route path='rent-free-quarters' element={<RentFreeQuarters/>} />
           </Route>
         </Route>
 
