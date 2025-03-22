@@ -553,7 +553,7 @@ function TaxConfiguration() {
               {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button> */}
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
+              <div className="custom-table-wrapper">
                 {loading && <div className="text-center p-3">Loading...</div>}
                 {/* {baseError && <div className="text-danger p-3">{baseError}</div>} */}
                 {!loading && (
@@ -602,7 +602,7 @@ function TaxConfiguration() {
               {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button> */}
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
+              <div className="custom-table-wrapper">
                 <table className="table table-sm">
                   <thead>
                     <tr>
