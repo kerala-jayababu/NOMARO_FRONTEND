@@ -32,17 +32,17 @@ export default class SalaryTemplateService {
   static saveSalaryTemplateData = async (payload) => {
     try {
       const res = await API.post("/api/v1/SalaryTemplate/AddSalaryTemplate", payload);
-      handleApiSuccessOrError(response, false);
+      handleApiSuccessOrError(res, false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error, true);
+      return handleApiSuccessOrError(res.data, true);
     }
   }
 
   static updateSalaryTemplateData = async (payload) => {
     try {
       const res = await API.post("/api/v1/SalaryTemplate/UpdateSalaryTemplate", payload);
-      handleApiSuccessOrError(response, false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error, true);

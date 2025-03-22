@@ -15,7 +15,7 @@ export default class SalaryAdjustmentService {
   static saveSalaryAdjustmentsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddSalaryAdjustment", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);
@@ -25,7 +25,7 @@ export default class SalaryAdjustmentService {
   static updateSalaryAdjustmentsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdateSalaryAdjustment", payload);
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(res.data,false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(error,true);
