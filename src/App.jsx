@@ -26,6 +26,7 @@ import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
+import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -35,7 +36,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />}>
             <Route index element={<ComingSoon />} /> {/* Default route inside Dashboard */}
             <Route path="vacation-mode" element={<VacationMode />} />
-            <Route path="salary-templates" element={<SalaryTemplate />} />
+            <Route path="salary-templates" element={<SalaryTemplateNew />} />
             <Route path="budget-codes" element={<BudgetCode />} />
             <Route path="departments" element={<Departments />} />
             <Route path="designations" element={<Designations />} />

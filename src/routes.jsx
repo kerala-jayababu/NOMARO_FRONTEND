@@ -17,6 +17,7 @@ import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
+import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 
 export const privateRoutes = [
   {
@@ -49,7 +50,7 @@ export const privateRoutes = [
   }, 
   {
     path: "/dashboard/salary-templates",
-    element: <SalaryTemplate />,
+    element: <SalaryTemplateNew />,
   },
   {
     path: "/dashboard/employee-salary-config",

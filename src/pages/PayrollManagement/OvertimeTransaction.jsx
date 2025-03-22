@@ -419,7 +419,6 @@ function OvertimeTransaction() {
                     )}
                   </tbody>
                 </table>
-
               </div>
               <div className="text-end pt-2">
                 <Pagination
@@ -446,7 +445,7 @@ function OvertimeTransaction() {
               <div className="accountDetail_card">
                 <Form noValidate validated={validated}>
                   <div className="accountDetail_card">
-                    <div className="row m-0 mt-3">
+                    <div className="row m-0">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
 
