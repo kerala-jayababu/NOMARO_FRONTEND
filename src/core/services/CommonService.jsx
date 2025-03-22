@@ -92,4 +92,13 @@ export default class CommonService {
     }
 }
 
+static getSystemParameters = async () => {
+  try {
+      const response = await API.get("/api/v1/MasterData/GetSystemParameters");
+      return { error: null, data: response.data };  
+  } catch (error) {
+      return handleApiError(error);
+  }
+}
+
 }
