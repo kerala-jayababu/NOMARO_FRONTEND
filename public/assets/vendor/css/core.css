@@ -18398,6 +18398,14 @@ input[type=number] {
 
 
 /* Custom table wrapper for table with sticky header and scrollable body */
+
+.custom-table-wrapper-tax {
+  display: block;
+  max-height: 200px;  
+  overflow-y: auto;
+  padding-bottom: 50px; 
+}
+
 .custom-table-wrapper {
   display: block;
   max-height: 400px;  
@@ -18405,14 +18413,14 @@ input[type=number] {
   padding-bottom: 50px; 
 }
 
-.custom-table-wrapper thead {
+.custom-table-wrapper-tax,.custom-table-wrapper thead {
   position: sticky;
   top: 0;
   background-color: #fff;
   z-index: 1;
 }
 
-.custom-table-wrapper .table th, .custom-table-wrapper .table td {
+.custom-table-wrapper-tax, .custom-table-wrapper .table th, .custom-table-wrapper-tax,.custom-table-wrapper .table td {
   padding: 0.5rem;
 }
 
