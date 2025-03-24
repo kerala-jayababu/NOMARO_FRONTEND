@@ -390,7 +390,7 @@ const EmployeeSalaryConfig = () => {
         value: detail.calculationMethod === "FIXEDAMOUNT" ? detail.fixedAmount : detail.percentageValue,
         customFormula: detail.customFormula,
         percentageOf: detail.percentageOfIdSalaryHead,
-        calculatedValue: detail.finalSalaryAmount,
+        calculatedValue: detail.salaryAmount,
       }));
 
       setRows(mappedRows);
@@ -425,7 +425,7 @@ const EmployeeSalaryConfig = () => {
         value: detail.calculationMethod === "FIXEDAMOUNT" ? detail.fixedAmount : detail.percentageValue,
         customFormula: detail.customFormula,
         percentageOf: detail.percentageOfIdSalaryHead,
-        calculatedValue: detail.finalSalaryAmount,
+        calculatedValue: detail.salaryAmount,
       }));
 
       setRows(mappedRows);
@@ -491,7 +491,7 @@ const EmployeeSalaryConfig = () => {
         percentageOfIdSalaryHead: row.calculationMethod === "PERCENTAGE" ? row.percentageOf : null,
         percentageValue: row.calculationMethod === "PERCENTAGE" ? row.value : null,
         customFormula: row.calculationMethod === "FORMULA" ? row.customFormula : null,
-        finalSalaryAmount: row.calculatedValue,
+        salaryAmount: row.calculatedValue,
       }))
     };
     EmployeeSalaryConfigService.saveEmployeeSalaryConfigData(payload)
@@ -530,7 +530,7 @@ const EmployeeSalaryConfig = () => {
         percentageOfIdSalaryHead: row.calculationMethod === "PERCENTAGE" ? row.percentageOf : null,
         percentageValue: row.calculationMethod === "PERCENTAGE" ? row.value : null,
         customFormula: row.calculationMethod === "FORMULA" ? row.customFormula : null,
-        finalSalaryAmount: row.calculatedValue,
+        salaryAmount: row.calculatedValue,
       }))
     };
     EmployeeSalaryConfigService.updateEmployeeSalaryConfigData(payload)
@@ -899,9 +899,7 @@ const EmployeeSalaryConfig = () => {
                                     : "Custom Formula"}
                               </td>
                               <td>
-                                {detail.calculationMethod === "PERCENTAGE"
-                                  ? Utils.formattedNumber(detail?.salaryAmount)
-                                  : Utils.formattedNumber(detail.fixedAmount)}
+                                {Utils.formattedNumber(detail.salaryAmount)}
                               </td>
                             </tr>
                           );

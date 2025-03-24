@@ -23,7 +23,7 @@ export default class EmployeeSalaryConfigService {
   static saveEmployeeSalaryConfigData = async (payload) => {
     try {
       const res = await API.post("/api/v1/EmployeeSalaryConfig/AddEmployeeSalaryConfig", payload);
-      handleApiSuccessOrError(res, false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
       return handleApiSuccessOrError(res.data, true);
