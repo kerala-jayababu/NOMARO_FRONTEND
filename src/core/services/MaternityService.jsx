@@ -8,8 +8,8 @@ export default class MaternityService {
       const res = await API.get("/api/v1/PayRollManagement/GetAllMaternityLeaveSalaries?fromDate=" + date + '&searchText=' + searchText);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static getMaternityLeaveSalaryById = async (id) => {
@@ -17,27 +17,27 @@ export default class MaternityService {
       const res = await API.get("/api/v1/PayRollManagement/GetMaternityLeaveSalaryById?id=" + id);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static saveMaternityLeaveSalariesData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddMaternityLeaveSalary", payload);
-      handleApiSuccessOrError(res.data,false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static updateMaternityLeaveSalariesData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdateMaternityLeaveSalary", payload);
-      handleApiSuccessOrError(res.data,false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 }
