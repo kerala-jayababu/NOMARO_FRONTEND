@@ -170,7 +170,6 @@ body {
   position: sticky;
   top: 0;
   background-color: var(--primary-light);
-  z-index: 100; 
   transform: translateZ(0);
 }
 

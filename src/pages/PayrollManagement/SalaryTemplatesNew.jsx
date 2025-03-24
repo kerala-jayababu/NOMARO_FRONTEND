@@ -149,19 +149,19 @@ const SalaryTemplateNew = () => {
       }
       return row;
     });
-    setRows(updatedRows);
 
     // Find the updated row
     const updatedRow = updatedRows.find(row => row.id === id);
     if (updatedRow && updatedRow.selectedSalaryHead) {
       const salaryHeadCode = updatedRow.selectedSalaryHead.salaryHeadCode;
 
-      // Find all rows that depend on this salary head
+      // Mark all dependent rows for recalculation
       const dependentRows = getDependentRows(updatedRows, salaryHeadCode);
+      const rowsToRecalculate = [...dependentRows, updatedRow];
 
-      // Recalculate dependent rows
+      // Recalculate all affected rows
       const recalculatedRows = updatedRows.map(row => {
-        if (dependentRows.some(depRow => depRow.id === row.id)) {
+        if (rowsToRecalculate.some(r => r.id === row.id)) {
           return calculateRowValue(row, updatedRows);
         }
         return row;
@@ -218,10 +218,11 @@ const SalaryTemplateNew = () => {
     const { calculationMethod, value, customFormula, percentageOf } = row;
 
     if (calculationMethod === "FIXEDAMOUNT") {
-      calculatedValue = parseFloat(value);
+      calculatedValue = parseFloat(value) || 0;
     } else if (calculationMethod === "PERCENTAGE") {
       const baseHead = rows.find(r => r.selectedSalaryHead?.idSalaryHead === percentageOf);
       if (baseHead && baseHead.calculatedValue !== undefined) {
+        // Convert percentage to decimal properly (20% = 0.20)
         calculatedValue = (baseHead.calculatedValue || 0) * (parseFloat(value) / 100);
       } else {
         setErrors((prevErrors) => ({ ...prevErrors, [row.id]: "Base salary head not selected or calculated." }));
@@ -247,28 +248,44 @@ const SalaryTemplateNew = () => {
   };
 
   const calculateValues = (rows) => {
-    const updatedRows = rows.map(row => calculateRowValue(row, rows));
+    // First pass - calculate all fixed amounts
+    let updatedRows = rows.map(row => {
+      if (row.calculationMethod === "FIXEDAMOUNT") {
+        return calculateRowValue(row, rows);
+      }
+      return row;
+    });
+
+    // Second pass - calculate percentages (which depend on fixed amounts)
+    updatedRows = updatedRows.map(row => {
+      if (row.calculationMethod === "PERCENTAGE") {
+        return calculateRowValue(row, updatedRows);
+      }
+      return row;
+    });
+
+    // Third pass - calculate formulas (which may depend on both)
+    updatedRows = updatedRows.map(row => {
+      if (row.calculationMethod === "FORMULA") {
+        return calculateRowValue(row, updatedRows);
+      }
+      return row;
+    });
 
     const earnings = updatedRows
       .filter(row => row.selectedSalaryHead?.headType === "EARNING")
-      .reduce((sum, row) => sum + row.calculatedValue, 0);
+      .reduce((sum, row) => sum + (row.calculatedValue || 0), 0);
+
     const deductions = updatedRows
       .filter(row => row.selectedSalaryHead?.headType === "DEDUCTION")
-      .reduce((sum, row) => sum + row.calculatedValue, 0);
+      .reduce((sum, row) => sum + (row.calculatedValue || 0), 0);
+
     const net = earnings - deductions;
 
-    // Only update state if values have changed
-    if (
-      JSON.stringify(rows) !== JSON.stringify(updatedRows) || // Check if rows have changed
-      totalEarnings !== earnings ||
-      totalDeductions !== deductions ||
-      netSalary !== net
-    ) {
-      setRows(updatedRows);
-      setTotalEarnings(earnings);
-      setTotalDeductions(deductions);
-      setNetSalary(net);
-    }
+    setRows(updatedRows);
+    setTotalEarnings(earnings);
+    setTotalDeductions(deductions);
+    setNetSalary(net);
   };
 
   const getDependentRows = (rows, salaryHeadCode) => {
