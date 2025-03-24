@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Modal } from "react-bootstrap";
+import { Form, Modal } from "react-bootstrap";
 import CommonService from "../../core/services/CommonService";
 import { evaluate } from 'mathjs';
 import Utils from "../../utils/Utils";
@@ -37,6 +37,7 @@ const EmployeeSalaryConfig = () => {
   const [employeesListOption, setEmployeesListOption] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [empDescDept, setEmpDescDept] = useState('');
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -456,6 +457,7 @@ const EmployeeSalaryConfig = () => {
       percentageOf: null,
       calculatedValue: 0
     }]);
+    setValidated(false);
     setSelectedEmployee(null)
     setDesignation(null);
     setEmpDescDept(null);
@@ -467,7 +469,12 @@ const EmployeeSalaryConfig = () => {
     setEmpDescDept("");
   };
 
-  const handleSave = () => {
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (!selectedEmployee) {
+      setValidated(true);
+      return;
+    }
     const payload = {
       idEmployeeSalaryConfig: null,
       idEmployee: selectedEmployee?.value,
@@ -499,7 +506,12 @@ const EmployeeSalaryConfig = () => {
       });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = (e) => {
+    e.preventDefault();
+    if (!selectedEmployee) {
+      setValidated(true);
+      return;
+    }
     const payload = {
       idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig ?? null,
       idEmployee: selectedEmployee?.value,
@@ -636,178 +648,180 @@ const EmployeeSalaryConfig = () => {
             </Modal.Header>
 
             <Modal.Body>
-              <div className="row m-0">
-                <div className="col-md-4 p-2">
-                  <label className="form-label mb-1">Employee Name</label>
-                  <Select
-                    options={employeesListOption}
-                    isSearchable
-                    onChange={handleChange}
-                    value={selectedEmployee}
-                    placeholder={'Select Employee'}
-                    className='textSize' required
-                  />
+              <Form noValidate validated={validated}>
+                <div className="row m-0">
+                  <div className="col-md-4 p-2">
+                    <label className="form-label mb-1">Employee Name</label>
+                    <Select
+                      options={employeesListOption}
+                      isSearchable
+                      onChange={handleChange}
+                      value={selectedEmployee}
+                      placeholder={'Select Employee'}
+                      className='textSize' required
+                    />
+                  </div>
+
+                  <div className="col-md-4 p-2">
+                    <label className="form-label mb-1">Designation</label>
+                    <input className='form-control' value={empDescDept} disabled />
+                  </div>
+
+                  <div className="col-md-4 p-2">
+                    <label className="form-label mb-1">Templates</label>
+                    <select
+                      className="form-select form-select"
+                      value={selectedTemplateId}
+                      onChange={(e) => {
+                        setSelectedTemplateId(e.target.value);
+                      }}>
+                      <option value="">Select Templates</option>
+                      {templatesList.map(tem => (
+                        <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
+                          {tem.salaryTemplateName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="col-md-4 p-2">
-                  <label className="form-label mb-1">Designation</label>
-                  <input className='form-control' value={empDescDept} disabled />
-                </div>
-
-                <div className="col-md-4 p-2">
-                  <label className="form-label mb-1">Templates</label>
-                  <select
-                    className="form-select form-select"
-                    value={selectedTemplateId}
-                    onChange={(e) => {
-                      setSelectedTemplateId(e.target.value);
-                    }}>
-                    <option value="">Select Templates</option>
-                    {templatesList.map(tem => (
-                      <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
-                        {tem.salaryTemplateName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Salary Head</th>
-                      <th>Calculation Method</th>
-                      <th>Percentage Of</th>
-                      <th>Value/Formula</th>
-                      <th className="text-center">Calculated Value</th>
-                      <th className="text-center"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, index) => (
-                      <tr key={row.id}>
-                        <td>
-                          <select className="form-select form-select-sm"
-                            value={row.selectedSalaryHead?.idSalaryHead || ""}
-                            onChange={(e) => handleSalaryHeadChange(row.id, parseInt(e.target.value))}
-                          >
-                            <option value="">Select Salary Head</option>
-                            {getAvailableSalaryHeads(row.id).map(head => (
-                              <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                {head.salaryHeadName}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <select className="form-select form-select-sm"
-                            value={row.calculationMethod}
-                            onChange={(e) => handleCalculationMethodChange(row.id, e.target.value)}
-                          >
-                            <option value="FIXEDAMOUNT">Fixed Amount</option>
-                            <option value="PERCENTAGE">Percentage</option>
-                            <option value="FORMULA">Formula</option>
-                          </select>
-                        </td>
-                        <td>
-                          {row.calculationMethod === "PERCENTAGE" ? (
+                <div>
+                  <table className="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Salary Head</th>
+                        <th>Calculation Method</th>
+                        <th>Percentage Of</th>
+                        <th>Value/Formula</th>
+                        <th className="text-center">Calculated Value</th>
+                        <th className="text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
                             <select className="form-select form-select-sm"
-                              value={row.percentageOf || ""}
-                              onChange={(e) => handlePercentageOfChange(row.id, parseInt(e.target.value))}
+                              value={row.selectedSalaryHead?.idSalaryHead || ""}
+                              onChange={(e) => handleSalaryHeadChange(row.id, parseInt(e.target.value))} required
                             >
                               <option value="">Select Salary Head</option>
-                              {rows
-                                .filter(r => r.id !== row.id && r.selectedSalaryHead)
-                                .map(r => (
-                                  <option key={r.selectedSalaryHead.idSalaryHead} value={r.selectedSalaryHead.idSalaryHead}>
-                                    {r.selectedSalaryHead.salaryHeadName}
-                                  </option>
-                                ))}
+                              {getAvailableSalaryHeads(row.id).map(head => (
+                                <option key={head.idSalaryHead} value={head.idSalaryHead}>
+                                  {head.salaryHeadName}
+                                </option>
+                              ))}
                             </select>
-                          ) : '-'}
-                        </td>
-                        <td>
-                          {row.calculationMethod === "FORMULA" ? (
-                            <>
-                              <input className="form-control form-control-sm"
-                                type="text"
-                                value={row.customFormula}
-                                onChange={(e) => handleValueChange(row.id, 'customFormula', e.target.value)}
-                              />
-                              {errors[row.id] && <div style={{ color: "red" }}>{errors[row.id]}</div>}
-                            </>
-                          ) : (
-                            // <input className="form-control form-control-sm"
-                            //   type="number"
-                            //   value={row.value}
-                            //   onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
-                            // />
-                            <>
-                              <NumericFormat
-                                className="form-control form-control-sm"
-                                value={row.value}
-                                onValueChange={(values) => {
-                                  const { value } = values;
-                                  handleValueChange(row.id, 'value', value)
-                                }}
-                                decimalScale={2} // Allow up to 2 decimal places
-                                allowNegative={false} // Disallow negative numbers
-                                thousandSeparator={true} // Disable thousand separators
-                                allowLeadingZeros={false}
-                                placeholder="Add amount"
-                                maxLength={12}
-                                required
-                              />
-                            </>
-                          )}
-                        </td>
+                          </td>
+                          <td>
+                            <select className="form-select form-select-sm"
+                              value={row.calculationMethod}
+                              onChange={(e) => handleCalculationMethodChange(row.id, e.target.value)}
+                            >
+                              <option value="FIXEDAMOUNT">Fixed Amount</option>
+                              <option value="PERCENTAGE">Percentage</option>
+                              <option value="FORMULA">Formula</option>
+                            </select>
+                          </td>
+                          <td>
+                            {row.calculationMethod === "PERCENTAGE" ? (
+                              <select className="form-select form-select-sm"
+                                value={row.percentageOf || ""}
+                                onChange={(e) => handlePercentageOfChange(row.id, parseInt(e.target.value))}
+                              >
+                                <option value="">Select Salary Head</option>
+                                {rows
+                                  .filter(r => r.id !== row.id && r.selectedSalaryHead)
+                                  .map(r => (
+                                    <option key={r.selectedSalaryHead.idSalaryHead} value={r.selectedSalaryHead.idSalaryHead}>
+                                      {r.selectedSalaryHead.salaryHeadName}
+                                    </option>
+                                  ))}
+                              </select>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {row.calculationMethod === "FORMULA" ? (
+                              <>
+                                <input className="form-control form-control-sm"
+                                  type="text"
+                                  value={row.customFormula}
+                                  onChange={(e) => handleValueChange(row.id, 'customFormula', e.target.value)} required
+                                />
+                                {errors[row.id] && <div style={{ color: "red" }}>{errors[row.id]}</div>}
+                              </>
+                            ) : (
+                              // <input className="form-control form-control-sm"
+                              //   type="number"
+                              //   value={row.value}
+                              //   onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
+                              // />
+                              <>
+                                <NumericFormat
+                                  className="form-control form-control-sm"
+                                  value={row.value}
+                                  onValueChange={(values) => {
+                                    const { value } = values;
+                                    handleValueChange(row.id, 'value', value)
+                                  }}
+                                  decimalScale={2} // Allow up to 2 decimal places
+                                  allowNegative={false} // Disallow negative numbers
+                                  thousandSeparator={true} // Disable thousand separators
+                                  allowLeadingZeros={false}
+                                  placeholder="Add value"
+                                  maxLength={12}
+                                  required
+                                />
+                              </>
+                            )}
+                          </td>
 
-                        <td className="text-center">{row.calculatedValue}</td>
-                        <td>
-                          {rows.length > 1 && (
-                            <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
-                              <i className="bx bx-trash"></i>
-                            </button>
-                          )}
-                          {(rows.length - 1 == index) && (
-                            <button className="btn btn-outline-primary border-0 btn-sm" onClick={addRow}>
-                              <i className="bx bx-plus"></i>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="total_salarycard">
-                  <ul
-                    style={{
-                      display: "flex",
-                      gap: "20px",
-                      listStyleType: "none",
-                      padding: "0",
-                    }}
-                  >
-                    <li style={{ margin: "0" }}>
-                      <b>Total Earnings:</b> {Utils.formattedNumber(totalEarnings)}
-                    </li>
-                    <li style={{ margin: "0" }}>
-                      <b>Total Deductions:</b> {Utils.formattedNumber(totalDeductions)}
-                    </li>
-                    <li style={{ margin: "0" }}>
-                      <b>Net Salary:</b> {Utils.formattedNumber(netSalary)}
-                    </li>
-                  </ul>
+                          <td className="text-center">{row.calculatedValue}</td>
+                          <td>
+                            {rows.length > 1 && (
+                              <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
+                                <i className="bx bx-trash"></i>
+                              </button>
+                            )}
+                            {(rows.length - 1 == index) && (
+                              <button className="btn btn-outline-primary border-0 btn-sm" onClick={addRow}>
+                                <i className="bx bx-plus"></i>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="total_salarycard">
+                    <ul
+                      style={{
+                        display: "flex",
+                        gap: "20px",
+                        listStyleType: "none",
+                        padding: "0",
+                      }}
+                    >
+                      <li style={{ margin: "0" }}>
+                        <b>Total Earnings:</b> {Utils.formattedNumber(totalEarnings)}
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Total Deductions:</b> {Utils.formattedNumber(totalDeductions)}
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Net Salary:</b> {Utils.formattedNumber(netSalary)}
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              </Form>
             </Modal.Body>
             <Modal.Footer>
-              {
+            {
                 isEdit &&
                 <button
                   className="btn btn-primary btn-sm py-2 px-4 me-2"
-                  onClick={handleUpdate}>
+                  onClick={(e) => handleUpdate(e)}>
                   Update
                 </button>
               }
@@ -815,7 +829,7 @@ const EmployeeSalaryConfig = () => {
                 !isEdit &&
                 <button
                   className="btn btn-primary btn-sm py-2 px-4 me-2"
-                  onClick={handleSave}>
+                  onClick={(e) => handleSave(e)}>
                   Submit for Approval
                 </button>
               }

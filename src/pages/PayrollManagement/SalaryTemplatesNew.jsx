@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Modal } from "react-bootstrap";
+import { Form, Modal } from "react-bootstrap";
 import CommonService from "../../core/services/CommonService";
 import { evaluate } from 'mathjs';
 import Utils from "../../utils/Utils";
 import SalaryTemplateService from "../../core/services/SalaryTemplateService";
 import Pagination from "../../components/pagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import { NumericFormat } from "react-number-format";
 
 const SalaryTemplateNew = () => {
   const [templateName, setTemplateName] = useState("");
@@ -28,6 +29,7 @@ const SalaryTemplateNew = () => {
   const [dataToEdit, setDataToEdit] = useState([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -341,6 +343,7 @@ const SalaryTemplateNew = () => {
       percentageOf: null,
       calculatedValue: 0
     }]);
+    setValidated(false);
     setTemplateName("");
     setDescription("");
     setTotalEarnings(0);
@@ -351,7 +354,12 @@ const SalaryTemplateNew = () => {
     setSelectedTemplateId("");
   };
 
-  const handleSave = () => {
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (!templateName) {
+      setValidated(true);
+      return;
+    }
     const payload = {
       idSalaryTemplate: null,
       salaryTemplateName: templateName,
@@ -383,7 +391,11 @@ const SalaryTemplateNew = () => {
       });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = (e) => {
+    if (!templateName) {
+      setValidated(true);
+      return;
+    }
     const payload = {
       idSalaryTemplate: dataToEdit.idSalaryTemplate ?? null,
       salaryTemplateName: templateName,
@@ -513,175 +525,194 @@ const SalaryTemplateNew = () => {
             </Modal.Header>
 
             <Modal.Body>
-              <div className="row m-0">
-                <div className="col-md-6 p-2">
-                  <div className="form-check mb-1">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="flexCheckDefault"
-                      checked={copyFromTemplate}
-                      onChange={(e) => {
-                        setCopyFromTemplate(e.target.checked);
-                      }} />
-                    <label className="form-check-label" htmlFor="flexCheckDefault">
-                      Copy From Templates
-                    </label>
+              <Form noValidate validated={validated}>
+                <div className="row m-0">
+                  <div className="col-md-6 p-2">
+                    <div className="form-check mb-1">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="flexCheckDefault"
+                        checked={copyFromTemplate}
+                        onChange={(e) => {
+                          setCopyFromTemplate(e.target.checked);
+                        }} />
+                      <label className="form-check-label" htmlFor="flexCheckDefault">
+                        Copy From Templates
+                      </label>
+                    </div>
+                    <div className="mb-2">
+                      <select
+                        className="form-select form-select"
+                        value={selectedTemplateId}
+                        onChange={(e) => {
+                          setSelectedTemplateId(e.target.value);
+                        }}
+                        disabled={!copyFromTemplate}>
+                        <option value="">Select Templates</option>
+                        {templatesList.map(tem => (
+                          <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
+                            {tem.salaryTemplateName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <input className="form-control"
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      maxLength="50" required
+                    />
                   </div>
-                  <div className="mb-2">
-                    <select
-                      className="form-select form-select"
-                      value={selectedTemplateId}
-                      onChange={(e) => {
-                        setSelectedTemplateId(e.target.value);
-                      }}
-                      disabled={!copyFromTemplate}>
-                      <option value="">Select Templates</option>
-                      {templatesList.map(tem => (
-                        <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
-                          {tem.salaryTemplateName}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">Remarks</label>
+                    <textarea
+                      className="form-control form-control"
+                      rows="3"
+                      maxLength="500"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)} required
+                    ></textarea>
                   </div>
-                  <input className="form-control"
-                    type="text"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    maxLength="50"
-                  />
                 </div>
-                <div className="col-md-6 p-2">
-                  <label className="form-label mb-1">Remarks</label>
-                  <textarea
-                    className="form-control form-control"
-                    rows="3"
-                    maxLength="500"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  ></textarea>
-                </div>
-              </div>
 
-              <div>
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Salary Head</th>
-                      <th>Calculation Method</th>
-                      <th>Percentage Of</th>
-                      <th>Value/Formula</th>
-                      <th className="text-center">Calculated Value</th>
-                      <th className="text-center"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, index) => (
-                      <tr key={row.id}>
-                        <td>
-                          <select className="form-select form-select-sm"
-                            value={row.selectedSalaryHead?.idSalaryHead || ""}
-                            onChange={(e) => handleSalaryHeadChange(row.id, parseInt(e.target.value))}
-                          >
-                            <option value="">Select Salary Head</option>
-                            {getAvailableSalaryHeads(row.id).map(head => (
-                              <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                {head.salaryHeadName}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <select className="form-select form-select-sm"
-                            value={row.calculationMethod}
-                            onChange={(e) => handleCalculationMethodChange(row.id, e.target.value)}
-                          >
-                            <option value="FIXEDAMOUNT">Fixed Amount</option>
-                            <option value="PERCENTAGE">Percentage</option>
-                            <option value="FORMULA">Formula</option>
-                          </select>
-                        </td>
-                        <td>
-                          {row.calculationMethod === "PERCENTAGE" ? (
+                <div>
+                  <table className="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Salary Head</th>
+                        <th>Calculation Method</th>
+                        <th>Percentage Of</th>
+                        <th>Value/Formula</th>
+                        <th className="text-center">Calculated Value</th>
+                        <th className="text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
                             <select className="form-select form-select-sm"
-                              value={row.percentageOf || ""}
-                              onChange={(e) => handlePercentageOfChange(row.id, parseInt(e.target.value))}
+                              value={row.selectedSalaryHead?.idSalaryHead || ""}
+                              onChange={(e) => handleSalaryHeadChange(row.id, parseInt(e.target.value))} required
                             >
                               <option value="">Select Salary Head</option>
-                              {rows
-                                .filter(r => r.id !== row.id && r.selectedSalaryHead)
-                                .map(r => (
-                                  <option key={r.selectedSalaryHead.idSalaryHead} value={r.selectedSalaryHead.idSalaryHead}>
-                                    {r.selectedSalaryHead.salaryHeadName}
-                                  </option>
-                                ))}
+                              {getAvailableSalaryHeads(row.id).map(head => (
+                                <option key={head.idSalaryHead} value={head.idSalaryHead}>
+                                  {head.salaryHeadName}
+                                </option>
+                              ))}
                             </select>
-                          ) : '-'}
-                        </td>
-                        <td>
-                          {row.calculationMethod === "FORMULA" ? (
-                            <>
-                              <input className="form-control form-control-sm"
-                                type="text"
-                                value={row.customFormula}
-                                onChange={(e) => handleValueChange(row.id, 'customFormula', e.target.value)}
-                              />
-                              {errors[row.id] && <div style={{ color: "red" }}>{errors[row.id]}</div>}
-                            </>
-                          ) : (
-                            <input className="form-control form-control-sm"
-                              type="number"
-                              value={row.value}
-                              onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
-                            />
-                          )}
-                        </td>
+                          </td>
+                          <td>
+                            <select className="form-select form-select-sm"
+                              value={row.calculationMethod}
+                              onChange={(e) => handleCalculationMethodChange(row.id, e.target.value)}
+                            >
+                              <option value="FIXEDAMOUNT">Fixed Amount</option>
+                              <option value="PERCENTAGE">Percentage</option>
+                              <option value="FORMULA">Formula</option>
+                            </select>
+                          </td>
+                          <td>
+                            {row.calculationMethod === "PERCENTAGE" ? (
+                              <select className="form-select form-select-sm"
+                                value={row.percentageOf || ""}
+                                onChange={(e) => handlePercentageOfChange(row.id, parseInt(e.target.value))}
+                              >
+                                <option value="">Select Salary Head</option>
+                                {rows
+                                  .filter(r => r.id !== row.id && r.selectedSalaryHead)
+                                  .map(r => (
+                                    <option key={r.selectedSalaryHead.idSalaryHead} value={r.selectedSalaryHead.idSalaryHead}>
+                                      {r.selectedSalaryHead.salaryHeadName}
+                                    </option>
+                                  ))}
+                              </select>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {row.calculationMethod === "FORMULA" ? (
+                              <>
+                                <input className="form-control form-control-sm"
+                                  type="text"
+                                  value={row.customFormula}
+                                  onChange={(e) => handleValueChange(row.id, 'customFormula', e.target.value)} required
+                                />
+                                {errors[row.id] && <div style={{ color: "red" }}>{errors[row.id]}</div>}
+                              </>
+                            ) : (
+                              // <input className="form-control form-control-sm"
+                              //   type="number"
+                              //   value={row.value}
+                              //   onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
+                              // />
+                              <>
+                                <NumericFormat
+                                  className="form-control form-control-sm"
+                                  value={row.value}
+                                  onValueChange={(values) => {
+                                    const { value } = values;
+                                    handleValueChange(row.id, 'value', value)
+                                  }}
+                                  decimalScale={2} // Allow up to 2 decimal places
+                                  allowNegative={false} // Disallow negative numbers
+                                  thousandSeparator={true} // Disable thousand separators
+                                  allowLeadingZeros={false}
+                                  placeholder="Add value"
+                                  maxLength={12}
+                                  required
+                                />
+                              </>
+                            )}
+                          </td>
 
-                        <td className="text-center">{row.calculatedValue}</td>
-                        <td>
-                          {rows.length > 1 && (
-                            <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
-                              <i className="bx bx-trash"></i>
-                            </button>
-                          )}
-                          {(rows.length - 1 == index) && (
-                            <button className="btn btn-outline-primary border-0 btn-sm" onClick={addRow}>
-                              <i className="bx bx-plus"></i>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="total_salarycard">
-                  <ul
-                    style={{
-                      display: "flex",
-                      gap: "20px",
-                      listStyleType: "none",
-                      padding: "0",
-                    }}
-                  >
-                    <li style={{ margin: "0" }}>
-                      <b>Total Earnings:</b> {Utils.formattedNumber(totalEarnings)}
-                    </li>
-                    <li style={{ margin: "0" }}>
-                      <b>Total Deductions:</b> {Utils.formattedNumber(totalDeductions)}
-                    </li>
-                    <li style={{ margin: "0" }}>
-                      <b>Net Salary:</b> {Utils.formattedNumber(netSalary)}
-                    </li>
-                  </ul>
+                          <td className="text-center">{row.calculatedValue}</td>
+                          <td>
+                            {rows.length > 1 && (
+                              <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
+                                <i className="bx bx-trash"></i>
+                              </button>
+                            )}
+                            {(rows.length - 1 == index) && (
+                              <button className="btn btn-outline-primary border-0 btn-sm" onClick={addRow}>
+                                <i className="bx bx-plus"></i>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="total_salarycard">
+                    <ul
+                      style={{
+                        display: "flex",
+                        gap: "20px",
+                        listStyleType: "none",
+                        padding: "0",
+                      }}
+                    >
+                      <li style={{ margin: "0" }}>
+                        <b>Total Earnings:</b> {Utils.formattedNumber(totalEarnings)}
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Total Deductions:</b> {Utils.formattedNumber(totalDeductions)}
+                      </li>
+                      <li style={{ margin: "0" }}>
+                        <b>Net Salary:</b> {Utils.formattedNumber(netSalary)}
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              </Form>
             </Modal.Body>
             <Modal.Footer>
               {
                 isEdit &&
                 <button
                   className="btn btn-primary btn-sm py-2 px-4 me-2"
-                  onClick={handleUpdate}>
+                  onClick={(e) => handleUpdate(e)}>
                   Update
                 </button>
               }
@@ -689,7 +720,7 @@ const SalaryTemplateNew = () => {
                 !isEdit &&
                 <button
                   className="btn btn-primary btn-sm py-2 px-4 me-2"
-                  onClick={handleSave}>
+                  onClick={(e) => handleSave(e)}>
                   Submit for Approval
                 </button>
               }
