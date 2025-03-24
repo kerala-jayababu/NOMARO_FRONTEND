@@ -3,15 +3,18 @@ import { Modal } from "react-bootstrap";
 import CommonService from "../../core/services/CommonService";
 import { evaluate } from 'mathjs';
 import Utils from "../../utils/Utils";
-import SalaryTemplateService from "../../core/services/SalaryTemplateService";
 import Pagination from "../../components/pagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import EmployeeSalaryConfigService from "../../core/services/EmployeeSalaryConfigService";
+import moment from "moment";
+import Select from 'react-select';
+import { NumericFormat } from "react-number-format";
 
-const SalaryTemplateNew = () => {
-  const [templateName, setTemplateName] = useState("");
-  const [description, setDescription] = useState("");
+const EmployeeSalaryConfig = () => {
+  const [designation, setDesignation] = useState("");
   const [isEdit, setIsEdit] = useState(false);
-  const [templatesList, setTemplatesList] = useState([]);
+  const [employeeSalaryConfigList, setEmployeeSalaryConfigList] = useState([]);
+  const [employeeSalaryDetails, setEmployeeSalaryDetails] = useState([]);
   const [netSalary, setNetSalary] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [copyFromTemplate, setCopyFromTemplate] = useState(false);
@@ -24,13 +27,21 @@ const SalaryTemplateNew = () => {
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [errors, setErrors] = useState({});
-  const totalPages = Math.ceil(templatesList.length / rowsPerPage);
+  const totalPages = Math.ceil(employeeSalaryConfigList.length / rowsPerPage);
   const [dataToEdit, setDataToEdit] = useState([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [templatesList, setTemplatesList] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
+  const [employeesListOption, setEmployeesListOption] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [empDescDept, setEmpDescDept] = useState('');
 
   useEffect(() => {
     getSalaryHeadData();
+    getEmployeeSalaryConfigs();
+    getEmployeesData();
     getSalaryTemplates();
     addRow();
   }, []);
@@ -48,6 +59,19 @@ const SalaryTemplateNew = () => {
     }
   }, [selectedTemplateId]);
 
+  useEffect(() => {
+    if (selectedEmployee == null) {
+      setDesignation(null);
+      setEmpDescDept(null);
+      return;
+    }
+    const empDetails = employeesList.find(emp => emp.idEmployee == selectedEmployee.value);
+    setDesignation(empDetails?.idDesignation);
+    setEmpDescDept(empDetails?.designation);
+    // const selected = employeesListOption.find(option => option.value === selectedEmployee);
+    // setSelectedEmployee(selected);
+  }, [selectedEmployee]);
+
   const getSalaryHeadData = () => {
     CommonService.getSalaryHeadList().then(res => {
       setSalaryHeadList(res.data.data);
@@ -56,8 +80,21 @@ const SalaryTemplateNew = () => {
     });
   };
 
+  const getEmployeesData = () => {
+    CommonService.getEmployeeList().then(res => {
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
+      setEmployeesList(res.data.data);
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.fullName,
+      }));
+      setEmployeesListOption(options);
+    }).catch(err => {
+    });
+  }
+
   const getSalaryTemplates = () => {
-    SalaryTemplateService.getAllSalaryTemplates(searchText).then(res => {
+    EmployeeSalaryConfigService.getAllSalaryTemplates().then(res => {
       setTemplatesList(res.data.data);
     }).catch(err => {
       console.error("Failed to fetch salary templates:", err);
@@ -67,7 +104,41 @@ const SalaryTemplateNew = () => {
   const getSalaryTemplatesById = (id) => {
     Promise.all([
       CommonService.getSalaryHeadList(),
-      SalaryTemplateService.getAllSalaryTemplatesById(id),
+      EmployeeSalaryConfigService.getAllSalaryTemplatesById(id),
+    ])
+      .then(([salaryHeadsRes, templateRes]) => {
+        setSalaryHeadList(salaryHeadsRes.data.data);
+        setDataToEdit(templateRes.data.data);
+        setupEditForCopy(templateRes.data.data);
+        setIsInitialLoad(true);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch data:", err);
+      });
+  };
+
+  const getEmployeeSalaryConfigs = () => {
+    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText).then(res => {
+      setEmployeeSalaryConfigList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
+  const getEmpSalDetails = (id) => {
+    EmployeeSalaryConfigService.getEmployeeSalaryConfigById(id).then(res => {
+      setEmployeeSalaryDetails(res.data.data);
+      setShowDetailsModal(true);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
+  const getEmpSalConfigById = (id) => {
+    Promise.all([
+      CommonService.getSalaryHeadList(),
+      EmployeeSalaryConfigService.getEmployeeSalaryConfigById(id),
+      // CommonService.getEmployeeList()
     ])
       .then(([salaryHeadsRes, templateRes]) => {
         setSalaryHeadList(salaryHeadsRes.data.data);
@@ -80,9 +151,17 @@ const SalaryTemplateNew = () => {
       });
   };
 
+  const handleChange = (selectedOption) => {
+    // setNewData((prevData) => ({
+    //   ...prevData,
+    //   idEmployee: selectedOption.value
+    // }));
+    setSelectedEmployee(selectedOption);
+  };
+
   const addRow = () => {
     const newRow = {
-      idSalaryTemplateDetail: null,
+      idEmployeeSalaryConfigDetail: null,
       id: Date.now(),
       selectedSalaryHead: null,
       calculationMethod: "FIXEDAMOUNT",
@@ -289,11 +368,12 @@ const SalaryTemplateNew = () => {
   };
 
   const setupEdit = (data) => {
-    setIsEdit(copyFromTemplate ? false : true);
-    if (data.salaryTemplateDetails) {
-      const mappedRows = data.salaryTemplateDetails.map((detail, key) => ({
-        id: !copyFromTemplate ? detail.idSalaryTemplateDetail : key + 1,
-        idSalaryTemplateDetail: !copyFromTemplate ? detail.idSalaryTemplateDetail : null,
+    setIsEdit(true);
+    if (data.employeeSalaryConfigDetails) {
+      const mappedRows = data.employeeSalaryConfigDetails.map((detail, key) => ({
+        id: detail.idEmployeeSalaryConfigDetail ?? key + 1,
+        idEmployeeSalaryConfig: detail.idEmployeeSalaryConfig,
+        idEmployeeSalaryConfigDetail: detail.idEmployeeSalaryConfigDetail ?? null,
         selectedSalaryHead: {
           idSalaryHead: detail.idSalaryHead,
           salaryHeadName: detail.salaryHeadName,
@@ -313,8 +393,43 @@ const SalaryTemplateNew = () => {
       }));
 
       setRows(mappedRows);
-      setTemplateName(copyFromTemplate ? '' : data.salaryTemplateName);
-      setDescription(copyFromTemplate ? '' : data.description);
+      const selected = employeesListOption.find(option => option.value === data.idEmployee);
+      setSelectedEmployee(selected);
+
+      // Recalculate values after rows are set
+      calculateValues(mappedRows);
+    }
+    setShowModal(true);
+  };
+
+  const setupEditForCopy = (data) => {
+    setIsEdit(false);
+    if (data.salaryTemplateDetails) {
+      const mappedRows = data.salaryTemplateDetails.map((detail, key) => ({
+        id: key + 1,
+        idEmployeeSalaryConfig: null,
+        idEmployeeSalaryConfigDetail: null,
+        selectedSalaryHead: {
+          idSalaryHead: detail.idSalaryHead,
+          salaryHeadName: detail.salaryHeadName,
+          salaryHeadCode: detail.salaryHeadCode,
+          headType: detail.headType,
+          calculationMethod: detail.calculationMethod,
+          fixedValue: detail.fixedAmount,
+          percentageValue: detail.percentageValue,
+          customFormula: detail.customFormula,
+          percentageOf: detail.percentageOfIdSalaryHead,
+        },
+        calculationMethod: detail.calculationMethod,
+        value: detail.calculationMethod === "FIXEDAMOUNT" ? detail.fixedAmount : detail.percentageValue,
+        customFormula: detail.customFormula,
+        percentageOf: detail.percentageOfIdSalaryHead,
+        calculatedValue: detail.finalSalaryAmount,
+      }));
+
+      setRows(mappedRows);
+      const selected = employeesListOption.find(option => option.value === data.idEmployee);
+      setSelectedEmployee(selected);
 
       // Recalculate values after rows are set
       calculateValues(mappedRows);
@@ -325,8 +440,8 @@ const SalaryTemplateNew = () => {
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return templatesList.slice(startIndex, endIndex);
-  }, [templatesList, currentPage, rowsPerPage]);
+    return employeeSalaryConfigList.slice(startIndex, endIndex);
+  }, [employeeSalaryConfigList, currentPage, rowsPerPage]);
 
   const handlePageChange = (page) => setCurrentPage(page);
 
@@ -341,27 +456,28 @@ const SalaryTemplateNew = () => {
       percentageOf: null,
       calculatedValue: 0
     }]);
-    setTemplateName("");
-    setDescription("");
+    setSelectedEmployee(null)
+    setDesignation(null);
+    setEmpDescDept(null);
     setTotalEarnings(0);
     setTotalDeductions(0);
     setNetSalary(0);
     setIsEdit(false);
-    setCopyFromTemplate(false);
     setSelectedTemplateId("");
+    setEmpDescDept("");
   };
 
   const handleSave = () => {
     const payload = {
-      idSalaryTemplate: null,
-      salaryTemplateName: templateName,
-      description: description,
+      idEmployeeSalaryConfig: null,
+      idEmployee: selectedEmployee?.value,
+      idDesignation: designation,
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
-      salaryTemplateDetails: rows.map(row => ({
-        idSalaryTemplateDetail: row.idSalaryTemplateDetail,
+      validFrom: moment().format("YYYY-MM-DD"),
+      employeeSalaryConfigDetails: rows.map(row => ({
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
         fixedAmount: row.calculationMethod === "FIXEDAMOUNT" ? row.value : null,
@@ -371,12 +487,12 @@ const SalaryTemplateNew = () => {
         finalSalaryAmount: row.calculatedValue,
       }))
     };
-    SalaryTemplateService.saveSalaryTemplateData(payload)
+    EmployeeSalaryConfigService.saveEmployeeSalaryConfigData(payload)
       .then(res => {
         if (res.data.status === 200) {
           setShowModal(false);
           resetForm();
-          getSalaryTemplates();
+          getEmployeeSalaryConfigs();
         }
       })
       .catch(err => {
@@ -385,15 +501,17 @@ const SalaryTemplateNew = () => {
 
   const handleUpdate = () => {
     const payload = {
-      idSalaryTemplate: dataToEdit.idSalaryTemplate ?? null,
-      salaryTemplateName: templateName,
-      description: description,
+      idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig ?? null,
+      idEmployee: selectedEmployee?.value,
+      idDesignation: designation,
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: dataToEdit.activeStatus ?? false,
-      salaryTemplateDetails: rows.map(row => ({
-        idSalaryTemplateDetail: row.idSalaryTemplateDetail,
+      validFrom: dataToEdit.validFrom ?? moment().format("YYYY-MM-DD"),
+      employeeSalaryConfigDetails: rows.map(row => ({
+        idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
+        idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail,
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
         fixedAmount: row.calculationMethod === "FIXEDAMOUNT" ? row.value : null,
@@ -403,12 +521,12 @@ const SalaryTemplateNew = () => {
         finalSalaryAmount: row.calculatedValue,
       }))
     };
-    SalaryTemplateService.updateSalaryTemplateData(payload)
+    EmployeeSalaryConfigService.updateEmployeeSalaryConfigData(payload)
       .then(res => {
         if (res.data.status === 200) {
           setShowModal(false);
           resetForm();
-          getSalaryTemplates();
+          getEmployeeSalaryConfigs();
         }
       })
       .catch(err => {
@@ -421,7 +539,6 @@ const SalaryTemplateNew = () => {
       getSalaryTemplatesById(selectedTemplateId);
     } else {
       setSelectedTemplateId("");
-      setCopyFromTemplate(false);
     }
   };
 
@@ -431,18 +548,18 @@ const SalaryTemplateNew = () => {
         <div className="col-lg-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Salary Templates</h5>
+              <h5 className="m-0">List of Employee Salary Configuration</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
                       if (e.target.value === "") {
-                        getSalaryTemplates();
+                        getEmployeeSalaryConfigs();
                       }
                     }}
-                    onKeyDown={e => e.key === 'Enter' ? getSalaryTemplates() : ''} />
-                  <i className="bx bx-search cursor" onClick={() => getSalaryTemplates()}></i>
+                    onKeyDown={e => e.key === 'Enter' ? getEmployeeSalaryConfigs() : ''} />
+                  <i className="bx bx-search cursor" onClick={() => getEmployeeSalaryConfigs()}></i>
                 </div>
                 <button
                   className="btn btn-primary btn-sm px-4"
@@ -457,23 +574,29 @@ const SalaryTemplateNew = () => {
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                      <th>Template Name</th>
-                      <th>Description</th>
-                      <th>Status</th>
+                      <th>Emp. Code</th>
+                      <th>Employee Name</th>
+                      <th>Designation</th>
+                      <th>Joining Date</th>
+                      <th>Total Earnings</th>
+                      <th>Total Deductions</th>
+                      <th>Net Salary</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
                     {paginatedData?.length > 0 ? (
                       paginatedData?.map((item, index) => (
-                        <tr key={item.idSalaryTemplate}>
-                          <td>{item?.salaryTemplateName}</td>
-                          <td>{item?.description}</td>
-                          <td>
-                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : ''}`}>{item.approvalStatus}</span>
-                          </td>
+                        <tr key={item.idEmployeeSalaryConfig}>
+                          <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.designationName}</td>
+                          <td>{moment(item?.joiningDate).format("MM/DD/YYYY")}</td>
+                          <td>{Utils.formattedNumber(item?.totalEarnings)}</td>
+                          <td>{Utils.formattedNumber(item?.totalDeductions)}</td>
+                          <td>{Utils.formattedNumber(item?.netSalary)}</td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getSalaryTemplatesById(item?.idSalaryTemplate)}>
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getEmpSalConfigById(item?.idEmployeeSalaryConfig)}>
                               <span className="tf-icons bx bx-pencil"></span>
                             </button>
                           </td>
@@ -481,7 +604,7 @@ const SalaryTemplateNew = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="text-center">
+                        <td colSpan="8" className="text-center">
                           <div className="Nodatafound_box">
                             <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
@@ -514,52 +637,38 @@ const SalaryTemplateNew = () => {
 
             <Modal.Body>
               <div className="row m-0">
-                <div className="col-md-6 p-2">
-                  <div className="form-check mb-1">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="flexCheckDefault"
-                      checked={copyFromTemplate}
-                      onChange={(e) => {
-                        setCopyFromTemplate(e.target.checked);
-                      }} />
-                    <label className="form-check-label" htmlFor="flexCheckDefault">
-                      Copy From Templates
-                    </label>
-                  </div>
-                  <div className="mb-2">
-                    <select
-                      className="form-select form-select"
-                      value={selectedTemplateId}
-                      onChange={(e) => {
-                        setSelectedTemplateId(e.target.value);
-                      }}
-                      disabled={!copyFromTemplate}>
-                      <option value="">Select Templates</option>
-                      {templatesList.map(tem => (
-                        <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
-                          {tem.salaryTemplateName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <input className="form-control"
-                    type="text"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    maxLength="50"
+                <div className="col-md-4 p-2">
+                  <label className="form-label mb-1">Employee Name</label>
+                  <Select
+                    options={employeesListOption}
+                    isSearchable
+                    onChange={handleChange}
+                    value={selectedEmployee}
+                    placeholder={'Select Employee'}
+                    className='textSize' required
                   />
                 </div>
-                <div className="col-md-6 p-2">
-                  <label className="form-label mb-1">Remarks</label>
-                  <textarea
-                    className="form-control form-control"
-                    rows="3"
-                    maxLength="500"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  ></textarea>
+
+                <div className="col-md-4 p-2">
+                  <label className="form-label mb-1">Designation</label>
+                  <input className='form-control' value={empDescDept} disabled />
+                </div>
+
+                <div className="col-md-4 p-2">
+                  <label className="form-label mb-1">Templates</label>
+                  <select
+                    className="form-select form-select"
+                    value={selectedTemplateId}
+                    onChange={(e) => {
+                      setSelectedTemplateId(e.target.value);
+                    }}>
+                    <option value="">Select Templates</option>
+                    {templatesList.map(tem => (
+                      <option key={tem.idSalaryTemplate} value={tem.idSalaryTemplate}>
+                        {tem.salaryTemplateName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -629,11 +738,28 @@ const SalaryTemplateNew = () => {
                               {errors[row.id] && <div style={{ color: "red" }}>{errors[row.id]}</div>}
                             </>
                           ) : (
-                            <input className="form-control form-control-sm"
-                              type="number"
-                              value={row.value}
-                              onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
-                            />
+                            // <input className="form-control form-control-sm"
+                            //   type="number"
+                            //   value={row.value}
+                            //   onChange={(e) => handleValueChange(row.id, 'value', e.target.value)}
+                            // />
+                            <>
+                              <NumericFormat
+                                className="form-control form-control-sm"
+                                value={row.value}
+                                onValueChange={(values) => {
+                                  const { value } = values;
+                                  handleValueChange(row.id, 'value', value)
+                                }}
+                                decimalScale={2} // Allow up to 2 decimal places
+                                allowNegative={false} // Disallow negative numbers
+                                thousandSeparator={true} // Disable thousand separators
+                                allowLeadingZeros={false}
+                                placeholder="Add amount"
+                                maxLength={12}
+                                required
+                              />
+                            </>
                           )}
                         </td>
 
@@ -711,10 +837,105 @@ const SalaryTemplateNew = () => {
               CancelBtn={"Cancel"}
             />
           }
+
+          <Modal
+            show={showDetailsModal} onHide={() => { setShowDetailsModal(false); }} size='xl'
+            aria-labelledby="contained-modal-title-vcenter"
+            centered backdrop="static"
+            keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <h5>Latest salary configurations</h5>
+              </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <div className="px-2">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Salary Head Name</th>
+                      <th>Type</th>
+                      <th>Calculation Details</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employeeSalaryDetails?.employeeSalaryConfigDetails?.length > 0 ? (
+                      employeeSalaryDetails?.employeeSalaryConfigDetails.map(
+                        (detail, index) => {
+                          const salaryHead = salaryHeadList.find(
+                            (head) => head.idSalaryHead === detail.idSalaryHead
+                          );
+                          const percentageOfHead = salaryHeadList.find(
+                            (head) =>
+                              head.idSalaryHead ===
+                              detail.percentageOfIdSalaryHead
+                          );
+                          return (
+                            <tr key={index}>
+                              <td>{salaryHead?.salaryHeadName || "N/A"}</td>
+                              <td>{salaryHead?.headType || "N/A"}</td>
+                              <td>
+                                {detail.calculationMethod === "PERCENTAGE"
+                                  ? `${detail.percentageValue}% of ${percentageOfHead?.salaryHeadName || "N/A"
+                                  }`
+                                  : detail.calculationMethod === "FIXEDAMOUNT"
+                                    ? "Fixed Amount"
+                                    : "Custom Formula"}
+                              </td>
+                              <td>
+                                {detail.calculationMethod === "PERCENTAGE"
+                                  ? Utils.formattedNumber(detail?.salaryAmount)
+                                  : Utils.formattedNumber(detail.fixedAmount)}
+                              </td>
+                            </tr>
+                          );
+                        }
+                      )
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <div className="total_salarycard">
+                  <ul
+                    style={{
+                      display: "flex",
+                      listStyleType: "none",
+                      padding: 0,
+                    }}
+                  >
+                    <li style={{ marginRight: "20px" }}>
+                      <b>Total Earnings:</b>{" "}
+                      {Utils.formattedNumber(employeeSalaryDetails?.totalEarnings)}
+                    </li>
+                    <li style={{ marginRight: "20px" }}>
+                      <b>Total Deductions:</b>{" "}
+                      {Utils.formattedNumber(employeeSalaryDetails?.totalDeductions)}
+                    </li>
+                    <li>
+                      <b>Net Salary:</b>{" "}
+                      {Utils.formattedNumber(employeeSalaryDetails?.netSalary)}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+            </Modal.Body>
+          </Modal>
+
         </div>
       </div>
     </div>
   );
 };
 
-export default SalaryTemplateNew;
+export default EmployeeSalaryConfig;

@@ -18,6 +18,7 @@ import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
+import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 
 export const privateRoutes = [
   {
@@ -54,7 +55,7 @@ export const privateRoutes = [
   },
   {
     path: "/dashboard/employee-salary-config",
-    element: <SalaryConfiguration />,
+    element: <EmployeeSalaryConfig />,
   },
   {
     path: "/dashboard/screen-permissions",

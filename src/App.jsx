@@ -27,6 +27,7 @@ import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
+import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -42,7 +43,7 @@ function App() {
             <Route path="designations" element={<Designations />} />
             <Route path="salary-heads" element={<SalaryHeads />} />
             <Route path="employee-profile" element={<EmployeeProfile />} />
-            <Route path='employee-salary-config' element={<SalaryConfiguration />} />
+            <Route path='employee-salary-config' element={<EmployeeSalaryConfig />} />
             <Route path='screen-permissions' element={<ScreenPermission />} />
             <Route path="salary-adjustments" element={<SalaryAdjustments />} />
             <Route path="maternity-leave-salaries" element={<MaternityLeaveSalaries />} />

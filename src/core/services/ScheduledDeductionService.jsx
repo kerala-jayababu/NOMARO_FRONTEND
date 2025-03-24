@@ -8,8 +8,8 @@ export default class ScheduledDeductionService {
       const res = await API.get("/api/v1/PayRollManagement/GetAllScheduledSalaryDeductionservice?fromDate=" + date + '&searchText=' + searchText);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static getScheduledDeductionsDataById = async (id) => {
@@ -17,27 +17,27 @@ export default class ScheduledDeductionService {
       const res = await API.get("/api/v1/PayRollManagement/GetScheduledSalaryDeductionserviceById?id=" + id);
       return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static saveScheduledDeductionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/AddscheduledSalaryDeductionservice", payload);
-      handleApiSuccessOrError(res.data,false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 
   static updateScheduledDeductionsData = async (payload) => {
     try {
       const res = await API.post("/api/v1/PayRollManagement/UpdatescheduledSalaryDeductionservice", payload);
-      handleApiSuccessOrError(res.data,false);
+      handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error,true);
-    } 
+      return handleApiSuccessOrError(error, true);
+    }
   }
 }
