@@ -24,7 +24,7 @@ function CurrencyConversion() {
   const [formData, setFormData] = React.useState(initialFormState);
   const [isEditing, setIsEditing] = React.useState(false);
   const datePickerRef = useRef(null);
-  const [fromDate, setFromDate] = React.useState(moment().format("YYYY-MM-DD"));
+  const [fromDate, setFromDate] = React.useState(null);
   const [validated, setValidated] = useState(false);
 
   useEffect(() => {
@@ -35,7 +35,10 @@ function CurrencyConversion() {
     setLoading(true);
     CurrConversionService.getAllCurrencyConversions()
       .then(res => {
-        let filteredData = res.data.data.filter(item => moment(item.rateDate).isSameOrAfter(fromDate));
+        let filteredData = res.data.data;
+        if(fromDate) {
+          filteredData = res.data.data.filter(item => moment(item.rateDate).isSameOrAfter(fromDate));
+        }
         setCurrencyConversions(filteredData);
         setCurrencyConversionsMain(res.data.data);
         setLoading(false);
@@ -51,8 +54,13 @@ function CurrencyConversion() {
   };
 
   const filterByDate = (date) => {
+    console.log('date',date)
     setFromDate(date);
-    let filteredData = currencyConversionsMain.filter(item => moment(item.rateDate).isSameOrAfter(date));
+
+    let filteredData = currencyConversionsMain;
+    if(date) {
+      filteredData = currencyConversionsMain.filter(item => moment(item.rateDate).isSameOrAfter(date));
+    }
     setCurrencyConversions(filteredData);
   }
 
@@ -195,6 +203,7 @@ function CurrencyConversion() {
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
+                    isClearable
                   />
                 </div>
                 {/* <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button> */}

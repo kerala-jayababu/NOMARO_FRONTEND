@@ -553,7 +553,7 @@ function TaxConfiguration() {
               {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button> */}
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
+              <div className="custom-table-wrapper-tax">
                 {loading && <div className="text-center p-3">Loading...</div>}
                 {/* {baseError && <div className="text-danger p-3">{baseError}</div>} */}
                 {!loading && (
@@ -602,7 +602,7 @@ function TaxConfiguration() {
               {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button> */}
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
+              <div className="custom-table-wrapper-tax">
                 <table className="table table-sm">
                   <thead>
                     <tr>
@@ -698,8 +698,8 @@ function TaxConfiguration() {
                 </div>
                 </div>
                 
-
-                <div className="mb-2">
+                <div className="row mb-2">
+                <div className="col-md-6">
                     <label className="form-label mb-1">Tax Rate (%)</label>
                     <NumericFormat
                       className="form-control"
@@ -716,7 +716,7 @@ function TaxConfiguration() {
                     )}
                   </div>
 
-                  <div className="mb-2 date-picker-container">
+                  <div className="col-md-6 date-picker-container">
                     <label className="form-label mb-1">Effective From</label>
                     <br />
                     <DatePicker
@@ -733,7 +733,7 @@ function TaxConfiguration() {
                       <div className="text-danger">{formErrors.financialYearFrom}</div>
                     )}
                   </div>
-
+                  </div>
                 <div className="text-center">
                   <button type="submit" className="btn btn-primary px-4 me-2">
                     Submit
