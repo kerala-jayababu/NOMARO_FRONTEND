@@ -19,6 +19,7 @@ import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
+import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
 
 export const privateRoutes = [
   {
@@ -96,6 +97,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/rent-free-quarters",
     element: <RentFreeQuarters />,
+  },
+  {
+    path: "/dashboard/salary-slips",
+    element: <ViewPaySlips />,
   },
 ];
 

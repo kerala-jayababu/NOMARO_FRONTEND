@@ -543,7 +543,7 @@ const EmployeeSalaryConfig = () => {
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
-      activeStatus: dataToEdit.activeStatus ?? false,
+      activeStatus: true,
       validFrom: dataToEdit.validFrom ?? moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
@@ -888,6 +888,7 @@ const EmployeeSalaryConfig = () => {
             </Modal.Header>
 
             <Modal.Body>
+              <h6>{employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode})</h6>
               <div className="px-2">
                 <table className="table table-sm">
                   <thead>
