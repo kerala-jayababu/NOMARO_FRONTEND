@@ -391,6 +391,7 @@ const SalaryTemplateNew = () => {
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
+      approvalStatus: "SUBMITTED",
       salaryTemplateDetails: rows.map(row => ({
         idSalaryTemplateDetail: row.idSalaryTemplateDetail,
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
@@ -426,7 +427,8 @@ const SalaryTemplateNew = () => {
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
-      activeStatus: dataToEdit.activeStatus ?? false,
+      activeStatus: true,
+      approvalStatus: "SUBMITTED",
       salaryTemplateDetails: rows.map(row => ({
         idSalaryTemplateDetail: row.idSalaryTemplateDetail,
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,

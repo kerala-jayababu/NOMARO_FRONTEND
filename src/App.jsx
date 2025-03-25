@@ -28,6 +28,7 @@ import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
+import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -57,6 +58,7 @@ function App() {
             <Route path="notification-types" element={<NotificationConfig />} />
             <Route path='bank-branches' element={<BankAndBranches/>} />
             <Route path='rent-free-quarters' element={<RentFreeQuarters/>} />
+            <Route path='salary-slips' element={<ViewPaySlips/>} />
           </Route>
         </Route>
 
