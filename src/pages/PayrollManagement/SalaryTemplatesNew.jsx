@@ -233,7 +233,13 @@ const SalaryTemplateNew = () => {
         try {
           const formula = customFormula
             .replace(/BP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "BP")?.calculatedValue || 0)
-            .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0);
+            .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0)
+            .replace(/HRA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "HRA")?.calculatedValue || 0)
+            .replace(/PF/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PF")?.calculatedValue || 0)
+            .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
+            .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
+            .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
+            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
           setErrors((prevErrors) => ({ ...prevErrors, [row.id]: "Invalid formula syntax." }));
@@ -537,7 +543,7 @@ const SalaryTemplateNew = () => {
             keyboard={false}>
             <Modal.Header closeButton>
               <Modal.Title>
-                <h5>Add/Update</h5>
+                <h5>Add/Update Salary Template</h5>
               </Modal.Title>
             </Modal.Header>
 
@@ -559,6 +565,7 @@ const SalaryTemplateNew = () => {
                       </label>
                     </div>
                     <div className="mb-2">
+                      <label>Templates</label>
                       <select
                         className="form-select form-select"
                         value={selectedTemplateId}
@@ -574,6 +581,7 @@ const SalaryTemplateNew = () => {
                         ))}
                       </select>
                     </div>
+                    <label>Template Name</label>
                     <input className="form-control"
                       type="text"
                       value={templateName}
@@ -585,7 +593,7 @@ const SalaryTemplateNew = () => {
                     <label className="form-label mb-1">Remarks</label>
                     <textarea
                       className="form-control form-control"
-                      rows="3"
+                      rows="5"
                       maxLength="500"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)} required
@@ -616,7 +624,7 @@ const SalaryTemplateNew = () => {
                               <option value="">Select Salary Head</option>
                               {getAvailableSalaryHeads(row.id).map(head => (
                                 <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                  {head.salaryHeadName}
+                                  {head.salaryHeadName} ({head.salaryHeadCode})
                                 </option>
                               ))}
                             </select>

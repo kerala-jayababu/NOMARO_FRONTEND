@@ -96,7 +96,8 @@ const EmployeeSalaryConfig = () => {
 
   const getSalaryTemplates = () => {
     EmployeeSalaryConfigService.getAllSalaryTemplates().then(res => {
-      setTemplatesList(res.data.data);
+      const data = res.data.data.filter(x => x.approvalStatus == 'APPROVED');
+      setTemplatesList(data);
     }).catch(err => {
       console.error("Failed to fetch salary templates:", err);
     });
@@ -227,16 +228,16 @@ const EmployeeSalaryConfig = () => {
       }
       return row;
     });
-  
+
     // Find the updated row
     const updatedRow = updatedRows.find(row => row.id === id);
     if (updatedRow && updatedRow.selectedSalaryHead) {
       const salaryHeadCode = updatedRow.selectedSalaryHead.salaryHeadCode;
-  
+
       // Mark all dependent rows for recalculation
       const dependentRows = getDependentRows(updatedRows, salaryHeadCode);
       const rowsToRecalculate = [...dependentRows, updatedRow];
-  
+
       // Recalculate all affected rows
       const recalculatedRows = updatedRows.map(row => {
         if (rowsToRecalculate.some(r => r.id === row.id)) {
@@ -244,7 +245,7 @@ const EmployeeSalaryConfig = () => {
         }
         return row;
       });
-  
+
       setRows(recalculatedRows);
       calculateValues(recalculatedRows);
     } else {
@@ -291,10 +292,10 @@ const EmployeeSalaryConfig = () => {
 
   const calculateRowValue = (row, rows) => {
     if (!row.selectedSalaryHead) return row;
-  
+
     let calculatedValue = 0;
     const { calculationMethod, value, customFormula, percentageOf } = row;
-  
+
     if (calculationMethod === "FIXEDAMOUNT") {
       calculatedValue = parseFloat(value) || 0;
     } else if (calculationMethod === "PERCENTAGE") {
@@ -311,7 +312,13 @@ const EmployeeSalaryConfig = () => {
         try {
           const formula = customFormula
             .replace(/BP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "BP")?.calculatedValue || 0)
-            .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0);
+            .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0)
+            .replace(/HRA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "HRA")?.calculatedValue || 0)
+            .replace(/PF/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PF")?.calculatedValue || 0)
+            .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
+            .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
+            .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
+            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
           setErrors((prevErrors) => ({ ...prevErrors, [row.id]: "Invalid formula syntax." }));
@@ -321,7 +328,7 @@ const EmployeeSalaryConfig = () => {
         calculatedValue = 0;
       }
     }
-  
+
     return { ...row, calculatedValue };
   };
 
@@ -333,7 +340,7 @@ const EmployeeSalaryConfig = () => {
       }
       return row;
     });
-  
+
     // Second pass - calculate percentages (which depend on fixed amounts)
     updatedRows = updatedRows.map(row => {
       if (row.calculationMethod === "PERCENTAGE") {
@@ -341,7 +348,7 @@ const EmployeeSalaryConfig = () => {
       }
       return row;
     });
-  
+
     // Third pass - calculate formulas (which may depend on both)
     updatedRows = updatedRows.map(row => {
       if (row.calculationMethod === "FORMULA") {
@@ -349,17 +356,17 @@ const EmployeeSalaryConfig = () => {
       }
       return row;
     });
-  
+
     const earnings = updatedRows
       .filter(row => row.selectedSalaryHead?.headType === "EARNING")
       .reduce((sum, row) => sum + (row.calculatedValue || 0), 0);
-      
+
     const deductions = updatedRows
       .filter(row => row.selectedSalaryHead?.headType === "DEDUCTION")
       .reduce((sum, row) => sum + (row.calculatedValue || 0), 0);
-      
+
     const net = earnings - deductions;
-  
+
     setRows(updatedRows);
     setTotalEarnings(earnings);
     setTotalDeductions(deductions);
@@ -660,7 +667,7 @@ const EmployeeSalaryConfig = () => {
             keyboard={false}>
             <Modal.Header closeButton>
               <Modal.Title>
-                <h5>Add/Update</h5>
+                <h5>Add/Update Employee Salary Configuration</h5>
               </Modal.Title>
             </Modal.Header>
 
@@ -725,7 +732,7 @@ const EmployeeSalaryConfig = () => {
                               <option value="">Select Salary Head</option>
                               {getAvailableSalaryHeads(row.id).map(head => (
                                 <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                  {head.salaryHeadName}
+                                  {head.salaryHeadName} ({head.salaryHeadCode})
                                 </option>
                               ))}
                             </select>
@@ -834,7 +841,7 @@ const EmployeeSalaryConfig = () => {
               </Form>
             </Modal.Body>
             <Modal.Footer>
-            {
+              {
                 isEdit &&
                 <button
                   className="btn btn-primary btn-sm py-2 px-4 me-2"
