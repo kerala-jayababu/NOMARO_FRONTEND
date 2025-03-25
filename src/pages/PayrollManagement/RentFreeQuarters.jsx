@@ -248,13 +248,17 @@ function RentFreeQuarters() {
       validFrom: formSubmitData.validFrom,
       monthlyRent: formSubmitData.monthlyRent,
       validTo: formSubmitData.validTo,
-      taxRate: formSubmitData.taxRate,
       annualTaxAmount: formSubmitData.annualTaxAmount,
       monthlyTaxAmount: formSubmitData.monthlyTaxAmount
     };
     payload.idRentFreeQuarterEnum = rentFreeQuarterDuration.find(item => item.monthCount == formSubmitData.durationInMonths).idRentFreeQuarterDuration;
     console.log(payload);
     setLoading(true);
+    if(isEdit) {
+      payload['taxRate'] = formSubmitData.taxRate;
+    } else {
+      payload['taxRate'] = rentFreeQuarterTaxPercentage?.parameterValue;
+    }
     const service = (isEdit)
       ? RentFreeQuarterService.updateRentFreeQuarter
       : RentFreeQuarterService.addRentFreeQuarter;
@@ -277,9 +281,12 @@ function RentFreeQuarters() {
         label: item.employeeName,
         value: item.idEmployee
       },
-      taxableAmount: (item.totalAnnualRent * ((rentFreeQuarterTaxPercentage?.parameterValue) / 100)).toFixed(2),
+      taxableAmount: isEdit 
+        ? (item.totalAnnualRent * (item.taxRate / 100)).toFixed(2) 
+        : (item.totalAnnualRent * ((rentFreeQuarterTaxPercentage?.parameterValue) / 100)).toFixed(2),
       monthlyRent: (item.totalAnnualRent / item.durationInMonths).toFixed(2)
     });
+    
     setIsEdit(true);
     setShowModal(true);
   };
@@ -354,7 +361,7 @@ function RentFreeQuarters() {
                           <td>{moment(item.validFrom).format('MMM, yyyy')}</td>
                           <td>{item.periodText}</td>
                           <td class="text-end">{(item.totalAnnualRent).toFixed(2)}</td>
-                          <td class="text-end">{(item.totalAnnualRent * ((rentFreeQuarterTaxPercentage?.parameterValue) / 100)).toFixed(2)}</td>
+                          <td class="text-end">{(item.totalAnnualRent * ((item.taxRate) / 100)).toFixed(2)}</td>
                           <td class="text-end">
                             <button type="button" class="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
                               onClick={() => handleEdit(item)}>
@@ -461,7 +468,13 @@ function RentFreeQuarters() {
                       </div>
                       <div class="row ">
                         <div class="col-md-6 mb-2">
-                          <label class="form-label mb-1">Taxable Amount ({rentFreeQuarterTaxPercentage?.parameterValue}%)</label>
+                          <label class="form-label mb-1">
+                            Taxable Amount (
+                            {isEdit
+                              ? `${formSubmitData.taxRate}%`
+                              : `${rentFreeQuarterTaxPercentage?.parameterValue}%`}
+                            )
+                          </label>
                           <NumericFormat
                             className="form-control"
                             value={formSubmitData.taxableAmount}  // Call the function to get the value
