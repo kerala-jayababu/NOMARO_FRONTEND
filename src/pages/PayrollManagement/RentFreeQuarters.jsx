@@ -149,7 +149,7 @@ function RentFreeQuarters() {
         periodText: periodText,
         monthlyRent: ((formSubmitData.totalAnnualRent) / data).toFixed(2)
       }));
-    } 
+    }
     if (field === 'idEmployee') {
       let filteredEmployee = employeesList.filter(employee =>
         employee.idEmployee == data.value
@@ -254,7 +254,7 @@ function RentFreeQuarters() {
     payload.idRentFreeQuarterEnum = rentFreeQuarterDuration.find(item => item.monthCount == formSubmitData.durationInMonths).idRentFreeQuarterDuration;
     console.log(payload);
     setLoading(true);
-    if(isEdit) {
+    if (isEdit) {
       payload['taxRate'] = formSubmitData.taxRate;
     } else {
       payload['taxRate'] = rentFreeQuarterTaxPercentage?.parameterValue;
@@ -281,12 +281,12 @@ function RentFreeQuarters() {
         label: item.employeeName,
         value: item.idEmployee
       },
-      taxableAmount: isEdit 
-        ? (item.totalAnnualRent * (item.taxRate / 100)).toFixed(2) 
+      taxableAmount: isEdit
+        ? (item.totalAnnualRent * (item.taxRate / 100)).toFixed(2)
         : (item.totalAnnualRent * ((rentFreeQuarterTaxPercentage?.parameterValue) / 100)).toFixed(2),
       monthlyRent: (item.totalAnnualRent / item.durationInMonths).toFixed(2)
     });
-    
+
     setIsEdit(true);
     setShowModal(true);
   };
@@ -360,8 +360,18 @@ function RentFreeQuarters() {
                           <td>{item.designationName}</td>
                           <td>{moment(item.validFrom).format('MMM, yyyy')}</td>
                           <td>{item.periodText}</td>
-                          <td class="text-end">{(item.totalAnnualRent).toFixed(2)}</td>
-                          <td class="text-end">{(item.totalAnnualRent * ((item.taxRate) / 100)).toFixed(2)}</td>
+                          <td class="text-end">
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(item.totalAnnualRent)}
+                          </td>
+                          <td class="text-end">
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format((item.totalAnnualRent * ((item.taxRate) / 100)))}
+                          </td>
                           <td class="text-end">
                             <button type="button" class="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
                               onClick={() => handleEdit(item)}>
