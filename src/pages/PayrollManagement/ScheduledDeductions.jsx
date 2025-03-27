@@ -82,7 +82,7 @@ function ScheduledDeductions() {
     }));
 
     if (newData.deductionFromSalaryMonthDate && newData.deductionToSalaryMonthDate) {
-      if(isEdit) {
+      if (isEdit) {
         generateGridForEdit(newData.deductionFromSalaryMonthDate, newData.deductionToSalaryMonthDate);
       } else {
         generateGrid(newData.deductionFromSalaryMonthDate, newData.deductionToSalaryMonthDate);
@@ -96,7 +96,8 @@ function ScheduledDeductions() {
 
   useEffect(() => {
     const total = deductionGrid.reduce((sum, month) => sum + month.amountTobeDeducted, 0);
-    setTotalDeductions(total);
+    const roundedSum = Math.round(total); // Round to nearest cent
+    setTotalDeductions(roundedSum);
   }, [deductionGrid]);
 
   const paginatedData = useMemo(() => {
@@ -126,7 +127,7 @@ function ScheduledDeductions() {
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
-      res.data.data.sort((a,b)=> a.fullName - b.fullName);
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
@@ -201,12 +202,14 @@ function ScheduledDeductions() {
       setValidated(true);
       return;
     }
-    if (totalDeductions == newData['totalAmount']) {
+    const isEqual = Math.abs(newData['totalAmount'] - totalDeductions) < 0.02;
+    if (isEqual) {
       let passData = newData;
       const scheduledDeductionDetails = transformDeductionGrid(deductionGrid);
       passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
       passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
+      passData['monthlyDeductableAmount'] = 1;
       ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
         if (res.data.status === 200) {
           // toast.success('Scheduled deductions added successfully', {
@@ -239,12 +242,14 @@ function ScheduledDeductions() {
       setValidated(true);
       return;
     }
-    if (totalDeductions == newData['totalAmount']) {
+    const isEqual = Math.abs(newData['totalAmount'] - totalDeductions) < 0.02;
+    if (isEqual) {
       let passData = newData;
       const scheduledDeductionDetails = transformDeductionGrid(deductionGrid);
       passData['deductionFromSalaryMonth'] = new Date(passData['deductionFromSalaryMonthDate']).getMonth() + 1;
       passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
+      passData['monthlyDeductableAmount'] = 1;
       ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
         if (res.data.status === 200) {
           // toast.success('Scheduled deductions updated successfully', {
@@ -280,7 +285,7 @@ function ScheduledDeductions() {
       deductionToSalaryMonthDate: null,
       allocatingSalaryHead: 0,
       monthCount: 0,
-      // monthlyDeductableAmount: 0,
+      monthlyDeductableAmount: 10,
     });
     setSelectedEmployee(null);
     setFilteredMonthsList(salaryMonthsList);
@@ -630,7 +635,7 @@ function ScheduledDeductions() {
                       </select>
                     </div>
                   </div>
-                  
+
                   <div className="col-lg-4">
                     <div className="mb-2">
                       <label className="form-label">No of Months</label>
@@ -658,7 +663,7 @@ function ScheduledDeductions() {
                         {deductionGrid.map((month) => (
                           <tr key={month.idSalaryMonth}>
                             <td>{month.salaryMonthText}</td>
-                            <td style={{padding:'4px'}}>
+                            <td style={{ padding: '4px' }}>
                               {/* <input
                               type="number"
                               className="form-control"
@@ -697,7 +702,7 @@ function ScheduledDeductions() {
                   </div>
                 </div>
 
-                
+
                 {/* <div className="row">
                   <div className="col-6 mt-1 mb-1">
                     <strong>Total Deductions: </strong>

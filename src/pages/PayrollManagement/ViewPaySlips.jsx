@@ -66,7 +66,7 @@ function ViewPaySlips() {
         <div className="col-lg-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">View/Download Pay Slips</h5>
+              <h5 className="m-0">View/Download Salary Slips</h5>
 
               <div className="list_menu">
                 <div className="list_searchbox">
