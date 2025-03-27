@@ -510,9 +510,12 @@ const SalaryTemplateNew = () => {
                             <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : ''}`}>{item.approvalStatus}</span>
                           </td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getSalaryTemplatesById(item?.idSalaryTemplate)}>
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
+                            {
+                              item.approvalStatus != 'APPROVED' &&
+                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getSalaryTemplatesById(item?.idSalaryTemplate)}>
+                                <span className="tf-icons bx bx-pencil"></span>
+                              </button>
+                            }
                           </td>
                         </tr>
                       ))
@@ -611,8 +614,8 @@ const SalaryTemplateNew = () => {
                         <th>Calculation Method</th>
                         <th>Percentage Of</th>
                         <th>Value/Formula</th>
-                        <th className="text-center">Calculated Value</th>
-                        <th className="text-center"></th>
+                        <th className="text-end">Calculated Value</th>
+                        <th className="text-end"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -694,8 +697,8 @@ const SalaryTemplateNew = () => {
                             )}
                           </td>
 
-                          <td className="text-center">{row.calculatedValue}</td>
-                          <td>
+                          <td className="text-end">{Utils.formattedNumber(row.calculatedValue)}</td>
+                          <td className="text-end">
                             {rows.length > 1 && (
                               <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
                                 <i className="bx bx-trash"></i>

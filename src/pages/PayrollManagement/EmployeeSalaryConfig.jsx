@@ -614,9 +614,9 @@ const EmployeeSalaryConfig = () => {
                       <th>Employee Name</th>
                       <th>Designation</th>
                       <th>Joining Date</th>
-                      <th>Total Earnings</th>
-                      <th>Total Deductions</th>
-                      <th>Net Salary</th>
+                      <th className="text-end">Total Earnings</th>
+                      <th className="text-end">Total Deductions</th>
+                      <th className="text-end">Net Salary</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -628,13 +628,16 @@ const EmployeeSalaryConfig = () => {
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.joiningDate).format("MM/DD/YYYY")}</td>
-                          <td>{Utils.formattedNumber(item?.totalEarnings)}</td>
-                          <td>{Utils.formattedNumber(item?.totalDeductions)}</td>
-                          <td>{Utils.formattedNumber(item?.netSalary)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
                           <td className="text-end">
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getEmpSalConfigById(item?.idEmployeeSalaryConfig)}>
-                              <span className="tf-icons bx bx-pencil"></span>
-                            </button>
+                            {
+                              item?.approvalStatus != "APPROVED" &&
+                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getEmpSalConfigById(item?.idEmployeeSalaryConfig)}>
+                                <span className="tf-icons bx bx-pencil"></span>
+                              </button>
+                            }
                           </td>
                         </tr>
                       ))
@@ -717,8 +720,8 @@ const EmployeeSalaryConfig = () => {
                         <th>Calculation Method</th>
                         <th>Percentage Of</th>
                         <th>Value/Formula</th>
-                        <th className="text-center">Calculated Value</th>
-                        <th className="text-center"></th>
+                        <th className="text-end">Calculated Value</th>
+                        <th className="text-end"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -800,8 +803,8 @@ const EmployeeSalaryConfig = () => {
                             )}
                           </td>
 
-                          <td className="text-center">{row.calculatedValue}</td>
-                          <td>
+                          <td className="text-end">{Utils.formattedNumber(row.calculatedValue)}</td>
+                          <td className="text-end">
                             {rows.length > 1 && (
                               <button className="btn btn-outline-danger border-0 btn-sm" onClick={() => removeRow(index)}>
                                 <i className="bx bx-trash"></i>

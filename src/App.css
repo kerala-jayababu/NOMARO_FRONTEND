@@ -156,9 +156,10 @@ body {
 }
 
 .deduct-table-container {
-  position: relative;
-  max-height: 250px;
-  overflow: auto;
+  display: block;
+  max-height: 250px;  
+  overflow-y: auto;
+  padding-bottom: 50px; 
 }
 
 .deduct-table-container table {
@@ -169,8 +170,7 @@ body {
 .deduct-table-container thead th {
   position: sticky;
   top: 0;
-  background-color: var(--primary-light);
-  transform: translateZ(0);
+  background-color: #fff;
 }
 
 .deduct-table-container th,

@@ -71,7 +71,10 @@ function MaternityLeaveSalaries() {
     const deductions = empSalaryStructure?.salaryComponents.filter(el => el.headType == 'DEDUCTION');
     setSalaryStructureToDisplay({
       earnings: earnings ?? [],
-      deductions: deductions ?? []
+      deductions: deductions ?? [],
+      totalEarnings: empSalaryStructure?.totalEarnings ?? 0,
+      totalDeductions: empSalaryStructure?.totalDeductions ?? 0,
+      netSalary: empSalaryStructure?.netSalary ?? 0
     });
     const selected = employeesListOption.find(option => option.value === newData.idEmployee);
     setSelectedEmployee(selected);
@@ -469,7 +472,7 @@ function MaternityLeaveSalaries() {
                           <td>{item?.designationName}</td>
                           <td>{moment(item?.maternityLeaveFrom).format("MMMM, YYYY")}</td>
                           <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
-                          <td className="text-end">{Utils.formattedNumber(item.netSalary)}</td>
+                          <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
@@ -586,12 +589,13 @@ function MaternityLeaveSalaries() {
                                 salaryStructureToDisplay.earnings?.map((item, index) => (
                                   <tr>
                                     <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
-                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
+                                    <td class="text-end">{Utils.formattedNumber(item?.salaryAmount)}</td>
                                   </tr>
                                 ))
                               ) : (
                                 <tr>
                                   <td style={{ paddingLeft: '30px' }}>No data</td>
+                                  <td></td>
                                 </tr>
                               )}
 
@@ -603,14 +607,27 @@ function MaternityLeaveSalaries() {
                                 salaryStructureToDisplay.deductions?.map((item, index) => (
                                   <tr>
                                     <td style={{ paddingLeft: '30px' }}>{item?.salaryHeadName}</td>
-                                    <td class="text-end">{Utils.formattedNumber(item?.fixedValue)}</td>
+                                    <td class="text-end">{Utils.formattedNumber(item?.salaryAmount)}</td>
                                   </tr>
                                 ))
                               ) : (
                                 <tr>
                                   <td style={{ paddingLeft: '30px' }}>No data</td>
+                                  <td></td>
                                 </tr>
                               )}
+                              <tr>
+                                <td><b>Total Earnings</b></td>
+                                <td class="text-end">{Utils.formattedNumber(salaryStructureToDisplay?.totalEarnings)}</td>
+                              </tr>
+                              <tr>
+                                <td><b>Total Deductions</b></td>
+                                <td class="text-end">{Utils.formattedNumber(salaryStructureToDisplay?.totalDeductions)}</td>
+                              </tr>
+                              <tr>
+                                <td><b>Net Salary</b></td>
+                                <td class="text-end">{Utils.formattedNumber(salaryStructureToDisplay?.netSalary)}</td>
+                              </tr>
                             </>
                           }
                           {
