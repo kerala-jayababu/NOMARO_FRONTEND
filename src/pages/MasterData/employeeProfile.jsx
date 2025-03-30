@@ -9,7 +9,6 @@ import Table from "../../components/table";
 import Label from "../../components/Label";
 import { DeleteIcon, AddIcon } from "../../components/icons";
 import Dropdown from "../../components/Dropdown";
-import { Input } from "react-select/animated";
 import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 import { getBudgetCodeById } from "../../redux/reducers/budgetCode";
 import { getEmployeeBankAccountsByID } from "../../redux/reducers/employeeProfiles";
@@ -19,6 +18,7 @@ import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
+import Input from "../../components/input";
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
   const {
@@ -95,7 +95,7 @@ const EmployeeProfile = () => {
       overTimesTypes.map((type) => ({
         value: type.value.toString(),
         label:
-          type.displayName === "Working Day" ? "Workday" : type.displayName,
+          type.displayName == "Working Day" ? "Workday" : type.displayName,
       })),
     [overTimesTypes]
   );
@@ -115,9 +115,11 @@ const EmployeeProfile = () => {
     setOvertimeDetails([]);
 
     const employee = employees?.find((emp) => emp.idEmployee === id);
+ 
     if (employee) {
+   
       setSelectedEmployee(employee);
-
+   
       // Fetch employee details
       // dispatch(getEmployeeDetailsByID(id));
       dispatch(getEmployeeDetailsByID(id)).then((response) => {
@@ -126,6 +128,8 @@ const EmployeeProfile = () => {
         }
       });
 
+
+    
       // dispatch(getEmployeeProfileByID(id)).then((response) => {
       //   if (response.payload && response.payload.data && response.payload.data.length > 0) {
       //     const employeeData = response.payload.data[0];
@@ -141,7 +145,6 @@ const EmployeeProfile = () => {
         dispatch(getEmployeeOvertimeConfigsByID(id)),
       ])
         .then(([bankAccountsResult, overtimeConfigsResult]) => {
-          console.log("Bank Accounts Result:", bankAccountsResult);
           // Handle bank accounts
           if (
             bankAccountsResult.payload &&
@@ -165,7 +168,7 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
-            console.log("Mapped Bank Accounts:", mappedBankAccounts);
+            // console.log("Mapped Bank Accounts:", mappedBankAccounts);
             setBankAccountsState(mappedBankAccounts);
           } else {
             setBankAccountsState([
@@ -189,10 +192,8 @@ const EmployeeProfile = () => {
           ) {
             const mappedOvertimeDetails =
               overtimeConfigsResult.payload.data.map((config) => {
-                let dayType = config.dayType;
-                if (dayType === "Working Day") {
-                  dayType = "Workday";
-                }
+                let dayType = checkDayType(config.dayType);
+               
                 const matchingOption = overtimeOptions.find(
                   (option) => option.label === dayType
                 );
@@ -208,6 +209,7 @@ const EmployeeProfile = () => {
                     config.idEmployeeOvertimeConfig || 0,
                 };
               });
+
             setOvertimeDetails(mappedOvertimeDetails);
           } else {
             setOvertimeDetails([
@@ -230,6 +232,17 @@ const EmployeeProfile = () => {
     }
     setIsModalOpen(true);
   };
+
+  const checkDayType = (dayType) => {
+    switch (dayType) {
+      case 'WORKINGDAY': return 'Workday'                    
+        break;
+      case 'HOLIDAY': return 'Holiday'                    
+        break;
+      default: return dayType
+        break;
+    }
+  }
 
 
   const handleButtonClick = (id) => {
@@ -310,10 +323,11 @@ const EmployeeProfile = () => {
           ) {
             const mappedOvertimeDetails =
               overtimeConfigsResult.payload.data.map((config) => {
-                let dayType = config.dayType;
-                if (dayType === "Working Day") {
-                  dayType = "Workday";
-                }
+                // let dayType = config.dayType;
+                // if (dayType === "Working Day") {
+                //   dayType = "Workday";
+                // }
+                let dayType = checkDayType(config.dayType);
                 const matchingOption = overtimeOptions.find(
                   (option) => option.label === dayType
                 );
@@ -683,9 +697,10 @@ const EmployeeProfile = () => {
       );
       let newType = selectedOption ? selectedOption.label : value;
       // Ensure "Workday" is used in the frontend
-      if (newType === "Working Day") {
-        newType = "Workday";
-      }
+      // if (newType === "Working Day") {
+      //   newType = "Workday";
+      // }
+      newType = checkDayType(newType);
       newOvertimeDetails[index][field] = newType;
     } else {
       newOvertimeDetails[index][field] = value;
@@ -813,7 +828,6 @@ const EmployeeProfile = () => {
     for (let i = 0; i < bankAccountsState.length; i++) {
       const account = bankAccountsState[i];
       const combinationKey = `${account.selectedBank}-${account.selectedBranch}`;
-      console.log("Combination Key:", combinationKey);
       if (combinations.has(combinationKey)) {
         return {
           isValid: false,
@@ -832,7 +846,6 @@ const EmployeeProfile = () => {
 
       // Validate bank account combinations
   const bankAccountCombinationValidation = validateBankAccountCombinations();
-  console.log("Bank Account Combination Validation:", bankAccountCombinationValidation);
   if (!bankAccountCombinationValidation.isValid) {
     setBankAccountErrors((prevErrors) => ({
       ...prevErrors,
@@ -859,7 +872,7 @@ const EmployeeProfile = () => {
       return; // Don't proceed with submission if validation fails
     }
 
-    setIsSubmitting(true);
+   
 
     const bankAccountPayload = bankAccountsState.map((account) => ({
       idEmployeeBankAccount: account.idEmployeeBankAccount || 0,
@@ -882,9 +895,12 @@ const EmployeeProfile = () => {
 
     const overtimeConfigsPayload = overtimeDetails.map((detail) => {
       let dayType = detail.type;
-      if (dayType === "Working day") {
-        dayType = "Workday";
-      }
+      if (dayType == "Workday") {
+        dayType = "WORKINGDAY";
+      } 
+      if (dayType == "Holiday") {
+        dayType = "HOLIDAY";
+      } 
       return {
         idEmployeeOvertimeConfig: detail.idEmployeeOvertimeConfig || 0,
         idEmployee: selectedEmployee.idEmployee,
@@ -893,7 +909,8 @@ const EmployeeProfile = () => {
         dayRate: parseFloat(detail.appliedRate),
       };
     });
-
+    // return
+    setIsSubmitting(true);
     try {
       const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
         await Promise.all([
