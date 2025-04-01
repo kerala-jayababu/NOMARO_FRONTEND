@@ -1184,13 +1184,7 @@ const EmployeeProfile = () => {
                     <h6 className="fw-bold mb-0">Bank Account Details</h6>
                   </div>
                   <Table
-                    headers={[
-                      "Bank Name",
-                      "Branch Name",
-                      "Account Number",
-                      "% Salary",
-                      "Currency",
-                    ]}
+                    headers={["Bank Name", "Branch Name", "Account Number", "% Salary", "Currency"]}
                     rows={(Array.isArray(bankData) ? bankData : []).map(
                       (account, index) => (
                         <tr key={index}>
@@ -1226,7 +1220,7 @@ const EmployeeProfile = () => {
       {/* Modal for Adding Employee Bank Account */}
       <Modal
         id="Add_EMP_Account"
-        title="Add Employee Bank Account"
+        title="Add/Update Employee Bank Account"
         onClose={() => {
           setSelectedEmployee(null);
           setBankAccountsState([
@@ -1268,155 +1262,130 @@ const EmployeeProfile = () => {
         </h6>
 
         {/* Bank Account Details Table Component Starts */}
-        <table className="table table-sm mb-0 border">
-          <thead>
+        <table className="table table-sm mb-0 border custom-table-emp-bank">
+  <thead>
+    <tr>
+      <th className="bank-name">Bank Name</th>
+      <th className="routing-number">Routing Number</th>
+      <th className="account-number">Account Number</th>
+      <th className="salary-percentage">% Salary</th>
+      <th className="currency">Currency</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {bankAccountsState.length > 0 ? (
+      bankAccountsState.map((bank, index) => (
+        <React.Fragment key={index}>
+          <tr className="custom-row">
+            <td className="bank-name">
+              <Dropdown
+                options={[...bankOptions]}
+                name="bankName"
+                value={bank.selectedBank}
+                onChange={(e) => handleBankChange(e.target.value, index)}
+              />
+            </td>
+
+            <td className="routing-number">
+              <Dropdown
+                options={[...branchOptions]}
+                name="branchName"
+                value={bank.selectedBranch}
+                onChange={(e) => handleBranchChange(e.target.value, index)}
+              />
+            </td>
+
+            <td className="account-number">
+              <input
+                type="text"
+                className="form-control"
+                name="accountNumber"
+                value={bank.accountNumber}
+                maxLength="25"
+                onChange={(e) => handleInputChange(e, index, "accountNumber")}
+              />
+            </td>
+
+            <td className="salary-percentage">
+              <input
+                type="text"
+                name="salaryPercentage"
+                className="form-control"
+                value={bank.salaryPercentageDistributed}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                    handleInputChange(e, index, "salaryPercentageDistributed");
+                  }
+                }}
+              />
+            </td>
+
+            <td className="currency">
+              <Dropdown
+                options={[
+                  { value: "GYD", label: "GYD" },
+                  { value: "USD", label: "USD" },
+                ]}
+                name="currency"
+                value={bank.currencyCode}
+                onChange={(e) => handleInputChange(e, index, "currencyCode")}
+              />
+            </td>
+
+            <td>
+              <div className="action-icons">
+                {bankAccountsState.length > 1 && (
+                  <DeleteIcon
+                    className="delete-icon"
+                    onClick={() => handleDeleteRow(index)}
+                  />
+                )}
+                {index === bankAccountsState.length - 1 && (
+                  <AddIcon className="add-icon" onClick={handleAddRow} />
+                )}
+              </div>
+            </td>
+          </tr>
+
+          {Object.keys(bankAccountErrors).some((key) =>
+            key.endsWith(`_${index}`)
+          ) && (
             <tr>
-              <th>Bank Name</th>
-              <th className="text-nowrap">Routing Number</th>
-              <th className="text-nowrap">Account Number</th>
-              <th className="text-nowrap">% Salary</th>
-              <th className="text-nowrap">Currency</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {bankAccountsState.length > 0 ? (
-              bankAccountsState.map((bank, index) => (
-                <React.Fragment key={index}>
-                  <tr className="custom-row">
-                    <td className="col-md-3">
-                      <Dropdown
-                        options={[...bankOptions]}
-                        name="bankName"
-                        value={bank.selectedBank}
-                        onChange={(e) =>
-                          handleBankChange(e.target.value, index)
-                        }
-                        
-                      />
-                    </td>
-                    <td className="col-md-3">
-                      <Dropdown
-                        options={[...branchOptions]}
-                        name="branchName"
-                        value={bank.selectedBranch}
-                        onChange={(e) =>
-                          handleBranchChange(e.target.value, index)
-                        }
-                        
-                      />
-                    </td>
-                    <td className="col-md-3">
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="accountNumber"
-                        value={bank.accountNumber}
-                        maxLength="25"
-                        onChange={(e) =>
-                          handleInputChange(e, index, "accountNumber")
-                        }
-                      />
-                    </td>
-
-                    <td className="col-md-2">
-                      <input
-                        type="text"
-                        name="salaryPercentage"
-                        className="form-control"
-                        value={bank.salaryPercentageDistributed}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                            handleInputChange(
-                              e,
-                              index,
-                              "salaryPercentageDistributed"
-                            );
-                          }
-                        }}
-                      />
-                    </td>
-
-                    <td className="col-md-3">
-                      <Dropdown
-                        options={[
-                          { value: "GYD", label: "GYD" },
-                          { value: "USD", label: "USD" },
-                        ]}
-                        name="currency"
-                        value={bank.currencyCode}
-                        onChange={(e) =>
-                          handleInputChange(e, index, "currencyCode")
-                        }
-                      />
-                    </td>
-                    <td className="col-md-1">
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        {bankAccountsState.length > 1 && (
-                          <DeleteIcon
-                            className="delete-icon"
-                            onClick={() => handleDeleteRow(index)}
-                          />
-                        )}
-                        {index === bankAccountsState.length - 1 && (
-                          <AddIcon
-                            className="add-icon"
-                            onClick={handleAddRow}
-                          />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  {Object.keys(bankAccountErrors).some((key) =>
-                    key.endsWith(`_${index}`)
-                  ) && (
-                    <tr>
-                      <td className="col-md-3">
-                        <div style={{ color: "red" }}>
-                          {bankAccountErrors[`idBank_${index}`] && (
-                            <div>{bankAccountErrors[`idBank_${index}`]}</div>
-                          )}
-                          {bankAccountErrors[`idBankBranch_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`idBankBranch_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`accountNumber_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`accountNumber_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`salaryPercentage_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`salaryPercentage_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`currencyCode_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`currencyCode_${index}`]}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+              <td className="error-message" colSpan="6">
+                <div>
+                  {bankAccountErrors[`idBank_${index}`] && (
+                    <div>{bankAccountErrors[`idBank_${index}`]}</div>
                   )}
-                </React.Fragment>
-              ))
-            ) : (
-              <tr>
-                <td className="text-center col-md-6">
-                  No bank accounts found. Click '+' to add one.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  {bankAccountErrors[`idBankBranch_${index}`] && (
+                    <div>{bankAccountErrors[`idBankBranch_${index}`]}</div>
+                  )}
+                  {bankAccountErrors[`accountNumber_${index}`] && (
+                    <div>{bankAccountErrors[`accountNumber_${index}`]}</div>
+                  )}
+                  {bankAccountErrors[`salaryPercentage_${index}`] && (
+                    <div>{bankAccountErrors[`salaryPercentage_${index}`]}</div>
+                  )}
+                  {bankAccountErrors[`currencyCode_${index}`] && (
+                    <div>{bankAccountErrors[`currencyCode_${index}`]}</div>
+                  )}
+                </div>
+              </td>
+            </tr>
+          )}
+        </React.Fragment>
+      ))
+    ) : (
+      <tr>
+        <td className="text-center no-accounts" colSpan="6">
+          No bank accounts found. Click '+' to add one.
+        </td>
+      </tr>
+    )}
+  </tbody>
+</table>
+
         {bankAccountErrors.salaryPercentageTotal && (
           <div className="text-danger mb-3">
             {bankAccountErrors.salaryPercentageTotal}
