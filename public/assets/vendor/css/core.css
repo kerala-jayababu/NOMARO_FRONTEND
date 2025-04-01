@@ -18441,3 +18441,80 @@ input[type=number] {
 }
 
 
+
+
+/* General table styling */
+.custom-table-emp-bank {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: #fff;
+}
+
+.custom-table-emp-bank th,
+.custom-table-emp-bank td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Custom column widths */
+.bank-name {
+  width: 30%;
+}
+
+.routing-number {
+  width: 20%;
+}
+
+.account-number {
+  width: 20%;
+}
+
+.salary-percentage {
+  width: 10%;
+}
+
+.currency {
+  width: 15%;
+}
+
+/* Row styling */
+.custom-row td {
+  vertical-align: middle;
+}
+
+/* Action icons */
+.action-icons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.delete-icon,
+.add-icon {
+  cursor: pointer;
+  font-size: 1.2em;
+  color: #007bff;
+  transition: color 0.3s;
+}
+
+.delete-icon:hover,
+.add-icon:hover {
+  color: #dc3545;
+}
+
+/* Error message styling */
+.error-message {
+  background-color: #ffe6e6;
+  color: #d93025;
+  text-align: left;
+  padding: 5px;
+}
+
+/* No accounts found message */
+.no-accounts {
+  font-style: italic;
+  color: #6c757d;
+  padding: 20px 0;
+}

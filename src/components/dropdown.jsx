@@ -20,11 +20,12 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
           value={value}
           onChange={handleChange}
           style={{
+            marginTop: "7px",
             appearance: "none",
             WebkitAppearance: "none",
             MozAppearance: "none",
             width: "100%",
-            height: "32px", // Match the input field height
+            height: "37px", // Match the input field height
             padding: "8px 30px 8px 10px",
             border: "1px solid #ccc",
             borderRadius: "4px",
