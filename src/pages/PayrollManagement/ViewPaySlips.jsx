@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import SalaryAdjustmentService from '../../core/services/SalaryAdjustmentService';
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import CommonService from '../../core/services/CommonService';
@@ -11,6 +9,7 @@ import Utils from '../../utils/Utils';
 import Select from 'react-select';
 import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
+import ViewPaySlipService from '../../core/services/ViewPaySlipService';
 
 function ViewPaySlips() {
   const [salarySlips, setSalarySlips] = useState([]);
@@ -19,17 +18,87 @@ function ViewPaySlips() {
   const totalPages = Math.ceil(salarySlips.length / rowsPerPage);
   const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
-  const [fromMonth, setFromMonth] = useState('January, 2025');
-  const [toMonth, setToMonth] = useState('January, 2025');
+  const [fromMonth, setFromMonth] = useState('');
+  const [toMonth, setToMonth] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
+  const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const [filteredMonthsList, setFilteredMonthsList] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
 
   useEffect(() => {
-    getSalarySlips();
-  }, [startDate]);
+    getEmployeesData();
+    getSalaryMonths();
+  }, []);
+
+  useEffect(() => {
+    if (fromMonth != '' && toMonth != '') {
+      getSalarySlips();
+    }
+  }, [fromMonth, toMonth]);
 
   const getSalarySlips = () => {
-
+    ViewPaySlipService.getSalarySlipsData(fromMonth, toMonth, searchText).then(res => {
+      setSalarySlips(res.data.data);
+    }).catch(err => {
+      setSalarySlips([]);
+    });
   }
+
+  const downloadSalarySlips = (data) => {
+    ViewPaySlipService.downloadSalarySlips(data.idEmployeeSalary).then(res => {
+      downloadFile(res.data.data[0]);
+    }).catch(err => {
+
+    });
+  }
+
+  const downloadMultipleSalarySlips = () => {
+    const ids = selectedRows;
+    const result = ids.join(",");
+    ViewPaySlipService.downloadSalarySlips(result).then(res => {
+      downloadFile(res.data.data[0]);
+    }).catch(err => {
+
+    });
+  }
+
+  const getSalaryMonths = () => {
+    CommonService.getAllSalaryMonths().then(res => {
+      setSalaryMonthsList(res.data);
+      setFilteredMonthsList(res.data);
+    }).catch(err => {
+    });
+  };
+
+
+  const getEmployeesData = () => {
+    CommonService.getEmployeeList().then(res => {
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
+      setEmployeesList(res.data.data);
+    }).catch(err => {
+    });
+  };
+
+  const handleMonthFromChange = (e) => {
+    const selectedId = e.target.value;
+
+    setFromMonth(selectedId);
+
+    if (selectedId) {
+      const filteredList = salaryMonthsList.filter(
+        (el) => el.idSalaryMonth >= parseInt(selectedId, 10)
+      );
+      setFilteredMonthsList(filteredList);
+    } else {
+      setFilteredMonthsList(salaryMonthsList);
+    }
+  };
+
+  const handleMonthToChange = (e) => {
+    const selectedId = e.target.value;
+    setToMonth(selectedId);
+  };
+
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -41,18 +110,18 @@ function ViewPaySlips() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
-  const handleRowSelect = (employeeCode) => {
-    if (selectedRows.includes(employeeCode)) {
-      setSelectedRows(selectedRows.filter(code => code !== employeeCode));
+  const handleRowSelect = (idEmployeeSalary) => {
+    if (selectedRows.includes(idEmployeeSalary)) {
+      setSelectedRows(selectedRows.filter(code => code !== idEmployeeSalary));
     } else {
-      setSelectedRows([...selectedRows, employeeCode]);
+      setSelectedRows([...selectedRows, idEmployeeSalary]);
     }
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allEmployeeCodes = validPaySlips.map(slip => slip.employeeCode);
-      setSelectedRows(allEmployeeCodes);
+      const allEmployeeSalIds = validPaySlips.map(slip => slip.idEmployeeSalary);
+      setSelectedRows(allEmployeeSalIds);
     } else {
       setSelectedRows([]);
     }
@@ -60,32 +129,72 @@ function ViewPaySlips() {
 
   const isAllSelected = validPaySlips.length > 0 && selectedRows.length === validPaySlips.length;
 
+  const downloadFile = (item) => {
+    const base64Data = item.fileContent;
+    const fileName = item.fileName || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">View/Download Salary Slips</h5>
+              <h5 className="m-0">List of Salary Slips</h5>
 
               <div className="list_menu">
                 <div className="list_searchbox">
                   {/* <label>Salary Month From</label> */}
-                  <input
-                    className="form-control"
-                    type="text"
+                  <select
+                    className="form-select"
                     value={fromMonth}
-                    onChange={(e) => setFromMonth(e.target.value)}
-                  />
+                    onChange={handleMonthFromChange}
+                    required
+                  >
+                    <option value={''}>Select From</option>
+                    {salaryMonthsList.map((el) => (
+                      <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="list_searchbox">
                   {/* <label>Salary Month To</label> */}
-                  <input
-                    className="form-control"
-                    type="text"
+                  <select
+                    className="form-select"
                     value={toMonth}
-                    onChange={(e) => setToMonth(e.target.value)}
-                  />
+                    onChange={handleMonthToChange}
+                    required
+                  >
+                    <option value={''}>Select To</option>
+                    {filteredMonthsList.map((el) => (
+                      <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
+                        {el.salaryMonthText}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -128,24 +237,25 @@ function ViewPaySlips() {
                       paginatedData?.map((slip, index) => (
                         <tr key={index}>
                           <td>
-                            {slip.employeeCode ? (
+                            {slip.idEmployeeSalary ? (
                               <input
                                 type="checkbox"
-                                checked={selectedRows.includes(slip.employeeCode)}
-                                onChange={() => handleRowSelect(slip.employeeCode)}
+                                checked={selectedRows.includes(slip.idEmployeeSalary)}
+                                onChange={() => handleRowSelect(slip.idEmployeeSalary)}
                               />
                             ) : (
                               <input type="checkbox" disabled />
                             )}
                           </td>
-                          <td>{slip.salaryMonth}</td>
+                          <td>{slip.salaryMonthText}</td>
                           <td>{slip.employeeCode}</td>
                           <td>{slip.employeeName || '-'}</td>
-                          <td>{slip.designation || '-'}</td>
-                          <td>{slip.department || '-'}</td>
+                          <td>{slip.designationName || '-'}</td>
+                          <td>{slip.departmentName || '-'}</td>
                           <td>{slip.emailStatus}</td>
                           <td>
-                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0">
+                            <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                              onClick={() => downloadSalarySlips(slip)}>
                               <span className="tf-icons bx bx-download"></span>
                             </button>
                           </td>
@@ -165,13 +275,13 @@ function ViewPaySlips() {
               </div>
               <div className="text-center">
                 <button className="btn btn-primary btn-sm px-4"
-                  disabled={selectedRows.length === 0}>
+                  disabled={selectedRows.length === 0} onClick={() => downloadMultipleSalarySlips()}>
                   Download selected
-                </button>&nbsp;&nbsp;
-                <button className="btn btn-primary btn-sm px-4"
+                </button>
+                {/* <button className="btn btn-primary btn-sm px-4"
                   disabled={selectedRows.length === 0}>
                   Send notification – Selected employees
-                </button>
+                </button> */}
               </div>
               <div className="text-end pt-2">
                 <Pagination
