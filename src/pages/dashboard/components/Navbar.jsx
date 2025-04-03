@@ -3,23 +3,46 @@ import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 
 function Navbar() {
-   const [profilePic,setProfilePic] = useState("/assets/img/avatars/1.png")
-   const userData = JSON.parse(secureLocalStorage.getItem("user"));
-   const navigate = useNavigate();
-   
-   useEffect(() => {
-    function getProfilePic() {
-      if(userData?.attachmentBlob) {
-        setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`)
-      }
+  const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Set profile picture from secureLocalStorage
+    if (userData?.attachmentBlob) {
+      setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
     }
-    getProfilePic()
-   },[])
-   
-   const logout = () => {
-      secureLocalStorage.clear()
-      navigate("/login")
-   }
+  }, []);
+
+  useEffect(() => {
+    // Toggle menu click behavior
+    const toggleBtn = document.getElementById("menu-toggle-btn");
+
+    const handleClick = () => {
+      const html = document.documentElement;
+      html.classList.add(
+        "light-style",
+        "layout-menu-fixed",
+        "layout-menu-100vh",
+        "layout-menu-expanded"
+      );
+    };
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", handleClick);
+    }
+
+    return () => {
+      if (toggleBtn) {
+        toggleBtn.removeEventListener("click", handleClick);
+      }
+    };
+  }, []);
+
+  const logout = () => {
+    secureLocalStorage.clear();
+    navigate("/login");
+  };
 
   return (
     <nav
@@ -27,24 +50,20 @@ function Navbar() {
       id="layout-navbar"
     >
       <div className="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-        <a className="nav-item nav-link px-0 me-xl-4">
+        <a id="menu-toggle-btn" className="nav-item nav-link px-0 me-xl-4">
           <i className="bx bx-menu bx-sm"></i>
         </a>
       </div>
 
-      <div
-        className="navbar-nav-right d-flex align-items-center"
-        id="navbar-collapse"
-      >
-        {/* <!-- Search --> */}
+      <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">Payroll Management </h5>
+            <h5 className="m-0 fw-bold">Payroll Management</h5>
           </div>
         </div>
-        {/* <!-- /Search --> */}
 
         <ul className="navbar-nav flex-row align-items-center ms-auto">
+          {/* Notification Bell */}
           <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
             <a
               className="nav-link dropdown-toggle hide-arrow"
@@ -238,12 +257,9 @@ function Navbar() {
             </ul>
           </li>
 
-          {/* <!-- User --> */}
+          {/* User Dropdown */}
           <li className="nav-item navbar-dropdown dropdown-user dropdown">
-            <a
-              className="nav-link dropdown-toggle hide-arrow"
-              data-bs-toggle="dropdown"
-            >
+            <a className="nav-link dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
               <div className="avatar avatar-online">
                 <img
                   src={profilePic}
@@ -272,18 +288,15 @@ function Navbar() {
                   </div>
                 </a>
               </li>
+              <li><div className="dropdown-divider"></div></li>
               <li>
-                <div className="dropdown-divider"></div>
-              </li>
-              <li>
-                <a className="dropdown-item" onClick={() => logout()}>
+                <a className="dropdown-item" onClick={logout}>
                   <i className="bx bx-power-off me-2"></i>
                   <span className="align-middle">Log Out</span>
                 </a>
               </li>
             </ul>
           </li>
-          {/* <!--/ User --> */}
         </ul>
       </div>
     </nav>

@@ -11,7 +11,7 @@ const Grid = ({
   onEmpCodeClick,
 }) => {
   return (
-    <div className="table-responsive text-nowrap" style={{maxHeight:'400px', overflowY:'auto'}}>
+    <div className="table-responsive text-nowrap" style={{maxHeight:'450px', overflowY:'auto'}}>
       <table className="table table-sm">
         <thead>
           <tr>
