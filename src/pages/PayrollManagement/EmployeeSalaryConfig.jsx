@@ -17,7 +17,7 @@ const EmployeeSalaryConfig = () => {
   const [employeeSalaryDetails, setEmployeeSalaryDetails] = useState([]);
   const [netSalary, setNetSalary] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
-  const [copyFromTemplate, setCopyFromTemplate] = useState(false);
+  const [copyFromData, setCopyFromData] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -38,6 +38,8 @@ const EmployeeSalaryConfig = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [empDescDept, setEmpDescDept] = useState('');
   const [validated, setValidated] = useState(false);
+  const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
+  const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
 
   useEffect(() => {
     getSalaryHeadData();
@@ -145,7 +147,11 @@ const EmployeeSalaryConfig = () => {
       .then(([salaryHeadsRes, templateRes]) => {
         setSalaryHeadList(salaryHeadsRes.data.data);
         setDataToEdit(templateRes.data.data);
-        setupEdit(templateRes.data.data);
+        if (selectedEmpConfigId != '') {
+          setupEditForFullCopy(templateRes.data.data);
+        } else {
+          setupEdit(templateRes.data.data);
+        }
         setIsInitialLoad(true);
       })
       .catch((err) => {
@@ -318,6 +324,13 @@ const EmployeeSalaryConfig = () => {
             .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
             .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
             .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
+            .replace(/OTT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OTT")?.calculatedValue || 0)
+            .replace(/RFQ/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "RFQ")?.calculatedValue || 0)
+            .replace(/SD/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SD")?.calculatedValue || 0)
+            .replace(/LOP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LOP")?.calculatedValue || 0)
+            .replace(/ENIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ENIS")?.calculatedValue || 0)
+            .replace(/FdA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "FdA")?.calculatedValue || 0)
+            .replace(/MLI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLI")?.calculatedValue || 0)
             .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
@@ -462,6 +475,42 @@ const EmployeeSalaryConfig = () => {
     setShowModal(true);
   };
 
+  const setupEditForFullCopy = (data) => {
+    console.log(data)
+    setIsEdit(false);
+    if (data.employeeSalaryConfigDetails) {
+      const mappedRows = data.employeeSalaryConfigDetails.map((detail, key) => ({
+        id: detail.idEmployeeSalaryConfigDetail ?? key + 1,
+        idEmployeeSalaryConfig: detail.idEmployeeSalaryConfig,
+        idEmployeeSalaryConfigDetail: detail.idEmployeeSalaryConfigDetail ?? null,
+        selectedSalaryHead: {
+          idSalaryHead: detail.idSalaryHead,
+          salaryHeadName: detail.salaryHeadName,
+          salaryHeadCode: detail.salaryHeadCode,
+          headType: detail.headType,
+          calculationMethod: detail.calculationMethod,
+          fixedValue: detail.fixedAmount,
+          percentageValue: detail.percentageValue,
+          customFormula: detail.customFormula,
+          percentageOf: detail.percentageOfIdSalaryHead,
+        },
+        calculationMethod: detail.calculationMethod,
+        value: detail.calculationMethod === "FIXEDAMOUNT" ? detail.fixedAmount : detail.percentageValue,
+        customFormula: detail.customFormula,
+        percentageOf: detail.percentageOfIdSalaryHead,
+        calculatedValue: detail.salaryAmount,
+      }));
+
+      setRows(mappedRows);
+      const selected = employeesListOption.find(option => option.value === data.idEmployee);
+      setSelectedEmployee(selected);
+
+      // Recalculate values after rows are set
+      calculateValues(mappedRows);
+    }
+    setShowModal(true);
+  };
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -491,6 +540,8 @@ const EmployeeSalaryConfig = () => {
     setIsEdit(false);
     setSelectedTemplateId("");
     setEmpDescDept("");
+    setSelectedEmpConfigId('');
+    setCopyFromData(false);
   };
 
   const handleSave = (e) => {
@@ -578,6 +629,14 @@ const EmployeeSalaryConfig = () => {
     }
   };
 
+  const confirmCopyFinalize = (val) => {
+    setShowCopyConfirmation(false);
+    if (val) {
+      setCopyFromData(true);
+      getEmpSalConfigById(selectedEmpConfigId);
+    }
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -636,6 +695,12 @@ const EmployeeSalaryConfig = () => {
                               item?.approvalStatus != "APPROVED" &&
                               <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getEmpSalConfigById(item?.idEmployeeSalaryConfig)}>
                                 <span className="tf-icons bx bx-pencil"></span>
+                              </button>
+                            }
+                            {
+                              item?.approvalStatus == "APPROVED" &&
+                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => { setShowCopyConfirmation(true); setSelectedEmpConfigId(item?.idEmployeeSalaryConfig) }}>
+                                <span className="tf-icons bx bx-copy"></span>
                               </button>
                             }
                           </td>
@@ -874,6 +939,17 @@ const EmployeeSalaryConfig = () => {
               modalShow={true}
               messageText={"The existing data will be overwritten. Are you sure to copy this template?"}
               callbackModal={confirmFinalize}
+              confirmBtn={"Confirm"}
+              CancelBtn={"Cancel"}
+            />
+          }
+
+          {
+            showCopyConfirmation &&
+            <ConfirmationModal
+              modalShow={true}
+              messageText={"Are you sure to create a copy of this config?"}
+              callbackModal={confirmCopyFinalize}
               confirmBtn={"Confirm"}
               CancelBtn={"Cancel"}
             />

@@ -28,6 +28,8 @@ const SalaryHeads = () => {
     defaultValue: "",
     activeStatus: true,
     orderNumber: "",
+    taxExcemptionThresholdType: "FIXEDVALUE", // or "Percentage"
+    taxExcemptionThresholdValue: "", // value for either fixed or percentage
   });
 
   const [errors, setErrors] = useState({
@@ -73,14 +75,17 @@ const SalaryHeads = () => {
           currentSalaryHead.calculationMethod === "FORMULA"
             ? "Custom Formula"
             : currentSalaryHead.calculationMethod === "PERCENTAGE"
-            ? "Percentage of"
-            : "Fixed Amount",
+              ? "Percentage of"
+              : "Fixed Amount",
         percentageOf: currentSalaryHead.idPercentageSalaryHead || "",
         value: currentSalaryHead.percentageValue || "",
         customFormula: currentSalaryHead.customFormula || "",
         defaultValue: currentSalaryHead.fixedValue || "",
         activeStatus: currentSalaryHead.isActive,
         orderNumber: currentSalaryHead.orderNumber,
+        // New fields
+        taxExcemptionThresholdType: currentSalaryHead.taxExcemptionThresholdType || "FIXEDVALUE",
+        taxExcemptionThresholdValue: currentSalaryHead.taxExcemptionThresholdValue || "",
       });
     }
   }, [currentSalaryHead]);
@@ -90,18 +95,18 @@ const SalaryHeads = () => {
   // };
   const [isEditing, setIsEditing] = useState(false);
 
-const handleEditClick = (id) => {
-  if (!isEditing) {
-    setIsEditing(true);
-    dispatch(getSalaryHeadById(id))
-      .then(() => {
-        setIsEditing(false);
-      })
-      .catch(() => {
-        setIsEditing(false);
-      });
-  }
-};
+  const handleEditClick = (id) => {
+    if (!isEditing) {
+      setIsEditing(true);
+      dispatch(getSalaryHeadById(id))
+        .then(() => {
+          setIsEditing(false);
+        })
+        .catch(() => {
+          setIsEditing(false);
+        });
+    }
+  };
 
 
   const handleReset = () => {
@@ -117,6 +122,8 @@ const handleEditClick = (id) => {
       defaultValue: "",
       activeStatus: true,
       orderNumber: "",
+      taxExcemptionThresholdType: "FIXEDVALUE",
+      taxExcemptionThresholdValue: "",
     });
     setErrors({
       salaryHeadCode: "",
@@ -149,7 +156,7 @@ const handleEditClick = (id) => {
   // };
   const validateField = (name, value) => {
     let error = "";
-  
+
     switch (name) {
       case "salaryHeadCode":
         if (!value.trim()) {
@@ -164,7 +171,7 @@ const handleEditClick = (id) => {
           error = "Salary Head Code Already Exists.";
         }
         break;
-  
+
       case "salaryHeadName":
         if (!value.trim()) {
           error = "Salary Head Name is required.";
@@ -178,7 +185,7 @@ const handleEditClick = (id) => {
           error = "Salary Head Name Already Exists.";
         }
         break;
-  
+
       case "orderNumber":
         if (!value) {
           error = "Order Number is required.";
@@ -191,7 +198,7 @@ const handleEditClick = (id) => {
           error = "Order Number Already Exists.";
         }
         break;
-  
+
       case "customFormula":
         if (formData.calculationMethod === "Custom Formula") {
           if (!value.trim()) {
@@ -201,28 +208,50 @@ const handleEditClick = (id) => {
           }
         }
         break;
-  
+
+      case "taxExcemptionThresholdValue":
+        if (formData.taxability === "Taxable") {
+          if (value === "" || value === null || value === undefined) {
+            error = formData.taxExcemptionThresholdType === "Percentage"
+              ? "Tax Percentage is required"
+              : "Tax Amount is required";
+          } else if (isNaN(value)) {
+            error = "Please enter a valid number";
+          } else if (
+            formData.taxExcemptionThresholdType === "Percentage" &&
+            (Number(value) < 0 || Number(value) > 100)
+          ) {
+            error = "Percentage must be between 0 and 100";
+          } else if (
+            formData.taxExcemptionThresholdType === "Fixed Value" &&
+            Number(value) < 0
+          ) {
+            error = "Amount cannot be negative";
+          }
+        }
+        break;
+
       default:
         break;
     }
-  
+
     return error;
   };
-  
+
   // const handleChange = (e) => {
   //   const { name, value } = e.target;
-  
+
   //   // Allow only numeric values for "orderNumber"
   //   if (name === "orderNumber" && isNaN(value)) {
   //     return; // Do nothing if the value is not a number
   //   }
-  
+
   //   // Update the formData state
   //   setFormData((prevFormData) => ({
   //     ...prevFormData,
   //     [name]: value,
   //   }));
-  
+
   //   // Clear errors when the user starts typing
   //   setErrors((prevErrors) => ({
   //     ...prevErrors,
@@ -232,20 +261,26 @@ const handleEditClick = (id) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // For numeric fields, convert to number if not empty
+    const processedValue = 
+      (name === "orderNumber" || name === "taxExcemptionThresholdValue" || name === "percentageValue" || name === "defaultValue") 
+      ? (value === "" ? "" : Number(value))
+      : value;
   
-    // Allow only numeric values for "orderNumber"
-    if (name === "orderNumber" && isNaN(value)) {
-      return; // Do nothing if the value is not a number
+    // Allow only numeric values for "orderNumber" and other numeric fields
+    if ((name === "orderNumber" || name === "taxExcemptionThresholdValue" || name === "percentageValue" || name === "defaultValue") && 
+        value !== "" && isNaN(value)) {
+      return;
     }
   
-    // Update the formData state
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: value,
+      [name]: processedValue,
     }));
   
     // Validate the field
-    const fieldError = validateField(name, value);
+    const fieldError = validateField(name, processedValue);
   
     // Update the errors state
     setErrors((prevErrors) => ({
@@ -253,8 +288,6 @@ const handleEditClick = (id) => {
       [name]: fieldError,
     }));
   };
-  
-
 
   // const handleRadioChange = (value, name) => {
   //   setFormData({
@@ -267,7 +300,7 @@ const handleEditClick = (id) => {
       ...prevFormData,
       [name]: value,
     }));
-  
+
     if (name === "calculationMethod" && value === "Custom Formula") {
       const formulaError = validateField("customFormula", formData.customFormula);
       setErrors((prevErrors) => ({
@@ -277,10 +310,10 @@ const handleEditClick = (id) => {
     }
   };
 
-  
+
   // const validateForm = () => {
   //   const newErrors = {};
-  
+
   //   // Validate mandatory fields
   //   if (!formData.salaryHeadCode.trim()) {
   //     newErrors.salaryHeadCode = "Salary Head Code is required.";
@@ -294,7 +327,7 @@ const handleEditClick = (id) => {
   //   ) {
   //     newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
   //   }
-  
+
   //   // Validate Salary Head Name
   //   if (!formData.salaryHeadName.trim()) {
   //     newErrors.salaryHeadName = "Salary Head Name is required.";
@@ -308,7 +341,7 @@ const handleEditClick = (id) => {
   //   ) {
   //     newErrors.salaryHeadName = "Salary Head Name Already Exists.";
   //   }
-  
+
   //   // Validate mandatory orderNumber
   //   if (!formData.orderNumber) {
   //     newErrors.orderNumber = "Order Number is required.";
@@ -323,7 +356,7 @@ const handleEditClick = (id) => {
   //       newErrors.orderNumber = "Order Number Already Exists.";
   //     }
   //   }
-  
+
   //   // Validate Custom Formula
   //   if (formData.calculationMethod === "Custom Formula") {
   //     if (!formData.customFormula.trim()) {
@@ -332,14 +365,14 @@ const handleEditClick = (id) => {
   //       newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
   //     }
   //   }
-  
+
   //   setErrors(newErrors);
   //   return Object.keys(newErrors).length === 0; // Return true if no errors
   // };
 
   const validateForm = () => {
     const newErrors = {};
-  
+
     // Validate all fields
     Object.keys(formData).forEach((field) => {
       const fieldError = validateField(field, formData[field]);
@@ -347,12 +380,12 @@ const handleEditClick = (id) => {
         newErrors[field] = fieldError;
       }
     });
-  
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
-  
-  
+
+
 
   const isValidCustomFormula = (formula, salaryHeadList) => {
     console.log("Formula:", formula);
@@ -386,14 +419,17 @@ const handleEditClick = (id) => {
         formData.calculationMethod === "Custom Formula"
           ? "FORMULA"
           : formData.calculationMethod === "Percentage of"
-          ? "PERCENTAGE"
-          : "FIXEDAMOUNT",
+            ? "PERCENTAGE"
+            : "FIXEDAMOUNT",
       idPercentageSalaryHead: formData.percentageOf || null,
       percentageValue: formData.value || 0,
       customFormula: formData.customFormula || "",
       fixedValue: formData.defaultValue || 0,
       isActive: formData.activeStatus,
       orderNumber: formData.orderNumber,
+      // New fields
+      taxExcemptionThresholdType: formData.taxability === "Taxable" ? formData.taxExcemptionThresholdType : null,
+      taxExcemptionThresholdValue: formData.taxability === "Taxable" ? formData.taxExcemptionThresholdValue : null,
     };
 
     // Check if it's an update
@@ -434,38 +470,38 @@ const handleEditClick = (id) => {
         {/* Salary Head List */}
         <div className="col-lg-8">
           <Card title="List of Salary Heads">
-              <Grid
-                columns={columns}
-                data={salaryHeadList.map((head) => ({
-                  salaryHeadCode: (
-                    <span className="bold">
-                      {head.salaryHeadCode}
+            <Grid
+              columns={columns}
+              data={salaryHeadList.map((head) => ({
+                salaryHeadCode: (
+                  <span className="bold">
+                    {head.salaryHeadCode}
+                  </span>
+                ),
+                salaryHeadName: (
+                  <div className="salary-head-name">
+                    <span className="badge-headtype" style={{ backgroundColor: head?.headType === "EARNING" ? "#5d8b1b" : "#701c21" }}>
+                      {head?.headType === "EARNING" ? "E" : "D"}
                     </span>
-                  ),
-                  salaryHeadName: (
-                    <div className="salary-head-name">
-                      <span className="badge-headtype" style={{ backgroundColor: head?.headType === "EARNING" ? "#5d8b1b" : "#701c21" }}>
-                          {head?.headType === "EARNING" ? "E" : "D"}
-                      </span>
-                      <span className="name">{head.salaryHeadName}</span>
-                    </div>
-                  ),
-                  orderNumber: (
-                    <span>
-                      {head.orderNumber}
-                    </span>
-                  ),
-                  isActive: (
-                    <StatusBadge
-                      status={head.isActive ? "Active" : "Inactive"}
-                    />
-                  ),
-                  id: head.idSalaryHead,
-                }))}
-                onEditClick={handleEditClick}
-                idKey="id"
-                modalId="editSalaryHeadModal"
-              />
+                    <span className="name">{head.salaryHeadName}</span>
+                  </div>
+                ),
+                orderNumber: (
+                  <span>
+                    {head.orderNumber}
+                  </span>
+                ),
+                isActive: (
+                  <StatusBadge
+                    status={head.isActive ? "Active" : "Inactive"}
+                  />
+                ),
+                id: head.idSalaryHead,
+              }))}
+              onEditClick={handleEditClick}
+              idKey="id"
+              modalId="editSalaryHeadModal"
+            />
           </Card>
         </div>
 
@@ -521,6 +557,53 @@ const handleEditClick = (id) => {
                   onChange={(value) => handleRadioChange(value, "taxability")}
                 />
               </div>
+              {formData.taxability === "Taxable" && (
+                <div className="row mb-2">
+                  <div className="col-md-6">
+                    {/* <Dropdown
+                      label="Tax Free Threshold"
+                      name="taxExcemptionThresholdType"
+                      value={formData.taxExcemptionThresholdType}
+                      onChange={handleChange}
+                      options={[
+                        { value: "FIXEDVALUE", label: "Fixed Value" },
+                        { value: "PERCENTAGE", label: "Percentage" },
+                      ]}
+                    /> */}
+                    <label className="mt-1">Tax Free Threshold</label>
+                    <select
+                      name="taxExcemptionThresholdType"
+                      className="form-select"
+                      value={formData.taxExcemptionThresholdType}
+                      onChange={handleChange}
+                      required>
+                      <option value={'FIXEDVALUE'}>Fixed Value</option>
+                      <option value={'PERCENTAGE'}>Percentage</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <Input
+                      label={formData.taxExcemptionThresholdType === "Percentage" ? "Tax Percentage" : "Tax Amount"}
+                      name="taxExcemptionThresholdValue"
+                      value={formData.taxExcemptionThresholdValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numbers and up to 2 decimal places
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleChange({
+                            ...e,
+                            target: {
+                              ...e.target,
+                              value: value === "" ? "" : Number(value)
+                            }
+                          });
+                        }
+                      }}
+                      maxLength={formData.taxExcemptionThresholdType === "Percentage" ? "4" : "12"}
+                    />
+                  </div>
+                </div>
+              )}
               <Dropdown
                 label="Calculation Method"
                 name="calculationMethod"
@@ -547,19 +630,19 @@ const handleEditClick = (id) => {
                     />
                   </div>
                   <div className="col-md-4 mb-2">
-                  <Input
-                    label="Default Value"
-                    name="defaultValue"
-                    value={formData.defaultValue}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d*\.?\d{0,2}$/.test(value)) {
-                        handleChange(e);
-                      }
-                    }}
-                    maxLength="9"
-                    pattern="^\d*\.?\d{0,2}$"
-                  />
+                    <Input
+                      label="Default Value"
+                      name="defaultValue"
+                      value={formData.defaultValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*\.?\d{0,2}$/.test(value)) {
+                          handleChange(e);
+                        }
+                      }}
+                      maxLength="9"
+                      pattern="^\d*\.?\d{0,2}$"
+                    />
                   </div>
                 </div>
               )}

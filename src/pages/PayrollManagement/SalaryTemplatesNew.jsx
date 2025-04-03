@@ -30,6 +30,8 @@ const SalaryTemplateNew = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [validated, setValidated] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsToShow, setDetailsToShow] = useState({});
 
   useEffect(() => {
     getSalaryHeadData();
@@ -239,6 +241,13 @@ const SalaryTemplateNew = () => {
             .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
             .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
             .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
+            .replace(/OTT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OTT")?.calculatedValue || 0)
+            .replace(/RFQ/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "RFQ")?.calculatedValue || 0)
+            .replace(/SD/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SD")?.calculatedValue || 0)
+            .replace(/LOP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LOP")?.calculatedValue || 0)
+            .replace(/ENIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ENIS")?.calculatedValue || 0)
+            .replace(/FdA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "FdA")?.calculatedValue || 0)
+            .replace(/MLI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLI")?.calculatedValue || 0)
             .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
@@ -504,7 +513,7 @@ const SalaryTemplateNew = () => {
                     {paginatedData?.length > 0 ? (
                       paginatedData?.map((item, index) => (
                         <tr key={item.idSalaryTemplate}>
-                          <td>{item?.salaryTemplateName}</td>
+                          <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => { setDetailsToShow(item); setShowDetailsModal(true) }}>{item?.salaryTemplateName}</td>
                           <td>{item?.description}</td>
                           <td>
                             <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : ''}`}>{item.approvalStatus}</span>
@@ -760,6 +769,99 @@ const SalaryTemplateNew = () => {
                 Reset
               </button>
             </Modal.Footer>
+          </Modal>
+
+          <Modal
+            show={showDetailsModal} onHide={() => { setShowDetailsModal(false); setDetailsToShow({}) }} size='xl'
+            aria-labelledby="contained-modal-title-vcenter"
+            centered backdrop="static"
+            keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <h5>Salary template details</h5>
+              </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <h6>{detailsToShow?.salaryTemplateName}</h6>
+              <div className="px-2">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Salary Head Name</th>
+                      <th>Type</th>
+                      <th>Calculation Details</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailsToShow?.salaryTemplateDetails?.length > 0 ? (
+                      detailsToShow?.salaryTemplateDetails.map(
+                        (detail, index) => {
+                          const salaryHead = salaryHeadList.find(
+                            (head) => head.idSalaryHead === detail.idSalaryHead
+                          );
+                          const percentageOfHead = salaryHeadList.find(
+                            (head) =>
+                              head.idSalaryHead ===
+                              detail.percentageOfIdSalaryHead
+                          );
+                          return (
+                            <tr key={index}>
+                              <td>{salaryHead?.salaryHeadName || "N/A"}</td>
+                              <td>{salaryHead?.headType || "N/A"}</td>
+                              <td>
+                                {detail.calculationMethod === "PERCENTAGE"
+                                  ? `${detail.percentageValue}% of ${percentageOfHead?.salaryHeadName || "N/A"
+                                  }`
+                                  : detail.calculationMethod === "FIXEDAMOUNT"
+                                    ? "Fixed Amount"
+                                    : "Custom Formula"}
+                              </td>
+                              <td>
+                                {Utils.formattedNumber(detail.finalSalaryAmount)}
+                              </td>
+                            </tr>
+                          );
+                        }
+                      )
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <div className="total_salarycard">
+                  <ul
+                    style={{
+                      display: "flex",
+                      listStyleType: "none",
+                      padding: 0,
+                    }}
+                  >
+                    <li style={{ marginRight: "20px" }}>
+                      <b>Total Earnings:</b>{" "}
+                      {Utils.formattedNumber(detailsToShow?.totalEarnings)}
+                    </li>
+                    <li style={{ marginRight: "20px" }}>
+                      <b>Total Deductions:</b>{" "}
+                      {Utils.formattedNumber(detailsToShow?.totalDeductions)}
+                    </li>
+                    <li>
+                      <b>Net Salary:</b>{" "}
+                      {Utils.formattedNumber(detailsToShow?.netSalary)}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+            </Modal.Body>
           </Modal>
 
           {
