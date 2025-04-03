@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
@@ -8,12 +8,36 @@ import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 function Menu() {
   const dispatch = useDispatch();
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
-  
+
   useEffect(() => {
     dispatch(getAllPayrollScreensAction());
+
+    // Function to remove classes from <html> tag
+    const removeHtmlClasses = () => {
+      const html = document.documentElement;
+      html.classList.remove(
+        "light-style",
+        "layout-menu-fixed",
+        "layout-menu-100vh",
+        "layout-menu-expanded"
+      );
+    };
+
+    // Add click event to menu toggle
+    const toggleBtn = document.getElementById("menu-toggle-remove");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", removeHtmlClasses);
+    }
+
+    // Cleanup event listener
+    return () => {
+      if (toggleBtn) {
+        toggleBtn.removeEventListener("click", removeHtmlClasses);
+      }
+    };
   }, [dispatch]);
 
   return (
@@ -28,6 +52,7 @@ function Menu() {
           </span>
         </a>
         <a
+          id="menu-toggle-remove"
           href="#"
           className="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none"
         >
@@ -40,45 +65,56 @@ function Menu() {
       <ul className="menu-inner py-1">
         {payrollScreen.map((screen) => (
           <li
+            key={screen.screenName}
             className={`menu-item ${
-              menu === screen.screenName && "open active"
+              menu === screen.screenName ? "open active" : ""
             } cursor-pointer`}
           >
             <a
               className="menu-link menu-toggle"
-              onClick={() => {
-                if (menu == screen.screenName) {
-                  setMenu("");
-                } else {
-                  setMenu(screen.screenName);
-                }
-              }}
+              onClick={() =>
+                setMenu(menu === screen.screenName ? "" : screen.screenName)
+              }
             >
               <i className="menu-icon tf-icons bx bx-dock-top"></i>
               <div data-i18n="Account Settings">{screen.screenName}</div>
             </a>
             <ul className="menu-sub">
-              {screen.subMenus.map((menu) => (
+              {screen.subMenus.map((menuItem) => (
                 <li
+                  key={menuItem.screenName}
                   className={`menu-item ${
-                    subMenu == menu.screenName && "active"
+                    subMenu === menuItem.screenName ? "active" : ""
                   }`}
                 >
                   <a className="menu-link">
                     <div
                       data-i18n="Account"
                       onClick={() => {
-                        if (subMenu == menu.screenName) {
-                          setSubMenu("");
-                        } else {
-                          setSubMenu(menu.screenName);
-                        }
-                        dispatch(setIdPayrollScreen(menu.idPayrollScreen))
-                        dispatch(setComponent(menu.screenName));
-                        navigate(`/dashboard/${menu.screenName.replace(/\s+/g, '-').toLowerCase()}`);
+                        // Remove html classes on submenu click
+                        const html = document.documentElement;
+                        html.classList.remove(
+                          "light-style",
+                          "layout-menu-fixed",
+                          "layout-menu-100vh",
+                          "layout-menu-expanded"
+                        );
+
+                        setSubMenu(
+                          subMenu === menuItem.screenName ? "" : menuItem.screenName
+                        );
+
+                        dispatch(setIdPayrollScreen(menuItem.idPayrollScreen));
+                        dispatch(setComponent(menuItem.screenName));
+
+                        navigate(
+                          `/dashboard/${menuItem.screenName
+                            .replace(/\s+/g, "-")
+                            .toLowerCase()}`
+                        );
                       }}
                     >
-                      {menu.screenName}
+                      {menuItem.screenName}
                     </div>
                   </a>
                 </li>
