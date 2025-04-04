@@ -7,6 +7,7 @@ import CommonService from "../../core/services/CommonService";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 const statusColor = [
   {
@@ -57,6 +58,7 @@ const months = [
 function SalaryApproved() {
   const dispatch = useDispatch();
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
+  const [showOverloay, setShowOverlay] = useState(false);
   const [salaryDraft, setSalaryDraft] = useState([]);
   const optionsRef = useRef();
   const statusRef = useRef();
@@ -163,6 +165,7 @@ function SalaryApproved() {
     { value: "All", label: "All Status" },
     { value: "APPROVED", label: "Approved" },
     { value: "SUBMITTED", label: "Submitted" },
+    { value: "INTERIM APPROVED", label: "Interim Approved" },
     { value: "DRAFT GENERATED", label: "Draft Generated" },
     { value: "NOT GENERATED", label: "Not Generated" },
     { value: "REJECTED", label: "Rejected" },
@@ -184,6 +187,10 @@ function SalaryApproved() {
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
+    clearAllFilter()
+  };
+
+  const clearAllFilter = () => {
     if (filterRef.current) filterRef.current.clearValue();
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
@@ -191,7 +198,7 @@ function SalaryApproved() {
     setSelectedCard("All");
     setSalaryDraft([]);
     handelCheckboxCheck(false);
-  };
+  }
 
   const uncheckCheckBox = () => {
     Array.from(document.querySelectorAll(".form-check-input")).map((item) => {
@@ -206,7 +213,9 @@ function SalaryApproved() {
       status: "APPROVED",
       idPayrollScreen,
     }));
+    setShowOverlay(true);
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
+    setShowOverlay(false);
     if (res.error) {
       toast.error(res.error);
     } else {
@@ -215,9 +224,11 @@ function SalaryApproved() {
       setSalaryDraft([]);
       const params = {
         idSalaryMonth: currentMonth?.value,
-        status: statusFilter?.value,
+        status: "All",
       };
-      dispatch(getSalaryGenerations(params));
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     }
   };
 
@@ -234,8 +245,11 @@ function SalaryApproved() {
       remarks: rejectReason,
       idPayrollScreen,
     }));
-
+    setShowRejectModal(false);
+    setShowOverlay(true);
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
+    setShowOverlay(false);
+
     if (res.error) {
       toast.error(res.error);
     } else {
@@ -243,12 +257,13 @@ function SalaryApproved() {
       uncheckCheckBox();
       setSalaryDraft([]);
       setRejectReason("");
-      setShowRejectModal(false);
       const params = {
         idSalaryMonth: currentMonth?.value,
-        status: statusFilter?.value,
+        status: "All",
       };
-      dispatch(getSalaryGenerations(params));
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     }
   };
 
@@ -280,12 +295,16 @@ function SalaryApproved() {
     if (e.target.checked && salaryGenerationList) {
       setSalaryDraft(
         salaryGenerationList.filter(
-          (x) => x.approvalStatus.toLowerCase() === statusFilter.value
+          (x) =>
+            statusFilter.value
+              .toLowerCase()
+              .search(x.approvalStatus.toLowerCase()) >= 0
         )
       );
     } else {
       setSalaryDraft([]);
     }
+
     handelCheckboxCheck(e.target.checked);
   };
 
@@ -391,9 +410,7 @@ function SalaryApproved() {
                         <div className="count bs-bg-warning">
                           {allSalaryList?.filter(
                             (x) =>
-                              x.approvalStatus.toLowerCase() === "submitted" ||
-                              x.approvalStatus.toLowerCase() ===
-                                "interim approved"
+                              x.approvalStatus.toLowerCase() === "submitted"
                           )?.length || 0}
                         </div>
                       </div>
@@ -528,13 +545,13 @@ function SalaryApproved() {
                   <thead>
                     <tr>
                       <th>
-                        {statusFilter.value.toLowerCase() === "submitted" && (
+                        {(statusFilter.value.toLowerCase() === "submitted") || (statusFilter.value.toLowerCase() === "interim approved") && (
                           <input
                             type="checkbox"
                             class="form-check-input"
                             checked={
                               salaryDraft.length ===
-                              salaryGenerationList?.length
+                              salaryGenerationList?.length && salaryDraft.length > 0
                             }
                             onChange={handleSelectAll}
                           />
@@ -580,8 +597,14 @@ function SalaryApproved() {
                                 }
                               }}
                               disabled={
-                                item.approvalStatus.toLowerCase() !==
-                                "submitted"
+                                !(
+                                  item.approvalStatus.toLowerCase() ===
+                                  "submitted"
+                                ) &&
+                                !(
+                                  item.approvalStatus.toLowerCase() ===
+                                  "interim approved"
+                                )
                               }
                             />
                           </td>
@@ -740,6 +763,7 @@ function SalaryApproved() {
           </div>
         </div>
       )}
+      <LoadingOverlay isLoading={showOverloay} />
     </div>
   );
 }

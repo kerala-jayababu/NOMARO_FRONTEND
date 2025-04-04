@@ -46,7 +46,7 @@ export default class SalaryGenerationService {
     }
   };
 
-  static  exportSalaryGeneration = async (employeeIds, month) => {
+  static exportSalaryGeneration = async (employeeIds, month) => {
     try {
       const res = await API.get(
         `/api/v1/SalaryGeneration/ExportSalaryGenerationDetails?employeeIds=${employeeIds}&idSalaryMonth=${month}`
@@ -69,4 +69,12 @@ export default class SalaryGenerationService {
     }
   };
 
+  static decryptToken = async (token) => {
+    try {
+      const res = await API.post(`/api/v1/Account/DecryptToken?token=${token}`);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }

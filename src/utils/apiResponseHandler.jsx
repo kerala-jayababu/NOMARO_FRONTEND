@@ -1,3 +1,4 @@
+import secureLocalStorage from 'react-secure-storage';
 import { showToast } from '../components/ToastNotifications/toastUtils';
 
 const handleApiResponse = (responseData) => {
@@ -10,6 +11,7 @@ const handleApiResponse = (responseData) => {
     const errorMessage = responseData?.response?.data?.message || responseData.message || "An unknown error occurred.";
     showToast(errorMessage, 'error'); 
   }
+
 };
 
 export default handleApiResponse;

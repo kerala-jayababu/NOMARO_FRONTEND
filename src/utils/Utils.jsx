@@ -121,11 +121,13 @@ export default class Utils {
             jsonData.forEach((row) => {
                 salaryHeadList.forEach((salaryHead) => {
                     if(Object.hasOwn(row, salaryHead.salaryHeadCode)){
+                        if(row["EmployeeCode"]){
                         resultArray.push({
                             employeeCode: row["EmployeeCode"],
                             idSalaryHead: salaryHead.idSalaryHead,
                             salaryAmount: row[salaryHead.salaryHeadCode],
                         });
+                        }
                     }
                 });
             });

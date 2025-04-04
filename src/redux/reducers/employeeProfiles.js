@@ -2,21 +2,25 @@ import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+import { handleApiSuccessOrError } from "../../core/constants/commons";
+export const BASE_URL = import.meta.env.VITE_API_URL;
+
+//const API_BASE_URL = "http://46.250.230.34:8081/api/v1/Employee";
 
 
-const API_BASE_URL = "http://46.250.230.34:8081/api/v1/Employee";
 
-
+// API Base URL
+const API_BASE_URL = `${BASE_URL}/api/v1/Employee`;
 // Fetch Employee Bank Accounts By ID
 export const getEmployeeBankAccountsByID = createAsyncThunk(
     "employeeBankAccount/GetEmployeeBankAccountsByID",
     async (id) => {
-        console.log(id, "response.id");
+      
       try {
         const storedUser = secureLocalStorage.getItem("user");
         const token = storedUser ? JSON.parse(storedUser)?.token : null;
   
-        console.log("Retrieved Token:", token); // Debugging
+      
   
         if (!token) {
           console.error("Authorization token missing");
@@ -30,11 +34,11 @@ export const getEmployeeBankAccountsByID = createAsyncThunk(
             },
           }
         );
-        console.log(id, "response.id");
-        console.log(response.data, "response.data-948r4905050");
+       
         return response.data;
       } catch (error) {
-        return error;
+        // return error;
+        return handleApiSuccessOrError(error,true);
       }
     }
   );
@@ -47,7 +51,6 @@ export const manageEmployeeBankAccount = createAsyncThunk(
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      console.log("Retrieved Token:", token); // Debugging
 
       if (!token) {
         console.error("Authorization token missing");
@@ -62,11 +65,10 @@ export const manageEmployeeBankAccount = createAsyncThunk(
           },
         }
       );
-      console.log(data, "data");
-      console.log(response.data, "response.data");
+   
       return response.data;
     } catch (error) {
-      return error;
+          return handleApiSuccessOrError(error,true);
     }
   }
 );  
@@ -78,7 +80,7 @@ export const updateEmployeeDetails = createAsyncThunk(
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      console.log("Retrieved Token:", token); // Debugging
+    
 
       if (!token) {
         console.error("Authorization token missing");
@@ -93,11 +95,10 @@ export const updateEmployeeDetails = createAsyncThunk(
           },
         }
       );
-      console.log(data, "data");
-      console.log(response.data, "response.data");
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
-      return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -109,7 +110,7 @@ export const getEmployeeOvertimeConfigsByID = createAsyncThunk(
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      console.log("Retrieved Token:", token); // Debugging
+    
 
       if (!token) {
         console.error("Authorization token missing");
@@ -123,11 +124,10 @@ export const getEmployeeOvertimeConfigsByID = createAsyncThunk(
           },
         }
       );
-      console.log(id, "response.id");
-      console.log(response.data, "response.data");
+    
       return response.data;
     } catch (error) {
-      return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -138,8 +138,6 @@ export const manageEmployeeOvertimeConfigs = createAsyncThunk(
     try {
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
-
-      console.log("Retrieved Token:", token); // Debugging
 
       if (!token) {
         console.error("Authorization token missing");
@@ -153,12 +151,10 @@ export const manageEmployeeOvertimeConfigs = createAsyncThunk(
             "Content-Type": "application/json",
           },
         }
-      );
-      console.log(data, "data");
-      console.log(response.data, "response.data");
+      );     
       return response.data;
     } catch (error) {
-      return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );

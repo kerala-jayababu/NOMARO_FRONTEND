@@ -44,7 +44,7 @@ const BudgetCodes = () => {
 
   const validateInputs = (field, value) => {
     let validationErrors = { ...errors };
-    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    const alphanumericRegex = /^[a-zA-Z0-9-]+$/;   
 
       // Check if the field is empty, and show the required message
   if (field === "budgetCode" && !value) {

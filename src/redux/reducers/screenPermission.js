@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import designation from "./designation";
+import { handleApiSuccessOrError } from "../../core/constants/commons";
 
 const API_BASE_URL = "http://46.250.230.34:8081/api/v1/RoleBasedScreens";
 
@@ -30,7 +31,8 @@ export const screenPermission = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -58,7 +60,8 @@ export const getEmployeePermissionsById = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -85,9 +88,12 @@ export const manageEmployeePermissions = createAsyncThunk(
           },
         }
       );
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
-      return error;
+      console.log('error',error)
+      return handleApiSuccessOrError(error,true);
+      // return error;
     }
   }
 );
@@ -115,7 +121,8 @@ export const getRoleBasedPermissionsByDesignationId = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -142,9 +149,11 @@ export const manageRoleBasedPermissions = createAsyncThunk(
           },
         }
       );
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
