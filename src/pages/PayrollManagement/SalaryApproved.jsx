@@ -165,6 +165,7 @@ function SalaryApproved() {
     { value: "All", label: "All Status" },
     { value: "APPROVED", label: "Approved" },
     { value: "SUBMITTED", label: "Submitted" },
+    { value: "INTERIM APPROVED", label: "Interim Approved" },
     { value: "DRAFT GENERATED", label: "Draft Generated" },
     { value: "NOT GENERATED", label: "Not Generated" },
     { value: "REJECTED", label: "Rejected" },
@@ -409,9 +410,7 @@ function SalaryApproved() {
                         <div className="count bs-bg-warning">
                           {allSalaryList?.filter(
                             (x) =>
-                              x.approvalStatus.toLowerCase() === "submitted" ||
-                              x.approvalStatus.toLowerCase() ===
-                                "interim approved"
+                              x.approvalStatus.toLowerCase() === "submitted"
                           )?.length || 0}
                         </div>
                       </div>
@@ -546,13 +545,13 @@ function SalaryApproved() {
                   <thead>
                     <tr>
                       <th>
-                        {statusFilter.value.toLowerCase() === "submitted" && (
+                        {(statusFilter.value.toLowerCase() === "submitted") || (statusFilter.value.toLowerCase() === "interim approved") && (
                           <input
                             type="checkbox"
                             class="form-check-input"
                             checked={
                               salaryDraft.length ===
-                              salaryGenerationList?.length
+                              salaryGenerationList?.length && salaryDraft.length > 0
                             }
                             onChange={handleSelectAll}
                           />
