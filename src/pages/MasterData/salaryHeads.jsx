@@ -62,6 +62,9 @@ const SalaryHeads = () => {
   useEffect(() => {
     dispatch(fetchSalaryHead());
     dispatch(getAllOptions());
+    return () => {
+      handleReset();
+    };
   }, [dispatch]);
 
   useEffect(() => {
