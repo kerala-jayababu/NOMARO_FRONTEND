@@ -155,7 +155,7 @@ function NotificationConfig() {
                     name="emailSubject"
                     value={formData.emailSubject}
                     onChange={handleInputChange}
-                    maxLength="15"
+                    maxLength="100"
                     autocomplete="off"
                   />
                 </div>

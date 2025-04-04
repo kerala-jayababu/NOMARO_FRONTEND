@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+import { handleApiSuccessOrError } from "../../core/constants/commons";
 
 // API Base URL
 const API_BASE_URL = "http://46.250.230.34:8081/api/v1/MasterData";
@@ -31,9 +32,10 @@ export const fetchBudgetCode = createAsyncThunk(
       return response.data;
     } catch (error) {
       console.error("Fetch Budget Code Error:", error.response);
-      return rejectWithValue(
-        error.response?.data || "Failed to fetch budget code"
-      );
+      // return rejectWithValue(
+      //   error.response?.data || "Failed to fetch budget code"
+      // );
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -64,12 +66,14 @@ export const addBudgetCode = createAsyncThunk(
       );
 
       console.log("API Response:", response.data); // Debugging
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
       console.error("Add Budget Code Error:", error.response);
-      return rejectWithValue(
-        error.response?.data || "Failed to add budget code"
-      );
+      // return rejectWithValue(
+      //   error.response?.data || "Failed to add budget code"
+      // );
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -99,9 +103,11 @@ export const updateBudgetCode = createAsyncThunk(
           },
         },
       );
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
@@ -130,7 +136,8 @@ export const getBudgetCodeById = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return error;
+      // return error;
+      return handleApiSuccessOrError(error,true);
     }
   }
 );
