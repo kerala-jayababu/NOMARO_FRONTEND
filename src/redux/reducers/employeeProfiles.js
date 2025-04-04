@@ -37,7 +37,8 @@ export const getEmployeeBankAccountsByID = createAsyncThunk(
        
         return response.data;
       } catch (error) {
-        return error;
+        // return error;
+        return handleApiSuccessOrError(error,true);
       }
     }
   );
@@ -47,7 +48,6 @@ export const manageEmployeeBankAccount = createAsyncThunk(
   "employeeBankAccount/ManageEmployeeBankAccount",
   async (data) => {
     try {
-      debugger
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
@@ -77,7 +77,6 @@ export const updateEmployeeDetails = createAsyncThunk(
   "employeeBankAccount/UpdateEmployeeDetails",
   async (data) => {
     try {
-      debugger
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
@@ -96,7 +95,7 @@ export const updateEmployeeDetails = createAsyncThunk(
           },
         }
       );
-     
+      handleApiSuccessOrError(response.data,false);
       return response.data;
     } catch (error) {
       return handleApiSuccessOrError(error,true);
@@ -137,11 +136,8 @@ export const manageEmployeeOvertimeConfigs = createAsyncThunk(
   "employeeBankAccount/ManageEmployeeOvertimeConfigs",
   async (data) => {
     try {
-      debugger
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
-
-   
 
       if (!token) {
         console.error("Authorization token missing");
