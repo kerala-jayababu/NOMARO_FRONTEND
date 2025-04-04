@@ -236,3 +236,7 @@ body {
 .bs-bg-warning {
   color:#ffc107;
 }
+
+.imp-sal-det{
+  width: 116% !important;
+}

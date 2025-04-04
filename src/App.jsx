@@ -25,6 +25,8 @@ import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
 import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
+import Authenticate from "./pages/PayrollManagement/Authenticate";
+
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
@@ -61,9 +63,9 @@ function App() {
             <Route path='salary-slips' element={<ViewPaySlips/>} />
           </Route>
         </Route>
-
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/auth/:route" element={<Authenticate />} />
         <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
       </Routes>
     </HashRouter>

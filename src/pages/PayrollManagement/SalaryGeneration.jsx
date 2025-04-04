@@ -10,6 +10,7 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 import { Modal } from "react-bootstrap";
 import Utils from "../../utils/Utils";
 import { getSalaryHeadList } from "../../utils/service";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 const statusColor = [
   {
@@ -68,6 +69,7 @@ const statusOptions = [
 
 function SalaryGeneration() {
   const dispatch = useDispatch();
+  const [showOverloay,setShowOverlay] = useState(false)
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryDraft, setSalaryDraft] = useState([]);
   const [draftSalary, setDraftSalary] = useState([]);
@@ -173,6 +175,7 @@ function SalaryGeneration() {
       };
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
+      clearAllFilter()
     }
 
     fetchData();
@@ -216,13 +219,19 @@ function SalaryGeneration() {
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
+    clearAllFilter()
+  }
+   
+
+  const clearAllFilter = () => {
     setSalaryDraft([]);
     handelCheckboxCheck(false);
     setSelectedCard("All");
     if (filterRef.current) filterRef.current.clearValue();
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
-  };
+  }
+  
 
   function disableCheckBox(item) {
     return (
@@ -243,15 +252,18 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    setShowOverlay(true)
     const response = await SalaryGenerationService.generateDraftSalary(
       employeeIds,
       currentMonth.value
     );
-
+    setShowOverlay(false)
     if (!response.error) {
       setDraftSalary(response.data.data);
       setShow(true);
-      await dispatch(getSalaryGenerations(params));
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     } else {
       toast.error(response.error);
     }
@@ -268,7 +280,7 @@ function SalaryGeneration() {
             setDraftSalary([]);
             setShow(false);
           }}
-          size="lg"
+          size="xl"
           aria-labelledby="contained-modal-title-vcenter"
           backdrop="static"
           keyboard={false}
@@ -281,7 +293,7 @@ function SalaryGeneration() {
           </Modal.Header>
           <Modal.Body>
             <div
-              style={{ width: "47rem", height: "50vh", overflowY: "scroll" }}
+              style={{ width: "69rem", height: "50vh", overflowY: "scroll" }}
             >
               <table className="table">
                 <tr>
@@ -315,11 +327,12 @@ function SalaryGeneration() {
           onHide={() => {
             setShowImportData(false);
           }}
-          size="lg"
+         size="xl"
           aria-labelledby="contained-modal-title-vcenter"
           backdrop="static"
           keyboard={false}
           position="top-center"
+          className="imp-sal-det"
         >
           <Modal.Header closeButton>
             <Modal.Title>
@@ -328,17 +341,17 @@ function SalaryGeneration() {
           </Modal.Header>
           <Modal.Body>
             <div
-              style={{ width: "47rem", height: "50vh", overflowY: "scroll" }}
+              style={{ width: "69rem", height: "50vh", overflowY: "scroll" }}
             >
               <table className="table">
                 <tr>
-                  <th className="p-2">Upload Status</th>
                   <th className="p-2">Employee Code</th>
+                  <th className="p-2">Upload Status</th>
                 </tr>
                 {importedData?.map((item) => (
                   <tr key={item.idEmployee}>
-                    <td className="p-2">{item.uploadStatus}</td>
                     <td className="p-2">{item.employeeCode}</td>
+                    <td className="p-2">{item.uploadStatus}</td>
                   </tr>
                 ))}
               </table>
@@ -356,14 +369,17 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    setShowOverlay(true)
     const response = await SalaryGenerationService.undoGeneratedDraftSalary(
       employeeIds,
       currentMonth.value
     );
-
+    setShowOverlay(false)
     if (!response.error) {
       toast.success("Draft Salary Generation Undone Successfully");
-      await dispatch(getSalaryGenerations(params));
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     } else {
       toast.error(response.error);
     }
@@ -377,14 +393,17 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    setShowOverlay(true)
     const response = await SalaryGenerationService.submitSalaryDetails(
       employeeIds,
       currentMonth.value
     );
-
+    setShowOverlay(false)
     if (!response.error) {
       toast.success("Salary Submitted for Approval Successfully");
-      await dispatch(getSalaryGenerations(params));
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     } else {
       toast.error(response.error);
     }
@@ -448,11 +467,12 @@ function SalaryGeneration() {
 
   const ExportSalaryGeneration = async () => {
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    setShowOverlay(true)
     const response = await SalaryGenerationService.exportSalaryGeneration(
       employeeIds,
       currentMonth.value
     );
-
+    setShowOverlay(false)
     if (response.error) {
       toast.error(response.error);
     } else {
@@ -498,8 +518,10 @@ function SalaryGeneration() {
         idSalaryMonth: currentMonth.value,
         employeeSalaryJsonData: data,
       };
+      setShowOverlay(true)
       const response =
         await SalaryGenerationService.UploadSalaryGenerationDetails(content);
+      setShowOverlay(false)
       if (response.error) {
         toast.error(response.error);
       } else {
@@ -507,6 +529,13 @@ function SalaryGeneration() {
         setShowImportData(true);
         setShowImportModal(false);
       }
+      const params = {
+        idSalaryMonth: currentMonth?.value,
+        status: "All",
+      };
+      const { payload } = await dispatch(getSalaryGenerations(params));
+      setAllSalaryList(payload.data);
+      clearAllFilter()
     } catch (error) {
       console.error("Error processing Excel file:", error);
     }
@@ -1001,6 +1030,7 @@ function SalaryGeneration() {
         showImportData={showImportData}
         setShowImportData={setShowImportData}
       />
+      <LoadingOverlay isLoading={showOverloay}/>
     </div>
   );
 }

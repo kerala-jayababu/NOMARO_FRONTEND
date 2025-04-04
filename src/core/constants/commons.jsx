@@ -22,8 +22,12 @@ export const Months = [
 
 
 export const handleApiSuccessOrError = (responseData,isError) => {
+    if(responseData.status === 401) {
+        secureLocalStorage.clear()
+        window.location.href = '/login';
+    }
     handleApiResponse(responseData);     
-    if(isError){          
+    if(isError){    
         return {
             error: responseData.response?.data?.message || 'An error occurred',
             data: null
