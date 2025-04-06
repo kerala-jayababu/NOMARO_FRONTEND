@@ -136,7 +136,7 @@ function SalaryGeneration() {
           month.salaryMonthText.includes(months[new Date().getMonth()])
         );
 
-      const filteredMonths = res.data.filter((month) => {
+      const filteredMonths = res.data?.filter((month) => {
         const currentDate = new Date();
         const currentMonthIndex = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();

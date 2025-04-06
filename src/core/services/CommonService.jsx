@@ -1,7 +1,6 @@
 import { API, handleApiError } from "../../redux/api/utils";
 
 export default class CommonService {
-
   static getEmployeeList = async () => {
     try {
       const res = await API.get("/api/v1/Employee/GetEmployeeList");
@@ -9,7 +8,7 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getDepartmentsList = async () => {
     try {
@@ -18,7 +17,7 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getDesignationsList = async () => {
     try {
@@ -27,7 +26,7 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getSalaryHeadList = async () => {
     try {
@@ -36,7 +35,7 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getHolidayTypes = async () => {
     try {
@@ -45,7 +44,7 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getAllSalaryMonths = async () => {
     try {
@@ -54,25 +53,29 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
-  
+  };
+
   static getEmployeesByHierarchy = async (employeeId) => {
     try {
-      const res = await API.get("/api/v1/Employee/GetEmployeesByHierarchy?employeeId=" + employeeId);
+      const res = await API.get(
+        "/api/v1/Employee/GetEmployeesByHierarchy?employeeId=" + employeeId
+      );
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getSalaryStructure = async () => {
     try {
-      const res = await API.get("/api/v1/Common/GetEmployeeLatestSalaryStructure");
+      const res = await API.get(
+        "/api/v1/Common/GetEmployeeLatestSalaryStructure"
+      );
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getAllOptions = async () => {
     try {
@@ -81,24 +84,41 @@ export default class CommonService {
     } catch (error) {
       return handleApiError(error);
     }
-  }
+  };
 
   static getAllFinancialYears = async () => {
     try {
-        const response = await API.get("/api/v1/Common/GetAllFiancialyear");
-        return { error: null, data: response.data };  
+      const response = await API.get("/api/v1/Common/GetAllFiancialyear");
+      return { error: null, data: response.data };
     } catch (error) {
-        return handleApiError(error);
-    }
-}
-
-static getSystemParameters = async () => {
-  try {
-      const response = await API.get("/api/v1/MasterData/GetSystemParameters");
-      return { error: null, data: response.data };  
-  } catch (error) {
       return handleApiError(error);
-  }
-}
+    }
+  };
 
+  static getSystemParameters = async () => {
+    try {
+      const response = await API.get("/api/v1/MasterData/GetSystemParameters");
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static GetEmployeeNotification = async () => {
+    try {
+      const response = await API.get("/api/v1/Common/GetEmployeeNotification");
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static UpdateEmployeeNotification = async (notificationId) => {
+    try {
+      const response = await API.post(`/api/v1/Common/UpdateEmployeeNotification?IdNotification=${notificationId}`);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }

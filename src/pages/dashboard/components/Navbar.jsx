@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
+import CommonService from "../../../core/services/CommonService";
+import Utils from "../../../utils/Utils";
 
 function Navbar() {
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const [notification, setNotification] = useState([]);
+  const [clicked,setClicked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Set profile picture from secureLocalStorage
+    CommonService.GetEmployeeNotification().then((res) => {
+      setNotification(res.data);
+    });
     if (userData?.attachmentBlob) {
       setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
     }
-  }, []);
+  }, [clicked]);
+  
 
   useEffect(() => {
     // Toggle menu click behavior
@@ -44,6 +52,12 @@ function Navbar() {
     navigate("/login");
   };
 
+  const handleNotificationClick = async (item) => { 
+    await CommonService.UpdateEmployeeNotification(item.idNotification)
+    setClicked(!clicked)
+    navigate(`/dashboard/${item.notificationLink}`)
+  }
+
   return (
     <nav
       className="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme bg-drak"
@@ -73,7 +87,18 @@ function Navbar() {
             >
               <span className="position-relative">
                 <i className="bx bx-bell bx-md"></i>
-                <span className="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+                {notification && notification?.length > 0 && (
+                  <span 
+                    className="position-absolute translate start-100 0 p-1 bg-danger rounded-circle"
+                    style={{ 
+                      width: '0.5px', 
+                      height: '0.5px',
+                      top: "4px",
+                    }}
+                  >
+                    <span className="visually-hidden">New notifications</span>
+                  </span>
+                )}
               </span>
             </a>
             <ul className="dropdown-menu dropdown-menu-end p-0">
@@ -81,7 +106,7 @@ function Navbar() {
                 <div className="dropdown-header d-flex align-items-center py-3">
                   <h6 className="mb-0 me-auto">Notification</h6>
                   <div className="d-flex align-items-center h6 mb-0">
-                    <span className="badge bg-label-primary me-2">8 New</span>
+                    <span className="badge bg-label-primary me-2">{notification?.length} New</span>
                     <a
                       className="dropdown-notifications-all p-2"
                       data-bs-toggle="tooltip"
@@ -96,33 +121,35 @@ function Navbar() {
               </li>
               <li className="dropdown-notifications-list scrollable-container ps">
                 <ul className="list-group list-group-flush">
-                  <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                    <div className="d-flex">
-                      <div className="flex-shrink-0 me-3">
-                        <div className="avatar">
-                          <span className="avatar-initial rounded-circle bg-label-danger">
-                            CF
-                          </span>
+                  {notification?.length > 0 && notification?.map((item, index) => (
+                    <li className="list-group-item list-group-item-action dropdown-notifications-item" onClick={() => handleNotificationClick(item)} key={index}>
+                      <div className="d-flex">
+                        <div className="flex-shrink-0 me-3">
+                          <div className="avatar">
+                            <span className="avatar-initial rounded-circle bg-label-danger">
+                              CF
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-grow-1">
+                          <h6 className="small mb-0"> {item.appNotificationText}</h6>
+                          <small className="mb-1 d-block text-body">
+                             {/* <div dangerouslySetInnerHTML={{ __html: item.appNotificationText }} /> */}
+                            {/* {item.emailContent} */}
+                          </small>
+                          <small className="text-muted">{Utils.timeAgo(item.createdAt)}</small>
+                        </div>
+                        <div className="flex-shrink-0 dropdown-notifications-actions">
+                          <a className="dropdown-notifications-read">
+                            <span className="badge badge-dot"></span>
+                          </a>
+                          <a className="dropdown-notifications-archive">
+                            <span className="bx bx-x"></span>
+                          </a>
                         </div>
                       </div>
-                      <div className="flex-grow-1">
-                        <h6 className="small mb-0">Charles Franklin</h6>
-                        <small className="mb-1 d-block text-body">
-                          Accepted your connection
-                        </small>
-                        <small className="text-muted">12hr ago</small>
-                      </div>
-                      <div className="flex-shrink-0 dropdown-notifications-actions">
-                        <a className="dropdown-notifications-read">
-                          <span className="badge badge-dot"></span>
-                        </a>
-                        <a className="dropdown-notifications-archive">
-                          <span className="bx bx-x"></span>
-                        </a>
-                      </div>
-                    </div>
-                  </li>
-                  <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
+                    </li>))}
+                  {/* <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
                     <div className="d-flex">
                       <div className="flex-shrink-0 me-3">
                         <div className="avatar">
@@ -230,8 +257,9 @@ function Navbar() {
                         </a>
                       </div>
                     </div>
-                  </li>
+                  </li> */}
                 </ul>
+
                 <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
                   <div
                     className="ps__thumb-x"

@@ -63,8 +63,8 @@ function App() {
             <Route path='salary-slips' element={<ViewPaySlips/>} />
           </Route>
         </Route>
-        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/auth/:route" element={<Authenticate />} />
         <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
       </Routes>

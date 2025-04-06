@@ -138,5 +138,29 @@ export default class Utils {
           reader.onerror = (error) => reject(error);
           reader.readAsArrayBuffer(file);
         });
-      };
+    };
+    
+    static timeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    const units = [
+        { label: 'yr', seconds: 31536000 },
+        { label: 'mo', seconds: 2592000 },
+        { label: 'd', seconds: 86400 },
+        { label: 'hr', seconds: 3600 },
+        { label: 'min', seconds: 60 },
+        { label: 'sec', seconds: 1 }
+    ];
+
+    for (let unit of units) {
+        const interval = Math.floor(diffInSeconds / unit.seconds);
+        if (interval >= 1) {
+            return `${interval}${unit.label} ago`;
+        }
+    }
+
+    return 'just now';
+}
 }
