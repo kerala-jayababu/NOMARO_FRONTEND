@@ -34,7 +34,7 @@ function ViewPaySlips() {
     if (fromMonth != '' && toMonth != '') {
       getSalarySlips();
     }
-  }, [fromMonth, toMonth]);
+  }, [fromMonth, toMonth, rowsPerPage]);
 
   const getSalarySlips = () => {
     ViewPaySlipService.getSalarySlipsData(fromMonth, toMonth, searchText).then(res => {
@@ -104,7 +104,7 @@ function ViewPaySlips() {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     return salarySlips.slice(startIndex, endIndex);
-  }, [salarySlips, currentPage, rowsPerPage]);
+  }, [salarySlips, currentPage]);
 
   const validPaySlips = salarySlips.filter(slip => slip.employeeCode);
 
@@ -273,7 +273,7 @@ function ViewPaySlips() {
                   </tbody>
                 </table>
               </div>
-              <div className="text-center">
+              <div className="text-center py-2">
                 <button className="btn btn-primary btn-sm px-4"
                   disabled={selectedRows.length === 0} onClick={() => downloadMultipleSalarySlips()}>
                   Download selected
@@ -284,6 +284,12 @@ function ViewPaySlips() {
                 </button> */}
               </div>
               <div className="text-end pt-2">
+                <select className='form-select' onChange={(e)=>setRowsPerPage(e.target.value)}>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

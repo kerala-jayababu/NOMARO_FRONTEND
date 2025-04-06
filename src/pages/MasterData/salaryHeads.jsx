@@ -37,6 +37,7 @@ const SalaryHeads = () => {
     salaryHeadName: "",
     orderNumber: "",
     customFormula: "",
+    taxExcemptionThresholdValue: "",
   });
 
   const dispatch = useDispatch();
@@ -62,6 +63,9 @@ const SalaryHeads = () => {
   useEffect(() => {
     dispatch(fetchSalaryHead());
     dispatch(getAllOptions());
+    return () => {
+      handleReset();
+    };
   }, [dispatch]);
 
   useEffect(() => {
@@ -90,9 +94,6 @@ const SalaryHeads = () => {
     }
   }, [currentSalaryHead]);
 
-  // const handleEditClick = (id) => {
-  //   dispatch(getSalaryHeadById(id));
-  // };
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditClick = (id) => {
@@ -134,26 +135,6 @@ const SalaryHeads = () => {
     dispatch({ type: "salaryHead/clearCurrentSalaryHead" });
   };
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   // Allow only numeric values for "orderNumber"
-  //   if (name === "orderNumber" && isNaN(value)) {
-  //     return; // Do nothing if the value is not a number
-  //   }
-
-  //   setFormData({
-  //     ...formData,
-  //     type: currentSalaryHead.headType === "EARNING" ? "E" : "D",
-  //     [name]: value,
-  //   });
-
-  //   // Clear errors when the user starts typing
-  //   setErrors({
-  //     ...errors,
-  //     [name]: "",
-  //   });
-  // };
   const validateField = (name, value) => {
     let error = "";
 
@@ -211,22 +192,20 @@ const SalaryHeads = () => {
 
       case "taxExcemptionThresholdValue":
         if (formData.taxability === "Taxable") {
-          if (value === "" || value === null || value === undefined) {
-            error = formData.taxExcemptionThresholdType === "Percentage"
-              ? "Tax Percentage is required"
-              : "Tax Amount is required";
-          } else if (isNaN(value)) {
-            error = "Please enter a valid number";
-          } else if (
-            formData.taxExcemptionThresholdType === "Percentage" &&
-            (Number(value) < 0 || Number(value) > 100)
-          ) {
-            error = "Percentage must be between 0 and 100";
-          } else if (
-            formData.taxExcemptionThresholdType === "Fixed Value" &&
-            Number(value) < 0
-          ) {
-            error = "Amount cannot be negative";
+          if (value === "") {
+            error = "Tax exemption threshold value is required";
+          } else if (formData.taxExcemptionThresholdType === "PERCENTAGE") {
+            if (value > 100) {
+              error = "Percentage cannot be more than 100";
+            } else if (value < 0) {
+              error = "Percentage cannot be negative";
+            }
+          } else if (formData.taxExcemptionThresholdType === "FIXEDVALUE") {
+            if (value.toString().length > 12) {
+              error = "Fixed value cannot exceed 12 digits";
+            } else if (value < 0) {
+              error = "Fixed value cannot be negative";
+            }
           }
         }
         break;
@@ -238,50 +217,51 @@ const SalaryHeads = () => {
     return error;
   };
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   // Allow only numeric values for "orderNumber"
-  //   if (name === "orderNumber" && isNaN(value)) {
-  //     return; // Do nothing if the value is not a number
-  //   }
-
-  //   // Update the formData state
-  //   setFormData((prevFormData) => ({
-  //     ...prevFormData,
-  //     [name]: value,
-  //   }));
-
-  //   // Clear errors when the user starts typing
-  //   setErrors((prevErrors) => ({
-  //     ...prevErrors,
-  //     [name]: "",
-  //   }));
-  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // For numeric fields, convert to number if not empty
-    const processedValue = 
-      (name === "orderNumber" || name === "taxExcemptionThresholdValue" || name === "percentageValue" || name === "defaultValue") 
-      ? (value === "" ? "" : Number(value))
-      : value;
-  
-    // Allow only numeric values for "orderNumber" and other numeric fields
-    if ((name === "orderNumber" || name === "taxExcemptionThresholdValue" || name === "percentageValue" || name === "defaultValue") && 
-        value !== "" && isNaN(value)) {
+    const processedValue =
+      (name === "orderNumber" ||
+        name === "taxExcemptionThresholdValue" ||
+        name === "percentageValue" ||
+        name === "defaultValue")
+        ? (value === "" ? "" : Number(value))
+        : value;
+
+    // Allow only numeric values for numeric fields
+    if ((name === "orderNumber" ||
+      name === "taxExcemptionThresholdValue" ||
+      name === "percentageValue" ||
+      name === "defaultValue") &&
+      value !== "" && isNaN(value)) {
       return;
     }
-  
+
+    // Additional validation for taxExcemptionThresholdValue
+    if (name === "taxExcemptionThresholdValue") {
+      if (formData.taxExcemptionThresholdType === "PERCENTAGE") {
+        // For percentage, limit to 100
+        if (processedValue !== "" && processedValue > 100) {
+          return;
+        }
+      } else {
+        // For fixed value, limit to 12 digits
+        if (processedValue !== "" && processedValue.toString().length > 12) {
+          return;
+        }
+      }
+    }
+
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: processedValue,
     }));
-  
+
     // Validate the field
     const fieldError = validateField(name, processedValue);
-  
+
     // Update the errors state
     setErrors((prevErrors) => ({
       ...prevErrors,
@@ -289,12 +269,6 @@ const SalaryHeads = () => {
     }));
   };
 
-  // const handleRadioChange = (value, name) => {
-  //   setFormData({
-  //     ...formData,
-  //     [name]: value,
-  //   });
-  // };
   const handleRadioChange = (value, name) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -309,66 +283,6 @@ const SalaryHeads = () => {
       }));
     }
   };
-
-
-  // const validateForm = () => {
-  //   const newErrors = {};
-
-  //   // Validate mandatory fields
-  //   if (!formData.salaryHeadCode.trim()) {
-  //     newErrors.salaryHeadCode = "Salary Head Code is required.";
-  //   } else if (
-  //     // Only check for existing Salary Head Code if it's a new salary head or updated code is different
-  //     (!currentSalaryHead?.idSalaryHead ||
-  //       currentSalaryHead.salaryHeadCode !== formData.salaryHeadCode) &&
-  //     salaryHeadList.some(
-  //       (head) => head.salaryHeadCode.toLowerCase() === formData.salaryHeadCode.toLowerCase()
-  //     )
-  //   ) {
-  //     newErrors.salaryHeadCode = "Salary Head Code Already Exists.";
-  //   }
-
-  //   // Validate Salary Head Name
-  //   if (!formData.salaryHeadName.trim()) {
-  //     newErrors.salaryHeadName = "Salary Head Name is required.";
-  //   } else if (
-  //     // Only check for existing Salary Head Name if it's a new salary head or updated name is different
-  //     (!currentSalaryHead?.idSalaryHead ||
-  //       currentSalaryHead.salaryHeadName !== formData.salaryHeadName) &&
-  //     salaryHeadList.some(
-  //       (head) => head.salaryHeadName.toLowerCase() === formData.salaryHeadName.toLowerCase()
-  //     )
-  //   ) {
-  //     newErrors.salaryHeadName = "Salary Head Name Already Exists.";
-  //   }
-
-  //   // Validate mandatory orderNumber
-  //   if (!formData.orderNumber) {
-  //     newErrors.orderNumber = "Order Number is required.";
-  //   } else {
-  //     // Validate unique orderNumber
-  //     if (
-  //       !currentSalaryHead?.idSalaryHead &&
-  //       salaryHeadList.some(
-  //         (head) => Number(head.orderNumber) === Number(formData.orderNumber)
-  //       )
-  //     ) {
-  //       newErrors.orderNumber = "Order Number Already Exists.";
-  //     }
-  //   }
-
-  //   // Validate Custom Formula
-  //   if (formData.calculationMethod === "Custom Formula") {
-  //     if (!formData.customFormula.trim()) {
-  //       newErrors.customFormula = "Custom Formula is required.";
-  //     } else if (!isValidCustomFormula(formData.customFormula, salaryHeadList)) {
-  //       newErrors.customFormula = "Invalid formula. Use valid Salary Head Codes and arithmetic operators.";
-  //     }
-  //   }
-
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0; // Return true if no errors
-  // };
 
   const validateForm = () => {
     const newErrors = {};
@@ -560,16 +474,6 @@ const SalaryHeads = () => {
               {formData.taxability === "Taxable" && (
                 <div className="row mb-2">
                   <div className="col-md-6">
-                    {/* <Dropdown
-                      label="Tax Free Threshold"
-                      name="taxExcemptionThresholdType"
-                      value={formData.taxExcemptionThresholdType}
-                      onChange={handleChange}
-                      options={[
-                        { value: "FIXEDVALUE", label: "Fixed Value" },
-                        { value: "PERCENTAGE", label: "Percentage" },
-                      ]}
-                    /> */}
                     <label className="mt-1">Tax Free Threshold</label>
                     <select
                       name="taxExcemptionThresholdType"
@@ -582,25 +486,20 @@ const SalaryHeads = () => {
                     </select>
                   </div>
                   <div className="col-md-6">
-                    <Input
-                      label={formData.taxExcemptionThresholdType === "Percentage" ? "Tax Percentage" : "Tax Amount"}
+                    <label className="mt-1">{formData.taxExcemptionThresholdType === "PERCENTAGE" ? "Tax Percentage" : "Tax Amount"}</label>
+                    <input
+                      className="form-control"
                       name="taxExcemptionThresholdValue"
+                      type="number"
                       value={formData.taxExcemptionThresholdValue}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow only numbers and up to 2 decimal places
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleChange({
-                            ...e,
-                            target: {
-                              ...e.target,
-                              value: value === "" ? "" : Number(value)
-                            }
-                          });
-                        }
-                      }}
-                      maxLength={formData.taxExcemptionThresholdType === "Percentage" ? "4" : "12"}
+                      onChange={handleChange}
+                      max={formData.taxExcemptionThresholdType === "PERCENTAGE" ? "100" : undefined}
+                      maxLength={formData.taxExcemptionThresholdType === "PERCENTAGE" ? "3" : "12"}
+                      step={formData.taxExcemptionThresholdType === "PERCENTAGE" ? "0.01" : "1"}
                     />
+                    {errors.taxExcemptionThresholdValue && (
+                      <div className="text-danger small">{errors.taxExcemptionThresholdValue}</div>
+                    )}
                   </div>
                 </div>
               )}
@@ -657,13 +556,6 @@ const SalaryHeads = () => {
                     placeholder="(BP + DA) / 10"
                     error={errors.customFormula}
                   />
-                  {/* <Input
-                    label="Value"
-                    name="value"
-                    value={formData.value}
-                    onChange={handleChange}
-                    maxLength="5"
-                  /> */}
                 </>
               )}
               {formData.calculationMethod === "Fixed Amount" && (
