@@ -140,7 +140,7 @@ body {
 
 .textSize {
   font-size: 14px;
-  color:#4d5975 !important
+  color: #4d5975 !important;
 }
 
 .controlHeight {
@@ -157,9 +157,9 @@ body {
 
 .deduct-table-container {
   display: block;
-  max-height: 250px;  
+  max-height: 250px;
   overflow-y: auto;
-  padding-bottom: 50px; 
+  padding-bottom: 50px;
 }
 
 .deduct-table-container table {
@@ -234,6 +234,9 @@ body {
 }
 
 .bs-bg-warning {
-  color:#ffc107;
+  color: #ffc107;
 }
 
+.translate {
+  transform: translate(-120%, -30%);
+}
