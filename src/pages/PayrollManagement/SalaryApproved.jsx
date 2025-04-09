@@ -316,6 +316,46 @@ function SalaryApproved() {
     });
   };
 
+  const exportSalaryApproved = async () => {
+    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+    setShowOverlay(true);
+    const response = await SalaryGenerationService.exportSalaryApproved(
+      employeeIds,
+      currentMonth.value
+    );
+    setShowOverlay(false);
+    if (response.error) {
+      toast.error(response.error);
+    } else {
+      downloadFile(response.data);
+    }
+    uncheckCheckBox();
+    setSalaryDraft([]);
+  };
+
+  const downloadFile = (item) => {
+    const base64Data = item.fileContent;
+    const fileName = item.fileName || "downloaded-file";
+
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: item.fileType });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div class="container-xxl flex-grow-1 container-p-y">
       <div class="row">
@@ -545,7 +585,7 @@ function SalaryApproved() {
                   <thead>
                     <tr>
                       <th>
-                        {(statusFilter.value.toLowerCase() === "submitted") || (statusFilter.value.toLowerCase() === "interim approved") && (
+                        {["submitted","interim approved","approved"].includes(statusFilter.value.toLowerCase()) && (
                           <input
                             type="checkbox"
                             class="form-check-input"
@@ -604,6 +644,10 @@ function SalaryApproved() {
                                 !(
                                   item.approvalStatus.toLowerCase() ===
                                   "interim approved"
+                                ) && 
+                                !(
+                                  item.approvalStatus.toLowerCase() ===
+                                  "approved"
                                 )
                               }
                             />
@@ -649,14 +693,16 @@ function SalaryApproved() {
                 </table>
                 <div class="text-center pt-3">
                   <button
-                    type="submit"
+                    type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
+                    onClick={exportSalaryApproved}
+                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() !== "approved"}
                   >
                     Export to Excel for Detailed Review
                   </button>
                   <button
                     type="button"
-                    disabled={salaryDraft.length === 0}
+                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() === "approved"}
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={() => setShowRejectModal(true)}
                   >
@@ -664,7 +710,7 @@ function SalaryApproved() {
                   </button>
                   <button
                     type="button"
-                    disabled={salaryDraft.length === 0}
+                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() === "approved"}
                     class="btn btn-info btn-sm py-2 px-4 me-2"
                     onClick={() => showConfirmationModal("approve")}
                   >

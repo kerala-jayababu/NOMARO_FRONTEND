@@ -77,4 +77,15 @@ export default class SalaryGenerationService {
       return handleApiError(error);
     }
   };
+
+  static exportSalaryApproved = async (employeeIds, month) => {
+    try {
+      const res = await API.get(
+        `/api/v1/SalaryGeneration/ExportSalaryGenerationDetailsForApproved?employeeIds=${employeeIds}&idSalaryMonth=${month}`
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }
