@@ -104,19 +104,12 @@ export default Content;
 
 export const ComingSoon = () => {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 m-4">
-      <div className="text-center bg-white rounded-lg shadow-lg max-w-lg w-full p-10">
-        <h1 className="text-4xl font-bold text-gray-800 ">Coming Soon!</h1>
-        <p className="text-lg text-gray-600 mb-6">
-          We're working to bring this feature to you. Stay tuned for updates!
-        </p>
-        <div className="flex justify-center">
-          <div className="w-24 h-24 border-t-4 border-blue-500 border-dotted rounded-full animate-spin"></div>
-        </div>
-        <p className="mt-4 text-sm text-gray-500">
-          Check back later for updates on this exciting new feature!
-        </p>
-      </div>
+    <div className="flex justify-center">
+      <img
+        src="/assets/Welcome1.jpg"
+        style={{ width: "55%", marginLeft: "25%", marginTop: "3%" }}
+        alt="Coming Soon"
+      />
     </div>
   );
 };

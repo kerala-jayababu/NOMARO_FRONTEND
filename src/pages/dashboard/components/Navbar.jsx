@@ -12,13 +12,30 @@ function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set profile picture from secureLocalStorage
-    CommonService.GetEmployeeNotification().then((res) => {
-      setNotification(res.data);
-    });
+    const fetchNotifications = () => {
+      CommonService.GetEmployeeNotification().then((res) => {
+        setNotification(res.data);
+      });
+    };
+  
+    fetchNotifications();
+  
+    const interval = setInterval(() => {
+      fetchNotifications(); 
+    }, 60000);
+  
+    return () => clearInterval(interval);
+  }, []);
+  
+  useEffect(() => {
     if (userData?.attachmentBlob) {
       setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
     }
+    // Optional: re-fetch manually when "clicked" changes
+    CommonService.GetEmployeeNotification().then((res) => {
+      debugger
+      setNotification(res.data);
+    });
   }, [clicked]);
   
 
@@ -104,7 +121,7 @@ function Navbar() {
             <ul className="dropdown-menu dropdown-menu-end p-0">
               <li className="dropdown-menu-header border-bottom">
                 <div className="dropdown-header d-flex align-items-center py-3">
-                  <h6 className="mb-0 me-auto">Notification</h6>
+                  <h6 className="mb-0 me-auto">Notifications</h6>
                   <div className="d-flex align-items-center h6 mb-0">
                     <span className="badge bg-label-primary me-2">{notification?.length} New</span>
                     <a
@@ -127,7 +144,7 @@ function Navbar() {
                         <div className="flex-shrink-0 me-3">
                           <div className="avatar">
                             <span className="avatar-initial rounded-circle bg-label-danger">
-                              CF
+                            {item.logoText}
                             </span>
                           </div>
                         </div>
@@ -277,9 +294,9 @@ function Navbar() {
               </li>
               <li className="border-top">
                 <div className="d-grid p-4">
-                  <a className="btn btn-primary btn-sm py-2" href="#">
+                  {/* <a className="btn btn-primary btn-sm py-2" href="#">
                     View all notifications
-                  </a>
+                  </a> */}
                 </div>
               </li>
             </ul>
