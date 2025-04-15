@@ -5,7 +5,6 @@ import secureLocalStorage from "react-secure-storage";
 function PrivateRoute() {
   const isAuthenticated = () => {
     const user = secureLocalStorage.getItem("user");
-    console.log("User from storage:", user); // Debug log
     return !!user; // Returns true if user exists, false otherwise
   };
 

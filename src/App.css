@@ -240,3 +240,7 @@ body {
 .translate {
   transform: translate(-120%, -30%);
 }
+
+.float-start-custom {
+  margin: -25px;
+}

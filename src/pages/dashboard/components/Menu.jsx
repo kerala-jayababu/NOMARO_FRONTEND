@@ -72,9 +72,13 @@ function Menu() {
           >
             <a
               className="menu-link menu-toggle"
-              onClick={() =>
-                setMenu(menu === screen.screenName ? "" : screen.screenName)
-              }
+              onClick={() => {
+                setMenu(menu === screen.screenName ? "" : screen.screenName);
+                if (screen.screenName.trim().toLowerCase() === 'reports') {
+                  const url = window.location.origin + window.location.pathname + '#/reports';
+                  window.open(url, '_blank');
+                }
+              }}
             >
               <i className="menu-icon tf-icons bx bx-dock-top"></i>
               <div data-i18n="Account Settings">{screen.screenName}</div>

@@ -26,11 +26,12 @@ import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import Authenticate from "./pages/PayrollManagement/Authenticate";
-
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
+import Reports from "./pages/PayrollManagement/Reports/Reports";
+
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -62,6 +63,7 @@ function App() {
             <Route path='rent-free-quarters' element={<RentFreeQuarters/>} />
             <Route path='salary-slips' element={<ViewPaySlips/>} />
           </Route>
+          <Route path="/reports" element={<Reports />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
