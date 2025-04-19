@@ -26,7 +26,6 @@ import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
 import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import Authenticate from "./pages/PayrollManagement/Authenticate";
-
 import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
@@ -35,6 +34,7 @@ import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
 import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
 import LoginWithOtp from "./pages/LoginWithOTP";
+import Reports from "./pages/PayrollManagement/Reports/Reports";
 
 function App() {
   return (
@@ -70,6 +70,7 @@ function App() {
             <Route path='salary-report' element={<SalaryReport/>} />
             <Route path='overtime-details' element={<EmployeeOvertimeTransaction/>} />
           </Route>
+          <Route path="/reports" element={<Reports />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginWithOtp />} />

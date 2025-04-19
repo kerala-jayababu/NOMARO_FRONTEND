@@ -201,7 +201,7 @@ function SalaryGeneration() {
   }
 
   const handleStatusChange = (status, cardName) => {
-    if (status.value) {
+    if (status?.value) {
       const params = {
         idSalaryMonth: currentMonth?.value,
         status: status?.value,
