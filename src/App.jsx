@@ -31,6 +31,11 @@ import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
+import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
+import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
+import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
+import LoginWithOtp from "./pages/LoginWithOTP";
+
 function App() {
   return (
     <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
@@ -61,10 +66,13 @@ function App() {
             <Route path='bank-branches' element={<BankAndBranches/>} />
             <Route path='rent-free-quarters' element={<RentFreeQuarters/>} />
             <Route path='salary-slips' element={<ViewPaySlips/>} />
+            <Route path='pay-slips' element={<SalarySlipsView/>} />
+            <Route path='salary-report' element={<SalaryReport/>} />
+            <Route path='overtime-details' element={<EmployeeOvertimeTransaction/>} />
           </Route>
         </Route>
         <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginWithOtp />} />
         <Route path="/auth/:route" element={<Authenticate />} />
         <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
       </Routes>

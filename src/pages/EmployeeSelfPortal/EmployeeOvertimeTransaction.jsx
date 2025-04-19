@@ -9,6 +9,7 @@ import { Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
+import { NumericFormat } from "react-number-format";
 
 function EmployeeOvertimeTransaction() {
 
@@ -101,7 +102,7 @@ function EmployeeOvertimeTransaction() {
   };
 
   const getEmployeesHeirarchy = () => {
-    CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
+    CommonService.getEmployeesByHierarchy(userData.idEmployee ?? 0).then(res => {
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
@@ -121,7 +122,7 @@ function EmployeeOvertimeTransaction() {
 
   const getOTTranasactions = () => {
     const date = moment(startDate).format("YYYY-MM-DD");
-    OvertimeService.getOvertimeTransactionsData(userData.userId ?? 0, date, statusType, searchText).then(res => {
+    OvertimeService.getEmployeeOvertimeTransactions(userData.idEmployee, date).then(res => {
       setOvertimeTransactions(res.data.data);
     }).catch(err => {
       setOvertimeTransactions([]);
@@ -160,7 +161,7 @@ function EmployeeOvertimeTransaction() {
 
   const saveOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
+    if (!newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
       setValidated(true);
       return;
     }
@@ -168,7 +169,7 @@ function EmployeeOvertimeTransaction() {
     // Create a FormData object to handle file upload
     const formData = new FormData();
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
-    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idEmployee', userData.idEmployee);
     formData.append('idOvertimeType', 0);
     formData.append('overtimeTypeName', 'NA');
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
@@ -204,14 +205,14 @@ function EmployeeOvertimeTransaction() {
 
   const updateOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
+    if (!newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
       setValidated(true);
       return;
     }
 
     const formData = new FormData();
     formData.append('idOvertimeTransaction', newData.idOvertimeTransaction);
-    formData.append('idEmployee', newData.idEmployee);
+    formData.append('idEmployee', userData.idEmployee);
     formData.append('idOvertimeType', 0);
     formData.append('overtimeTypeName', 'NA');
     formData.append('startDate', moment(newData.startDate).format('YYYY-MM-DD'));
@@ -317,7 +318,7 @@ function EmployeeOvertimeTransaction() {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
-                <div className="list_searchbox">
+                {/* <div className="list_searchbox">
                   <select className="form-select" value={statusType}
                     onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
                     <option value={''}>All Status</option>
@@ -325,14 +326,14 @@ function EmployeeOvertimeTransaction() {
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
                     <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
                   </select>
-                </div>
+                </div> */}
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                     showYearDropdown dropdownMode="select" />
                 </div>
-                <div className="list_searchbox">
+                {/* <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
                       setSearchText(e.target.value);
@@ -342,7 +343,7 @@ function EmployeeOvertimeTransaction() {
                     }}
                     onKeyDown={e => e.key === 'Enter' ? getOTTranasactions() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getOTTranasactions()}></i>
-                </div>
+                </div> */}
                 <button
                   className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>
                   Add
@@ -445,7 +446,7 @@ function EmployeeOvertimeTransaction() {
               <div className="accountDetail_card">
                 <Form noValidate validated={validated}>
                   <div className="accountDetail_card">
-                    <div className="row m-0">
+                    {/* <div className="row m-0">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Employee Name</label>
 
@@ -458,19 +459,7 @@ function EmployeeOvertimeTransaction() {
                           className="textSize" required
                         />
                       </div>
-                      {/* <div className="col-md-6 p-2">
-                        <label className="form-label mb-1">Type</label>
-                        <select className="form-select" value={newData.idOvertimeType}
-                          onChange={(e) => setNewData({ ...newData, idOvertimeType: e.target.value, overtimeTypeName: e.target.name })} required>
-                          <option value={''}>Select</option>
-                          {
-                            overtimeTypes?.map((el) => (
-                              <option value={el.value} key={el.value}>{el.displayName}</option>
-                            ))
-                          }
-                        </select>
-                      </div> */}
-                    </div>
+                    </div> */}
                     <div className="row m-0">
                       <div className="col-md-6 p-2">
                         <label className="form-label mb-1">Start Date and Time</label>
@@ -512,12 +501,23 @@ function EmployeeOvertimeTransaction() {
                       <div class="col-md-6 p-0">
                         <div class="p-2">
                           <label class="form-label mb-1">Duration in Hrs</label>
-                          <input
+                          {/* <input
                             type="number"
                             className="form-control"
                             placeholder="00"
                             value={newData.durationInHours} disabled={true}
                             onChange={(e) => setNewData({ ...newData, durationInHours: e.target.value })} required
+                          /> */}
+                          <NumericFormat
+                            className="form-control"
+                            value={newData.durationInHours} disabled={true}
+                            decimalScale={2} // Allow up to 2 decimal places
+                            allowNegative={false} // Disallow negative numbers
+                            thousandSeparator={true} // Disable thousand separators
+                            allowLeadingZeros={false}
+                            placeholder="0"
+                            maxLength={12}
+                            required
                           />
                         </div>
                         <div class="p-2">
@@ -691,9 +691,9 @@ function EmployeeOvertimeTransaction() {
             </div>
           </div>
 
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 }
 

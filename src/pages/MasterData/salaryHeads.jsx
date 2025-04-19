@@ -423,14 +423,7 @@ const SalaryHeads = () => {
         <div className="col-lg-4">
           <Card title="Add/Update Salary Head">
             <form onSubmit={handleSubmit}>
-              <Input
-                label="Salary Head Code"
-                name="salaryHeadCode"
-                value={formData.salaryHeadCode}
-                onChange={handleChange}
-                maxLength="10"
-                error={errors.salaryHeadCode}
-              />
+
               <Input
                 label="Salary Head Name"
                 name="salaryHeadName"
@@ -439,14 +432,29 @@ const SalaryHeads = () => {
                 maxLength="50"
                 error={errors.salaryHeadName}
               />
-              <Input
-                label="Order Number"
-                name="orderNumber"
-                value={formData.orderNumber}
-                onChange={handleChange}
-                maxLength="3"
-                error={errors.orderNumber}
-              />
+              <div className="row mb-0">
+                <div className="col-md-6 mb-2">
+                  <Input
+                    label="Salary Head Code"
+                    name="salaryHeadCode"
+                    value={formData.salaryHeadCode}
+                    onChange={handleChange}
+                    maxLength="10"
+                    error={errors.salaryHeadCode}
+                  />
+                </div>
+                <div className="col-md-6 mb-2">
+                  <Input
+                    label="Order Number"
+                    name="orderNumber"
+                    value={formData.orderNumber}
+                    onChange={handleChange}
+                    maxLength="3"
+                    error={errors.orderNumber}
+                  />
+                </div>
+              </div>
+
               <div className="mb-2">
                 {/* <label className="form-label mb-1">Type of Salary Head</label> */}
                 <RadioButton

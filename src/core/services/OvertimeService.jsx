@@ -40,4 +40,13 @@ export default class OvertimeService {
       return handleApiSuccessOrError(error, true);
     }
   }
+
+  static getEmployeeOvertimeTransactions = async (empId, date) => {
+    try {
+      const res = await API.get("/api/v1/SelfPortal/GetOvertimeTransactionsForSelfPortal?EmployeeId=" + empId + '&date=' + date);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
 }
