@@ -7,9 +7,11 @@ import { Button, Form, Modal } from 'react-bootstrap';
 import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
+import secureLocalStorage from "react-secure-storage";
 
 function SalaryReport() {
 
+    const userData = JSON.parse(secureLocalStorage.getItem("user"));
     const [salaryReport, setSalaryReport] = useState({});
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -30,7 +32,7 @@ function SalaryReport() {
         const end_date = moment(endDate).format("YYYY-MM");
         const start_id = salaryMonthsList.find(option => option.formattedDate == start_date).idSalaryMonth;
         const end_id = salaryMonthsList.find(option => option.formattedDate == end_date).idSalaryMonth;
-        ViewPaySlipService.getSalaryReport(12, start_id, end_id).then(res => {
+        ViewPaySlipService.getSalaryReport(userData.idEmployee ?? 0, start_id, end_id).then(res => {
             if (res.data.data.length > 0) {
                 setSalaryReport(res.data.data[0]);
                 setEmployeeSalaries(res.data.data[0].employeeSalaries);

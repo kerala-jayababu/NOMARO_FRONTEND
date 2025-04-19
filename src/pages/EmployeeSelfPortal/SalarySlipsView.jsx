@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
 import MonthSelector from '../../components/monthSelector';
+import secureLocalStorage from "react-secure-storage";
 
 function SalarySlipsView() {
+    const userData = JSON.parse(secureLocalStorage.getItem("user"));
     const [salarySlipData, setSalarySlipData] = useState({});
     const [salaryStructure, setSalaryStructure] = useState([]);
     const [startDate, setStartDate] = useState(new Date());
@@ -28,7 +30,7 @@ function SalarySlipsView() {
             usd: { earnings: 0, deductions: 0, net: 0 },
             ytd: { earnings: 0, deductions: 0, net: 0 }
         };
-        ViewPaySlipService.getSalarySlipDetails(12, monthId).then(res => {
+        ViewPaySlipService.getSalarySlipDetails(userData.idEmployee ?? 0, monthId).then(res => {
             setSalarySlipData(res.data.data[0]);
             if (res.data.data.length > 0) {
                 res.data.data[0].employeeSalaryDetails.forEach(detail => {

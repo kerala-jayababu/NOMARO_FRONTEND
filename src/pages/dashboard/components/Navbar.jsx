@@ -37,7 +37,6 @@ function Navbar({ view }) {
     }
     // Optional: re-fetch manually when "clicked" changes
     CommonService.GetEmployeeNotification().then((res) => {
-      debugger
       setNotification(res.data);
     });
   }, [clicked]);
