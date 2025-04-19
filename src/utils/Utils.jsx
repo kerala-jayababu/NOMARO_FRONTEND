@@ -2,6 +2,8 @@ import { Tooltip } from "react-bootstrap";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 export default class Utils {
   static encodeBase64(string) {
@@ -193,15 +195,172 @@ export default class Utils {
       { s: { r: 0, c: 0 }, e: { r: 0, c: columns.length - 1 } },
     ];
 
-    worksheet["!cols"] = columns.map((col) => ({
-      wch: Math.max(
-        rows[0][col] ? String(rows[0][col]).length * 1.2 : col.length * 2,
-        col.length * 2
-      ),
-    }));
+    worksheet["!cols"] = columns.map((col, colIndex) => {
+      let maxWidth = col.length * 1.2;
+      rows.forEach(row => {
+        if (row[col] !== null && row[col] !== undefined) {
+          const cellContentLength = String(row[col]).length;
+          maxWidth = Math.max(maxWidth, cellContentLength * 1.2);
+        }
+      });
+      return { wch: Math.max(10, Math.min(maxWidth, 50)) };
+    });
+
+    const headerRowIndex = 3;
+    
+    const headerStyle = {
+      fill: { fgColor: { rgb: "CBD5E1" } }, 
+      font: { bold: true, color: { rgb: "000000" } },
+      alignment: { horizontal: "center", vertical: "center" }
+    };
+    
+    columns.forEach((col, colIndex) => {
+      const cellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c: colIndex });
+      if (!worksheet[cellRef]) worksheet[cellRef] = {};
+      worksheet[cellRef].s = headerStyle;
+    });
+
+    const titleStyle = {
+      font: { bold: true, size: 14, color: { rgb: "0064E6" } },
+      alignment: { horizontal: "left" }
+    };
+    worksheet[XLSX.utils.encode_cell({ r: 0, c: 0 })].s = titleStyle;
+
+    const filterStyle = {
+      font: { italic: true, color: { rgb: "666666" } },
+      alignment: { horizontal: "left" }
+    };
+    worksheet[XLSX.utils.encode_cell({ r: 1, c: 0 })].s = filterStyle;
 
     XLSX.utils.book_append_sheet(workbook, worksheet, reportName);
-    XLSX.writeFile(workbook, `${reportName}.xlsx`, { compression: true });
+
+    const writeOptions = { 
+      bookType: 'xlsx', 
+      bookSST: false, 
+      type: 'binary',
+      compression: true
+    };
+    
+    XLSX.writeFile(workbook, `${reportName}.xlsx`, writeOptions);
+  }
+
+  static exportToExcelJS(rows, reportName, filter) {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(reportName);
+    
+    const columns = Object.keys(rows[0]).filter(x => x !== "id");
+    
+    let filterText = "";
+    Object.keys(filter).map(item => {
+      filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]}` + "   ";
+    });
+    
+    const titleRow = worksheet.addRow([reportName]);
+    titleRow.font = { bold: true, size: 14, color: { argb: 'FF0064E6' } };
+    titleRow.alignment = { horizontal: 'left' };
+    
+    const filterRow = worksheet.addRow([filterText]);
+    filterRow.font = { italic: true, color: { argb: 'FF666666' } };
+    filterRow.alignment = { horizontal: 'left' };
+    
+    worksheet.addRow([]);
+
+    const headerRow = worksheet.addRow(columns);
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFCBD5E1' }
+      };
+      cell.font = { bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+    
+    const numericColumnIndexes = columns.map((col, index) => {
+      return {
+        index: index + 1, 
+          isNumeric: /Earnings|Deductions|Salary|Amount|Balance|MonthlyTax|Annual Tax|Total|Price|Cost|Rate|Value/i.test(col)
+      };
+    });
+    
+    rows.forEach(row => {
+      const rowValues = columns.map((col, index) => {
+        const value = row[col];
+        
+        const isNumericColumn = numericColumnIndexes[index].isNumeric;
+        
+        if (isNumericColumn && value !== null && value !== undefined) {
+          if (typeof value === 'string' && !isNaN(parseFloat(value))) {
+            return parseFloat(value);
+          }
+        }
+        
+        return value;
+      });
+      
+      const dataRow = worksheet.addRow(rowValues);
+      
+      dataRow.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        
+        const columnInfo = numericColumnIndexes.find(col => col.index === colNumber);
+        if (columnInfo && columnInfo.isNumeric) {
+          cell.alignment = { horizontal: 'right' };
+          
+          const value = cell.value;
+          if (typeof value === 'number') {
+            cell.numFmt = '#,##0.00';
+          }
+        } else {
+          cell.alignment = { horizontal: 'left' };
+        }
+      });
+    });
+    
+    worksheet.mergeCells(1, 1, 1, columns.length);
+    
+    columns.forEach((col, index) => {
+      const colIndex = index + 1; 
+      const isNumericColumn = numericColumnIndexes.find(c => c.index === colIndex)?.isNumeric;
+      
+      let maxLength = col.length * 1.2;
+      
+      rows.forEach(row => {
+        const value = row[col];
+        if (value !== null && value !== undefined) {
+          if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
+            const numValue = typeof value === 'number' ? value : parseFloat(value);
+            const formattedLength = String(numValue).length + Math.floor(String(numValue).length / 3) + 3;
+            maxLength = Math.max(maxLength, formattedLength);
+          } else {
+            maxLength = Math.max(maxLength, String(value).length);
+          }
+        }
+      });
+      
+      const padding = 2;
+      const minWidth = isNumericColumn ? 10 : 12;
+      const maxWidth = 50;
+      const columnWidth = Math.max(minWidth, Math.min(maxLength + padding, maxWidth));
+      
+      worksheet.getColumn(colIndex).width = columnWidth;
+    });
+    
+    workbook.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `${reportName}.xlsx`);
+    });
   }
 
   static exportToPdf(rows, reportName, orientation, filter) {

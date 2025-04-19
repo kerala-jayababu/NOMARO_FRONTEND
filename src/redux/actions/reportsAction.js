@@ -8,7 +8,17 @@ import {
 export const getReportsMasterAction = () => async (dispatch) => {
   try {
     const { data } = await api.getReportsMaster();
-    dispatch(setReports(data.data));
+    const menu = data.data.filter((item) => item.idParentReport === 0);
+    const child = data.data.filter((item) => item.idParentReport !== 0);
+    const report = menu.map((item) => {
+      return {
+        ...item,
+        subMenu: child.filter(
+          (childItem) => childItem.idParentReport === item.idReport
+        ),
+      };
+    });
+    dispatch(setReports(report));
   } catch (error) {
     console.error("Error fetching reports:", error);
   }
@@ -27,6 +37,11 @@ export const getReportDataAction = (content) => async (dispatch) => {
   try {
     const { data } = await api.getReportData(content);
     var reportData = data.map((item, index) => {
+      Object.keys(item).forEach((key) => {
+        if (typeof item[key] === "number") {
+          item[key] = Number(item[key]).toFixed(2);
+        }
+      });
       return { ...item, id: index };
     });
     dispatch(setReportData(reportData));

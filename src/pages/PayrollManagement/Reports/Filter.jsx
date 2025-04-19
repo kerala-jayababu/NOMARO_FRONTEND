@@ -5,15 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { getReportDataAction } from "../../../redux/actions/reportsAction";
 import { fetchDesignations } from "../../../redux/reducers/designation";
 import { fetchDepartments } from "../../../redux/reducers/department";
+import DatePicker from "react-datepicker";
 
-function parseValidValues(validValues) {
-  return validValues.split(",").map((v) => {
-    const [value, label] = v.split(":");
-    return { value: value.trim(), label: label.trim() };
-  });
-}
-
-const ReportFilterItem = ({ field, report, handleInputChange }) => {
+const ReportFilterItem = ({ field, report, handleInputChange, departments, designation }) => {
   const {
     conditionName,
     controlType,
@@ -25,13 +19,39 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
   } = field;
 
   const isDateField = conditionName?.toLowerCase()?.includes("date");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const defaultDateValue =
     isDateField && defaultValue ? getDefaultDate(defaultValue) : "";
 
   switch (controlType) {
+    case "DATE":
+      return (
+        <div className="col-md-2" key={spParameterName}>
+          <label className="text-[0.9rem]">
+            {conditionName}
+            {mandatoryFlag == "Y" && <span className="text-danger">*</span>}
+          </label>
+          <DatePicker
+            className="form-control"
+            dateFormat="MM/dd/yyyy"
+            selected={selectedDate} 
+            placeholderText="Date"
+            onChange={(date) => {
+              var value = date.toISOString().slice(0, 10);
+              setSelectedDate(value)
+              handleInputChange(
+                conditionName,
+                spParameterName,
+                JSON.stringify({ label: value, value })
+              );
+            }}
+            showYearDropdown
+          />
+        </div>
+      );
     case "TEXTBOX":
       return (
-        <div className="col-md-2 mx-1" key={spParameterName}>
+        <div className="col-md-2" key={spParameterName}>
           <label className="text-[0.9rem]">
             {conditionName}
             {mandatoryFlag == "Y" && <span className="text-danger">*</span>}
@@ -39,13 +59,13 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
           <input
             type={isDateField ? "date" : "text"}
             key={report?.reportName + spParameterName}
-            // value={defaultDateValue}
             className="form-control"
             onChange={(e) => {
               var value = isDateField
                 ? e.target.value.split("-").reverse().join("-")
                 : e.target.value;
               handleInputChange(
+                conditionName,
                 spParameterName,
                 JSON.stringify({ label: value, value })
               );
@@ -55,27 +75,29 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
       );
 
     case "COMBOBOX":
-      const { departments } = useSelector((state) => state.department);
-      const { designation } = useSelector((state) => state.designation);
       return (
-        <div className="col-md-2 mx-1" key={spParameterName}>
+        <div className="col-md-2 mx-2" key={spParameterName}>
           <label className="text-[0.9rem]">{conditionName}</label>
           <select
             key={spParameterName + report?.reportName}
             className="form-select"
             onChange={(e) => {
-              handleInputChange(spParameterName, JSON.stringify({value:e.target.value}));
+              handleInputChange(
+                conditionName,
+                spParameterName,
+                e.target.value
+              );
             }}
           >
-            {!validValues && <option value={"0"}>Select</option>}
+            {!validValues && <option value={JSON.stringify({value:"0",label:"ALL"})}>Select</option>}
             {tableName.toLowerCase() === "departments"
               ? departments?.data.map((item) => (
-                  <option value={item.idDepartment} key={item.idDepartment}>
+                  <option value={JSON.stringify({value:item.idDepartment,label:item.departmentName})} key={item.idDepartment}>
                     {item.departmentName}
                   </option>
                 ))
               : designation?.data.map((item) => (
-                  <option value={item.idDesignation} key={item.idDesignation}>
+                  <option value={JSON.stringify({value:item.idDesignation,label:item.designationName})} key={item.idDesignation}>
                     {item.designationName}
                   </option>
                 ))}
@@ -89,10 +111,24 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
 
 export default function Filter({ reportCondition, report, downloadFile }) {
   const dispatch = useDispatch();
-  const [filter, setFilter] = useState({"@IdDepartment":0,"@IdDesignation":0});
+  const { departments } = useSelector((state) => state.department);
+  const { designation } = useSelector((state) => state.designation);
+  const [AppliedFilters, setAppliedFilters] = useState({
+    Department: 0,
+    Designation: 0,
+  });
+  const [filter, setFilter] = useState({
+    "@IdDepartment": 0,
+    "@IdDesignation": 0,
+  });
+  const { reportData } = useSelector((state) => state.reports);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (conditionName,field, value) => {
     const data = JSON.parse(value);
+    setAppliedFilters((prevValues) => ({
+      ...prevValues,
+      [conditionName]: data.label,
+    }));
     setFilter((prevValues) => ({
       ...prevValues,
       [field]: data.value,
@@ -104,7 +140,6 @@ export default function Filter({ reportCondition, report, downloadFile }) {
       storedProcedureName: report.storedProcName,
       parameters: filter,
     };
-    console.log("content", content);
     dispatch(showLoader());
     await dispatch(getReportDataAction(content));
     dispatch(hideLoader());
@@ -115,18 +150,27 @@ export default function Filter({ reportCondition, report, downloadFile }) {
     dispatch(fetchDepartments());
   }, []);
 
-  return (
-    <div className="d-flex mx-3 mt-4">
-      <div className="absolute left-[79.1rem] mt-4 d-flex justify-start w-[16rem]">
-        <h6 className="fw-bold">{report?.reportName}</h6>
-      </div>
+  useEffect(() => {
+    setFilter({
+    "@IdDepartment": 0,
+    "@IdDesignation": 0,
+    });
+    setAppliedFilters({
+    Department: 0,
+    Designation: 0,
+  });
+  },[report,reportCondition])
 
-      {reportCondition.map((field) => (
+  return (
+     <div className="m-3 mt-4 d-flex justify-content-center">
+      {reportCondition.map((field, index) => (
         <ReportFilterItem
-          key={field.sPParameterName}
+          key={field.spParameterName + String(index)}
           field={field}
           report={report}
           handleInputChange={handleInputChange}
+          departments={departments}
+          designation={designation}
         />
       ))}
 
@@ -135,29 +179,29 @@ export default function Filter({ reportCondition, report, downloadFile }) {
           <Button
             variant="contained"
             color="primary"
-            sx={{ backgroundColor: "#007BFF", flex: 1 }}
+            sx={{ backgroundColor: "#75869e", flex: 1 }}
             onClick={getReportData}
           >
             RUN
           </Button>
           <Button
             variant="contained"
-            color="secondary"
+            color="success"
             className="mx-2"
-            sx={{ backgroundColor: "#FF0000", flex: 1 }}
-            onClick={() => downloadFile("pdf")}
-            // disabled={reportData == null || reportData?.length <= 0}
+            sx={{ backgroundColor: "#203e69", flex: 1 }}
+            onClick={() => downloadFile("excel",AppliedFilters)}
+            disabled={reportData == null || reportData?.length <= 0}
           >
-            PDF
+            EXCEL
           </Button>
           <Button
             variant="contained"
-            color="success"
-            sx={{ backgroundColor: "#28A745", flex: 1 }}
-            onClick={() => downloadFile("excel")}
-            // disabled={reportData == null || reportData?.length <= 0}
+            color="secondary"
+            sx={{ backgroundColor: "#75869e", flex: 1 }}
+            onClick={() => downloadFile("pdf",AppliedFilters)}
+            disabled={reportData == null || reportData?.length <= 0}
           >
-            EXCEL
+            PDF
           </Button>
         </div>
       )}

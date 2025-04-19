@@ -17,6 +17,10 @@ body {
   color: var(--text-primary);
 }
 
+* {
+  font-family: "Poppins", sans-serif;
+}
+
 .list_menu {
   display: flex;
   align-items: center;
@@ -253,4 +257,21 @@ body {
 
 .float-start-custom {
   margin: -25px;
+}
+
+.MuiDataGrid-filler,
+.MuiDataGrid-scrollbarFiller {
+  background-color: rgb(133, 146, 163) !important;
+}
+
+.w-max-content {
+  width: 100vw !important;
+}
+
+.overflow-x-scroll {
+  overflow-x: auto !important;
+}
+
+.data-grid::-webkit-scrollbar {
+  display: none;
 }

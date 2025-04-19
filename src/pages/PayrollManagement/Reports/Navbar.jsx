@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "../../../../public/assets/logo.png";
 import secureLocalStorage from "react-secure-storage";
 
 function Navbar() {
-  const [profilePic] = useState("/assets/img/avatars/1.png");
+  const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
 
+  useEffect(() => {
+    if (userData?.attachmentBlob) {
+      setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
+    }
+  }, []);
+  
   const logout = () => {
     secureLocalStorage.clear();
     navigate("/login");
@@ -17,7 +23,12 @@ function Navbar() {
       id="layout-navbar"
     >
       <div className="me-5">
-        <img src={logo} width={200} height={62} className="float-start-custom" />
+        <img
+          src={logo}
+          width={200}
+          height={62}
+          className="float-start-custom"
+        />
       </div>
 
       <div

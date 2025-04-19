@@ -74,10 +74,6 @@ function Menu({viewType}) {
               className="menu-link menu-toggle"
               onClick={() => {
                 setMenu(menu === screen.screenName ? "" : screen.screenName);
-                if (screen.screenName.trim().toLowerCase() === 'reports') {
-                  const url = window.location.origin + window.location.pathname + '#/reports';
-                  window.open(url, '_blank');
-                }
               }}
             >
               <i className="menu-icon tf-icons bx bx-dock-top"></i>
@@ -105,17 +101,29 @@ function Menu({viewType}) {
                         );
 
                         setSubMenu(
-                          subMenu === menuItem.screenName ? "" : menuItem.screenName
+                          subMenu === menuItem.screenName
+                            ? ""
+                            : menuItem.screenName
                         );
 
                         dispatch(setIdPayrollScreen(menuItem.idPayrollScreen));
                         dispatch(setComponent(menuItem.screenName));
 
-                        navigate(
-                          `/dashboard/${menuItem.screenName
-                            .replace(/\s+/g, "-")
-                            .toLowerCase()}`
-                        );
+                        if (
+                          screen.screenName.trim().toLowerCase() === "reports"
+                        ) {
+                          const url =
+                            window.location.origin +
+                            window.location.pathname +
+                            "#/reports";
+                          window.open(url, "_blank");
+                        } else {
+                          navigate(
+                            `/dashboard/${menuItem.screenName
+                              .replace(/\s+/g, "-")
+                              .toLowerCase()}`
+                          );
+                        }
                       }}
                     >
                       {menuItem.screenName}
