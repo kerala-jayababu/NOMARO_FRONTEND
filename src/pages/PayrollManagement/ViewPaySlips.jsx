@@ -34,7 +34,7 @@ function ViewPaySlips() {
     if (fromMonth != '' && toMonth != '') {
       getSalarySlips();
     }
-  }, [fromMonth, toMonth, rowsPerPage]);
+  }, [fromMonth, toMonth]);
 
   const getSalarySlips = () => {
     ViewPaySlipService.getSalarySlipsData(fromMonth, toMonth, searchText).then(res => {
@@ -46,7 +46,29 @@ function ViewPaySlips() {
 
   const downloadSalarySlips = (data) => {
     ViewPaySlipService.downloadSalarySlips(data.idEmployeeSalary).then(res => {
-      downloadFile(res.data.data[0]);
+      if (!res.data.data || !(res.data.data instanceof Blob)) {
+        throw new Error("Invalid file data received");
+      }
+
+      const blob = new Blob([res.data.data], { type: res.data.headers['content-type'] });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      const defaultName = `payslip_${data.idEmployeeSalary}.pdf`;
+      link.download = res.data.headers['content-disposition']
+        ? res.headers['content-disposition'].split('filename=')[1].replace(/"/g, '')
+        : defaultName;
+
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
     }).catch(err => {
 
     });
@@ -56,7 +78,28 @@ function ViewPaySlips() {
     const ids = selectedRows;
     const result = ids.join(",");
     ViewPaySlipService.downloadSalarySlips(result).then(res => {
-      downloadFile(res.data.data[0]);
+      if (!res.data.data || !(res.data.data instanceof Blob)) {
+        throw new Error("Invalid file data received");
+      }
+
+      const blob = new Blob([res.data.data], { type: res.data.headers['content-type'] });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      const defaultName = `payslip_multiple.zip`;
+      link.download = res.data.headers['content-disposition']
+        ? res.headers['content-disposition'].split('filename=')[1].replace(/"/g, '')
+        : defaultName;
+
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
     }).catch(err => {
 
     });
@@ -104,7 +147,7 @@ function ViewPaySlips() {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     return salarySlips.slice(startIndex, endIndex);
-  }, [salarySlips, currentPage]);
+  }, [salarySlips, currentPage, rowsPerPage]);
 
   const validPaySlips = salarySlips.filter(slip => slip.employeeCode);
 
@@ -129,31 +172,6 @@ function ViewPaySlips() {
 
   const isAllSelected = validPaySlips.length > 0 && selectedRows.length === validPaySlips.length;
 
-  const downloadFile = (item) => {
-    const base64Data = item.fileContent;
-    const fileName = item.fileName || 'downloaded-file';
-
-    // Convert Base64 to Blob
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
-
-    // Create a download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', fileName); // Set the file name
-    document.body.appendChild(link);
-    link.click();
-
-    // Clean up
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -284,12 +302,12 @@ function ViewPaySlips() {
                 </button> */}
               </div>
               <div className="text-end pt-2">
-                <select className='form-select' onChange={(e)=>setRowsPerPage(e.target.value)}>
+                {/* <select className='form-select' onChange={(e)=>setRowsPerPage(e.target.value)}>
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
-                </select>
+                </select> */}
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

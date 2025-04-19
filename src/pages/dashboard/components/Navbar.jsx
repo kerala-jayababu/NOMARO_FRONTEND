@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 import CommonService from "../../../core/services/CommonService";
 import Utils from "../../../utils/Utils";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 
-function Navbar() {
+function Navbar({ view }) {
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const [notification, setNotification] = useState([]);
-  const [clicked,setClicked] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const navigate = useNavigate();
+  const currentAuth = secureLocalStorage.getItem("currentAuth");
+  const authorizedModules = secureLocalStorage.getItem("authorizedModules");
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = () => {
@@ -37,7 +41,7 @@ function Navbar() {
       setNotification(res.data);
     });
   }, [clicked]);
-  
+
 
   useEffect(() => {
     // Toggle menu click behavior
@@ -69,11 +73,28 @@ function Navbar() {
     navigate("/login");
   };
 
-  const handleNotificationClick = async (item) => { 
+  const handleNotificationClick = async (item) => {
     await CommonService.UpdateEmployeeNotification(item.idNotification)
     setClicked(!clicked)
     navigate(`/dashboard/${item.notificationLink}`)
   }
+
+  const switchAuth = () => {
+    if (currentAuth == 'PAYROLL') {
+      secureLocalStorage.setItem("currentAuth", 'SELFPORTAL');
+      view('SELFPORTAL');
+    } else {
+      secureLocalStorage.setItem("currentAuth", 'PAYROLL');
+      view('PAYROLL');
+    }
+  }
+
+  const confirmFinalize = (val) => {
+    setShowConfirmation(false);
+    if (val) {
+      switchAuth();
+    }
+  };
 
   return (
     <nav
@@ -89,7 +110,7 @@ function Navbar() {
       <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">Payroll Management</h5>
+            <h5 className="m-0 fw-bold">{currentAuth == 'PAYROLL' ? 'Payroll Management' : 'Employee Self Portal'}</h5>
           </div>
         </div>
 
@@ -105,10 +126,10 @@ function Navbar() {
               <span className="position-relative">
                 <i className="bx bx-bell bx-md"></i>
                 {notification && notification?.length > 0 && (
-                  <span 
+                  <span
                     className="position-absolute translate start-100 0 p-1 bg-danger rounded-circle"
-                    style={{ 
-                      width: '0.5px', 
+                    style={{
+                      width: '0.5px',
                       height: '0.5px',
                       top: "4px",
                     }}
@@ -151,7 +172,7 @@ function Navbar() {
                         <div className="flex-grow-1">
                           <h6 className="small mb-0"> {item.appNotificationText}</h6>
                           <small className="mb-1 d-block text-body">
-                             {/* <div dangerouslySetInnerHTML={{ __html: item.appNotificationText }} /> */}
+                            {/* <div dangerouslySetInnerHTML={{ __html: item.appNotificationText }} /> */}
                             {/* {item.emailContent} */}
                           </small>
                           <small className="text-muted">{Utils.timeAgo(item.createdAt)}</small>
@@ -334,8 +355,17 @@ function Navbar() {
                 </a>
               </li>
               <li><div className="dropdown-divider"></div></li>
+              {
+                authorizedModules.length > 1 &&
+                <li>
+                  <a className="dropdown-item cursor" onClick={() => setShowConfirmation(true)}>
+                    <i className="bx bx-power-off me-2"></i>
+                    <span className="align-middle">Switch to {currentAuth == 'PAYROLL' ? 'Self Portal' : 'Payroll'}</span>
+                  </a>
+                </li>
+              }
               <li>
-                <a className="dropdown-item" onClick={logout}>
+                <a className="dropdown-item cursor" onClick={logout}>
                   <i className="bx bx-power-off me-2"></i>
                   <span className="align-middle">Log Out</span>
                 </a>
@@ -344,6 +374,16 @@ function Navbar() {
           </li>
         </ul>
       </div>
+      {
+        showConfirmation &&
+        <ConfirmationModal
+          modalShow={true}
+          messageText={currentAuth == 'PAYROLL' ? 'Are you sure to switch to Self Portal?' : 'Are you sure to switch to Payroll Portal?'}
+          callbackModal={confirmFinalize}
+          confirmBtn={"Confirm"}
+          CancelBtn={"Cancel"}
+        />
+      }
     </nav>
   );
 }
