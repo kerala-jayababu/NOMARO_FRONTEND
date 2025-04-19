@@ -35,49 +35,52 @@ import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
 import LoginWithOtp from "./pages/LoginWithOTP";
 import Reports from "./pages/PayrollManagement/Reports/Reports";
+import { LoaderProvider } from "./components/LoaderContext";
 
 function App() {
   return (
-    <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
-    <Toaster position="top-center"></Toaster>
-      <Routes>
-        <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />}>
-            <Route index element={<ComingSoon />} /> {/* Default route inside Dashboard */}
-            <Route path="vacation-mode" element={<VacationMode />} />
-            <Route path="salary-templates" element={<SalaryTemplateNew />} />
-            <Route path="budget-codes" element={<BudgetCode />} />
-            <Route path="departments" element={<Departments />} />
-            <Route path="designations" element={<Designations />} />
-            <Route path="salary-heads" element={<SalaryHeads />} />
-            <Route path="employee-profile" element={<EmployeeProfile />} />
-            <Route path='employee-salary-config' element={<EmployeeSalaryConfig />} />
-            <Route path='screen-permissions' element={<ScreenPermission />} />
-            <Route path="salary-adjustments" element={<SalaryAdjustments />} />
-            <Route path="maternity-leave-salaries" element={<MaternityLeaveSalaries />} />
-            <Route path="scheduled-deductions" element={<ScheduledDeductions />} />
-            <Route path="overtime-transactions" element={<OvertimeTransaction />} />
-            <Route path="salary-generation" element={<SalaryGeneration />} />
-            <Route path="salary-approval" element={<SalaryApproved />} />
-            <Route path="config-approvals" element={<ConfigApproval />} />
-            <Route path="income-tax-config" element={<TaxConfiguration />} /> 
-            <Route path="currency-conversion" element={<CurrencyConversion />} />
-            <Route path="notification-types" element={<NotificationConfig />} />
-            <Route path='bank-branches' element={<BankAndBranches/>} />
-            <Route path='rent-free-quarters' element={<RentFreeQuarters/>} />
-            <Route path='salary-slips' element={<ViewPaySlips/>} />
-            <Route path='pay-slips' element={<SalarySlipsView/>} />
-            <Route path='salary-report' element={<SalaryReport/>} />
-            <Route path='overtime-details' element={<EmployeeOvertimeTransaction/>} />
+    <LoaderProvider>
+      <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
+        <Toaster position="top-center"></Toaster>
+        <Routes>
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />}>
+              <Route index element={<ComingSoon />} /> {/* Default route inside Dashboard */}
+              <Route path="vacation-mode" element={<VacationMode />} />
+              <Route path="salary-templates" element={<SalaryTemplateNew />} />
+              <Route path="budget-codes" element={<BudgetCode />} />
+              <Route path="departments" element={<Departments />} />
+              <Route path="designations" element={<Designations />} />
+              <Route path="salary-heads" element={<SalaryHeads />} />
+              <Route path="employee-profile" element={<EmployeeProfile />} />
+              <Route path='employee-salary-config' element={<EmployeeSalaryConfig />} />
+              <Route path='screen-permissions' element={<ScreenPermission />} />
+              <Route path="salary-adjustments" element={<SalaryAdjustments />} />
+              <Route path="maternity-leave-salaries" element={<MaternityLeaveSalaries />} />
+              <Route path="scheduled-deductions" element={<ScheduledDeductions />} />
+              <Route path="overtime-transactions" element={<OvertimeTransaction />} />
+              <Route path="salary-generation" element={<SalaryGeneration />} />
+              <Route path="salary-approval" element={<SalaryApproved />} />
+              <Route path="config-approvals" element={<ConfigApproval />} />
+              <Route path="income-tax-config" element={<TaxConfiguration />} />
+              <Route path="currency-conversion" element={<CurrencyConversion />} />
+              <Route path="notification-types" element={<NotificationConfig />} />
+              <Route path='bank-branches' element={<BankAndBranches />} />
+              <Route path='rent-free-quarters' element={<RentFreeQuarters />} />
+              <Route path='salary-slips' element={<ViewPaySlips />} />
+              <Route path='pay-slips' element={<SalarySlipsView />} />
+              <Route path='salary-report' element={<SalaryReport />} />
+              <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
+            </Route>
+            <Route path="/reports" element={<Reports />} />
           </Route>
-          <Route path="/reports" element={<Reports />} />
-        </Route>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<LoginWithOtp />} />
-        <Route path="/auth/:route" element={<Authenticate />} />
-        <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
-      </Routes>
-    </HashRouter>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<LoginWithOtp />} />
+          <Route path="/auth/:route" element={<Authenticate />} />
+          <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
+        </Routes>
+      </HashRouter>
+    </LoaderProvider>
   );
 }
 

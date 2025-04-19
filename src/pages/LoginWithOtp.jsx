@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 import LoginService from "../core/services/LoginService";
 import { toast } from "react-toastify";
+import { useLoader } from "../components/LoaderContext";
 
 function LoginWithOtp() {
+  const { showLoader, hideLoader } = useLoader();
   const navigate = useNavigate();
   const [emailId, setEmailId] = useState('');
   const [otp, setOtp] = useState('');
@@ -14,7 +16,6 @@ function LoginWithOtp() {
     LoginService.validateEmailwithOtp(emailId, otp).then(res => {
       if (res.data.success && res.data.data.idEmployee > 0) {
         const array = res.data.data.authorizedModules.split(',');
-        console.log(array)
         secureLocalStorage.setItem("authorizedModules", array);
         secureLocalStorage.setItem("currentAuth", array[0]);
         secureLocalStorage.setItem("token", res.data.data.token);
@@ -26,7 +27,9 @@ function LoginWithOtp() {
   };
 
   const getOtp = () => {
+    showLoader();
     LoginService.getOtp(emailId).then(res => {
+      hideLoader();
       if (res.data.success && res.data.data.idEmployee > 0) {
         toast.success('OTP sent to email successfully', {
           position: 'top-right',
@@ -39,6 +42,7 @@ function LoginWithOtp() {
         });
       }
     }).catch(err => {
+      hideLoader();
     });
   };
 
