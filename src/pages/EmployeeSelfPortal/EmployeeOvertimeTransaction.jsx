@@ -179,6 +179,7 @@ function EmployeeOvertimeTransaction() {
     formData.append('durationInHours', newData.durationInHours);
     formData.append('reasonForOvertime', newData.reasonForOvertime);
     formData.append('attachmentDescription', newData.attachmentDescription);
+    formData.append('appType', 'SELFPORTAL');
 
     // Append the file if it exists
     if (newData.file) {
@@ -222,6 +223,7 @@ function EmployeeOvertimeTransaction() {
     formData.append('durationInHours', newData.durationInHours);
     formData.append('reasonForOvertime', newData.reasonForOvertime);
     formData.append('attachmentDescription', newData.attachmentDescription);
+    formData.append('appType', 'SELFPORTAL');
 
     // Append the file if it exists
     if (newData.file) {
