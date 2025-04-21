@@ -49,6 +49,8 @@ function LoginWithOtp() {
   useEffect(() => {
     if (secureLocalStorage.getItem("user")) {
       navigate("/dashboard");
+    } else {
+      secureLocalStorage.clear();
     }
   }, [])
 

@@ -5,7 +5,7 @@ import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 
-function Menu({viewType}) {
+function Menu({ viewType }) {
   const dispatch = useDispatch();
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
   const navigate = useNavigate();
@@ -14,6 +14,12 @@ function Menu({viewType}) {
 
   useEffect(() => {
     dispatch(getAllPayrollScreensAction(viewType));
+
+    navigate("/dashboard");
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, '', window.location.href);
+    };
 
     // Function to remove classes from <html> tag
     const removeHtmlClasses = () => {
@@ -31,7 +37,7 @@ function Menu({viewType}) {
     if (toggleBtn) {
       toggleBtn.addEventListener("click", removeHtmlClasses);
     }
-    navigate("/dashboard");
+    
     // Cleanup event listener
     return () => {
       if (toggleBtn) {
@@ -66,9 +72,8 @@ function Menu({viewType}) {
         {payrollScreen.map((screen) => (
           <li
             key={screen.screenName}
-            className={`menu-item ${
-              menu === screen.screenName ? "open active" : ""
-            } cursor-pointer`}
+            className={`menu-item ${menu === screen.screenName ? "open active" : ""
+              } cursor-pointer`}
           >
             <a
               className="menu-link menu-toggle"
@@ -83,9 +88,8 @@ function Menu({viewType}) {
               {screen.subMenus.map((menuItem) => (
                 <li
                   key={menuItem.screenName}
-                  className={`menu-item ${
-                    subMenu === menuItem.screenName ? "active" : ""
-                  }`}
+                  className={`menu-item ${subMenu === menuItem.screenName ? "active" : ""
+                    }`}
                 >
                   <a className="menu-link">
                     <div
