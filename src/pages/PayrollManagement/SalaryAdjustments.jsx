@@ -154,6 +154,8 @@ function SalaryAdjustments() {
     }
     let passData = newData;
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
+    const paydate = moment(passData['payAdjustmentDate']).format("YYYY-MM-DD");
+    passData['payAdjustmentDate'] = paydate;
     SalaryAdjustmentService.saveSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Salary adjustments added successfully', {
@@ -181,6 +183,8 @@ function SalaryAdjustments() {
     }
     let passData = newData;
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
+    const paydate = moment(passData['payAdjustmentDate']).format("YYYY-MM-DD");
+    passData['payAdjustmentDate'] = paydate;
     SalaryAdjustmentService.updateSalaryAdjustmentsData(passData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Salary adjustments updated successfully', {

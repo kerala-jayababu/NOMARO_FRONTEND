@@ -9,6 +9,7 @@ import EmployeeSalaryConfigService from "../../core/services/EmployeeSalaryConfi
 import moment from "moment";
 import Select from 'react-select';
 import { NumericFormat } from "react-number-format";
+import { useLoader } from "../../components/LoaderContext";
 
 const EmployeeSalaryConfig = () => {
   const [designation, setDesignation] = useState("");
@@ -40,6 +41,7 @@ const EmployeeSalaryConfig = () => {
   const [validated, setValidated] = useState(false);
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
+  const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
     getSalaryHeadData();
@@ -569,8 +571,10 @@ const EmployeeSalaryConfig = () => {
         salaryAmount: row.calculatedValue,
       }))
     };
+    showLoader();
     EmployeeSalaryConfigService.saveEmployeeSalaryConfigData(payload)
       .then(res => {
+        hideLoader();
         if (res.data.status === 200) {
           setShowModal(false);
           resetForm();
@@ -578,6 +582,7 @@ const EmployeeSalaryConfig = () => {
         }
       })
       .catch(err => {
+        hideLoader();
       });
   };
 
@@ -608,8 +613,10 @@ const EmployeeSalaryConfig = () => {
         salaryAmount: row.calculatedValue,
       }))
     };
+    showLoader();
     EmployeeSalaryConfigService.updateEmployeeSalaryConfigData(payload)
       .then(res => {
+        hideLoader();
         if (res.data.status === 200) {
           setShowModal(false);
           resetForm();
@@ -617,6 +624,7 @@ const EmployeeSalaryConfig = () => {
         }
       })
       .catch(err => {
+        hideLoader();
       });
   };
 

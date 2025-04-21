@@ -101,7 +101,7 @@ function OvertimeTransaction() {
   };
 
   const getEmployeesHeirarchy = () => {
-    CommonService.getEmployeesByHierarchy(userData.userId ?? 0).then(res => {
+    CommonService.getEmployeesByHierarchy(userData.idEmployee ?? 0).then(res => {
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
@@ -121,7 +121,7 @@ function OvertimeTransaction() {
 
   const getOTTranasactions = () => {
     const date = moment(startDate).format("YYYY-MM-DD");
-    OvertimeService.getOvertimeTransactionsData(userData.userId ?? 0, date, statusType, searchText).then(res => {
+    OvertimeService.getOvertimeTransactionsData(userData.idEmployee ?? 0, date, statusType, searchText).then(res => {
       setOvertimeTransactions(res.data.data);
     }).catch(err => {
       setOvertimeTransactions([]);
