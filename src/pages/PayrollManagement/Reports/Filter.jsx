@@ -6,6 +6,7 @@ import { getReportDataAction } from "../../../redux/actions/reportsAction";
 import { fetchDesignations } from "../../../redux/reducers/designation";
 import { fetchDepartments } from "../../../redux/reducers/department";
 import DatePicker from "react-datepicker";
+import dayjs from "dayjs";
 
 const ReportFilterItem = ({ field, report, handleInputChange, departments, designation }) => {
   const {
@@ -19,9 +20,8 @@ const ReportFilterItem = ({ field, report, handleInputChange, departments, desig
   } = field;
 
   const isDateField = conditionName?.toLowerCase()?.includes("date");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const defaultDateValue =
-    isDateField && defaultValue ? getDefaultDate(defaultValue) : "";
+  const defaultDateValue =  defaultValue ? getDefaultDate(defaultValue) : "";
+  const [selectedDate, setSelectedDate] = useState(defaultDateValue);
 
   switch (controlType) {
     case "DATE":
@@ -151,15 +151,27 @@ export default function Filter({ reportCondition, report, downloadFile }) {
   }, []);
 
   useEffect(() => {
+    var defaultDate = new Object();
+    reportCondition.map((field) => {
+      const { defaultValue, spParameterName,controlType } = field;
+      if (controlType === "DATE") {
+        const defaultDateValue = defaultValue.length > 0 ? getDefaultDate(defaultValue) : ""
+        defaultDate[spParameterName] = defaultDateValue;
+      }
+    });
     setFilter({
     "@IdDepartment": 0,
-    "@IdDesignation": 0,
+      "@IdDesignation": 0,
+    ...defaultDate
     });
     setAppliedFilters({
     Department: 0,
-    Designation: 0,
+      Designation: 0,
+    ...defaultDate
   });
-  },[report,reportCondition])
+  }, [report, reportCondition])
+  
+
 
   return (
      <div className="m-3 mt-4 d-flex justify-content-center">
@@ -171,6 +183,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
           handleInputChange={handleInputChange}
           departments={departments}
           designation={designation}
+          setFilter={setFilter}
         />
       ))}
 
