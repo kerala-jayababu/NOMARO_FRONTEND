@@ -3,12 +3,11 @@ import { Button } from "@mui/material";
 import { hideLoader, showLoader } from "../../../redux/reducers/reports";
 import { useDispatch, useSelector } from "react-redux";
 import { getReportDataAction } from "../../../redux/actions/reportsAction";
-import { fetchDesignations } from "../../../redux/reducers/designation";
-import { fetchDepartments } from "../../../redux/reducers/department";
 import DatePicker from "react-datepicker";
 import dayjs from "dayjs";
+import { API } from "../../../redux/api/utils";
 
-const ReportFilterItem = ({ field, report, handleInputChange, departments, designation }) => {
+const ReportFilterItem = ({ field, report, handleInputChange }) => {
   const {
     conditionName,
     controlType,
@@ -16,12 +15,31 @@ const ReportFilterItem = ({ field, report, handleInputChange, departments, desig
     validValues,
     spParameterName,
     mandatoryFlag,
-    tableName,
   } = field;
 
   const isDateField = conditionName?.toLowerCase()?.includes("date");
-  const defaultDateValue =  defaultValue ? getDefaultDate(defaultValue) : "";
+  const defaultDateValue = defaultValue ? getDefaultDate(defaultValue) : "";
   const [selectedDate, setSelectedDate] = useState(defaultDateValue);
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Move API call to useEffect
+  useEffect(() => {
+    if (controlType === "COMBOBOX" && field.tableName && field.valueColumn && field.displayColumn) {
+      setLoading(true);
+      API.post(`api/v1/Reports/GetReportsTableValue?tableName=${field.tableName}&valueColumn=${field.valueColumn}&displayColumn=${field.displayColumn}`)
+        .then(response => {
+          if (response?.data) {
+            setOptions(response.data);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error("Error fetching options:", error);
+          setLoading(false);
+        });
+    }
+  }, [controlType, field.tableName, field.valueColumn, field.displayColumn]);
 
   switch (controlType) {
     case "DATE":
@@ -88,19 +106,21 @@ const ReportFilterItem = ({ field, report, handleInputChange, departments, desig
                 e.target.value
               );
             }}
+            disabled={loading}
           >
-            {!validValues && <option value={JSON.stringify({value:"0",label:"ALL"})}>Select</option>}
-            {tableName.toLowerCase() === "departments"
-              ? departments?.data.map((item) => (
-                  <option value={JSON.stringify({value:item.idDepartment,label:item.departmentName})} key={item.idDepartment}>
-                    {item.departmentName}
-                  </option>
-                ))
-              : designation?.data.map((item) => (
-                  <option value={JSON.stringify({value:item.idDesignation,label:item.designationName})} key={item.idDesignation}>
-                    {item.designationName}
-                  </option>
-                ))}
+            {!validValues && <option value={JSON.stringify({ value: "0", label: "ALL" })}>Select</option>}
+            {loading ? (
+              <option>Loading...</option>
+            ) : (
+              options.map((item, index) => (
+                <option 
+                  value={JSON.stringify({ value: item.valueColumn, label: item.displayColumn })} 
+                  key={item.displayColumn + index}
+                >
+                  {item.displayColumn}
+                </option>
+              ))
+            )}
           </select>
         </div>
       );
@@ -111,8 +131,6 @@ const ReportFilterItem = ({ field, report, handleInputChange, departments, desig
 
 export default function Filter({ reportCondition, report, downloadFile }) {
   const dispatch = useDispatch();
-  const { departments } = useSelector((state) => state.department);
-  const { designation } = useSelector((state) => state.designation);
   const [AppliedFilters, setAppliedFilters] = useState({
     Department: 0,
     Designation: 0,
@@ -146,11 +164,6 @@ export default function Filter({ reportCondition, report, downloadFile }) {
   }
 
   useEffect(() => {
-    dispatch(fetchDesignations());
-    dispatch(fetchDepartments());
-  }, []);
-
-  useEffect(() => {
     var defaultDate = new Object();
     reportCondition.map((field) => {
       const { defaultValue, spParameterName,controlType } = field;
@@ -170,22 +183,17 @@ export default function Filter({ reportCondition, report, downloadFile }) {
     ...defaultDate
   });
   }, [report, reportCondition])
-  
-
 
   return (
      <div className="m-3 mt-4 d-flex justify-content-center">
-      {reportCondition.map((field, index) => (
-        <ReportFilterItem
+      {reportCondition.map((field, index) => {
+        return <ReportFilterItem
           key={field.spParameterName + String(index)}
           field={field}
           report={report}
           handleInputChange={handleInputChange}
-          departments={departments}
-          designation={designation}
-          setFilter={setFilter}
         />
-      ))}
+      })}
 
       {report?.reportName && (
         <div className="flex items-center mt-3 mx-2">
