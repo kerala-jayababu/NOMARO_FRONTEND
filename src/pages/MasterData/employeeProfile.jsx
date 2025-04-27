@@ -55,6 +55,7 @@ const EmployeeProfile = () => {
   const [bankData, setBankData] = useState("");
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [branchesPerBank, setBranchesPerBank] = useState({});
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
       type: "",
@@ -534,12 +535,40 @@ const EmployeeProfile = () => {
     return filteredEmployeeData.slice(startIndex, endIndex);
   }, [filteredEmployeeData, currentPage, rowsPerPage]);
 
-  const handleBankChange = (value, index) => {
+  const getFilteredBranches = async (bankId) => {
+    debugger;
+  
+    // Ensure bankId is an integer
+    const parsedBankId = parseInt(bankId, 10);
+  
+    try {
+      const response = await fetch(`http://46.250.230.34:8081/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`);
+      const data = await response.json();
+  
+      return data.data.map((branch) => ({
+        value: branch.idBankBranches,
+        label: branch.branchName,
+      }));
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      return [];
+    }
+  };
+  
+
+  const handleBankChange = async (value, index) => {
+    const filteredBranches = await getFilteredBranches(value);
+  
+    // Cache branches for this bank
+    setBranchesPerBank((prev) => ({
+      ...prev,
+      [value]: filteredBranches,
+    }));
+  
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index].selectedBank = value;
-      newState[index].selectedBranch =
-        branchOptions.length > 0 ? branchOptions[0].value : "";
+      newState[index].selectedBranch =  "";
       return newState;
     });
   };
@@ -1288,12 +1317,12 @@ const EmployeeProfile = () => {
                     </td>
 
                     <td className="routing-number">
-                      <Dropdown
-                        options={[...branchOptions]}
-                        name="branchName"
-                        value={bank.selectedBranch}
-                        onChange={(e) => handleBranchChange(e.target.value, index)}
-                      />
+                    <Dropdown
+  options={branchesPerBank[bank.selectedBank] || []}
+  name="branchName"
+  value={bank.selectedBranch}
+  onChange={(e) => handleBranchChange(e.target.value, index)}
+/>
                     </td>
 
                     <td className="account-number">

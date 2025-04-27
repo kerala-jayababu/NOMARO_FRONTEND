@@ -355,7 +355,7 @@ function Navbar({ view }) {
               </li>
               <li><div className="dropdown-divider"></div></li>
               {
-                authorizedModules.length > 1 &&
+                authorizedModules?.length > 1 &&
                 <li>
                   <a className="dropdown-item cursor" onClick={() => setShowConfirmation(true)}>
                     <i className="bx bx-power-off me-2"></i>
