@@ -238,17 +238,28 @@ const SalaryTemplateNew = () => {
             .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0)
             .replace(/HRA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "HRA")?.calculatedValue || 0)
             .replace(/PF/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PF")?.calculatedValue || 0)
+            .replace(/MLIE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLIE")?.calculatedValue || 0)
+            .replace(/MLID/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLID")?.calculatedValue || 0)
             .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
             .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
             .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
-            .replace(/OTT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OTT")?.calculatedValue || 0)
+            .replace(/OT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OT")?.calculatedValue || 0)
             .replace(/RFQ/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "RFQ")?.calculatedValue || 0)
             .replace(/SD/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SD")?.calculatedValue || 0)
             .replace(/LOP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LOP")?.calculatedValue || 0)
-            .replace(/ENIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ENIS")?.calculatedValue || 0)
-            .replace(/FdA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "FdA")?.calculatedValue || 0)
+            .replace(/NIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "NIS")?.calculatedValue || 0)
+            .replace(/MA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MA")?.calculatedValue || 0)
             .replace(/MLI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLI")?.calculatedValue || 0)
-            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
+            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0)
+            .replace(/PA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PA")?.calculatedValue || 0)
+            .replace(/BA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "BA")?.calculatedValue || 0)
+            .replace(/UA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "UA")?.calculatedValue || 0)
+            .replace(/PEN/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PEN")?.calculatedValue || 0)
+            .replace(/ASA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ASA")?.calculatedValue || 0)
+            .replace(/SBA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SBA")?.calculatedValue || 0)
+            .replace(/MDE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MDE")?.calculatedValue || 0)
+            .replace(/PAYE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PAYE")?.calculatedValue || 0)
+            .replace(/MISC/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MISC")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
           setErrors((prevErrors) => ({ ...prevErrors, [row.id]: "Invalid formula syntax." }));

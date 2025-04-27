@@ -193,6 +193,37 @@ const EmployeeSalaryConfig = () => {
     const selectedHead = salaryHeadList.find(head => head.idSalaryHead === selectedHeadId);
     if (!selectedHead) return;
 
+    // for NIS
+    if (selectedHead.salaryHeadCode === "NIS") {
+      const updatedRows = rows.map(row => {
+        if (row.id === id) {
+
+          const earningHeads = rows
+            .filter(r =>
+              r.selectedSalaryHead?.headType === "EARNING" &&
+              r.selectedSalaryHead?.salaryHeadCode !== "NIS" &&
+              r.id !== id
+            )
+            .map(r => r.selectedSalaryHead.salaryHeadCode);
+
+          const dynamicFormula = `MIN((${earningHeads.join('+')})*0.056, 280000*0.056)`;
+
+          return {
+            ...row,
+            selectedSalaryHead: selectedHead,
+            calculationMethod: "FORMULA",
+            customFormula: dynamicFormula,
+            calculatedValue: 0
+          };
+        }
+        return row;
+      });
+
+      setRows(updatedRows);
+      calculateValues(updatedRows);
+      return;
+    }
+
     const updatedRows = rows.map(row => {
       if (row.id === id) {
         return {
@@ -237,18 +268,30 @@ const EmployeeSalaryConfig = () => {
       return row;
     });
 
-    // Find the updated row
     const updatedRow = updatedRows.find(row => row.id === id);
-    if (updatedRow && updatedRow.selectedSalaryHead) {
-      const salaryHeadCode = updatedRow.selectedSalaryHead.salaryHeadCode;
+    if (updatedRow?.selectedSalaryHead) {
+      if (updatedRow.selectedSalaryHead.headType === "EARNING") {
+        updatedRows.forEach(row => {
+          if (row.selectedSalaryHead?.salaryHeadCode === "NIS") {
+            const earningHeads = updatedRows
+              .filter(r =>
+                r.selectedSalaryHead?.headType === "EARNING" &&
+                r.selectedSalaryHead?.salaryHeadCode !== "NIS" &&
+                r.id !== row.id
+              )
+              .map(r => r.selectedSalaryHead.salaryHeadCode);
 
-      // Mark all dependent rows for recalculation
-      const dependentRows = getDependentRows(updatedRows, salaryHeadCode);
-      const rowsToRecalculate = [...dependentRows, updatedRow];
+            row.customFormula = `MIN((${earningHeads.join('+')})*0.056, 280000*0.056)`;
+          }
+        });
+      }
 
-      // Recalculate all affected rows
       const recalculatedRows = updatedRows.map(row => {
-        if (rowsToRecalculate.some(r => r.id === row.id)) {
+        if (row.selectedSalaryHead?.salaryHeadCode === "NIS") {
+          return calculateRowValue(row, updatedRows);
+        }
+
+        if (row.id === id || getDependentRows(updatedRows, updatedRow.selectedSalaryHead.salaryHeadCode).some(r => r.id === row.id)) {
           return calculateRowValue(row, updatedRows);
         }
         return row;
@@ -273,6 +316,31 @@ const EmployeeSalaryConfig = () => {
   };
 
   const validateFormula = (formula, rowId) => {
+    const row = rows.find(r => r.id === rowId);
+
+    if (row?.selectedSalaryHead?.salaryHeadCode === "NIS") {
+      const hasEarningHeads = rows.some(r =>
+        r.selectedSalaryHead?.headType === "EARNING" &&
+        r.selectedSalaryHead?.salaryHeadCode !== "NIS" &&
+        r.id !== rowId
+      );
+
+      if (!hasEarningHeads) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [rowId]: "At least one EARNING head required for NIS calculation"
+        }));
+        return false;
+      }
+
+      setErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        delete newErrors[rowId];
+        return newErrors;
+      });
+      return true;
+    }
+
     const salaryHeadCodesInFormula = formula.match(/[A-Z]+/g) || [];
     const errors = [];
 
@@ -301,6 +369,43 @@ const EmployeeSalaryConfig = () => {
   const calculateRowValue = (row, rows) => {
     if (!row.selectedSalaryHead) return row;
 
+    // for NIS calculation
+    if (row.selectedSalaryHead.salaryHeadCode === "NIS") {
+      try {
+
+        const earningHeads = rows.filter(r =>
+          r.selectedSalaryHead?.headType === "EARNING" &&
+          r.selectedSalaryHead?.salaryHeadCode !== "NIS" &&
+          r.id !== row.id 
+        );
+
+        const sumOfRelevantHeads = earningHeads.reduce(
+          (sum, head) => sum + (head.calculatedValue || 0),
+          0
+        );
+
+        const option1 = sumOfRelevantHeads * 0.056;
+        const option2 = 280000 * 0.056;
+
+        const calculatedValue = Math.min(option1, option2);
+
+        const currentFormula = `MIN((${earningHeads.map(h => h.selectedSalaryHead.salaryHeadCode).join('+')})*0.056, 280000*0.056)`;
+
+        return {
+          ...row,
+          calculatedValue,
+          customFormula: currentFormula 
+        };
+      } catch (error) {
+        console.error("NIS calculation error:", error);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [row.id]: "Error calculating NIS value"
+        }));
+        return { ...row, calculatedValue: 0 };
+      }
+    }
+
     let calculatedValue = 0;
     const { calculationMethod, value, customFormula, percentageOf } = row;
 
@@ -323,17 +428,28 @@ const EmployeeSalaryConfig = () => {
             .replace(/DA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "DA")?.calculatedValue || 0)
             .replace(/HRA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "HRA")?.calculatedValue || 0)
             .replace(/PF/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PF")?.calculatedValue || 0)
+            .replace(/MLIE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLIE")?.calculatedValue || 0)
+            .replace(/MLID/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLID")?.calculatedValue || 0)
             .replace(/MI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MI")?.calculatedValue || 0)
             .replace(/TA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "TA")?.calculatedValue || 0)
             .replace(/LTA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LTA")?.calculatedValue || 0)
-            .replace(/OTT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OTT")?.calculatedValue || 0)
+            .replace(/OT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "OT")?.calculatedValue || 0)
             .replace(/RFQ/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "RFQ")?.calculatedValue || 0)
             .replace(/SD/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SD")?.calculatedValue || 0)
             .replace(/LOP/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "LOP")?.calculatedValue || 0)
-            .replace(/ENIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ENIS")?.calculatedValue || 0)
-            .replace(/FdA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "FdA")?.calculatedValue || 0)
+            .replace(/NIS/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "NIS")?.calculatedValue || 0)
+            .replace(/MA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MA")?.calculatedValue || 0)
             .replace(/MLI/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MLI")?.calculatedValue || 0)
-            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0);
+            .replace(/PT/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PT")?.calculatedValue || 0)
+            .replace(/PA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PA")?.calculatedValue || 0)
+            .replace(/BA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "BA")?.calculatedValue || 0)
+            .replace(/UA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "UA")?.calculatedValue || 0)
+            .replace(/PEN/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PEN")?.calculatedValue || 0)
+            .replace(/ASA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "ASA")?.calculatedValue || 0)
+            .replace(/SBA/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "SBA")?.calculatedValue || 0)
+            .replace(/MDE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MDE")?.calculatedValue || 0)
+            .replace(/PAYE/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "PAYE")?.calculatedValue || 0)
+            .replace(/MISC/g, rows.find(r => r.selectedSalaryHead?.salaryHeadCode === "MISC")?.calculatedValue || 0);
           calculatedValue = evaluate(formula);
         } catch (error) {
           setErrors((prevErrors) => ({ ...prevErrors, [row.id]: "Invalid formula syntax." }));
