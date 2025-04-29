@@ -159,20 +159,23 @@ export default function Filter({ reportCondition, report, downloadFile }) {
 
   useEffect(() => {
     var defaultDate = new Object();
+    var appliedFilter = new Object();
     reportCondition.map((field) => {
-      const { defaultValue, spParameterName,controlType } = field;
+      const { defaultValue, spParameterName,controlType,conditionName } = field;
       if (controlType === "DATE") {
         const defaultDateValue = defaultValue.length > 0 ? getDefaultDate(defaultValue) : ""
         defaultDate[spParameterName] = defaultDateValue;
+        appliedFilter[conditionName] = defaultDateValue
       } else {
         defaultDate[spParameterName] = defaultValue;
+        appliedFilter[conditionName] = defaultValue
       }
     });
     setFilter({
     ...defaultDate
     });
     setAppliedFilters({
-    ...defaultDate
+    ...appliedFilter
   });
   }, [report, reportCondition])
 
