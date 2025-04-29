@@ -464,7 +464,7 @@ function SalaryAdjustments() {
                         setNewData({ ...newData, amount: value });
                       }}
                       decimalScale={2} // Allow up to 2 decimal places
-                      allowNegative={false} // Disallow negative numbers
+                      allowNegative={true} // Disallow negative numbers
                       thousandSeparator={true} // Disable thousand separators
                       allowLeadingZeros={false}
                       placeholder="Add amount"
