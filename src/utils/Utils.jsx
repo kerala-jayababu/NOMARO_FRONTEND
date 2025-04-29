@@ -283,10 +283,13 @@ export default class Utils {
     });
     
     const numericColumnIndexes = columns.map((col, index) => {
+      const values = rows.map(row => row[col])
+      const number = values.find(value => !isNaN(`${value}`));
       return {
-        index: index + 1, 
-          isNumeric: /Earnings|Deductions|Salary|Amount|Balance|MonthlyTax|Annual Tax|Total|Price|Cost|Rate|Value/i.test(col)
-      };
+        index: index+1, 
+        isNumeric: number !== undefined && number !== null,
+        column:col
+      }
     });
     
     rows.forEach(row => {
@@ -301,7 +304,7 @@ export default class Utils {
           }
         }
         
-        return value;
+        return value?.length > 0 ? value : " ";
       });
       
       const dataRow = worksheet.addRow(rowValues);

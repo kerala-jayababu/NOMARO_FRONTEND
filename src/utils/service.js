@@ -1,7 +1,8 @@
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+export const BASE_URL = import.meta.env.VITE_API_URL;
 
-const salaryTemplateURL = "http://46.250.230.34:8081/api/v1/SalaryTemplate/";
+const salaryTemplateURL = `${BASE_URL}/api/v1/SalaryTemplate/`;
 
 export const getAllSalaryTemplates = async () => {
   try {
@@ -55,7 +56,7 @@ export const updateSalaryTemplate = async (data) => {
 export const getAllOptions = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/Common/GetAllOptions`
+      `${BASE_URL}/api/v1/Common/GetAllOptions`
     );
     return response;
   } catch (error) {
@@ -66,7 +67,7 @@ export const getAllOptions = async () => {
 export const getEmployeeDetails = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/Employee/GetEmployeeList`
+      `${BASE_URL}/api/v1/Employee/GetEmployeeList`
     );
     return response.data;
   } catch (error) {
@@ -77,7 +78,7 @@ export const getEmployeeDetails = async () => {
 export const getMasterDepartmentList = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetDepartmentList`
+      `${BASE_URL}/api/v1/MasterData/GetDepartmentList`
     );
     return response.data;
   } catch (error) {
@@ -89,7 +90,7 @@ export const getMasterDepartmentByID = async (id) => {
   try {
     console.log(id, "test");
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetDepartmentByID?Id=${id}`
+      `${BASE_URL}/api/v1/MasterData/GetDepartmentByID?Id=${id}`
     );
     console.log(response, "response");
     return response.data;
@@ -101,7 +102,7 @@ export const getMasterDepartmentByID = async (id) => {
 export const updateMasterDepartment = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/UpdateDepartment`,
+      `${BASE_URL}/api/v1/MasterData/UpdateDepartment`,
       data
     );
     return response.data;
@@ -113,7 +114,7 @@ export const updateMasterDepartment = async (data) => {
 export const addMasterDepartment = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/AddDepartment`,
+      `${BASE_URL}/api/v1/MasterData/AddDepartment`,
       data
     );
     return response.data;
@@ -125,7 +126,7 @@ export const addMasterDepartment = async (data) => {
 export const getBudgetList = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetBudgetList`
+      `${BASE_URL}/api/v1/MasterData/GetBudgetList`
     );
     return response.data;
   } catch (error) {
@@ -137,7 +138,7 @@ export const getBudgetById = async (id) => {
   try {
     console.log(id, "test");
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetBudgetById?Id=${id}`
+      `${BASE_URL}/api/v1/MasterData/GetBudgetById?Id=${id}`
     );
     console.log(response, "response");
     return response.data;
@@ -149,7 +150,7 @@ export const getBudgetById = async (id) => {
 export const addBudgetCode = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/AddBudgetCode`,
+      `${BASE_URL}/api/v1/MasterData/AddBudgetCode`,
       data
     );
     return response.data;
@@ -161,7 +162,7 @@ export const addBudgetCode = async (data) => {
 export const updateBudgetCode = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/UpdateBudgetCode`,
+      `${BASE_URL}/api/v1/MasterData/UpdateBudgetCode`,
       data
     );
     return response.data;
@@ -173,7 +174,7 @@ export const updateBudgetCode = async (data) => {
 export const getDesignationList = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/getMasterDesignationListById`
+      `${BASE_URL}/api/v1/MasterData/getMasterDesignationListById`
     );
     return response.data;
   } catch (error) {
@@ -184,7 +185,7 @@ export const getDesignationList = async () => {
 export const getDesignationById = async (id) => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetDesignationByID?Id=${id}`
+      `${BASE_URL}/api/v1/MasterData/GetDesignationByID?Id=${id}`
     );
     return response.data;
   } catch (error) {
@@ -195,7 +196,7 @@ export const getDesignationById = async (id) => {
 export const addDesignation = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/AddDesignation`,
+      `${BASE_URL}/api/v1/MasterData/AddDesignation`,
       data
     );
     return response.data;
@@ -207,7 +208,7 @@ export const addDesignation = async (data) => {
 export const updateDesignation = async (data) => {
   try {
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/UpdateDesignation`,
+      `${BASE_URL}/api/v1/MasterData/UpdateDesignation`,
       data
     );
     return response.data;
@@ -224,7 +225,7 @@ export const getSalaryHeadList = async () => {
       console.error("Authorization token missing");
     }
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadList`,
+      `${BASE_URL}/api/v1/MasterData/GetSalaryHeadList`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -249,7 +250,7 @@ export const getSalaryHeadById = async (id) => {
       console.error("Authorization token missing");
     }
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetSalaryHeadByID?Id=${id}`,
+      `${BASE_URL}/api/v1/MasterData/GetSalaryHeadByID?Id=${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -271,7 +272,7 @@ export const addSalaryHead = async (data) => {
     console.log("Retrieved Token:", token); // Debugging
 
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/AddSalaryHead`,
+      `${BASE_URL}/api/v1/MasterData/AddSalaryHead`,
       data,
       {
         headers: {
@@ -294,7 +295,7 @@ export const updateSalaryHead = async (data) => {
     console.log("Retrieved Token:", token); // Debugging
 
     const response = await axios.post(
-      `http://46.250.230.34:8081/api/v1/MasterData/UpdateSalaryHead`,
+      `${BASE_URL}/api/v1/MasterData/UpdateSalaryHead`,
       data,
       {
         headers: {
@@ -312,7 +313,7 @@ export const updateSalaryHead = async (data) => {
 export const getVacationModeList = async () => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/MasterData/GetAllVacationModes`
+      `${BASE_URL}/api/v1/MasterData/GetAllVacationModes`
     );
     return response.data;
   } catch (error) {
@@ -323,7 +324,7 @@ export const getVacationModeList = async () => {
 export const getEmployeeDetailsById = async (id) => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/Employee/GetEmployeeDetailsByID?Id=${id}`
+      `${BASE_URL}/api/v1/Employee/GetEmployeeDetailsByID?Id=${id}`
     );
     return response.data;
   } catch (error) {
@@ -334,7 +335,7 @@ export const getEmployeeDetailsById = async (id) => {
 export const getEmployeeProfileById = async (id) => {
   try {
     const response = await axios.get(
-      `http://46.250.230.34:8081/api/v1/Employee/GetEmployeeProfileByID?Id=${id}`
+      `${BASE_URL}/api/v1/Employee/GetEmployeeProfileByID?Id=${id}`
     );
     return response.data;
   } catch (error) {

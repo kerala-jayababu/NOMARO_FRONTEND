@@ -2,9 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
-
+export const BASE_URL = import.meta.env.VITE_API_URL;
 // API Base URL
-const API_BASE_URL = "http://46.250.230.34:8081/api/v1/MasterData";
+const API_BASE_URL = `${BASE_URL}/api/v1/MasterData`;
 
 // Fetch Vacation Mode List
 export const fetchVacationMode = createAsyncThunk(

@@ -19,6 +19,8 @@ import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeePro
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
 import Input from "../../components/input";
+export const BASE_URL = import.meta.env.VITE_API_URL;
+
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
   const {
@@ -542,7 +544,7 @@ const EmployeeProfile = () => {
     const parsedBankId = parseInt(bankId, 10);
   
     try {
-      const response = await fetch(`http://46.250.230.34:8081/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`);
+        const response = await fetch(`${BASE_URL}/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`);
       const data = await response.json();
   
       return data.data.map((branch) => ({

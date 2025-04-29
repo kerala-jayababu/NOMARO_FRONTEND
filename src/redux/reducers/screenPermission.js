@@ -4,8 +4,8 @@ import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import designation from "./designation";
 import { handleApiSuccessOrError } from "../../core/constants/commons";
-
-const API_BASE_URL = "http://46.250.230.34:8081/api/v1/RoleBasedScreens";
+export const BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `${BASE_URL}/api/v1/RoleBasedScreens`;
 
 export const screenPermission = createAsyncThunk(
   "screenPermission/GetScreenPermission",

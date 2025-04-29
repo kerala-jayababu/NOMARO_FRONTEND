@@ -131,14 +131,8 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
 
 export default function Filter({ reportCondition, report, downloadFile }) {
   const dispatch = useDispatch();
-  const [AppliedFilters, setAppliedFilters] = useState({
-    Department: 0,
-    Designation: 0,
-  });
-  const [filter, setFilter] = useState({
-    "@IdDepartment": 0,
-    "@IdDesignation": 0,
-  });
+  const [AppliedFilters, setAppliedFilters] = useState();
+  const [filter, setFilter] = useState();
   const { reportData } = useSelector((state) => state.reports);
 
   const handleInputChange = (conditionName,field, value) => {
@@ -165,22 +159,23 @@ export default function Filter({ reportCondition, report, downloadFile }) {
 
   useEffect(() => {
     var defaultDate = new Object();
+    var appliedFilter = new Object();
     reportCondition.map((field) => {
-      const { defaultValue, spParameterName,controlType } = field;
+      const { defaultValue, spParameterName,controlType,conditionName } = field;
       if (controlType === "DATE") {
         const defaultDateValue = defaultValue.length > 0 ? getDefaultDate(defaultValue) : ""
         defaultDate[spParameterName] = defaultDateValue;
+        appliedFilter[conditionName] = defaultDateValue
+      } else {
+        defaultDate[spParameterName] = defaultValue;
+        appliedFilter[conditionName] = defaultValue
       }
     });
     setFilter({
-    "@IdDepartment": 0,
-      "@IdDesignation": 0,
     ...defaultDate
     });
     setAppliedFilters({
-    Department: 0,
-      Designation: 0,
-    ...defaultDate
+    ...appliedFilter
   });
   }, [report, reportCondition])
 
