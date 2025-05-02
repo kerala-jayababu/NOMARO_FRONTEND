@@ -180,47 +180,56 @@ export default function Filter({ reportCondition, report, downloadFile }) {
   }, [report, reportCondition])
 
   return (
-     <div className="m-3 mt-4 d-flex justify-content-center">
-      {reportCondition.map((field, index) => {
-        return <ReportFilterItem
-          key={field.spParameterName + String(index)}
-          field={field}
-          report={report}
-          handleInputChange={handleInputChange}
-        />
-      })}
-
-      {report?.reportName && (
-        <div className="flex items-center mt-3 mx-2">
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ backgroundColor: "#75869e", flex: 1 }}
-            onClick={getReportData}
-          >
-            RUN
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            className="mx-2"
-            sx={{ backgroundColor: "#203e69", flex: 1 }}
-            onClick={() => downloadFile("excel",AppliedFilters)}
-            disabled={reportData == null || reportData?.length <= 0}
-          >
-            EXCEL
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            sx={{ backgroundColor: "#75869e", flex: 1 }}
-            onClick={() => downloadFile("pdf",AppliedFilters)}
-            disabled={reportData == null || reportData?.length <= 0}
-          >
-            PDF
-          </Button>
+    <div className="m-3 mt-4">
+      <div className="row">
+        {/* Filter fields in a row with proper wrapping */}
+        <div className="col-md-10">
+          <div className="row">
+            {reportCondition.map((field, index) => (
+              <ReportFilterItem
+                key={field.spParameterName + String(index)}
+                field={field}
+                report={report}
+                handleInputChange={handleInputChange}
+              />
+            ))}
+          </div>
         </div>
-      )}
+        
+        {/* Buttons in a separate column that stays aligned */}
+        <div className="col-md-2 mt-3">
+          {report?.reportName && (
+            <div className="d-flex flex-row gap-2">
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ backgroundColor: "#75869e"}}
+                onClick={getReportData}
+              >
+                RUN
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                sx={{ backgroundColor: "#203e69"}}
+                onClick={() => downloadFile("excel",AppliedFilters)}
+                disabled={reportData == null || reportData?.length <= 0}
+              >
+                EXCEL
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                sx={{ backgroundColor: "#75869e"}}
+                onClick={() => downloadFile("pdf",AppliedFilters)}
+                disabled={reportData == null || reportData?.length <= 0}
+              >
+                PDF
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

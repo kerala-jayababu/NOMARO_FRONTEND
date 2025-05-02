@@ -8,6 +8,9 @@ import toast from "react-hot-toast";
 import Select from "react-select";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import axios from "axios";
+import { API } from "../../redux/api/utils";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const statusColor = [
   {
@@ -87,14 +90,24 @@ function SalaryApproved() {
   });
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
-  const getSalaryMonths = () => {
+  const getSalaryMonths = async () => {
+    const data = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
+    const currentStatus = statusOptions.find(
+      (option) => option.value.toLowerCase() === data?.data?.data?.ApprovalStatus?.toLowerCase()
+    );
+    
     CommonService.getAllSalaryMonths().then((res) => {
       const currentMonth = res.data
         ?.filter((month) =>
           month.salaryMonthText.includes(new Date().getFullYear().toString())
         )
-        .find((month) =>
-          month.salaryMonthText.includes(months[new Date().getMonth()])
+        .find((month) => {
+          if (data.data) {
+            return month.salaryMonthText.includes(months[data?.data?.data?.MaxSalaryMonth])
+          } else {
+            return month.salaryMonthText.includes(months[new Date().getMonth()])
+          }
+        }
         );
 
       const filteredMonths = res.data.filter((month) => {
@@ -124,6 +137,7 @@ function SalaryApproved() {
         value: currentMonth.idSalaryMonth,
         label: currentMonth.salaryMonthText,
       });
+      setStatusFilter(currentStatus)
       setSalaryMonthsList(filteredMonths);
     });
   };
@@ -573,7 +587,7 @@ function SalaryApproved() {
                   <Select
                     ref={statusRef}
                     className="textSize"
-                    options={statusOptions}
+                    options={statusOptions.sort((a,b) => a.label.localeCompare(b.label))}
                     onChange={(option) => handleStatusChange(option)}
                     value={statusFilter}
                     isSearchable
@@ -691,6 +705,33 @@ function SalaryApproved() {
                       ))}
                   </tbody>
                 </table>
+
+                {/* Summary row below the table */}
+                {salaryGenerationList?.length > 0 && (
+                  <div className="p-2 mb-3 mt-3" style={{border:"1px solid black"}}>
+                    <div className="d-flex justify-between" style={{justifyContent:"center"}}>
+                      <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
+                        Total Earnings: {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalEarnings) || 0), 0))}
+                      </div>
+                      <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
+                        Total Deductions: {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalDeductions) || 0), 0))}
+                      </div>
+                      <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
+                        Total Net Salary: {new Intl.NumberFormat("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.netSalary) || 0), 0))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div class="text-center pt-3">
                   <button
                     type="button"

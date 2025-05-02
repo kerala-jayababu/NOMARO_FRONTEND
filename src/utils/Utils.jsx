@@ -254,17 +254,26 @@ export default class Utils {
     Object.keys(filter).map(item => {
       filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]}` + "   ";
     });
+
+    // Add company name row and make it span across all columns
+    const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
+    companyName.font = { bold: true, size: 14, color: { argb: 'FF0D384D' } };
+    companyName.alignment = { horizontal: 'left' };
     
+    // Add title row
     const titleRow = worksheet.addRow([reportName]);
     titleRow.font = { bold: true, size: 14, color: { argb: 'FF0064E6' } };
     titleRow.alignment = { horizontal: 'left' };
     
+    // Add filter row
     const filterRow = worksheet.addRow([filterText]);
     filterRow.font = { italic: true, color: { argb: 'FF666666' } };
     filterRow.alignment = { horizontal: 'left' };
     
+    // Add empty row
     worksheet.addRow([]);
 
+    // Add header row
     const headerRow = worksheet.addRow(columns);
     headerRow.eachCell((cell) => {
       cell.fill = {
@@ -282,16 +291,18 @@ export default class Utils {
       };
     });
     
+    // Identify numeric columns
     const numericColumnIndexes = columns.map((col, index) => {
-      const values = rows.map(row => row[col])
+      const values = rows.map(row => row[col]);
       const number = values.find(value => !isNaN(`${value}`));
       return {
         index: index+1, 
-        isNumeric: number !== undefined && number !== null,
-        column:col
-      }
+        isNumeric: number !== undefined && number !== null && col.toLowerCase() != "employeecode",
+        column: col
+      };
     });
     
+    // Add data rows
     rows.forEach(row => {
       const rowValues = columns.map((col, index) => {
         const value = row[col];
@@ -331,8 +342,10 @@ export default class Utils {
       });
     });
     
-    worksheet.mergeCells(1, 1, 1, columns.length);
+    // Merge cells for all title rows
+    worksheet.mergeCells(1, 1, 1, 2);  // Company name row
     
+    // Calculate and set column widths
     columns.forEach((col, index) => {
       const colIndex = index + 1; 
       const isNumericColumn = numericColumnIndexes.find(c => c.index === colIndex)?.isNumeric;
@@ -360,6 +373,7 @@ export default class Utils {
       worksheet.getColumn(colIndex).width = columnWidth;
     });
     
+    // Generate and save the file
     workbook.xlsx.writeBuffer().then(buffer => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, `${reportName}.xlsx`);
@@ -382,22 +396,32 @@ export default class Utils {
           }` +
           "   ";
       });
-      doc.setTextColor(0, 100, 230);
+      
+      // Set color for GEORGETOWN INTERNATIONAL ACADEMY to primary color (#0d384d)
+      doc.setTextColor(13, 56, 77); // RGB values for #0d384d
       doc.setFontSize(12);
-      doc.text(reportName, 14, 20, { align: "left" });
-      doc.text(filterText, 14, 27, { align: "left" });
+      doc.text("GEORGETOWN INTERNATIONAL ACADEMY", 14, 20, { align: "left" });
+      
+      // Reset color to blue for report name
+      doc.setTextColor(0, 100, 230);
+      doc.text(reportName, 14, 27, { align: "left" });
+      doc.text(filterText, 14, 34, { align: "left" });
+      
       var alignments = new Object();
 
       Object.keys(tableData[0]).map((item, index) => {
         if (!isNaN(tableData[0][item])) {
+          if(!item.includes("EmployeeCode"))
           alignments[index] = { halign: "right" };
+        } else {
+          alignments[index] = { halign: "left" };
         }
       });
 
       autoTable(doc, {
         head: [tableHeaders],
         body: tableData,
-        startY: 30,
+        startY: 37,
         theme: "grid",
         headStyles: {
           fillColor: [203, 213, 225],
@@ -434,8 +458,8 @@ export default class Utils {
     } catch (error) {
       console.error("Error downloading PDF:", error);
     }
-    }
-    
+  }
+
   static formatDateTime(date) {
     const formatter = new Intl.DateTimeFormat("en-GB", {
       day: "2-digit",
@@ -449,104 +473,3 @@ export default class Utils {
   }
 }
 
-export const spdata = [
-  {
-    id: 1,
-    EmployeeCode: "EMP003",
-    EmployeeName: "Rohit ",
-    Designation: "Senior Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 22900.0,
-    TotalDeductions: 2300.0,
-    NetSalary: 20600.0,
-  },
-  {
-    id: 2,
-    EmployeeCode: "EMP004",
-    EmployeeName: "Amitabh Verma",
-    Designation: "Senior Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "April, 2025",
-    TotalEarnings: 20000.0,
-    TotalDeductions: 0.0,
-    NetSalary: 20000.0,
-  },
-  {
-    id: 3,
-    EmployeeCode: "EMP006",
-    EmployeeName: "Siddharth Malhotra",
-    Designation: "Assistant Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 20900.0,
-    TotalDeductions: 1900.0,
-    NetSalary: 19000.0,
-  },
-  {
-    id: 4,
-    EmployeeCode: "EMP010",
-    EmployeeName: "Rahul Chatterjee",
-    Designation: "Assistant Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 23000.0,
-    TotalDeductions: 6100.0,
-    NetSalary: 16900.0,
-  },
-  {
-    id: 5,
-    EmployeeCode: "EMP011",
-    EmployeeName: "Ananya Menon",
-    Designation: "Assistant Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 12500.0,
-    TotalDeductions: 500.0,
-    NetSalary: 12000.0,
-  },
-  {
-    id: 6,
-    EmployeeCode: "EMP014",
-    EmployeeName: "Shruti Bhattacharya",
-    Designation: "Assistant Teacher",
-    Department: "Teaching Staff",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 22850.0,
-    TotalDeductions: 1600.0,
-    NetSalary: 21250.0,
-  },
-  {
-    id: 7,
-    EmployeeCode: "EMP018",
-    EmployeeName: "Ishita Agarwal",
-    Designation: "Facilities Manager",
-    Department: "Finance Department",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 750000.0,
-    TotalDeductions: 6500.0,
-    NetSalary: 743500.0,
-  },
-  {
-    id: 8,
-    EmployeeCode: "EMP019",
-    EmployeeName: "Sanya Tiwari",
-    Designation: "Facilities Manager",
-    Department: "Finance Department",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 5000.0,
-    TotalDeductions: 2500.0,
-    NetSalary: 2500.0,
-  },
-  {
-    id: 9,
-    EmployeeCode: "EMP020",
-    EmployeeName: "Divya Kulkarni",
-    Designation: "Facilities Manager",
-    Department: "Finance Department",
-    SalaryMonth: "March, 2025",
-    TotalEarnings: 20000.0,
-    TotalDeductions: 500.0,
-    NetSalary: 19500.0,
-  },
-];

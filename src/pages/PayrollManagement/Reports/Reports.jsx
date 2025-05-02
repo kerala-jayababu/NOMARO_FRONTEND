@@ -128,10 +128,10 @@ function Reports() {
                         color: "white",
                         cursor: "pointer",
                         fontFamily: "Arial",
-                        fontSize: "15px",
+                        fontSize: "13px",
                         fontWeight: 500,
                         px: 2,
-                        "&:hover": { textDecoration: "underline" },
+                        textDecoration: "underline",
                       }}
                       {...bindTrigger(popupState)}
                     >

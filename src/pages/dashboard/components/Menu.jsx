@@ -68,7 +68,7 @@ function Menu({ viewType }) {
 
       <div className="menu-inner-shadow"></div>
 
-      <ul className="menu-inner py-1">
+      <ul className="menu-inner scroll-side-menu py-1">
         {payrollScreen.map((screen) => (
           <li
             key={screen.screenName}

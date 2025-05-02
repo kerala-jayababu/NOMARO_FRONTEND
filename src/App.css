@@ -245,7 +245,7 @@ body {
   transform: translate(-120%, -30%);
 }
 
-.arrowbuttonStyle  {
+.arrowbuttonStyle {
   padding: 8px 16px;
   font-size: 13px;
   cursor: pointer;
@@ -273,5 +273,30 @@ body {
 }
 
 .data-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-side-menu {
+  height: 90vh !important;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.scroll-side-menu::-webkit-scrollbar {
+  width: 6px !important;
+  display: block !important;
+}
+
+.scroll-side-menu::-webkit-scrollbar-thumb {
+  width: 5px !important;
+  background-color: var(--primary-color) !important;
+  border-radius: 6px;
+}
+
+.scroll-side-menu::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+body::-webkit-scrollbar {
   display: none;
 }

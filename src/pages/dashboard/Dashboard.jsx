@@ -19,11 +19,14 @@ function Dashboard() {
           {/* <!-- / Navbar --> */}
 
           {/* <!-- Content wrapper --> */}
-          <div className="content-wrapper">
+          <div className="content-wrapper scroll-side-menu">
             {/* <!-- Content --> */}
             <Outlet />
             {/* <!-- / Content --> */}
 
+
+            <div className="content-backdrop fade"></div>
+          </div>
             {/* <!-- Footer --> */}
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
@@ -33,9 +36,6 @@ function Dashboard() {
               </div>
             </footer>
             {/* <!-- / Footer --> */}
-
-            <div className="content-backdrop fade"></div>
-          </div>
           {/* <!-- Content wrapper --> */}
         </div>
         {/* <!-- / Layout page --> */}
