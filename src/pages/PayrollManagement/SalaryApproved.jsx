@@ -737,7 +737,7 @@ function SalaryApproved() {
                     type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={exportSalaryApproved}
-                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() !== "approved"}
+                    disabled={salaryDraft.length === 0 || !["approved","submitted"].includes(statusFilter.value.toLowerCase())}
                   >
                     Export to Excel for Detailed Review
                   </button>
