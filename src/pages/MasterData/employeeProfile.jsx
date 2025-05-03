@@ -19,6 +19,7 @@ import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeePro
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
 import Input from "../../components/input";
+import secureLocalStorage from "react-secure-storage";
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
 const EmployeeProfile = () => {
@@ -65,6 +66,7 @@ const EmployeeProfile = () => {
       appliedRate: "",
     },
   ]);
+  const [overtimeOptions, setOvertimeOptions] = useState([]);
 
   const bankOptions = useMemo(
     () =>
@@ -93,21 +95,23 @@ const EmployeeProfile = () => {
     [budgetCode]
   );
 
-  const overtimeOptions = useMemo(
-    () =>
-      overTimesTypes.map((type) => ({
-        value: type.value.toString(),
-        label:
-          type.displayName == "Working Day" ? "Workday" : type.displayName,
-      })),
-    [overTimesTypes]
-  );
 
  
 
   useEffect(() => {
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
+
+  
+useEffect(() => {
+  debugger
+  const fetchOvertimeTypes = async () => {
+    const options = await getOvertimeTypes();
+    setOvertimeOptions(options);
+  };
+
+  fetchOvertimeTypes();
+}, []);
 
   
   const handlePageChange = (page) => setCurrentPage(page);
@@ -195,21 +199,16 @@ const EmployeeProfile = () => {
           ) {
             const mappedOvertimeDetails =
               overtimeConfigsResult.payload.data.map((config) => {
-                let dayType = checkDayType(config.dayType);
-               
+                
+               debugger
                 const matchingOption = overtimeOptions.find(
-                  (option) => option.label === dayType
+                  (opt) => opt.value === config.dayType
                 );
                 return {
-                  type: matchingOption ? matchingOption.label : dayType,
-                  hourlyRate:
-                    config.standardRate != null
-                      ? config.standardRate.toString()
-                      : "",
-                  appliedRate:
-                    config.dayRate != null ? config.dayRate.toString() : "",
-                  idEmployeeOvertimeConfig:
-                    config.idEmployeeOvertimeConfig || 0,
+                  type: matchingOption?.value || config.dayType, // Store the label (e.g., "Workday")
+                  hourlyRate: config.standardRate?.toString() || "",
+                  appliedRate: config.dayRate?.toString() || "",
+                  idEmployeeOvertimeConfig: config.idEmployeeOvertimeConfig || 0,
                 };
               });
 
@@ -549,13 +548,59 @@ const EmployeeProfile = () => {
   
       return data.data.map((branch) => ({
         value: branch.idBankBranches,
-        label: branch.branchName,
+        label: branch.abaRoutingNumber,
       }));
     } catch (error) {
       console.error("Error fetching branches:", error);
       return [];
     }
   };
+  
+  const getOvertimeTypes = async () => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+  
+      const response = await fetch(`${BASE_URL}/api/v1/Common/GetHolidayTypes`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const text = await response.text();
+  
+      if (!text) {
+        console.warn("Empty response from GetHolidayTypes");
+        return [];
+      }
+  
+      const data = JSON.parse(text);
+      
+      // Log the full response
+      console.log("Raw API response:", data);
+  
+      const result = data?.map((item) => {
+        console.log("Mapping overtime item:", item);
+        debugger; // pauses in browser's dev tools
+        return {
+          value: item.holidayType.toString(),
+          label: item.holidayTypeName,
+        };
+      }) || [];
+  
+      return result;
+    } catch (error) {
+      console.error("Error fetching overtime types:", error);
+      return [];
+    }
+  };
+  
   
 
   const handleBankChange = async (value, index) => {
@@ -663,20 +708,10 @@ const EmployeeProfile = () => {
   // };
 
   const isDuplicateDayType = (dayType, index) => {
-   
-
-    const dayTypeMapping = {
-      1: "Workday",
-      2: "Holiday",
-    };
-
-    const mappedDayType = dayTypeMapping[dayType];
-
     return overtimeDetails.some(
-      (detail, i) => i !== index && detail.type === mappedDayType
+      (detail, i) => i !== index && detail.type === dayType
     );
   };
-
   const handleAddOvertimeRow = () => {
     const newOvertimeDetails = [
       ...overtimeDetails,
@@ -706,38 +741,31 @@ const EmployeeProfile = () => {
   };
 
   const handleOvertimeChange = (index, field, value) => {
+    debugger
     if (field === "type" && isDuplicateDayType(value, index)) {
       setOvertimeErrors((prevErrors) => ({
         ...prevErrors,
         [`overtimeType_${index}`]: "Duplicate DayType values are not allowed.",
       }));
-      return; // Prevent updating the state if duplicate is found
+      return;
     }
-
-    // Clear any existing error for this field
+  
     setOvertimeErrors((prevErrors) => ({
       ...prevErrors,
       [`overtimeType_${index}`]: "",
     }));
-
+  
     const newOvertimeDetails = [...overtimeDetails];
+  
     if (field === "type") {
-      // Find the corresponding label (displayName) for the selected value
-      const selectedOption = overtimeOptions.find(
-        (option) => option.value === value
-      );
-      let newType = selectedOption ? selectedOption.label : value;
-      // Ensure "Workday" is used in the frontend
-      // if (newType === "Working Day") {
-      //   newType = "Workday";
-      // }
-      newType = checkDayType(newType);
-      newOvertimeDetails[index][field] = newType;
+      newOvertimeDetails[index].type = value; // Directly assign raw value
     } else {
       newOvertimeDetails[index][field] = value;
     }
+  
     setOvertimeDetails(newOvertimeDetails);
   };
+  
 
   const handleDeleteOvertimeRow = (index) => {
     setOvertimeDetails((prevState) => {
@@ -804,6 +832,7 @@ const EmployeeProfile = () => {
   };
 
   const validateOvertimeDetails = () => {
+    debugger
     let isValid = true;
     let errors = {};
 
@@ -1452,18 +1481,12 @@ const EmployeeProfile = () => {
                   <React.Fragment key={index}>
                     <tr>
                       <td className="col-md-3">
-                        <Dropdown
-                          options={overtimeOptions}
-                          name="overtimeDays"
-                          value={
-                            overtimeOptions.find(
-                              (option) => option.label === detail.type
-                            )?.value || ""
-                          }
-                          onChange={(e) =>
-                            handleOvertimeChange(index, "type", e.target.value)
-                          }
-                        />
+                      <Dropdown
+  options={overtimeOptions}
+  name="overtimeDays"
+  value={detail.type}
+  onChange={(e) => handleOvertimeChange(index, "type", e.target.value)}
+/>
                       </td>
                       <td className="col-md-3">
                         <input

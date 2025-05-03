@@ -32,6 +32,7 @@ function SalaryAdjustments() {
     allocatingSalaryHead: 0,
     earningOrDeduction: "",
     allocatingSalaryMonth: 0,
+    taNumber:"",
     isTaxable: "",
     amount: null,
     remarks: ""
@@ -125,6 +126,7 @@ function SalaryAdjustments() {
   }
 
   const setupEdit = (item) => {
+    debugger
     setIsEdit(true);
     setNewData({
       idSalaryAdjustment: item.idSalaryAdjustment,
@@ -136,6 +138,7 @@ function SalaryAdjustments() {
       allocatingSalaryHead: item.allocatingSalaryHead,
       earningOrDeduction: item.earningOrDeduction,
       allocatingSalaryMonth: item.allocatingSalaryMonth,
+      taNumber:item.taNumber,
       isTaxable: item.isTaxable == true ? 'Yes' : 'No',
       amount: item.amount,
       remarks: item.remarks,
@@ -270,6 +273,7 @@ function SalaryAdjustments() {
                   <thead>
                     <tr>
                       <th>Emp. Code</th>
+                      <th>TA Number</th>                      
                       <th>Employee Name</th>
                       <th>Department</th>
                       {/* <th>Designation</th> */}
@@ -288,6 +292,7 @@ function SalaryAdjustments() {
                       paginatedData?.map((item, index) => (
                         <tr>
                           <td>{item?.employeeCode}</td>
+                          <td>{item?.taNumber}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.departmentName}</td>
                           {/* <td>{item?.designationName}</td> */}
@@ -473,13 +478,32 @@ function SalaryAdjustments() {
                     />
                   </div>
 
-                  <div className="col-md-12 p-2">
-                    <label className="form-label mb-1">Remarks</label>
-                    <textarea className="form-control" rows="4" maxlength="100" value={newData.remarks}
-                      onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
-                      placeholder='Add remarks here'></textarea>
-                    <small>{100 - newData.remarks.length} / 100 characters remaining</small>
+                  <div className="col-md-6 p-2">
+                    <label className="form-label mb-1">TA Number</label>
+                    <input
+  type="text"
+  readOnly
+  className="form-control"
+  value={newData?.taNumber || ''}
+  required
+  
+/>
                   </div>
+
+                  <div className="col-md-12 p-2">
+  <label className="form-label mb-1">Remarks</label>
+  <textarea
+    className="form-control"
+    rows="4"
+    maxLength="100"
+    value={newData?.remarks || ''}
+    onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
+    placeholder="Add remarks here"
+  ></textarea>
+  <small>
+    {100 - (newData?.remarks ? newData.remarks.length : 0)} / 100 characters remaining
+  </small>
+</div>
                 </div>
               </Form>
             </div>
