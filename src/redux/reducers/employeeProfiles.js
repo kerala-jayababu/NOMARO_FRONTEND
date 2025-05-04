@@ -75,8 +75,9 @@ export const manageEmployeeBankAccount = createAsyncThunk(
 
 export const updateEmployeeDetails = createAsyncThunk(
   "employeeBankAccount/UpdateEmployeeDetails",
-  async (data) => {
+  async (formData) => {
     try {
+      
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
@@ -87,11 +88,11 @@ export const updateEmployeeDetails = createAsyncThunk(
       }
       const response = await axios.post(
         `${API_BASE_URL}/UpdateEmployeeDetails`,
-        data,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+         
           },
         }
       );
@@ -102,6 +103,37 @@ export const updateEmployeeDetails = createAsyncThunk(
     }
   }
 );
+
+export const deleteEmployeeAttachment = createAsyncThunk(
+  "employeeBankAccount/DeleteEmployeeAttachment",
+  async (idEmployee) => {
+    try {
+      debugger
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        throw new Error("Authorization token missing");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/DeleteEmployeeAttachment?idEmployee=${idEmployee}`, 
+        {}, // empty body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      handleApiSuccessOrError(response.data, false); // show success
+      return response.data;
+    } catch (error) {
+      return handleApiSuccessOrError(error, true); // show error
+    }
+  }
+);
+
 
 export const getEmployeeOvertimeConfigsByID = createAsyncThunk(
   "employeeBankAccount/GetEmployeeOvertimeConfigsByID",

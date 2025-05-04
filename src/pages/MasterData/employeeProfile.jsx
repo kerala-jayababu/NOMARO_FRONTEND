@@ -5,6 +5,7 @@ import Grid from "../../components/grid";
 import Pagination from "../../components/pagination";
 import StatusBadge from "../../components/statusBadge";
 import Modal from "../../components/modal";
+import { Modal as BootstrapModal, Form } from "react-bootstrap";
 import Table from "../../components/table";
 import Label from "../../components/Label";
 import { DeleteIcon, AddIcon } from "../../components/icons";
@@ -14,6 +15,7 @@ import { getBudgetCodeById } from "../../redux/reducers/budgetCode";
 import { getEmployeeBankAccountsByID } from "../../redux/reducers/employeeProfiles";
 import { getAllOptions } from "../../redux/reducers/getAllOptions";
 import { manageEmployeeBankAccount } from "../../redux/reducers/employeeProfiles";
+import {deleteEmployeeAttachment}from  "../../redux/reducers/employeeProfiles";
 import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
@@ -39,6 +41,7 @@ const EmployeeProfile = () => {
   const { options: overtimeConfigs } = useSelector(
     (state) => state.employeeProfiles
   );
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
@@ -59,6 +62,7 @@ const EmployeeProfile = () => {
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [branchesPerBank, setBranchesPerBank] = useState({});
+  const [attachmentFile, setAttachmentFile] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
       type: "",
@@ -76,6 +80,7 @@ const EmployeeProfile = () => {
       })),
     [banks]
   );
+
 
   const branchOptions = useMemo(
     () =>
@@ -103,8 +108,7 @@ const EmployeeProfile = () => {
   }, [dispatch]);
 
   
-useEffect(() => {
-  debugger
+useEffect(() => {  
   const fetchOvertimeTypes = async () => {
     const options = await getOvertimeTypes();
     setOvertimeOptions(options);
@@ -113,16 +117,22 @@ useEffect(() => {
   fetchOvertimeTypes();
 }, []);
 
-  
+const [editFileName, setEditFileName] = useState(null);
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEditClick = (id) => {
     setSelectedEmployee(null);
     setBankAccountsState([]);
     setOvertimeDetails([]);
-
+debugger
     const employee = employees?.find((emp) => emp.idEmployee === id);
- 
+    const path = employee.childCountDocumentFilePath;
+    document.getElementById('tempFileDetails').value = '';
+    // Extract file name regardless of path format (Windows or Unix)
+    const fileName = path?.split(/[\\/]/).pop();  // This handles both \ and /
+    const parts = fileName.split("_");
+    const afterDate = parts.slice(6).join("_"); 
+    setEditFileName(afterDate);
     if (employee) {
    
       setSelectedEmployee(employee);
@@ -153,6 +163,7 @@ useEffect(() => {
       ])
         .then(([bankAccountsResult, overtimeConfigsResult]) => {
           // Handle bank accounts
+          debugger
           if (
             bankAccountsResult.payload &&
             bankAccountsResult.payload.data &&
@@ -165,7 +176,7 @@ useEffect(() => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.idBankBranch.toString()
+                    ? account.abaRoutingNumber.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -198,9 +209,8 @@ useEffect(() => {
             overtimeConfigsResult.payload.data.length > 0
           ) {
             const mappedOvertimeDetails =
-              overtimeConfigsResult.payload.data.map((config) => {
-                
-               debugger
+              overtimeConfigsResult.payload.data.map((config) => {                
+               
                 const matchingOption = overtimeOptions.find(
                   (opt) => opt.value === config.dayType
                 );
@@ -292,7 +302,7 @@ useEffect(() => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.idBankBranch.toString()
+                    ? account.abaRoutingNumber.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -367,6 +377,7 @@ useEffect(() => {
     }
     setIsModalOpen(true);
   };
+
 
 
   const handleEmpCodeClick = (empCode) => {
@@ -536,8 +547,7 @@ useEffect(() => {
     return filteredEmployeeData.slice(startIndex, endIndex);
   }, [filteredEmployeeData, currentPage, rowsPerPage]);
 
-  const getFilteredBranches = async (bankId) => {
-    debugger;
+  const getFilteredBranches = async (bankId) => {    
   
     // Ensure bankId is an integer
     const parsedBankId = parseInt(bankId, 10);
@@ -586,8 +596,7 @@ useEffect(() => {
       console.log("Raw API response:", data);
   
       const result = data?.map((item) => {
-        console.log("Mapping overtime item:", item);
-        debugger; // pauses in browser's dev tools
+        console.log("Mapping overtime item:", item);         // pauses in browser's dev tools
         return {
           value: item.holidayType.toString(),
           label: item.holidayTypeName,
@@ -741,7 +750,7 @@ useEffect(() => {
   };
 
   const handleOvertimeChange = (index, field, value) => {
-    debugger
+    
     if (field === "type" && isDuplicateDayType(value, index)) {
       setOvertimeErrors((prevErrors) => ({
         ...prevErrors,
@@ -832,7 +841,7 @@ useEffect(() => {
   };
 
   const validateOvertimeDetails = () => {
-    debugger
+    
     let isValid = true;
     let errors = {};
 
@@ -901,6 +910,27 @@ useEffect(() => {
     return { isValid: true, error: "" };
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      debugger
+      const response = await dispatch(deleteEmployeeAttachment(selectedEmployee.idEmployee));
+  debugger
+      if (response?.payload?.success) {
+        setAttachmentFile(null);
+        setEditFileName(null);
+        setShowConfirmModal(false);
+      } else {
+        console.error("Delete failed:", response?.payload?.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("API error while deleting:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
@@ -947,11 +977,20 @@ useEffect(() => {
       currencyCode: account.currencyCode,
     }));
 
-    const employeeDetailsPayload = {
-      employeeId: selectedEmployee.idEmployee,
-      budgetCodeId: parseInt(selectedBudgetCode, 10) || 0,
-      childCount: parseInt(childCount, 10) || 0,
-    };
+    // const employeeDetailsPayload = {
+    //   employeeId: selectedEmployee.idEmployee,
+    //   budgetCodeId: parseInt(selectedBudgetCode, 10) || 0,
+    //   childCount: parseInt(childCount, 10) || 0,
+    // };
+
+    
+    const formData = new FormData();
+    formData.append("EmployeeId", selectedEmployee.idEmployee);
+    formData.append("BudgetCodeId", parseInt(selectedBudgetCode, 10));
+    formData.append("ChildCount", parseInt(childCount, 10));
+    if (attachmentFile) {
+      formData.append("File", attachmentFile);
+    }
 
     const overtimeConfigsPayload = overtimeDetails.map((detail) => {
       let dayType = detail.type;
@@ -975,7 +1014,7 @@ useEffect(() => {
       const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
         await Promise.all([
           dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-          dispatch(updateEmployeeDetails(employeeDetailsPayload)),
+          dispatch(updateEmployeeDetails(formData)),
           dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
         ]);
 
@@ -1039,6 +1078,9 @@ useEffect(() => {
     // setBankData("");
     // setOverTimeData("");
   };
+
+  
+
 
 
 
@@ -1277,6 +1319,10 @@ useEffect(() => {
         </div>
       </div>
 
+
+
+    
+
       {/* Modal for Adding Employee Bank Account */}
       <Modal
         id="Add_EMP_Account"
@@ -1295,6 +1341,8 @@ useEffect(() => {
             },
           ]);
           setIsModalOpen(false);
+          setAttachmentFile(null);
+          setEditFileName(null);
           setBankAccountErrors({}); // Clear errors when modal is closed
           setOvertimeErrors({}); // Clear errors when modal is closed
         }}
@@ -1316,7 +1364,27 @@ useEffect(() => {
             </>
           )}
         </div>
-
+        <div class="p-2">
+                          <label class="form-label mb-1"> Attachments </label>
+                          <input
+  type="file"
+  id="tempFileDetails"
+  className="form-control"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAttachmentFile(file);
+      //setEditFileName(file.name); // Set file name for custom display
+    }
+  }}
+/>
+                          {
+                            editFileName &&
+                            <span className="badge bg-label-info p-1">{editFileName} &nbsp;&nbsp;
+                              <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                            </span>
+                          }
+                        </div>
         <h6>
           <strong>Bank Account Details</strong>
         </h6>
@@ -1348,8 +1416,16 @@ useEffect(() => {
                     </td>
 
                     <td className="routing-number">
+                    {
+                      
+    console.log(
+      `Bank index: ${index}, Selected Bank: ${bank.selectedBranch}, Branches:`,
+      branchesPerBank[bank.selectedBranch]
+    )
+  }
                     <Dropdown
-  options={branchesPerBank[bank.selectedBank] || []}
+                    
+  options={branchesPerBank[bank.selectedBranch] || []}
   name="branchName"
   value={bank.selectedBranch}
   onChange={(e) => handleBranchChange(e.target.value, index)}
@@ -1609,6 +1685,55 @@ useEffect(() => {
           </div>
         </div>
       </Modal>
+
+      <BootstrapModal 
+  show={showConfirmModal}
+  onHide={() => setShowConfirmModal(false)}
+  size="md"
+  aria-labelledby="contained-modal-title-vcenter"
+  centered
+  backdrop="static"
+  keyboard={false}
+>
+  <BootstrapModal.Header closeButton>
+    <BootstrapModal.Title>
+      <h5>Confirm Delete</h5>
+    </BootstrapModal.Title>
+  </BootstrapModal.Header>
+
+  <BootstrapModal.Body>
+  <div className="modal-body pt-1 text-center">
+    <div className="text-center mb-4">
+      <div className="mb-4 text-danger">
+        <i className="bx bx-x-circle fs-2"></i>
+      </div>
+      <h6>Are you sure you want to remove this file?</h6>
+    </div>
+
+    <button
+      type="button"
+      className="btn btn-primary btn-sm py-2 px-4 me-2"
+      onClick={handleConfirmDelete}
+      disabled={isDeleting} // optional loading state
+    >
+      {isDeleting ? "Deleting..." : "Confirm"}
+    </button>
+
+    <button
+      type="button"
+      className="btn btn-outline-secondary btn-sm py-2 px-4"
+      onClick={() => setShowConfirmModal(false)}
+    >
+      Cancel
+    </button>
+  </div>
+</BootstrapModal.Body>
+
+
+
+
+</BootstrapModal>
+
     </div>
   );
 };
