@@ -413,7 +413,7 @@ function SalaryGeneration() {
 
   const disableApprovalbtn = () => {
     return (
-      salaryDraft.filter((x) => x.approvalStatus.toLowerCase() === "draft")
+      salaryDraft.filter((x) => x.approvalStatus.toLowerCase() === "draft" || x.approvalStatus.toLowerCase() === "rejected")
         .length === 0
     );
   };

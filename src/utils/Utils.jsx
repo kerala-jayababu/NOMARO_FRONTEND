@@ -294,7 +294,7 @@ export default class Utils {
     // Identify numeric columns
     const numericColumnIndexes = columns.map((col, index) => {
       const values = rows.map(row => row[col]);
-      const number = values.find(value => !isNaN(`${value}`));
+      const number = values.find(value => `${value}`.length > 0 && !isNaN(`${value}`.replaceAll(",","")));
       return {
         index: index+1, 
         isNumeric: number !== undefined && number !== null && col.toLowerCase() != "employeecode",
@@ -343,7 +343,7 @@ export default class Utils {
     });
     
     // Merge cells for all title rows
-    worksheet.mergeCells(1, 1, 1, 2);  // Company name row
+    worksheet.mergeCells(1, 1, 1, 3);  // Company name row
     
     // Calculate and set column widths
     columns.forEach((col, index) => {

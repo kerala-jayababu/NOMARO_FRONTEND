@@ -15,7 +15,7 @@ import { getBudgetCodeById } from "../../redux/reducers/budgetCode";
 import { getEmployeeBankAccountsByID } from "../../redux/reducers/employeeProfiles";
 import { getAllOptions } from "../../redux/reducers/getAllOptions";
 import { manageEmployeeBankAccount } from "../../redux/reducers/employeeProfiles";
-import {deleteEmployeeAttachment}from  "../../redux/reducers/employeeProfiles";
+import { deleteEmployeeAttachment } from "../../redux/reducers/employeeProfiles";
 import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
@@ -61,7 +61,7 @@ const EmployeeProfile = () => {
   const [bankData, setBankData] = useState("");
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [branchesPerBank, setBranchesPerBank] = useState({});
+  const [branchesPerBank, setBranchesPerBank] = useState([]);
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
@@ -81,7 +81,6 @@ const EmployeeProfile = () => {
     [banks]
   );
 
-
   const branchOptions = useMemo(
     () =>
       bankBranches.map((branch) => ({
@@ -100,43 +99,38 @@ const EmployeeProfile = () => {
     [budgetCode]
   );
 
-
- 
-
   useEffect(() => {
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
 
-  
-useEffect(() => {  
-  const fetchOvertimeTypes = async () => {
-    const options = await getOvertimeTypes();
-    setOvertimeOptions(options);
-  };
+  useEffect(() => {
+    const fetchOvertimeTypes = async () => {
+      const options = await getOvertimeTypes();
+      setOvertimeOptions(options);
+    };
 
-  fetchOvertimeTypes();
-}, []);
+    fetchOvertimeTypes();
+  }, []);
 
-const [editFileName, setEditFileName] = useState(null);
+  const [editFileName, setEditFileName] = useState(null);
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEditClick = (id) => {
     setSelectedEmployee(null);
     setBankAccountsState([]);
     setOvertimeDetails([]);
-debugger
+    debugger;
     const employee = employees?.find((emp) => emp.idEmployee === id);
-    const path = employee.childCountDocumentFilePath;
-    document.getElementById('tempFileDetails').value = '';
+    const path = employee?.childCountDocumentFilePath;
+    document.getElementById("tempFileDetails").value = "";
     // Extract file name regardless of path format (Windows or Unix)
-    const fileName = path?.split(/[\\/]/).pop();  // This handles both \ and /
-    const parts = fileName.split("_");
-    const afterDate = parts.slice(6).join("_"); 
-    setEditFileName(afterDate);
+    //const fileName = path?.split(/[\\/]/).pop();  // This handles both \ and /
+    //const parts = fileName.split("_");
+    // const afterDate = parts.slice(6).join("_");
+    setEditFileName(path);
     if (employee) {
-   
       setSelectedEmployee(employee);
-   
+
       // Fetch employee details
       // dispatch(getEmployeeDetailsByID(id));
       dispatch(getEmployeeDetailsByID(id)).then((response) => {
@@ -145,8 +139,6 @@ debugger
         }
       });
 
-
-    
       // dispatch(getEmployeeProfileByID(id)).then((response) => {
       //   if (response.payload && response.payload.data && response.payload.data.length > 0) {
       //     const employeeData = response.payload.data[0];
@@ -163,7 +155,7 @@ debugger
       ])
         .then(([bankAccountsResult, overtimeConfigsResult]) => {
           // Handle bank accounts
-          debugger
+          debugger;
           if (
             bankAccountsResult.payload &&
             bankAccountsResult.payload.data &&
@@ -209,8 +201,7 @@ debugger
             overtimeConfigsResult.payload.data.length > 0
           ) {
             const mappedOvertimeDetails =
-              overtimeConfigsResult.payload.data.map((config) => {                
-               
+              overtimeConfigsResult.payload.data.map((config) => {
                 const matchingOption = overtimeOptions.find(
                   (opt) => opt.value === config.dayType
                 );
@@ -218,7 +209,8 @@ debugger
                   type: matchingOption?.value || config.dayType, // Store the label (e.g., "Workday")
                   hourlyRate: config.standardRate?.toString() || "",
                   appliedRate: config.dayRate?.toString() || "",
-                  idEmployeeOvertimeConfig: config.idEmployeeOvertimeConfig || 0,
+                  idEmployeeOvertimeConfig:
+                    config.idEmployeeOvertimeConfig || 0,
                 };
               });
 
@@ -247,15 +239,17 @@ debugger
 
   const checkDayType = (dayType) => {
     switch (dayType) {
-      case 'WORKINGDAY': return 'Workday'                    
+      case "WORKINGDAY":
+        return "Workday";
         break;
-      case 'HOLIDAY': return 'Holiday'                    
+      case "HOLIDAY":
+        return "Holiday";
         break;
-      default: return dayType
+      default:
+        return dayType;
         break;
     }
-  }
-
+  };
 
   const handleButtonClick = (id) => {
     setSelectedEmployee(null);
@@ -377,8 +371,6 @@ debugger
     }
     setIsModalOpen(true);
   };
-
-
 
   const handleEmpCodeClick = (empCode) => {
     // Dispatch the action to get employee profile by emp code
@@ -508,34 +500,33 @@ debugger
   useEffect(() => {}, [selectedEmployee]);
 
   const employeeData =
-  employees?.map((employee) => ({
-    editId: employee.idEmployee,
-    empCode: employee.employeeCode,
-    name: employee.fullName,
-    designation: employee.designation,
-    department: employee.department,
-    joiningDate: new Date(employee.joiningDate).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }),
-    status: employee.currentStatus,
-    childCount: employee.childrenCount,
-  })) || [];
+    employees?.map((employee) => ({
+      editId: employee.idEmployee,
+      empCode: employee.employeeCode,
+      name: employee.fullName,
+      designation: employee.designation,
+      department: employee.department,
+      joiningDate: new Date(employee.joiningDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }),
+      status: employee.currentStatus,
+      childCount: employee.childrenCount,
+    })) || [];
 
   const filteredEmployeeData = useMemo(() => {
     if (!searchTerm) return employeeData;
-  
+
     return employeeData.filter((employee) => {
       return (
-        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        employee.designation.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     });
   }, [employeeData, searchTerm]);
-  
 
   const rowsPerPage = 10; // Number of rows per page
 
@@ -547,15 +538,16 @@ debugger
     return filteredEmployeeData.slice(startIndex, endIndex);
   }, [filteredEmployeeData, currentPage, rowsPerPage]);
 
-  const getFilteredBranches = async (bankId) => {    
-  
+  const getFilteredBranches = async (bankId) => {
     // Ensure bankId is an integer
     const parsedBankId = parseInt(bankId, 10);
-  
+
     try {
-        const response = await fetch(`${BASE_URL}/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`);
+      const response = await fetch(
+        `${BASE_URL}/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`
+      );
       const data = await response.json();
-  
+
       return data.data.map((branch) => ({
         value: branch.idBankBranches,
         label: branch.abaRoutingNumber,
@@ -565,66 +557,65 @@ debugger
       return [];
     }
   };
-  
+
   const getOvertimeTypes = async () => {
     try {
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
-  
-      const response = await fetch(`${BASE_URL}/api/v1/Common/GetHolidayTypes`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
+
+      const response = await fetch(
+        `${BASE_URL}/api/v1/Common/GetHolidayTypes`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const text = await response.text();
-  
+
       if (!text) {
         console.warn("Empty response from GetHolidayTypes");
         return [];
       }
-  
+
       const data = JSON.parse(text);
-      
+
       // Log the full response
       console.log("Raw API response:", data);
-  
-      const result = data?.map((item) => {
-        console.log("Mapping overtime item:", item);         // pauses in browser's dev tools
-        return {
-          value: item.holidayType.toString(),
-          label: item.holidayTypeName,
-        };
-      }) || [];
-  
+
+      const result =
+        data?.map((item) => {
+          console.log("Mapping overtime item:", item); // pauses in browser's dev tools
+          return {
+            value: item.holidayType.toString(),
+            label: item.holidayTypeName,
+          };
+        }) || [];
+
       return result;
     } catch (error) {
       console.error("Error fetching overtime types:", error);
       return [];
     }
   };
-  
-  
 
   const handleBankChange = async (value, index) => {
     const filteredBranches = await getFilteredBranches(value);
-  
+
     // Cache branches for this bank
-    setBranchesPerBank((prev) => ({
-      ...prev,
-      [value]: filteredBranches,
-    }));
-  
+    setBranchesPerBank(filteredBranches);
+
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index].selectedBank = value;
-      newState[index].selectedBranch =  "";
+      newState[index].selectedBranch = "";
       return newState;
     });
   };
@@ -638,7 +629,7 @@ debugger
 
   const handleInputChange = (e, index, field) => {
     const { value } = e.target;
-    
+
     if (field === "accountNumber") {
       // Allow only alphanumeric values and enforce max length of 25
       if (!/^[a-zA-Z0-9]{0,25}$/.test(value)) {
@@ -651,14 +642,14 @@ debugger
       newState[index][field] = value;
       return newState;
     });
-     // Revalidate total salary percentage when salaryPercentageDistributed changes
-  if (field === "salaryPercentageDistributed") {
-    const salaryPercentageValidation = validateSalaryPercentage();
-    setBankAccountErrors((prevErrors) => ({
-      ...prevErrors,
-      salaryPercentageTotal: salaryPercentageValidation.error,
-    }));
-  }
+    // Revalidate total salary percentage when salaryPercentageDistributed changes
+    if (field === "salaryPercentageDistributed") {
+      const salaryPercentageValidation = validateSalaryPercentage();
+      setBankAccountErrors((prevErrors) => ({
+        ...prevErrors,
+        salaryPercentageTotal: salaryPercentageValidation.error,
+      }));
+    }
   };
 
   const handleAddRow = () => {
@@ -673,11 +664,11 @@ debugger
         currencyCode: "GYD",
       },
     ]);
-      // Clear total salary percentage error when adding a new row
-  setBankAccountErrors((prevErrors) => ({
-    ...prevErrors,
-    salaryPercentageTotal: "",
-  }));
+    // Clear total salary percentage error when adding a new row
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: "",
+    }));
   };
 
   const handleDeleteRow = (index) => {
@@ -697,12 +688,12 @@ debugger
       }
       return prevState.filter((_, i) => i !== index);
     });
-      // Revalidate total salary percentage when deleting a row
-  const salaryPercentageValidation = validateSalaryPercentage();
-  setBankAccountErrors((prevErrors) => ({
-    ...prevErrors,
-    salaryPercentageTotal: salaryPercentageValidation.error,
-  }));
+    // Revalidate total salary percentage when deleting a row
+    const salaryPercentageValidation = validateSalaryPercentage();
+    setBankAccountErrors((prevErrors) => ({
+      ...prevErrors,
+      salaryPercentageTotal: salaryPercentageValidation.error,
+    }));
   };
 
   // const handleAddOvertimeRow = () => {
@@ -735,8 +726,6 @@ debugger
     const lastIndex = newOvertimeDetails.length - 1;
     const newDayType = newOvertimeDetails[lastIndex].type;
 
-
-
     if (isDuplicateDayType(newDayType, lastIndex)) {
       setOvertimeErrors((prevErrors) => ({
         ...prevErrors,
@@ -750,7 +739,6 @@ debugger
   };
 
   const handleOvertimeChange = (index, field, value) => {
-    
     if (field === "type" && isDuplicateDayType(value, index)) {
       setOvertimeErrors((prevErrors) => ({
         ...prevErrors,
@@ -758,23 +746,22 @@ debugger
       }));
       return;
     }
-  
+
     setOvertimeErrors((prevErrors) => ({
       ...prevErrors,
       [`overtimeType_${index}`]: "",
     }));
-  
+
     const newOvertimeDetails = [...overtimeDetails];
-  
+
     if (field === "type") {
       newOvertimeDetails[index].type = value; // Directly assign raw value
     } else {
       newOvertimeDetails[index][field] = value;
     }
-  
+
     setOvertimeDetails(newOvertimeDetails);
   };
-  
 
   const handleDeleteOvertimeRow = (index) => {
     setOvertimeDetails((prevState) => {
@@ -841,7 +828,6 @@ debugger
   };
 
   const validateOvertimeDetails = () => {
-    
     let isValid = true;
     let errors = {};
 
@@ -880,20 +866,21 @@ debugger
       const percentage = parseFloat(account.salaryPercentageDistributed) || 0;
       return sum + percentage;
     }, 0);
-  
+
     if (totalPercentage > 100) {
       return {
         isValid: false,
-        error: "The total Salary Percentage Distributed must be less than or equal to 100.",
+        error:
+          "The total Salary Percentage Distributed must be less than or equal to 100.",
       };
-    } 
-  
+    }
+
     return { isValid: true, error: "" };
   };
 
   const validateBankAccountCombinations = () => {
     const combinations = new Set();
-  
+
     for (let i = 0; i < bankAccountsState.length; i++) {
       const account = bankAccountsState[i];
       const combinationKey = `${account.selectedBank}-${account.selectedBranch}`;
@@ -903,10 +890,10 @@ debugger
           error: "Duplicate Bank and BankBranch combination found.",
         };
       }
-  
+
       combinations.add(combinationKey);
     }
-  
+
     return { isValid: true, error: "" };
   };
 
@@ -914,15 +901,20 @@ debugger
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     try {
-      debugger
-      const response = await dispatch(deleteEmployeeAttachment(selectedEmployee.idEmployee));
-  debugger
+      debugger;
+      const response = await dispatch(
+        deleteEmployeeAttachment(selectedEmployee.idEmployee)
+      );
+      debugger;
       if (response?.payload?.success) {
         setAttachmentFile(null);
         setEditFileName(null);
         setShowConfirmModal(false);
       } else {
-        console.error("Delete failed:", response?.payload?.message || "Unknown error");
+        console.error(
+          "Delete failed:",
+          response?.payload?.message || "Unknown error"
+        );
       }
     } catch (error) {
       console.error("API error while deleting:", error);
@@ -934,35 +926,32 @@ debugger
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-      // Validate bank account combinations
-  const bankAccountCombinationValidation = validateBankAccountCombinations();
-  if (!bankAccountCombinationValidation.isValid) {
-    setBankAccountErrors((prevErrors) => ({
-      ...prevErrors,
-      bankAccountCombination: bankAccountCombinationValidation.error,
-    }));
-    return; // Stop submission if validation fails
-  }
+    // Validate bank account combinations
+    const bankAccountCombinationValidation = validateBankAccountCombinations();
+    if (!bankAccountCombinationValidation.isValid) {
+      setBankAccountErrors((prevErrors) => ({
+        ...prevErrors,
+        bankAccountCombination: bankAccountCombinationValidation.error,
+      }));
+      return; // Stop submission if validation fails
+    }
 
     const bankAccountsValid = validateBankAccounts();
     const overtimeValid = validateOvertimeDetails();
 
-      // Validate salary percentage distribution
-  const salaryPercentageValidation = validateSalaryPercentage();
-  if (!salaryPercentageValidation.isValid) {
-    setBankAccountErrors((prevErrors) => ({
-      ...prevErrors,
-      salaryPercentageTotal: salaryPercentageValidation.error,
-    }));
-    return; // Stop submission if validation fails
-  }
-
+    // Validate salary percentage distribution
+    const salaryPercentageValidation = validateSalaryPercentage();
+    if (!salaryPercentageValidation.isValid) {
+      setBankAccountErrors((prevErrors) => ({
+        ...prevErrors,
+        salaryPercentageTotal: salaryPercentageValidation.error,
+      }));
+      return; // Stop submission if validation fails
+    }
 
     if (!bankAccountsValid || !overtimeValid) {
       return; // Don't proceed with submission if validation fails
     }
-
-   
 
     const bankAccountPayload = bankAccountsState.map((account) => ({
       idEmployeeBankAccount: account.idEmployeeBankAccount || 0,
@@ -983,7 +972,6 @@ debugger
     //   childCount: parseInt(childCount, 10) || 0,
     // };
 
-    
     const formData = new FormData();
     formData.append("EmployeeId", selectedEmployee.idEmployee);
     formData.append("BudgetCodeId", parseInt(selectedBudgetCode, 10));
@@ -996,10 +984,10 @@ debugger
       let dayType = detail.type;
       if (dayType == "Workday") {
         dayType = "WORKINGDAY";
-      } 
+      }
       if (dayType == "Holiday") {
         dayType = "HOLIDAY";
-      } 
+      }
       return {
         idEmployeeOvertimeConfig: detail.idEmployeeOvertimeConfig || 0,
         idEmployee: selectedEmployee.idEmployee,
@@ -1052,7 +1040,7 @@ debugger
         currencyCode: "GYD",
       },
     ]);
-  
+
     // Reset overtime details state
     setOvertimeDetails([
       {
@@ -1061,28 +1049,23 @@ debugger
         appliedRate: "",
       },
     ]);
-  
+
     // Reset selected budget code
     setSelectedBudgetCode("");
-  
+
     // Reset child count
     setChildCount(0);
-  
+
     // Clear errors
     setBankAccountErrors({});
     setOvertimeErrors({});
-  
+
     // Optionally, reset other states if needed
     // setSelectedEmployee(null);
     // setProfileData("");
     // setBankData("");
     // setOverTimeData("");
   };
-
-  
-
-
-
 
   const columns = [
     { key: "empCode", label: "Emp. Code" },
@@ -1132,7 +1115,6 @@ debugger
                   idKey="editId"
                   modalId="Add_EMP_Account"
                   popUpId="EMP_profileView"
-
                 />
               )}
               <div className="text-end pt-2">
@@ -1157,7 +1139,7 @@ debugger
             className="modal-dialog modal-xl modal-dialog-centered"
             role="document"
             data-bs-backdrop="static" // Prevents closing on outside click
-          data-bs-keyboard="false" // Prevents closing on Esc key p
+            data-bs-keyboard="false" // Prevents closing on Esc key p
           >
             <div className="modal-content">
               <div className="modal-header">
@@ -1175,7 +1157,13 @@ debugger
                 <div className="accountDetail_cardProfile">
                   <div className="avatar-upload">
                     <div className="avatar-preview">
-                      <img src={profileData?.attachmentBlob != null ? `data:image/jpeg;base64,${profileData?.attachmentBlob}` : "src/assets/avatar.jpg"} />
+                      <img
+                        src={
+                          profileData?.attachmentBlob != null
+                            ? `data:image/jpeg;base64,${profileData?.attachmentBlob}`
+                            : "src/assets/avatar.jpg"
+                        }
+                      />
                     </div>
                   </div>
 
@@ -1286,7 +1274,13 @@ debugger
                     <h6 className="fw-bold mb-0">Bank Account Details</h6>
                   </div>
                   <Table
-                    headers={["Bank Name", "Branch Name", "Account Number", "% Salary", "Currency"]}
+                    headers={[
+                      "Bank Name",
+                      "Branch Name",
+                      "Account Number",
+                      "% Salary",
+                      "Currency",
+                    ]}
                     rows={(Array.isArray(bankData) ? bankData : []).map(
                       (account, index) => (
                         <tr key={index}>
@@ -1318,10 +1312,6 @@ debugger
           </div>
         </div>
       </div>
-
-
-
-    
 
       {/* Modal for Adding Employee Bank Account */}
       <Modal
@@ -1363,28 +1353,33 @@ debugger
               <Label text="Designation" value={selectedEmployee.designation} />
             </>
           )}
+        <div class="col-md-3">
+          <label class="form-label mb-1"> Attachments </label>
+          <input
+            type="file"
+            id="tempFileDetails"
+            className="form-control"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) {
+                setAttachmentFile(file);
+                //setEditFileName(file.name); // Set file name for custom display
+              }
+            }}
+          />
+          {editFileName && (
+            <span className="badge bg-label-info p-1">
+              {editFileName} &nbsp;&nbsp;
+              <label
+                className="cursor"
+                onClick={() => setShowConfirmModal(true)}
+              >
+                X
+              </label>
+            </span>
+          )}
         </div>
-        <div class="p-2">
-                          <label class="form-label mb-1"> Attachments </label>
-                          <input
-  type="file"
-  id="tempFileDetails"
-  className="form-control"
-  onChange={(e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAttachmentFile(file);
-      //setEditFileName(file.name); // Set file name for custom display
-    }
-  }}
-/>
-                          {
-                            editFileName &&
-                            <span className="badge bg-label-info p-1">{editFileName} &nbsp;&nbsp;
-                              <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
-                            </span>
-                          }
-                        </div>
+        </div>
         <h6>
           <strong>Bank Account Details</strong>
         </h6>
@@ -1393,12 +1388,15 @@ debugger
         <table className="table table-sm mb-0 border custom-table-emp-bank">
           <thead>
             <tr>
-            <th className="bank-name">Bank Name</th>
-            <th className="routing-number">Routing Number</th>
-            <th className="account-number" style={{ width: "30%" }}>Account Number</th> {/* Increase width */}
-            <th className="salary-percentage">% Salary</th>
-            <th className="currency">Currency</th>
-            <th style={{ width: "10%" }}></th> {/* Reduce width */}
+              <th className="bank-name">Bank Name</th>
+              <th className="routing-number">Routing Number</th>
+              <th className="account-number" style={{ width: "30%" }}>
+                Account Number
+              </th>{" "}
+              {/* Increase width */}
+              <th className="salary-percentage">% Salary</th>
+              <th className="currency">Currency</th>
+              <th style={{ width: "10%" }}></th> {/* Reduce width */}
             </tr>
           </thead>
           <tbody>
@@ -1411,25 +1409,25 @@ debugger
                         options={[...bankOptions]}
                         name="bankName"
                         value={bank.selectedBank}
-                        onChange={(e) => handleBankChange(e.target.value, index)}
+                        onChange={(e) =>
+                          handleBankChange(e.target.value, index)
+                        }
                       />
                     </td>
 
                     <td className="routing-number">
-                    {
-                      
-    console.log(
-      `Bank index: ${index}, Selected Bank: ${bank.selectedBranch}, Branches:`,
-      branchesPerBank[bank.selectedBranch]
-    )
-  }
-                    <Dropdown
-                    
-  options={branchesPerBank[bank.selectedBranch] || []}
-  name="branchName"
-  value={bank.selectedBranch}
-  onChange={(e) => handleBranchChange(e.target.value, index)}
-/>
+                      {/* {console.log(
+                        `Bank index: ${index}, Selected Bank: ${bank.selectedBranch}, Branches:`,
+                        branchesPerBank[bank.selectedBranch]
+                      )} */}
+                      <Dropdown
+                        options={branchesPerBank || []}
+                        name="branchName"
+                        value={bank.selectedBranch}
+                        onChange={(e) =>
+                          handleBranchChange(e.target.value, index)
+                        }
+                      />
                     </td>
 
                     <td className="account-number">
@@ -1439,7 +1437,9 @@ debugger
                         name="accountNumber"
                         value={bank.accountNumber}
                         maxLength="25"
-                        onChange={(e) => handleInputChange(e, index, "accountNumber")}
+                        onChange={(e) =>
+                          handleInputChange(e, index, "accountNumber")
+                        }
                       />
                     </td>
 
@@ -1452,7 +1452,11 @@ debugger
                         onChange={(e) => {
                           const value = e.target.value;
                           if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                            handleInputChange(e, index, "salaryPercentageDistributed");
+                            handleInputChange(
+                              e,
+                              index,
+                              "salaryPercentageDistributed"
+                            );
                           }
                         }}
                       />
@@ -1466,7 +1470,9 @@ debugger
                         ]}
                         name="currency"
                         value={bank.currencyCode}
-                        onChange={(e) => handleInputChange(e, index, "currencyCode")}
+                        onChange={(e) =>
+                          handleInputChange(e, index, "currencyCode")
+                        }
                       />
                     </td>
 
@@ -1479,7 +1485,10 @@ debugger
                           />
                         )}
                         {index === bankAccountsState.length - 1 && (
-                          <AddIcon className="add-icon" onClick={handleAddRow} />
+                          <AddIcon
+                            className="add-icon"
+                            onClick={handleAddRow}
+                          />
                         )}
                       </div>
                     </td>
@@ -1495,16 +1504,24 @@ debugger
                             <div>{bankAccountErrors[`idBank_${index}`]}</div>
                           )}
                           {bankAccountErrors[`idBankBranch_${index}`] && (
-                            <div>{bankAccountErrors[`idBankBranch_${index}`]}</div>
+                            <div>
+                              {bankAccountErrors[`idBankBranch_${index}`]}
+                            </div>
                           )}
                           {bankAccountErrors[`accountNumber_${index}`] && (
-                            <div>{bankAccountErrors[`accountNumber_${index}`]}</div>
+                            <div>
+                              {bankAccountErrors[`accountNumber_${index}`]}
+                            </div>
                           )}
                           {bankAccountErrors[`salaryPercentage_${index}`] && (
-                            <div>{bankAccountErrors[`salaryPercentage_${index}`]}</div>
+                            <div>
+                              {bankAccountErrors[`salaryPercentage_${index}`]}
+                            </div>
                           )}
                           {bankAccountErrors[`currencyCode_${index}`] && (
-                            <div>{bankAccountErrors[`currencyCode_${index}`]}</div>
+                            <div>
+                              {bankAccountErrors[`currencyCode_${index}`]}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -1528,10 +1545,10 @@ debugger
           </div>
         )}
         {bankAccountErrors.bankAccountCombination && (
-  <div className="text-danger mb-3">
-    {bankAccountErrors.bankAccountCombination}
-  </div>
-)}
+          <div className="text-danger mb-3">
+            {bankAccountErrors.bankAccountCombination}
+          </div>
+        )}
 
         {/* Bank Account Details Table Component Ends */}
 
@@ -1557,12 +1574,14 @@ debugger
                   <React.Fragment key={index}>
                     <tr>
                       <td className="col-md-3">
-                      <Dropdown
-  options={overtimeOptions}
-  name="overtimeDays"
-  value={detail.type}
-  onChange={(e) => handleOvertimeChange(index, "type", e.target.value)}
-/>
+                        <Dropdown
+                          options={overtimeOptions}
+                          name="overtimeDays"
+                          value={detail.type}
+                          onChange={(e) =>
+                            handleOvertimeChange(index, "type", e.target.value)
+                          }
+                        />
                       </td>
                       <td className="col-md-3">
                         <input
@@ -1676,7 +1695,7 @@ debugger
                 onChange={(e) => {
                   const value = e.target.value;
                   if (/^\d*$/.test(value)) {
-                    console.log('meeeeeeeeeeeeeeeeee',value)
+                    console.log("meeeeeeeeeeeeeeeeee", value);
                     setChildCount(value);
                   }
                 }}
@@ -1686,54 +1705,49 @@ debugger
         </div>
       </Modal>
 
-      <BootstrapModal 
-  show={showConfirmModal}
-  onHide={() => setShowConfirmModal(false)}
-  size="md"
-  aria-labelledby="contained-modal-title-vcenter"
-  centered
-  backdrop="static"
-  keyboard={false}
->
-  <BootstrapModal.Header closeButton>
-    <BootstrapModal.Title>
-      <h5>Confirm Delete</h5>
-    </BootstrapModal.Title>
-  </BootstrapModal.Header>
+      <BootstrapModal
+        show={showConfirmModal}
+        onHide={() => setShowConfirmModal(false)}
+        size="md"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
+        <BootstrapModal.Header closeButton>
+          <BootstrapModal.Title>
+            <h5>Confirm Delete</h5>
+          </BootstrapModal.Title>
+        </BootstrapModal.Header>
 
-  <BootstrapModal.Body>
-  <div className="modal-body pt-1 text-center">
-    <div className="text-center mb-4">
-      <div className="mb-4 text-danger">
-        <i className="bx bx-x-circle fs-2"></i>
-      </div>
-      <h6>Are you sure you want to remove this file?</h6>
-    </div>
+        <BootstrapModal.Body>
+          <div className="modal-body pt-1 text-center">
+            <div className="text-center mb-4">
+              <div className="mb-4 text-danger">
+                <i className="bx bx-x-circle fs-2"></i>
+              </div>
+              <h6>Are you sure you want to remove this file?</h6>
+            </div>
 
-    <button
-      type="button"
-      className="btn btn-primary btn-sm py-2 px-4 me-2"
-      onClick={handleConfirmDelete}
-      disabled={isDeleting} // optional loading state
-    >
-      {isDeleting ? "Deleting..." : "Confirm"}
-    </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm py-2 px-4 me-2"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting} // optional loading state
+            >
+              {isDeleting ? "Deleting..." : "Confirm"}
+            </button>
 
-    <button
-      type="button"
-      className="btn btn-outline-secondary btn-sm py-2 px-4"
-      onClick={() => setShowConfirmModal(false)}
-    >
-      Cancel
-    </button>
-  </div>
-</BootstrapModal.Body>
-
-
-
-
-</BootstrapModal>
-
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm py-2 px-4"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </BootstrapModal.Body>
+      </BootstrapModal>
     </div>
   );
 };

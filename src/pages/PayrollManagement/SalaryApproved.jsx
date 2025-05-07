@@ -103,7 +103,7 @@ function SalaryApproved() {
         )
         .find((month) => {
           if (data.data) {
-            return month.salaryMonthText.includes(months[data?.data?.data?.MaxSalaryMonth])
+            return month.idSalaryMonth === data?.data?.data?.MaxSalaryMonth
           } else {
             return month.salaryMonthText.includes(months[new Date().getMonth()])
           }
@@ -658,10 +658,6 @@ function SalaryApproved() {
                                 !(
                                   item.approvalStatus.toLowerCase() ===
                                   "interim approved"
-                                ) && 
-                                !(
-                                  item.approvalStatus.toLowerCase() ===
-                                  "approved"
                                 )
                               }
                             />
@@ -737,7 +733,7 @@ function SalaryApproved() {
                     type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={exportSalaryApproved}
-                    disabled={salaryDraft.length === 0 || !["approved","submitted"].includes(statusFilter.value.toLowerCase())}
+                    disabled={salaryDraft.length === 0}
                   >
                     Export to Excel for Detailed Review
                   </button>

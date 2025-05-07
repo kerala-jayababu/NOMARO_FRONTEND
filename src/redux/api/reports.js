@@ -31,3 +31,14 @@ export const getReportData = async (content) => {
     return handleApiError(error);
   }
 };
+
+export const GetReportColumns = async (idReport) => {
+  try {
+    const res = await API.post(
+      `/api/v1/Reports/GetReportColumnsById?IdReport=${idReport}`
+    );
+    return { error: null, data: res.data };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};

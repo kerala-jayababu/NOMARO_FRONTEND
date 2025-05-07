@@ -133,7 +133,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
   const dispatch = useDispatch();
   const [AppliedFilters, setAppliedFilters] = useState();
   const [filter, setFilter] = useState();
-  const { reportData } = useSelector((state) => state.reports);
+  const { reportData,reportColumns } = useSelector((state) => state.reports);
 
   const handleInputChange = (conditionName,field, value) => {
     const data = JSON.parse(value);
@@ -153,7 +153,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
       parameters: filter,
     };
     dispatch(showLoader());
-    await dispatch(getReportDataAction(content));
+    await dispatch(getReportDataAction(content,reportColumns));
     dispatch(hideLoader());
   }
 

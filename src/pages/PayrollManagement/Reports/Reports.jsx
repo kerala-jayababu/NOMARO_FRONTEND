@@ -16,7 +16,7 @@ import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
 function Reports() {
   const targetRef = useRef();
   const dispatch = useDispatch();
-  const { reports, reportCondition, report, loader, reportData } = useSelector(
+  const { reports, reportCondition, report, loader, reportData, reportColumns } = useSelector(
     (state) => state.reports
   );
 
@@ -40,11 +40,12 @@ function Reports() {
 
   const columns = reportData && reportData.length > 0
     ? Object.keys(reportData[0]).map((key, index) => {
+        const config = reportColumns?.find((item) => item.columnName === key);
         const headerText = key.replace(/_/g, " ");
         const headerWidth = getTextWidth(headerText, 'bold 14px Arial') + 60;
         const contentWidth = getMaxContentWidth(key) + 60;
         const columnWidth = Math.max(headerWidth, contentWidth, 100);
-        
+        const alignment = getAlignment(config,key)
         return {
           field: key,
           headerName: headerText,
@@ -52,17 +53,32 @@ function Reports() {
           headerClassName: "bg-secondary text-white",
           flex: index === Object.keys(reportData[0]).length - 1 ? 1 : 0,
           resizable: true,
-          headerAlign:
-            /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-              ? "right"
-              : "left",
-          cellClassName:
-            /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-              ? "text-end"
-              : "",
+          headerAlign: alignment,
+          cellClassName: alignment == 'right' ? 'text-end':'',
+          // headerAlign:
+          //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
+          //     ? "right"
+          //     : "left",
+          // cellClassName:
+          //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
+          //     ? "text-end"
+          //     : "",
         };
       })
     : [];
+
+  function getAlignment(config, key) {
+    const value = getValueForKey(key)
+    if(config?.alignment === 'LEFT') {
+      return "left";
+    } else if (config?.alignment === 'RIGHT') {
+      return "right";
+    } else if(/Amt|Amount|Discount|Balance/i.test(key) || !isNaN(value)) {
+      return "right";
+    } else {
+      return "left";
+    }
+  }
 
   function getTextWidth(text, font) {
     const canvas = document.createElement("canvas");
@@ -81,7 +97,10 @@ function Reports() {
   
   function getValueForKey(key) {
     const value = reportData.find((item) => item[key] !== null);
-    return value ? value[key] : "";
+    if (value !== null || value !== undefined) {
+      return `${value[key]}`.replaceAll(",","") 
+    }
+    return"";
   }
 
   const paginationModel = {
