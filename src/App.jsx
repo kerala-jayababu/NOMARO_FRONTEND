@@ -36,6 +36,7 @@ import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOver
 import LoginWithOtp from "./pages/LoginWithOTP";
 import Reports from "./pages/PayrollManagement/Reports/Reports";
 import { LoaderProvider } from "./components/LoaderContext";
+import Holidays from "./pages/AdminTools/holidays"
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
               <Route path='pay-slips' element={<SalarySlipsView />} />
               <Route path='salary-report' element={<SalaryReport />} />
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
+              <Route path="holiday-config" element={< Holidays/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
