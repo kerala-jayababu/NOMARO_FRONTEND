@@ -61,7 +61,7 @@ const EmployeeProfile = () => {
   const [bankData, setBankData] = useState("");
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [branchesPerBank, setBranchesPerBank] = useState([]);
+  const [branchesPerBank, setBranchesPerBank] = useState({});
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
@@ -168,7 +168,7 @@ const EmployeeProfile = () => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.abaRoutingNumber.toString()
+                    ? account.idBankBranch.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -178,6 +178,24 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
+
+
+            const loadBranchesForBanks = async () => {
+              const bankIds = [...new Set(mappedBankAccounts.map(account => account.selectedBank))];
+
+              for (const bankId of bankIds) {
+                if (bankId && !branchesPerBank[bankId]) {
+                  const branches = await getFilteredBranches(bankId);
+                  setBranchesPerBank(prev => ({
+                    ...prev,
+                    [bankId]: branches
+                  }));
+                }
+              }
+            };
+
+            loadBranchesForBanks();
+
             // console.log("Mapped Bank Accounts:", mappedBankAccounts);
             setBankAccountsState(mappedBankAccounts);
           } else {
@@ -296,7 +314,7 @@ const EmployeeProfile = () => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.abaRoutingNumber.toString()
+                    ? account.idBankBranch.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -306,6 +324,23 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
+
+            const loadBranchesForBanks = async () => {
+              const bankIds = [...new Set(mappedBankAccounts.map(account => account.selectedBank))];
+
+              for (const bankId of bankIds) {
+                if (bankId && !branchesPerBank[bankId]) {
+                  const branches = await getFilteredBranches(bankId);
+                  setBranchesPerBank(prev => ({
+                    ...prev,
+                    [bankId]: branches
+                  }));
+                }
+              }
+            };
+
+            loadBranchesForBanks();
+
             setBankAccountsState(mappedBankAccounts);
           } else {
             setBankAccountsState([
@@ -462,20 +497,36 @@ const EmployeeProfile = () => {
       bankAccounts.data.length > 0 &&
       Array.isArray(bankAccounts.data)
     ) {
-      setBankAccountsState(
-        bankAccounts.data?.map((account) => ({
-          ...account,
-          selectedBank: account.idBank != null ? account.idBank.toString() : "",
-          selectedBranch:
-            account.idBankBranch != null ? account.idBankBranch.toString() : "",
-          accountNumber: account.accountNumber || "",
-          salaryPercentageDistributed:
-            account.salaryPercentageDistributed != null
-              ? account.salaryPercentageDistributed.toString()
-              : "",
-          currencyCode: account.currencyCode || "GYD",
-        }))
-      );
+      const mappedAccounts = bankAccounts.data?.map((account) => ({
+        ...account,
+        selectedBank: account.idBank != null ? account.idBank.toString() : "",
+        selectedBranch:
+          account.idBankBranch != null ? account.idBankBranch.toString() : "",
+        accountNumber: account.accountNumber || "",
+        salaryPercentageDistributed:
+          account.salaryPercentageDistributed != null
+            ? account.salaryPercentageDistributed.toString()
+            : "",
+        currencyCode: account.currencyCode || "GYD",
+      }));
+
+      setBankAccountsState(mappedAccounts);
+
+      const loadBranchesForBanks = async () => {
+        const bankIds = [...new Set(mappedAccounts.map(account => account.selectedBank))];
+
+        for (const bankId of bankIds) {
+          if (bankId && !branchesPerBank[bankId]) {
+            const branches = await getFilteredBranches(bankId);
+            setBranchesPerBank(prev => ({
+              ...prev,
+              [bankId]: branches
+            }));
+          }
+        }
+      };
+
+      loadBranchesForBanks();
     } else {
       setBankAccountsState([
         {
@@ -609,8 +660,10 @@ const EmployeeProfile = () => {
   const handleBankChange = async (value, index) => {
     const filteredBranches = await getFilteredBranches(value);
 
-    // Cache branches for this bank
-    setBranchesPerBank(filteredBranches);
+    setBranchesPerBank(prevState => ({
+      ...prevState,
+      [value]: filteredBranches
+    }));
 
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
@@ -1421,7 +1474,7 @@ const EmployeeProfile = () => {
                         branchesPerBank[bank.selectedBranch]
                       )} */}
                       <Dropdown
-                        options={branchesPerBank || []}
+                        options={bank.selectedBank ? (branchesPerBank[bank.selectedBank] || []) : []}
                         name="branchName"
                         value={bank.selectedBranch}
                         onChange={(e) =>
@@ -1695,7 +1748,6 @@ const EmployeeProfile = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (/^\d*$/.test(value)) {
-                    console.log("meeeeeeeeeeeeeeeeee", value);
                     setChildCount(value);
                   }
                 }}
