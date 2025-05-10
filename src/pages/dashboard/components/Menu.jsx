@@ -138,6 +138,29 @@ function Menu({ viewType }) {
             </ul>
           </li>
         ))}
+        <li className={`menu-item ${menu === 'leavePassage' ? 'open active' : ''} cursor-pointer`}>
+          <a
+            className="menu-link"
+            onClick={() => {
+              setMenu('leavePassage');
+              setSubMenu('');
+              const html = document.documentElement;
+              html.classList.remove(
+                "light-style",
+                "layout-menu-fixed",
+                "layout-menu-100vh",
+                "layout-menu-expanded"
+              );
+              dispatch(setIdPayrollScreen(null));
+              dispatch(setComponent('LeavePassage'));
+
+              navigate('/dashboard/leavepassage');
+            }}
+          >
+            <i className="menu-icon tf-icons bx bx-calendar-event"></i>
+            <div data-i18n="leavepassage">Leave Passage</div>
+          </a>
+        </li>
       </ul>
     </aside>
   );

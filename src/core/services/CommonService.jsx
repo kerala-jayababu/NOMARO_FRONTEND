@@ -146,4 +146,13 @@ export default class CommonService {
       return handleApiError(error);
     }
   }
+
+  static deleteHolidays = async(data) => {
+    try{
+      const response = await API.post(`/api/v1/MasterData/DeleteHoliday?IdHoliday=` + data)
+      return {error: null, data: response.message};
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
 }
