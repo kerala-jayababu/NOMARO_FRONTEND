@@ -31,8 +31,10 @@ function Reports() {
   };
 
   function downloadFile(format, filter) {
+    
     if (format === "excel") {
-      Utils.exportToExcelJS(reportData, report?.reportName, filter);
+      
+      Utils.exportToExcelJS(reportData, report?.reportName,report?.headerRequired, filter);
     } else {
       Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
     }
@@ -96,16 +98,18 @@ function Reports() {
   }
 
   function getValueForKey(key) {
-    const value = reportData.find((item) => item[key] !== null);
-    if (value !== null || value !== undefined) {
-      return `${value[key]}`.replaceAll(",","") 
+    const value = reportData.find((item) => item[key] !== null && item[key] !== undefined);
+    
+    if (value && value[key] !== null && value[key] !== undefined) {
+      return `${value[key]}`.replaceAll(",", "");
     }
-    return"";
+  
+    return "";
   }
-
+  
   const paginationModel = {
     page: 0,
-    pageSize: Math.min(reportData?.length || 0, 50),
+    pageSize: Math.min(reportData?.length || 0, 20),
   };
 
   return (

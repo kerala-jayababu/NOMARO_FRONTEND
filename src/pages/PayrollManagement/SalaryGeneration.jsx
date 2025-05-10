@@ -821,9 +821,9 @@ function SalaryGeneration() {
                     {salaryGenerationList
                       ?.filter(
                         (x) =>
-                          x.departmentName.toLowerCase() ===
+                          x?.departmentName.toLowerCase() ===
                             filter.toLowerCase() ||
-                          x.designationName.toLowerCase() ===
+                          x?.designationName.toLowerCase() ===
                             filter.toLowerCase() ||
                           filter.length === 0
                       )

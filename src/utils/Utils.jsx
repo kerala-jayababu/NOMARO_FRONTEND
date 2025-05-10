@@ -244,7 +244,7 @@ export default class Utils {
     XLSX.writeFile(workbook, `${reportName}.xlsx`, writeOptions);
   }
 
-  static exportToExcelJS(rows, reportName, filter) {
+  static exportToExcelJS(rows, reportName, headerRequired,filter) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
 
@@ -257,42 +257,46 @@ export default class Utils {
           filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` + "   ";
     });
+    debugger
 
-    // Add company name row and make it span across all columns
-    const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
-    companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
-    companyName.alignment = { horizontal: "left" };
+   
+// Add company name row and make it span across all columns
+const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
+companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
+companyName.alignment = { horizontal: "left" };
 
-    // Add title row
-    const titleRow = worksheet.addRow([reportName]);
-    titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
-    titleRow.alignment = { horizontal: "left" };
+// Add title row
+const titleRow = worksheet.addRow([reportName]);
+titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
+titleRow.alignment = { horizontal: "left" };
 
-    // Add filter row
-    const filterRow = worksheet.addRow([filterText]);
-    filterRow.font = { italic: true, color: { argb: "FF666666" } };
-    filterRow.alignment = { horizontal: "left" };
+// Add filter row
+const filterRow = worksheet.addRow([filterText]);
+filterRow.font = { italic: true, color: { argb: "FF666666" } };
+filterRow.alignment = { horizontal: "left" };
 
-    // Add empty row
-    worksheet.addRow([]);
+// Add empty row
+worksheet.addRow([]);
 
-    // Add header row
-    const headerRow = worksheet.addRow(columns);
-    headerRow.eachCell((cell) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFCBD5E1" },
-      };
-      cell.font = { bold: true, color: { argb: "FF000000" } };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
+// Add header row
+const headerRow = worksheet.addRow(columns);
+headerRow.eachCell((cell) => {
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFCBD5E1" },
+  };
+  cell.font = { bold: true, color: { argb: "FF000000" } };
+  cell.alignment = { horizontal: "center", vertical: "middle" };
+  cell.border = {
+    top: { style: "thin" },
+    left: { style: "thin" },
+    bottom: { style: "thin" },
+    right: { style: "thin" },
+  };
+});
+    
+    
 
     // Identify numeric columns
     const numericColumnIndexes = columns.map((col, index) => {
@@ -404,7 +408,10 @@ export default class Utils {
 
       worksheet.getColumn(colIndex).width = columnWidth;
     });
-
+    debugger
+if(!headerRequired){
+  worksheet.spliceRows(1, 5);
+}
     // Generate and save the file
     workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], {
