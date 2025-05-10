@@ -311,7 +311,7 @@ export default class Utils {
         
         if (isNumericColumn && value !== null && value !== undefined) {
           if (typeof value === 'string' && !isNaN(parseFloat(value))) {
-            return parseFloat(value);
+            return parseFloat(`${value}`.replaceAll(",", ""));
           }
         }
         
@@ -332,10 +332,10 @@ export default class Utils {
         if (columnInfo && columnInfo.isNumeric) {
           cell.alignment = { horizontal: 'right' };
           
-          const value = cell.value;
-          if (typeof value === 'number') {
+          // const value = cell.value;
+          // if (typeof value === 'number') {
             cell.numFmt = '#,##0.00';
-          }
+          // }
         } else {
           cell.alignment = { horizontal: 'left' };
         }
