@@ -276,6 +276,32 @@ body {
   display: none;
 }
 
+.data-grid-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 10px);
+  width: 100%;
+}
+
+.MuiDataGrid-footerContainer {
+  padding: 0 10px !important;
+  min-height: 52px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-top: 1px solid rgba(224, 224, 224, 1) !important;
+}
+
+.MuiTablePagination-root {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-displayedRows {
+  margin: 0 !important;
+}
+
 .scroll-side-menu {
   height: 90vh !important;
   overflow-y: scroll;
@@ -303,4 +329,8 @@ body::-webkit-scrollbar {
 
 .bg-A6A6A6 {
   background: #a6a6a6;
+}
+
+.text-bold {
+  font-weight: 600;
 }

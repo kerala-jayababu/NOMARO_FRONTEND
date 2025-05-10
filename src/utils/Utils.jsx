@@ -315,6 +315,12 @@ headerRow.eachCell((cell) => {
       };
     });
 
+    const boldColumnIndex = columns.map((col,index) => {
+      if(["totalearnings","netsalary","totaldeductions"].includes(col.toLowerCase())) {
+        return index + 1;
+      }
+    })
+
     // Add data rows
     rows.map((row, index) => {
       const rowValues = columns.map((col, index) => {
@@ -334,6 +340,7 @@ headerRow.eachCell((cell) => {
       const dataRow = worksheet.addRow(rowValues);
       if (index == rows.length - 1 && rows[rows.length - 1][Object.keys(rows[0])[0]].includes("Grand Total")) {
         dataRow.eachCell((cell) => {
+          cell.font = { bold: true }
           cell.fill = {
             type: "pattern",
             pattern: "solid",
@@ -353,13 +360,14 @@ headerRow.eachCell((cell) => {
         const columnInfo = numericColumnIndexes.find(
           (col) => col.index === colNumber
         );
+        
+        if(boldColumnIndex.includes(colNumber)) {
+          cell.font = { bold: true }
+        }
+        
         if (columnInfo && columnInfo.isNumeric) {
           cell.alignment = { horizontal: "right" };
-
-          // const value = cell.value;
-          // if (typeof value === 'number') {
           cell.numFmt = "#,##0.00";
-          // }
         } else {
           cell.alignment = { horizontal: "left" };
         }

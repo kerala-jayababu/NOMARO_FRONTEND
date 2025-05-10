@@ -44,10 +44,12 @@ function Reports() {
       ? Object.keys(reportData[0]).map((key, index) => {
           const config = reportColumns?.find((item) => item.columnName === key);
           const headerText = key.replace(/_/g, " ");
-        const headerWidth = getTextWidth(headerText, 'bold 14px Arial') + 60;
+          const headerWidth = getTextWidth(headerText, 'bold 14px Arial') + 60;
           const contentWidth = getMaxContentWidth(key) + 60;
           const columnWidth = Math.max(headerWidth, contentWidth, 100);
-        const alignment = getAlignment(config,key)
+          const alignment = getAlignment(config,key);
+          const isTotalEarningColumn = ["totalearnings","netsalary","totaldeductions"].includes(headerText.toLowerCase());
+
           return {
             field: key,
             headerName: headerText,
@@ -56,15 +58,16 @@ function Reports() {
             flex: index === Object.keys(reportData[0]).length - 1 ? 1 : 0,
             resizable: true,
             headerAlign: alignment,
-          cellClassName: alignment == 'right' ? 'text-end':'',
-            // headerAlign:
-            //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-            //     ? "right"
-            //     : "left",
-            // cellClassName:
-            //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-            //     ? "text-end"
-            //     : "",
+            cellClassName: () => {
+              let classes = [];
+              if (alignment === 'right') {
+                classes.push('text-end');
+              }
+              if (isTotalEarningColumn) {
+                classes.push('text-bold');
+              }
+              return classes.join(' ');
+            },
           };
         })
       : [];
@@ -165,7 +168,10 @@ function Reports() {
                           <MenuItem
                             key={item.reportName}
                           onClick={() =>
-                              handleReportClick(item)
+                          {
+                            handleReportClick(item)
+                            popupState.close();
+                          }
                           }
                             sx={{
                               fontFamily: "Arial",
@@ -208,17 +214,24 @@ function Reports() {
       <div className="m-3 mt-3 d-flex justify-content-center" ref={targetRef}>
         {reportData && reportData?.length > 0 ? (
           !loader ? (
-            <div className="w-max-content overflow-x-scroll data-grid">
+            <div className="w-max-content overflow-x-scroll data-grid-container">
               <DataGrid
                 rows={reportData}
                 columns={columns}
                 scrollbarSize={20}
-                sx={{ overflowX: "scroll", fontSize: "12px" }}
+                sx={{
+                  overflowX: "scroll",
+                  fontSize: "12px",
+                  '& .MuiDataGrid-footerContainer': {
+                    borderTop: '1px solid rgba(224, 224, 224, 1)',
+                    backgroundColor: '#fff'
+                  }
+                }}
                 rowHeight={24}
                 columnHeaderHeight={40}
                 getRowClassName={(params) => {
                   return params.row[Object.keys(reportData[0])[0]]?.includes("Grand Total")
-                    ? "bg-A6A6A6"
+                    ? "bg-A6A6A6 text-bold"
                     : ""
                 }
                 }

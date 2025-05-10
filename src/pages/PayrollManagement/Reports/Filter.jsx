@@ -217,7 +217,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
               >
                 EXCEL
               </Button>
-              <Button
+              {report?.pdfViewable && <Button
                 variant="contained"
                 color="secondary"
                 sx={{ backgroundColor: "#75869e"}}
@@ -225,7 +225,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
                 disabled={reportData == null || reportData?.length <= 0}
               >
                 PDF
-              </Button>
+              </Button>}
             </div>
           )}
         </div>
