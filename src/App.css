@@ -300,3 +300,7 @@ body {
 body::-webkit-scrollbar {
   display: none;
 }
+
+.bg-A6A6A6 {
+  background: #a6a6a6;
+}

@@ -39,33 +39,33 @@ function Reports() {
   }
 
   const columns = reportData && reportData.length > 0
-    ? Object.keys(reportData[0]).map((key, index) => {
-        const config = reportColumns?.find((item) => item.columnName === key);
-        const headerText = key.replace(/_/g, " ");
+      ? Object.keys(reportData[0]).map((key, index) => {
+          const config = reportColumns?.find((item) => item.columnName === key);
+          const headerText = key.replace(/_/g, " ");
         const headerWidth = getTextWidth(headerText, 'bold 14px Arial') + 60;
-        const contentWidth = getMaxContentWidth(key) + 60;
-        const columnWidth = Math.max(headerWidth, contentWidth, 100);
+          const contentWidth = getMaxContentWidth(key) + 60;
+          const columnWidth = Math.max(headerWidth, contentWidth, 100);
         const alignment = getAlignment(config,key)
-        return {
-          field: key,
-          headerName: headerText,
-          width: columnWidth,
-          headerClassName: "bg-secondary text-white",
-          flex: index === Object.keys(reportData[0]).length - 1 ? 1 : 0,
-          resizable: true,
-          headerAlign: alignment,
+          return {
+            field: key,
+            headerName: headerText,
+            width: columnWidth,
+            headerClassName: "bg-secondary text-white",
+            flex: index === Object.keys(reportData[0]).length - 1 ? 1 : 0,
+            resizable: true,
+            headerAlign: alignment,
           cellClassName: alignment == 'right' ? 'text-end':'',
-          // headerAlign:
-          //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-          //     ? "right"
-          //     : "left",
-          // cellClassName:
-          //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
-          //     ? "text-end"
-          //     : "",
-        };
-      })
-    : [];
+            // headerAlign:
+            //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
+            //     ? "right"
+            //     : "left",
+            // cellClassName:
+            //   /Amt|Amount|Discount|Balance/i.test(key) || !isNaN(getValueForKey(key))
+            //     ? "text-end"
+            //     : "",
+          };
+        })
+      : [];
 
   function getAlignment(config, key) {
     const value = getValueForKey(key)
@@ -94,7 +94,7 @@ function Reports() {
       return Math.max(maxWidth, contentWidth);
     }, 0);
   }
-  
+
   function getValueForKey(key) {
     const value = reportData.find((item) => item[key] !== null);
     if (value !== null || value !== undefined) {
@@ -135,48 +135,48 @@ function Reports() {
             {reports &&
               reports.map((report) => (
                 <PopupState
-                variant="popover"
-                popupId={`menu-popup-${report.reportName}`}
-                key={report.reportName}
-              >
-                {(popupState) => (
-                  <React.Fragment>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: "white",
-                        cursor: "pointer",
-                        fontFamily: "Arial",
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        px: 2,
-                        textDecoration: "underline",
-                      }}
-                      {...bindTrigger(popupState)}
-                    >
-                      {report.reportName}
-                    </Typography>
-                    <Menu {...bindMenu(popupState)}>
-                      {report.subMenu.map((item) => (
-                        <MenuItem
-                          key={item.reportName}
+                  variant="popover"
+                  popupId={`menu-popup-${report.reportName}`}
+                  key={report.reportName}
+                >
+                  {(popupState) => (
+                    <React.Fragment>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "white",
+                          cursor: "pointer",
+                          fontFamily: "Arial",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          px: 2,
+                          textDecoration: "underline",
+                        }}
+                        {...bindTrigger(popupState)}
+                      >
+                        {report.reportName}
+                      </Typography>
+                      <Menu {...bindMenu(popupState)}>
+                        {report.subMenu.map((item) => (
+                          <MenuItem
+                            key={item.reportName}
                           onClick={() =>
                               handleReportClick(item)
                           }
-                          sx={{
-                            fontFamily: "Arial",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#000",
-                          }}
-                        >
-                          {item.reportName}
-                        </MenuItem>
-                      ))}
-                    </Menu>
-                  </React.Fragment>
-                )}
-              </PopupState>
+                            sx={{
+                              fontFamily: "Arial",
+                              fontSize: "12px",
+                              fontWeight: 400,
+                              color: "#000",
+                            }}
+                          >
+                            {item.reportName}
+                          </MenuItem>
+                        ))}
+                      </Menu>
+                    </React.Fragment>
+                  )}
+                </PopupState>
               ))}
           </Box>
           <Box>
@@ -209,9 +209,15 @@ function Reports() {
                 rows={reportData}
                 columns={columns}
                 scrollbarSize={20}
-                sx={{ overflowX: "scroll",fontSize:"12px" }}
+                sx={{ overflowX: "scroll", fontSize: "12px" }}
                 rowHeight={24}
                 columnHeaderHeight={40}
+                getRowClassName={(params) => {
+                  return params.row[Object.keys(reportData[0])[0]]?.includes("Grand Total")
+                    ? "bg-A6A6A6"
+                    : ""
+                }
+                }
                 initialState={{
                   pagination: { paginationModel },
                 }}
