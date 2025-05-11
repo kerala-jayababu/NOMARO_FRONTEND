@@ -1,4 +1,5 @@
 import { API, handleApiError } from "../../redux/api/utils";
+import moment from 'moment';
 
 export default class CommonService {
   static getEmployeeList = async () => {
@@ -121,4 +122,37 @@ export default class CommonService {
       return handleApiError(error);
     }
   };
+
+  static getHolidaysInAnYear = async (year) => {
+    try{
+      const response = await API.get(`api/v1/MasterData/GetHolidaysInAnYear?Year=${year}`);
+      return { error: null, data: response.data.data};
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+
+  static addOrUpdateHolidays = async (data) => {
+    try{
+      const payload = {
+        idHoliday : data.id,
+        holidayDate : moment(data.start).format('YYYY-MM-DD'),
+        holidayType: data.holidayType,
+        holidayDescription: data.desc,
+      }
+      const response = await API.post(`/api/v1/MasterData/AddOrUpdateHoliday`, payload)
+      return { error: null, data: response};
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+
+  static deleteHolidays = async(data) => {
+    try{
+      const response = await API.post(`/api/v1/MasterData/DeleteHoliday?IdHoliday=` + data)
+      return {error: null, data: response.message};
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
 }

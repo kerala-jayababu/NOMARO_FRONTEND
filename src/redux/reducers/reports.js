@@ -4,6 +4,7 @@ const initialState = {
   reports: [],
   reportData: [],
   reportCondition: [],
+  reportColumns: [],
   report: null,
   loader: false,
 };
@@ -24,6 +25,9 @@ const reportsSlice = createSlice({
     setReport: (state, action) => {
       state.report = action.payload;
     },
+    setReportColumns: (state, action) => {
+      state.reportColumns = action.payload;
+    },
     showLoader: (state, _) => {
       state.loader = true;
     },
@@ -41,5 +45,6 @@ export const {
   showLoader,
   hideLoader,
   setReportData,
+  setReportColumns,
 } = reportsSlice.actions;
 export default reportsSlice.reducer;

@@ -207,13 +207,13 @@ export default class Utils {
     });
 
     const headerRowIndex = 3;
-    
+
     const headerStyle = {
-      fill: { fgColor: { rgb: "CBD5E1" } }, 
+      fill: { fgColor: { rgb: "CBD5E1" } },
       font: { bold: true, color: { rgb: "000000" } },
       alignment: { horizontal: "center", vertical: "center" }
     };
-    
+
     columns.forEach((col, colIndex) => {
       const cellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c: colIndex });
       if (!worksheet[cellRef]) worksheet[cellRef] = {};
@@ -222,160 +222,215 @@ export default class Utils {
 
     const titleStyle = {
       font: { bold: true, size: 14, color: { rgb: "0064E6" } },
-      alignment: { horizontal: "left" }
+      alignment: { horizontal: "left" },
     };
     worksheet[XLSX.utils.encode_cell({ r: 0, c: 0 })].s = titleStyle;
 
     const filterStyle = {
       font: { italic: true, color: { rgb: "666666" } },
-      alignment: { horizontal: "left" }
+      alignment: { horizontal: "left" },
     };
     worksheet[XLSX.utils.encode_cell({ r: 1, c: 0 })].s = filterStyle;
 
     XLSX.utils.book_append_sheet(workbook, worksheet, reportName);
 
-    const writeOptions = { 
-      bookType: 'xlsx', 
-      bookSST: false, 
-      type: 'binary',
-      compression: true
+    const writeOptions = {
+      bookType: "xlsx",
+      bookSST: false,
+      type: "binary",
+      compression: true,
     };
-    
+
     XLSX.writeFile(workbook, `${reportName}.xlsx`, writeOptions);
   }
 
-  static exportToExcelJS(rows, reportName, filter) {
+  static exportToExcelJS(rows, reportName, headerRequired,filter) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
-    
-    const columns = Object.keys(rows[0]).filter(x => x !== "id");
-    
+
+    const columns = Object.keys(rows[0]).filter((x) => x !== "id");
+
     let filterText = "";
-    Object.keys(filter).map(item => {
-      filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]}` + "   ";
+    Object.keys(filter).map((item) => {
+      filterText +=
+        `${item}: ${
+          filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        }` + "   ";
     });
 
-    // Add company name row and make it span across all columns
-    const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
-    companyName.font = { bold: true, size: 14, color: { argb: 'FF0D384D' } };
-    companyName.alignment = { horizontal: 'left' };
-    
-    // Add title row
-    const titleRow = worksheet.addRow([reportName]);
-    titleRow.font = { bold: true, size: 14, color: { argb: 'FF0064E6' } };
-    titleRow.alignment = { horizontal: 'left' };
-    
-    // Add filter row
-    const filterRow = worksheet.addRow([filterText]);
-    filterRow.font = { italic: true, color: { argb: 'FF666666' } };
-    filterRow.alignment = { horizontal: 'left' };
-    
-    // Add empty row
-    worksheet.addRow([]);
 
-    // Add header row
-    const headerRow = worksheet.addRow(columns);
-    headerRow.eachCell((cell) => {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFCBD5E1' }
-      };
-      cell.font = { bold: true, color: { argb: 'FF000000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-    });
-    
-    // Identify numeric columns
+// Add company name row and make it span across all columns
+const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
+companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
+companyName.alignment = { horizontal: "left" };
+
+// Add title row
+const titleRow = worksheet.addRow([reportName]);
+titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
+titleRow.alignment = { horizontal: "left" };
+
+// Add filter row
+const filterRow = worksheet.addRow([filterText]);
+filterRow.font = { italic: true, color: { argb: "FF666666" } };
+filterRow.alignment = { horizontal: "left" };
+
+// Add empty row
+worksheet.addRow([]);
+
+// Add header row
+const headerRow = worksheet.addRow(columns);
+headerRow.eachCell((cell) => {
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFCBD5E1" },
+  };
+  cell.font = { bold: true, color: { argb: "FF000000" } };
+  cell.alignment = { horizontal: "center", vertical: "middle" };
+  cell.border = {
+    top: { style: "thin" },
+    left: { style: "thin" },
+    bottom: { style: "thin" },
+    right: { style: "thin" },
+  };
+});
+
     const numericColumnIndexes = columns.map((col, index) => {
-      const values = rows.map(row => row[col]);
-      const number = values.find(value => !isNaN(`${value}`));
+      const values = rows.map((row) => row[col]);
+      const number = values.find(
+        (value) =>
+          `${value}`.length > 0 && !isNaN(`${value}`.replaceAll(",", ""))
+      );
       return {
-        index: index+1, 
-        isNumeric: number !== undefined && number !== null && col.toLowerCase() != "employeecode",
-        column: col
+        index: index + 1,
+        isNumeric:
+          number !== undefined &&
+          number !== null &&
+          col.toLowerCase() != "employeecode",
+        column: col,
       };
     });
-    
+
+    const boldColumnIndex = columns.map((col,index) => {
+      if(["totalearnings","netsalary","totaldeductions"].includes(col.toLowerCase())) {
+        return index + 1;
+      }
+    })
+
     // Add data rows
-    rows.forEach(row => {
+    rows.map((row, index) => {
       const rowValues = columns.map((col, index) => {
         const value = row[col];
-        
+
         const isNumericColumn = numericColumnIndexes[index].isNumeric;
-        
+
         if (isNumericColumn && value !== null && value !== undefined) {
-          if (typeof value === 'string' && !isNaN(parseFloat(value))) {
-            return parseFloat(value);
+          if (typeof value === "string" && !isNaN(parseFloat(value))) {
+            return parseFloat(`${value}`.replaceAll(",", ""));
           }
         }
-        
+
         return value?.length > 0 ? value : " ";
       });
-      
+
       const dataRow = worksheet.addRow(rowValues);
-      
+      if (index == rows.length - 1 && rows[rows.length - 1][Object.keys(rows[0])[0]].includes("Grand Total")) {
+        dataRow.eachCell((cell) => {
+          cell.font = { bold: true }
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFA6A6A6" },
+          };
+        });
+      }
+
       dataRow.eachCell((cell, colNumber) => {
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
-        
-        const columnInfo = numericColumnIndexes.find(col => col.index === colNumber);
+
+        const columnInfo = numericColumnIndexes.find(
+          (col) => col.index === colNumber
+        );
+
+        if(boldColumnIndex.includes(colNumber)) {
+          cell.font = { bold: true }
+        }
+
         if (columnInfo && columnInfo.isNumeric) {
-          cell.alignment = { horizontal: 'right' };
-          
-          const value = cell.value;
-          if (typeof value === 'number') {
-            cell.numFmt = '#,##0.00';
+          cell.alignment = { horizontal: "right" };
+          cell.numFmt = "#,##0.00";
+          const cellValue = cell.value;
+          if (cellValue && typeof cellValue === 'number' && cellValue > 1000000) {
+            worksheet.getColumn(colNumber).width = 18;
           }
         } else {
-          cell.alignment = { horizontal: 'left' };
+          cell.alignment = { horizontal: "left" };
         }
       });
     });
-    
+
     // Merge cells for all title rows
-    worksheet.mergeCells(1, 1, 1, 2);  // Company name row
-    
+    worksheet.mergeCells(1, 1, 1, 3); // Company name row
+
     // Calculate and set column widths
     columns.forEach((col, index) => {
-      const colIndex = index + 1; 
-      const isNumericColumn = numericColumnIndexes.find(c => c.index === colIndex)?.isNumeric;
-      
+      const colIndex = index + 1;
+      const isNumericColumn = numericColumnIndexes.find(
+        (c) => c.index === colIndex
+      )?.isNumeric;
+
       let maxLength = col.length * 1.2;
-      
-      rows.forEach(row => {
+
+      rows.forEach((row) => {
         const value = row[col];
         if (value !== null && value !== undefined) {
-          if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
-            const numValue = typeof value === 'number' ? value : parseFloat(value);
-            const formattedLength = String(numValue).length + Math.floor(String(numValue).length / 3) + 3;
+          if (
+            typeof value === "number" ||
+            (typeof value === "string" && !isNaN(parseFloat(value)))
+          ) {
+            const numValue =
+              typeof value === "number" ? value : parseFloat(value);
+
+            const numStr = String(numValue);
+            const integerPart = Math.floor(Math.abs(numValue)).toString();
+            const commaCount = Math.floor((integerPart.length - 1) / 3);
+
+            const formattedLength =
+              numStr.length + 
+              commaCount + 
+              (numStr.includes('.') ? 0 : 3) +
+              (numValue < 0 ? 1 : 0); 
             maxLength = Math.max(maxLength, formattedLength);
           } else {
             maxLength = Math.max(maxLength, String(value).length);
           }
         }
       });
-      
+
       const padding = 2;
-      const minWidth = isNumericColumn ? 10 : 12;
-      const maxWidth = 50;
-      const columnWidth = Math.max(minWidth, Math.min(maxLength + padding, maxWidth));
-      
+      const minWidth = isNumericColumn ? 15 : 12;
+      const maxWidth = 40;
+      const columnWidth = Math.max(
+        minWidth,
+        Math.min(maxLength + padding, maxWidth)
+      );
+
       worksheet.getColumn(colIndex).width = columnWidth;
     });
-    
+
+if(!headerRequired){
+  worksheet.spliceRows(1, 5);
+}
     // Generate and save the file
-    workbook.xlsx.writeBuffer().then(buffer => {
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       saveAs(blob, `${reportName}.xlsx`);
     });
   }
@@ -396,23 +451,23 @@ export default class Utils {
           }` +
           "   ";
       });
-      
+
       // Set color for GEORGETOWN INTERNATIONAL ACADEMY to primary color (#0d384d)
       doc.setTextColor(13, 56, 77); // RGB values for #0d384d
       doc.setFontSize(12);
       doc.text("GEORGETOWN INTERNATIONAL ACADEMY", 14, 20, { align: "left" });
-      
+
       // Reset color to blue for report name
       doc.setTextColor(0, 100, 230);
       doc.text(reportName, 14, 27, { align: "left" });
       doc.text(filterText, 14, 34, { align: "left" });
-      
+
       var alignments = new Object();
 
       Object.keys(tableData[0]).map((item, index) => {
         if (!isNaN(tableData[0][item])) {
-          if(!item.includes("EmployeeCode"))
-          alignments[index] = { halign: "right" };
+          if (!item.includes("EmployeeCode"))
+            alignments[index] = { halign: "right" };
         } else {
           alignments[index] = { halign: "left" };
         }
@@ -472,4 +527,3 @@ export default class Utils {
     return formatter.format(date).replace("pm", "PM").replace("am", "AM");
   }
 }
-
