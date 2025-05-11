@@ -49,4 +49,13 @@ export default class OvertimeService {
       return handleApiSuccessOrError(error, true);
     }
   }
+
+  static getOvertimeAmount = async (empId, date, duration) => {
+    try {
+      const res = await API.post("/api/v1/PayRollManagement/GetOverTimeAmount?IdEmployee=" + empId + '&OvertimeDate=' + date + '&DurationInHours=' + duration, {});
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
 }

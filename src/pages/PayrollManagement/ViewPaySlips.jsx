@@ -56,7 +56,7 @@ function ViewPaySlips() {
       const link = document.createElement('a');
       link.href = url;
 
-      const defaultName = `payslip_${data.idEmployeeSalary}.pdf`;
+      const defaultName = `Payslip_${data.idEmployee}_${data.employeeName}_${data.salaryMonthText}.pdf`;
       link.download = res.data.headers['content-disposition']
         ? res.headers['content-disposition'].split('filename=')[1].replace(/"/g, '')
         : defaultName;

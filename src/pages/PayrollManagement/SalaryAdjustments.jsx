@@ -32,10 +32,13 @@ function SalaryAdjustments() {
     allocatingSalaryHead: 0,
     earningOrDeduction: "",
     allocatingSalaryMonth: 0,
-    taNumber:"",
+    taNumber: "",
     isTaxable: "",
     amount: null,
-    remarks: ""
+    remarks: "",
+    file: null,
+    attachmentBlob: null,
+    documentFilePath: null
   });
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -44,6 +47,7 @@ function SalaryAdjustments() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(salaryAdjustments.length / rowsPerPage);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     getEmployeesData();
@@ -89,7 +93,7 @@ function SalaryAdjustments() {
 
   const getEmployeesData = () => {
     CommonService.getEmployeeList().then(res => {
-      res.data.data.sort((a,b)=> a.fullName - b.fullName);
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
       setEmployeesList(res.data.data);
       const options = res.data.data.map(employee => ({
         value: employee.idEmployee,
@@ -126,7 +130,6 @@ function SalaryAdjustments() {
   }
 
   const setupEdit = (item) => {
-    debugger
     setIsEdit(true);
     setNewData({
       idSalaryAdjustment: item.idSalaryAdjustment,
@@ -138,10 +141,13 @@ function SalaryAdjustments() {
       allocatingSalaryHead: item.allocatingSalaryHead,
       earningOrDeduction: item.earningOrDeduction,
       allocatingSalaryMonth: item.allocatingSalaryMonth,
-      taNumber:item.taNumber,
+      taNumber: item.taNumber,
       isTaxable: item.isTaxable == true ? 'Yes' : 'No',
       amount: item.amount,
       remarks: item.remarks,
+      file: item.file,
+      attachmentBlob: item.attachmentBlob,
+      documentFilePath: item.documentFilePath,
     });
     const selected = employeesListOption.find(option => option.value === newData.idEmployee);
     setSelectedEmployee(selected);
@@ -159,7 +165,28 @@ function SalaryAdjustments() {
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     const paydate = moment(passData['payAdjustmentDate']).format("YYYY-MM-DD");
     passData['payAdjustmentDate'] = paydate;
-    SalaryAdjustmentService.saveSalaryAdjustmentsData(passData).then(res => {
+
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('idEmployee', passData.idEmployee);
+    formData.append('idDepartment', passData.idDepartment);
+    formData.append('idDesignation', passData.idDesignation);
+    formData.append('taNumber', passData.taNumber);
+    formData.append('allocatingSalaryMonth', passData.allocatingSalaryMonth);
+    formData.append('payAdjustmentDate', passData.payAdjustmentDate);
+    formData.append('payAdjustmentDetails', passData.payAdjustmentDetails);
+    formData.append('earningOrDeduction', passData.earningOrDeduction);
+    formData.append('isTaxable', passData.isTaxable);
+    formData.append('allocatingSalaryHead', passData.allocatingSalaryHead);
+    formData.append('amount', passData.amount);
+    formData.append('remarks', passData.remarks);
+
+    // Append the file if it exists
+    if (passData.file) {
+      formData.append('file', passData.file);
+    }
+
+    SalaryAdjustmentService.saveSalaryAdjustmentsData(formData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Salary adjustments added successfully', {
         //   position: 'top-right',
@@ -188,7 +215,29 @@ function SalaryAdjustments() {
     passData['isTaxable'] = passData['isTaxable'] == 'Yes' ? true : false;
     const paydate = moment(passData['payAdjustmentDate']).format("YYYY-MM-DD");
     passData['payAdjustmentDate'] = paydate;
-    SalaryAdjustmentService.updateSalaryAdjustmentsData(passData).then(res => {
+
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('idSalaryAdjustment', passData.idSalaryAdjustment);
+    formData.append('idEmployee', passData.idEmployee);
+    formData.append('idDepartment', passData.idDepartment);
+    formData.append('idDesignation', passData.idDesignation);
+    formData.append('taNumber', passData.taNumber);
+    formData.append('allocatingSalaryMonth', passData.allocatingSalaryMonth);
+    formData.append('payAdjustmentDate', passData.payAdjustmentDate);
+    formData.append('payAdjustmentDetails', passData.payAdjustmentDetails);
+    formData.append('earningOrDeduction', passData.earningOrDeduction);
+    formData.append('isTaxable', passData.isTaxable);
+    formData.append('allocatingSalaryHead', passData.allocatingSalaryHead);
+    formData.append('amount', passData.amount);
+    formData.append('remarks', passData.remarks);
+
+    // Append the file if it exists
+    if (passData.file) {
+      formData.append('file', passData.file);
+    }
+
+    SalaryAdjustmentService.updateSalaryAdjustmentsData(formData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Salary adjustments updated successfully', {
         //   position: 'top-right',
@@ -222,7 +271,9 @@ function SalaryAdjustments() {
       allocatingSalaryMonth: 0,
       isTaxable: "",
       amount: null,
-      remarks: ""
+      remarks: "",
+      file: null,
+      documentFilePath: null
     });
     setSelectedEmployee(null)
   }
@@ -235,6 +286,50 @@ function SalaryAdjustments() {
   };
 
   const handlePageChange = (page) => setCurrentPage(page);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    console.log(file)
+    setNewData(prevState => ({
+      ...prevState,
+      file: file,
+    }));
+  };
+
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.documentFilePath || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  const removeFile = () => {
+    setNewData((prevData) => ({
+      ...prevData,
+      file: null,
+      documentFilePath: null
+    }));
+    setShowConfirmModal(false);
+  }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -273,7 +368,7 @@ function SalaryAdjustments() {
                   <thead>
                     <tr>
                       <th>Emp. Code</th>
-                      <th>TA Number</th>                      
+                      <th>TA Number</th>
                       <th>Employee Name</th>
                       <th>Department</th>
                       {/* <th>Designation</th> */}
@@ -284,6 +379,7 @@ function SalaryAdjustments() {
                       <th>Salary Head</th>
                       <th className="text-end">Amount</th>
                       {/* <th>Remarks</th> */}
+                      <th className="text-center"></th>
                       <th className="text-end"></th>
                     </tr>
                   </thead>
@@ -303,6 +399,14 @@ function SalaryAdjustments() {
                           <td>{item?.allcoatingSalaryHeadName}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.amount)}</td>
                           {/* <td>{item?.remarks}</td> */}
+                          <td>
+                            {
+                              item.documentFilePath &&
+                              <button className="btn btn-outline-primary border-0 btn-sm">
+                                <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
+                              </button>
+                            }
+                          </td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -481,29 +585,40 @@ function SalaryAdjustments() {
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">TA Number</label>
                     <input
-  type="text"
-  readOnly
-  className="form-control"
-  value={newData?.taNumber || ''}
-  required
-  
-/>
+                      type="text"
+                      readOnly
+                      className="form-control"
+                      value={newData?.taNumber || ''}
+                      required
+
+                    />
+                  </div>
+
+                  <div className="col-md-6 p-2">
+                    <label class="form-label mb-1"> Attachments </label>
+                    <input type="file" className="form-control" onChange={handleFileChange} />
+                    {
+                      newData.documentFilePath &&
+                      <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
                   </div>
 
                   <div className="col-md-12 p-2">
-  <label className="form-label mb-1">Remarks</label>
-  <textarea
-    className="form-control"
-    rows="4"
-    maxLength="100"
-    value={newData?.remarks || ''}
-    onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
-    placeholder="Add remarks here"
-  ></textarea>
-  <small>
-    {100 - (newData?.remarks ? newData.remarks.length : 0)} / 100 characters remaining
-  </small>
-</div>
+                    <label className="form-label mb-1">Remarks</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      maxLength="100"
+                      value={newData?.remarks || ''}
+                      onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
+                      placeholder="Add remarks here"
+                    ></textarea>
+                    <small>
+                      {100 - (newData?.remarks ? newData.remarks.length : 0)} / 100 characters remaining
+                    </small>
+                  </div>
                 </div>
               </Form>
             </div>
@@ -520,6 +635,43 @@ function SalaryAdjustments() {
             </div>
           </Modal.Body>
         </Modal >
+
+        <Modal
+          show={showConfirmModal} onHide={() => { setShowConfirmModal(false); }} size='md'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Confirm Delete</h5>
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <div className="modal-body pt-1 text-center">
+              <div className="text-center mb-5">
+                <div className="mb-4 text-danger">
+                  <i className="bx bx-x-circle fs-2"></i>
+                </div>
+                <h6> Are you sure to remove this file?</h6>
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm py-2 px-4 me-2"
+                onClick={() => removeFile()}
+              >
+                Confirm
+              </button>
+              <button
+                type="submit"
+                className="btn btn-outline-secondary  btn-sm py-2 px-4"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal.Body>
+        </Modal>
       </div >
     </div >
 

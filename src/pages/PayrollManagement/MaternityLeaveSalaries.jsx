@@ -30,6 +30,9 @@ function MaternityLeaveSalaries() {
     netSalary: 0,
     totalEarnings: 0,
     totalDeductions: 0,
+    file: null,
+    attachmentBlob: null,
+    documentFilePath: null
   });
   const [salaryDetails, setSalaryDetails] = useState([
     {
@@ -49,6 +52,7 @@ function MaternityLeaveSalaries() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -220,6 +224,9 @@ function MaternityLeaveSalaries() {
       netSalary: item.maternityLeaveNetSalary,
       totalEarnings: item.totalEarnings,
       totalDeductions: item.totalDeductions,
+      file: item.file,
+      attachmentBlob: item.attachmentBlob,
+      documentFilePath: item.documentFilePath,
     });
     handleMonthFromChangeEdit(item.idSalaryMonthFrom)
     setSalaryDetails(item.maternityLeaveSalaryDetailDto);
@@ -284,7 +291,21 @@ function MaternityLeaveSalaries() {
     delete passData['totalDeductions'];
     delete passData['netSalary'];
 
-    MaternityService.saveMaternityLeaveSalariesData(passData).then(res => {
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('maternityLeaveSalaryDetailDtoJson', JSON.stringify(passData.maternityLeaveSalaryDetailDto));
+    formData.append('idEmployee', passData.idEmployee);
+    formData.append('idSalaryMonthFrom', passData.idSalaryMonthFrom);
+    formData.append('idSalaryMonthTo', passData.idSalaryMonthTo);
+    formData.append('maternityLeaveFrom', passData.maternityLeaveFrom);
+    formData.append('maternityLeaveTo', passData.maternityLeaveTo);
+
+    // Append the file if it exists
+    if (passData.file) {
+      formData.append('file', passData.file);
+    }
+
+    MaternityService.saveMaternityLeaveSalariesData(formData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Maternity leave salaries added successfully', {
         //   position: 'top-right',
@@ -328,7 +349,22 @@ function MaternityLeaveSalaries() {
     delete passData['totalDeductions'];
     delete passData['netSalary'];
 
-    MaternityService.updateMaternityLeaveSalariesData(passData).then(res => {
+    // Create a FormData object to handle file upload
+    const formData = new FormData();
+    formData.append('maternityLeaveSalaryDetailDtoJson', JSON.stringify(passData.maternityLeaveSalaryDetailDto));
+    formData.append('idMaternityLeaveSalary', passData.idMaternityLeaveSalary);
+    formData.append('idEmployee', passData.idEmployee);
+    formData.append('idSalaryMonthFrom', passData.idSalaryMonthFrom);
+    formData.append('idSalaryMonthTo', passData.idSalaryMonthTo);
+    formData.append('maternityLeaveFrom', passData.maternityLeaveFrom);
+    formData.append('maternityLeaveTo', passData.maternityLeaveTo);
+
+    // Append the file if it exists
+    if (passData.file) {
+      formData.append('file', passData.file);
+    }
+
+    MaternityService.updateMaternityLeaveSalariesData(formData).then(res => {
       if (res.data.status === 200) {
         // toast.success('Maternity leave salaries updated successfully', {
         //   position: 'top-right',
@@ -359,6 +395,8 @@ function MaternityLeaveSalaries() {
       netSalary: 0,
       totalEarnings: 0,
       totalDeductions: 0,
+      file: null,
+      documentFilePath: null
     });
     setSalaryDetails([
       {
@@ -418,6 +456,50 @@ function MaternityLeaveSalaries() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    console.log(file)
+    setNewData(prevState => ({
+      ...prevState,
+      file: file,
+    }));
+  };
+
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.documentFilePath || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  const removeFile = () => {
+    setNewData((prevData) => ({
+      ...prevData,
+      file: null,
+      documentFilePath: null
+    }));
+    setShowConfirmModal(false);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -460,6 +542,7 @@ function MaternityLeaveSalaries() {
                       <th>Salary Month To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
+                      <th className="text-center"></th>
                       <th className="text-end"></th>
                     </tr>
                   </thead>
@@ -474,6 +557,14 @@ function MaternityLeaveSalaries() {
                           <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
+                          <td>
+                            {
+                              item.documentFilePath &&
+                              <button className="btn btn-outline-primary border-0 btn-sm">
+                                <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
+                              </button>
+                            }
+                          </td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getMaternityLeaveSalById(item.idMaternityLeaveSalary)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -519,9 +610,8 @@ function MaternityLeaveSalaries() {
             <div className="accountDetail_card">
               <Form noValidate validated={validated}>
                 <div class="row m-0">
-                  <div class="col-md-5 p-2">
+                  <div class="col-md-3 p-2">
                     <label class="form-label mb-1">Employee Name</label>
-
                     <Select
                       options={employeesListOption}
                       isSearchable
@@ -534,7 +624,6 @@ function MaternityLeaveSalaries() {
 
                   <div class="col-md-3 p-2">
                     <label class="form-label mb-1">Month From</label>
-
                     <select
                       className="form-select controlHeight"
                       value={newData.idSalaryMonthFrom}
@@ -551,7 +640,6 @@ function MaternityLeaveSalaries() {
                   </div>
                   <div class="col-md-3 p-2">
                     <label class="form-label mb-1">Month To</label>
-
                     <select
                       className="form-select controlHeight"
                       value={newData.idSalaryMonthTo}
@@ -565,6 +653,17 @@ function MaternityLeaveSalaries() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div class="col-md-3 p-2">
+                    <label class="fform-label mb-1">Attachments </label>
+                    <input type="file" className="form-control" onChange={handleFileChange} />
+                    {
+                      newData.documentFilePath &&
+                      <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
                   </div>
 
                   <div class="col-md-5 p-2">
@@ -757,6 +856,44 @@ function MaternityLeaveSalaries() {
             </div>
           </Modal.Body>
         </Modal>
+
+        <Modal
+          show={showConfirmModal} onHide={() => { setShowConfirmModal(false); }} size='md'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Confirm Delete</h5>
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <div className="modal-body pt-1 text-center">
+              <div className="text-center mb-5">
+                <div className="mb-4 text-danger">
+                  <i className="bx bx-x-circle fs-2"></i>
+                </div>
+                <h6> Are you sure to remove this file?</h6>
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm py-2 px-4 me-2"
+                onClick={() => removeFile()}
+              >
+                Confirm
+              </button>
+              <button
+                type="submit"
+                className="btn btn-outline-secondary  btn-sm py-2 px-4"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </Modal.Body>
+        </Modal>
+
       </div>
     </div>
   )
