@@ -257,9 +257,8 @@ export default class Utils {
           filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` + "   ";
     });
-    debugger
 
-   
+
 // Add company name row and make it span across all columns
 const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
 companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
@@ -295,10 +294,7 @@ headerRow.eachCell((cell) => {
     right: { style: "thin" },
   };
 });
-    
-    
 
-    // Identify numeric columns
     const numericColumnIndexes = columns.map((col, index) => {
       const values = rows.map((row) => row[col]);
       const number = values.find(
@@ -360,14 +356,18 @@ headerRow.eachCell((cell) => {
         const columnInfo = numericColumnIndexes.find(
           (col) => col.index === colNumber
         );
-        
+
         if(boldColumnIndex.includes(colNumber)) {
           cell.font = { bold: true }
         }
-        
+
         if (columnInfo && columnInfo.isNumeric) {
           cell.alignment = { horizontal: "right" };
           cell.numFmt = "#,##0.00";
+          const cellValue = cell.value;
+          if (cellValue && typeof cellValue === 'number' && cellValue > 1000000) {
+            worksheet.getColumn(colNumber).width = 18;
+          }
         } else {
           cell.alignment = { horizontal: "left" };
         }
@@ -395,10 +395,16 @@ headerRow.eachCell((cell) => {
           ) {
             const numValue =
               typeof value === "number" ? value : parseFloat(value);
+
+            const numStr = String(numValue);
+            const integerPart = Math.floor(Math.abs(numValue)).toString();
+            const commaCount = Math.floor((integerPart.length - 1) / 3);
+
             const formattedLength =
-              String(numValue).length +
-              Math.floor(String(numValue).length / 3) +
-              3;
+              numStr.length + 
+              commaCount + 
+              (numStr.includes('.') ? 0 : 3) +
+              (numValue < 0 ? 1 : 0); 
             maxLength = Math.max(maxLength, formattedLength);
           } else {
             maxLength = Math.max(maxLength, String(value).length);
@@ -407,8 +413,8 @@ headerRow.eachCell((cell) => {
       });
 
       const padding = 2;
-      const minWidth = isNumericColumn ? 10 : 12;
-      const maxWidth = 50;
+      const minWidth = isNumericColumn ? 15 : 12;
+      const maxWidth = 40;
       const columnWidth = Math.max(
         minWidth,
         Math.min(maxLength + padding, maxWidth)
@@ -416,7 +422,7 @@ headerRow.eachCell((cell) => {
 
       worksheet.getColumn(colIndex).width = columnWidth;
     });
-    debugger
+
 if(!headerRequired){
   worksheet.spliceRows(1, 5);
 }

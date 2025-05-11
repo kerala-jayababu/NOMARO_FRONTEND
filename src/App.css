@@ -279,7 +279,7 @@ body {
 .data-grid-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 10px);
+  /* height: calc(100vh - 150px); */
   width: 100%;
 }
 
