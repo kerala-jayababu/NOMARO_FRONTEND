@@ -130,8 +130,12 @@ const LeavePassage = () => {
   const handlePageChange = (page) => setCurrentPage(page);
 
   const paginatedData = useMemo(() => {
+    const getDate = (monthText) => new Date(`01 ${monthText}`);
+    const sortedData = [...leavePassages].sort((a, b) => 
+      getDate(a.salaryMonthText) - getDate(b.salaryMonthText) 
+    );
     const startIndex = (currentPage - 1) * rowsPerPage;
-    return leavePassages.slice(startIndex, startIndex + rowsPerPage);
+    return sortedData.slice(startIndex, startIndex + rowsPerPage);
   }, [leavePassages, currentPage]);
 
   const resetValues = () => {
@@ -186,12 +190,12 @@ const LeavePassage = () => {
       idSalaryMonth: 0,
       remarks: "",
       approvalStatus: "",
-      employeeCode: employeeData.employeeCode,
-      employeeName: employeeData.fullName,
-      departmentName: employeeData.department,
-      designationName: employeeData.designation,
-      idDepartment: employeeData.idDepartment,
-      idDesignation: employeeData.idDesignation,
+      employeeCode: employeeData?.employeeCode,
+      employeeName: employeeData?.fullName,
+      departmentName: employeeData?.department,
+      designationName: employeeData?.designation,
+      idDepartment: employeeData?.idDepartment,
+      idDesignation: employeeData?.idDesignation,
       salaryMonthText: "",
       financialYearFrom: "",
       financialYearTo: "",
@@ -209,10 +213,11 @@ const LeavePassage = () => {
     setLoading(true);
     try {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
-      if(validateForm(formData)){
+      if(validateForm(formData, "ADD")){
         const res = await LeavePassageService.addLeavePassage(formData);
         if (res.data.status === 200) {
           showToast.success('Leave Passage added successfully');
+          setLeavePassages(...leavePassages, formData);
           setRefreshFlag(prev => !prev);
           setShowModal(false);
         }
@@ -233,10 +238,15 @@ const LeavePassage = () => {
     setLoading(true);
     try {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
-      if(validateForm(formData)){
+      if(validateForm(formData, "EDIT")){
         const res = await LeavePassageService.updateLeavePassage(formData);
+        let updatedLeavePassages;
         if (res.data.status === 200) {
           showToast.success('Leave Passage updated successfully');
+          updatedLeavePassages = leavePassages.map(e =>
+                    e.idLeavePassage = formData.idLeavePassage ? formData : e
+                  );
+          setLeavePassages(updatedLeavePassages);
           setRefreshFlag(prev => !prev);
           setShowModal(false);
         }
@@ -258,20 +268,42 @@ const LeavePassage = () => {
     setShowModal(true);
   }
 
-  const validateForm = (formData) => {
+  const validateForm = (formData, mode) => {
     const currentFY = getFinancialYear(formData.salaryMonthText);
-    const alreadyClaimedInOtherRecord = leavePassages.some((entry) => {
+  
+    const duplicateRecord = leavePassages.some((entry) => {
       const sameEmployee = entry.employeeCode === formData.employeeCode;
       const sameFY = getFinancialYear(entry.salaryMonthText) === currentFY;
-      return sameEmployee && sameFY;
+      const isDifferentRecord = entry.idLeavePassage !== formData.idLeavePassage;
+  
+      if (sameEmployee && sameFY) {
+        // ADD mode: block if any matching record exists
+        if (mode === 'ADD') {
+          return true;
+        }
+  
+        // EDIT mode
+        if (mode === 'EDIT' && isDifferentRecord) {
+          return true; // there's another record in same FY
+        }
+  
+        if (mode === 'EDIT' && !isDifferentRecord) {
+          // If trying to update the same record, allow only if not approved
+          return entry.approvalStatus === 'APPROVED';
+        }
+      }
+  
+      return false;
     });
   
-    if (alreadyClaimedInOtherRecord) {
+    if (duplicateRecord) {
       showToast(`Leave Passage already claimed for FY ${currentFY}`, 'error');
       return false;
     }
+  
     return true;
-  }
+  };
+  
 
   const getFinancialYear = (monthStr) => {
     const date = moment(monthStr, 'YYYY-MM');
@@ -316,7 +348,7 @@ const LeavePassage = () => {
                       paginatedData.map((item) => (
                         <tr key={item.idLeavePassage}>
                           <td>{item.employeeName}</td>
-                          <td>{item.salaryMonthText?moment(item.salaryMonthText).format("MM/DD/YYYY"):''}</td>
+                          <td>{item.salaryMonthText?moment(item.salaryMonthText).format("MMM YYYY"):''}</td>
                           <td>
                             <span
                               className={`badge ${
