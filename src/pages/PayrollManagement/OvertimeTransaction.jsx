@@ -9,6 +9,7 @@ import { Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
+import { NumericFormat } from "react-number-format";
 
 function OvertimeTransaction() {
 
@@ -43,6 +44,7 @@ function OvertimeTransaction() {
   const totalPages = Math.ceil(overtimeTransactions.length / rowsPerPage);
   const today = new Date();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [OTAmount, setOTAmount] = useState(0);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -61,6 +63,10 @@ function OvertimeTransaction() {
   useEffect(() => {
     calculateDuration();
   }, [newData.startTime, newData.endTime, newData.startDate, newData.endDate]);
+
+  useEffect(() => {
+    getOTAmount();
+  }, [newData.durationInHours]);
 
   // useEffect(() => {
   //   if (newData.idOvertimeType == "") return;
@@ -126,6 +132,16 @@ function OvertimeTransaction() {
     }).catch(err => {
       setOvertimeTransactions([]);
     });
+  }
+
+  const getOTAmount = () => {
+    if (newData.idEmployee && newData.durationInHours) {
+      const date = moment(newData.startDate).format("YYYY-MM-DD");
+      OvertimeService.getOvertimeAmount(newData.idEmployee ?? 0, date, newData.durationInHours).then(res => {
+        setOTAmount(res.data.data);
+      }).catch(err => {
+      });
+    }
   }
 
   const getOTTranasactionsById = (id) => {
@@ -510,15 +526,32 @@ function OvertimeTransaction() {
                       </div>
 
                       <div class="col-md-6 p-0">
-                        <div class="p-2">
-                          <label class="form-label mb-1">Duration in Hrs</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            placeholder="00"
-                            value={newData.durationInHours} disabled={true}
-                            onChange={(e) => setNewData({ ...newData, durationInHours: e.target.value })} required
-                          />
+                        <div className="row m-0">
+                          <div className="col-md-4 p-2">
+                            <label class="form-label mb-1">Duration in Hrs</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              placeholder="00"
+                              value={newData.durationInHours} disabled={true}
+                              onChange={(e) => setNewData({ ...newData, durationInHours: e.target.value })} required
+                            />
+                          </div>
+                          <div className="col-md-8 p-2">
+                            <label class="form-label mb-1">Overtime Amount</label>
+                            <NumericFormat
+                              className="form-control"
+                              value={OTAmount}
+                              decimalScale={2}
+                              allowNegative={false}
+                              thousandSeparator={true}
+                              allowLeadingZeros={false}
+                              placeholder="Amount"
+                              maxLength={12}
+                              disabled={true}
+                            />
+                          </div>
+
                         </div>
                         <div class="p-2">
                           <label class="form-label mb-1"> Attachments </label>
