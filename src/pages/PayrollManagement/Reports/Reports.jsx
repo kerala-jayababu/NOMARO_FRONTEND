@@ -1,5 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import { AppBar, Box, CircularProgress, Menu, MenuItem, Typography } from "@mui/material";
+import {
+  AppBar,
+  Box,
+  CircularProgress,
+  Menu,
+  MenuItem,
+  Typography,
+} from "@mui/material";
 import { Toolbar } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { DataGrid } from "@mui/x-data-grid";
@@ -8,7 +15,11 @@ import {
   getReportsMasterAction,
 } from "../../../redux/actions/reportsAction";
 import Utils from "../../../utils/Utils";
-import { setReport, setReportData, setReports } from "../../../redux/reducers/reports";
+import {
+  setReport,
+  setReportData,
+  setReports,
+} from "../../../redux/reducers/reports";
 import Navbar from "./Navbar";
 import Filter from "./Filter";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
@@ -16,9 +27,14 @@ import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
 function Reports() {
   const targetRef = useRef();
   const dispatch = useDispatch();
-  const { reports, reportCondition, report, loader, reportData, reportColumns } = useSelector(
-    (state) => state.reports
-  );
+  const {
+    reports,
+    reportCondition,
+    report,
+    loader,
+    reportData,
+    reportColumns,
+  } = useSelector((state) => state.reports);
 
   useEffect(() => {
     dispatch(getReportsMasterAction());
@@ -31,24 +47,32 @@ function Reports() {
   };
 
   function downloadFile(format, filter) {
-    
     if (format === "excel") {
-      
-      Utils.exportToExcelJS(reportData, report?.reportName,report?.headerRequired, filter);
+      Utils.exportToExcelJS(
+        reportData,
+        report?.reportName,
+        report?.headerRequired,
+        filter
+      );
     } else {
       Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
     }
   }
 
-  const columns = reportData && reportData.length > 0
+  const columns =
+    reportData && reportData.length > 0
       ? Object.keys(reportData[0]).map((key, index) => {
           const config = reportColumns?.find((item) => item.columnName === key);
           const headerText = key.replace(/_/g, " ");
-          const headerWidth = getTextWidth(headerText, 'bold 14px Arial') + 60;
+          const headerWidth = getTextWidth(headerText, "bold 14px Arial") + 60;
           const contentWidth = getMaxContentWidth(key) + 60;
           const columnWidth = Math.max(headerWidth, contentWidth, 100);
-          const alignment = getAlignment(config,key);
-          const isTotalEarningColumn = ["totalearnings","netsalary","totaldeductions"].includes(headerText.toLowerCase());
+          const alignment = getAlignment(config, key);
+          const isTotalEarningColumn = [
+            "totalearnings",
+            "netsalary",
+            "totaldeductions",
+          ].includes(headerText.toLowerCase());
 
           return {
             field: key,
@@ -60,25 +84,25 @@ function Reports() {
             headerAlign: alignment,
             cellClassName: () => {
               let classes = [];
-              if (alignment === 'right') {
-                classes.push('text-end');
+              if (alignment === "right") {
+                classes.push("text-end");
               }
               if (isTotalEarningColumn) {
-                classes.push('text-bold');
+                classes.push("text-bold");
               }
-              return classes.join(' ');
+              return classes.join(" ");
             },
           };
         })
       : [];
 
   function getAlignment(config, key) {
-    const value = getValueForKey(key)
-    if(config?.alignment === 'LEFT') {
+    const value = getValueForKey(key);
+    if (config?.alignment === "LEFT") {
       return "left";
-    } else if (config?.alignment === 'RIGHT') {
+    } else if (config?.alignment === "RIGHT") {
       return "right";
-    } else if(/Amt|Amount|Discount|Balance/i.test(key) || !isNaN(value)) {
+    } else if (/Amt|Amount|Discount|Balance/i.test(key) || !isNaN(value)) {
       return "right";
     } else {
       return "left";
@@ -88,28 +112,31 @@ function Reports() {
   function getTextWidth(text, font) {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
-    context.font = font || '14px Arial';
+    context.font = font || "14px Arial";
     return context.measureText(text).width;
   }
 
   function getMaxContentWidth(key) {
     return reportData.reduce((maxWidth, row) => {
-      const cellContent = row[key] !== null && row[key] !== undefined ? String(row[key]) : '';
-      const contentWidth = getTextWidth(cellContent, '14px Arial');
+      const cellContent =
+        row[key] !== null && row[key] !== undefined ? String(row[key]) : "";
+      const contentWidth = getTextWidth(cellContent, "14px Arial");
       return Math.max(maxWidth, contentWidth);
     }, 0);
   }
 
   function getValueForKey(key) {
-    const value = reportData.find((item) => item[key] !== null && item[key] !== undefined);
-    
+    const value = reportData.find(
+      (item) => item[key] !== null && item[key] !== undefined
+    );
+
     if (value && value[key] !== null && value[key] !== undefined) {
       return `${value[key]}`.replaceAll(",", "");
     }
-  
+
     return "";
   }
-  
+
   const paginationModel = {
     page: 0,
     pageSize: Math.min(reportData?.length || 0, 20),
@@ -167,12 +194,10 @@ function Reports() {
                         {report.subMenu.map((item) => (
                           <MenuItem
                             key={item.reportName}
-                          onClick={() =>
-                          {
-                            handleReportClick(item)
-                            popupState.close();
-                          }
-                          }
+                            onClick={() => {
+                              handleReportClick(item);
+                              popupState.close();
+                            }}
                             sx={{
                               fontFamily: "Arial",
                               fontSize: "12px",
@@ -211,10 +236,17 @@ function Reports() {
         report={report}
         downloadFile={downloadFile}
       />
-      <div className="m-3 mt-3 d-flex justify-content-center" ref={targetRef}>
+      <div
+        className="m-3 mt-3 d-flex justify-content-center "
+        style={{
+          height: "calc(100vh - 180px)", // Adjust based on your header/filter height
+          overflowY: "auto",
+        }}
+        ref={targetRef}
+      >
         {reportData && reportData?.length > 0 ? (
           !loader ? (
-            <div className="w-max-content overflow-x-scroll data-grid-container">
+            <div className="w-max-content overflow-x-scroll data-grid">
               <DataGrid
                 rows={reportData}
                 columns={columns}
@@ -222,19 +254,20 @@ function Reports() {
                 sx={{
                   overflowX: "scroll",
                   fontSize: "12px",
-                  '& .MuiDataGrid-footerContainer': {
-                    borderTop: '1px solid rgba(224, 224, 224, 1)',
-                    backgroundColor: '#fff'
-                  }
+                  "& .MuiDataGrid-footerContainer": {
+                    borderTop: "1px solid rgba(224, 224, 224, 1)",
+                    backgroundColor: "#fff",
+                  },
                 }}
                 rowHeight={24}
                 columnHeaderHeight={40}
                 getRowClassName={(params) => {
-                  return params.row[Object.keys(reportData[0])[0]]?.includes("Grand Total")
+                  return params.row[Object.keys(reportData[0])[0]]?.includes(
+                    "Grand Total"
+                  )
                     ? "bg-A6A6A6 text-bold"
-                    : ""
-                }
-                }
+                    : "";
+                }}
                 initialState={{
                   pagination: { paginationModel },
                 }}
@@ -254,7 +287,10 @@ function Reports() {
             <CircularProgress className="mt-[5rem]" />
           )
         ) : !loader ? (
-          <div className="bg-white shadow-md rounded-lg p-6 max-w-md w-full text-center mt-5">
+          <div
+            className="bg-white shadow-md rounded-lg p-6 max-w-md w-full text-center mt-5"
+            style={{ height: "20%" }}
+          >
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
               No Data Available
             </h2>
