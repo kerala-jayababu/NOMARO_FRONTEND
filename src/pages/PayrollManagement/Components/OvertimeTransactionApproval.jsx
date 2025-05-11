@@ -211,13 +211,15 @@ function OvertimeTransactionApproval({
             <table className="table table-bordered mt-3">
               <thead>
                 <tr>
-                  <th>Duration</th>
-                  <th>Details</th>
+                <th style={{ width: "25%" }}>Duration</th>
+      <th style={{ width: "25%" }}>Amount</th>
+      <th style={{ width: "50%" }}>Details</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>{overtimeTransaction.durationInHours}</td>
+                  <td>{overtimeTransaction.otAmount}</td>
                   <td>{overtimeTransaction.reasonForOvertime}</td>
                 </tr>
               </tbody>

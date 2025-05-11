@@ -60,10 +60,15 @@ export const getReportDataAction =
 
         if (columnName?.totalRequired) {
           var total = reportData.reduce(
-            (sum, item) => sum + (item[key] ? parseFloat(item[key]) : 0),
+            (sum, item) =>
+              sum +
+              (item[key] ? parseFloat(`${item[key]}`.replaceAll(",", "")) : 0),
             0
           );
-          grandTotal[key] = parseFloat(`${total}`).toFixed(2);
+          grandTotal[key] = new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(total);
           isAmountFieldExist = true;
         } else {
           grandTotal[key] = "";

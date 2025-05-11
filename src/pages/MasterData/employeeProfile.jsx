@@ -61,7 +61,7 @@ const EmployeeProfile = () => {
   const [bankData, setBankData] = useState("");
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [branchesPerBank, setBranchesPerBank] = useState([]);
+  const [branchesPerBank, setBranchesPerBank] = useState({});
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
@@ -122,7 +122,7 @@ const EmployeeProfile = () => {
     debugger;
     const employee = employees?.find((emp) => emp.idEmployee === id);
     const path = employee?.childCountDocumentFilePath;
-    document.getElementById("tempFileDetails").value = "";
+   
     // Extract file name regardless of path format (Windows or Unix)
     //const fileName = path?.split(/[\\/]/).pop();  // This handles both \ and /
     //const parts = fileName.split("_");
@@ -130,12 +130,15 @@ const EmployeeProfile = () => {
     setEditFileName(path);
     if (employee) {
       setSelectedEmployee(employee);
-
+    
       // Fetch employee details
       // dispatch(getEmployeeDetailsByID(id));
       dispatch(getEmployeeDetailsByID(id)).then((response) => {
         if (response.payload && response.payload.data) {
+          debugger
           setChildCount(response.payload.data.childrenCount || 0); // Update child count state
+        }else{
+          setChildCount(0)
         }
       });
 
@@ -168,7 +171,7 @@ const EmployeeProfile = () => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.abaRoutingNumber.toString()
+                    ? account.idBankBranch.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -178,6 +181,24 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
+
+
+            const loadBranchesForBanks = async () => {
+              const bankIds = [...new Set(mappedBankAccounts.map(account => account.selectedBank))];
+
+              for (const bankId of bankIds) {
+                if (bankId && !branchesPerBank[bankId]) {
+                  const branches = await getFilteredBranches(bankId);
+                  setBranchesPerBank(prev => ({
+                    ...prev,
+                    [bankId]: branches
+                  }));
+                }
+              }
+            };
+
+            loadBranchesForBanks();
+
             // console.log("Mapped Bank Accounts:", mappedBankAccounts);
             setBankAccountsState(mappedBankAccounts);
           } else {
@@ -228,12 +249,15 @@ const EmployeeProfile = () => {
         .catch((error) => {
           console.error("Error fetching employee data:", error);
         });
-
-      if (employee.idBudgetCode) {
-        const budgetCodeValue = employee.idBudgetCode.toString();
-        setSelectedBudgetCode(budgetCodeValue);
-      }
+debugger
+if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
+  const budgetCodeValue = employee.idBudgetCode.toString();
+  setSelectedBudgetCode(budgetCodeValue);
+} else {
+  setSelectedBudgetCode("");
+}
     }
+    document.getElementById("tempFileDetails").value = "";
     setIsModalOpen(true);
   };
 
@@ -296,7 +320,7 @@ const EmployeeProfile = () => {
                   account.idBank != null ? account.idBank.toString() : "",
                 selectedBranch:
                   account.idBankBranch != null
-                    ? account.abaRoutingNumber.toString()
+                    ? account.idBankBranch.toString()
                     : "",
                 accountNumber: account.accountNumber || "",
                 salaryPercentageDistributed:
@@ -306,6 +330,23 @@ const EmployeeProfile = () => {
                 currencyCode: account.currencyCode || "GYD",
               })
             );
+
+            const loadBranchesForBanks = async () => {
+              const bankIds = [...new Set(mappedBankAccounts.map(account => account.selectedBank))];
+
+              for (const bankId of bankIds) {
+                if (bankId && !branchesPerBank[bankId]) {
+                  const branches = await getFilteredBranches(bankId);
+                  setBranchesPerBank(prev => ({
+                    ...prev,
+                    [bankId]: branches
+                  }));
+                }
+              }
+            };
+
+            loadBranchesForBanks();
+
             setBankAccountsState(mappedBankAccounts);
           } else {
             setBankAccountsState([
@@ -462,20 +503,36 @@ const EmployeeProfile = () => {
       bankAccounts.data.length > 0 &&
       Array.isArray(bankAccounts.data)
     ) {
-      setBankAccountsState(
-        bankAccounts.data?.map((account) => ({
-          ...account,
-          selectedBank: account.idBank != null ? account.idBank.toString() : "",
-          selectedBranch:
-            account.idBankBranch != null ? account.idBankBranch.toString() : "",
-          accountNumber: account.accountNumber || "",
-          salaryPercentageDistributed:
-            account.salaryPercentageDistributed != null
-              ? account.salaryPercentageDistributed.toString()
-              : "",
-          currencyCode: account.currencyCode || "GYD",
-        }))
-      );
+      const mappedAccounts = bankAccounts.data?.map((account) => ({
+        ...account,
+        selectedBank: account.idBank != null ? account.idBank.toString() : "",
+        selectedBranch:
+          account.idBankBranch != null ? account.idBankBranch.toString() : "",
+        accountNumber: account.accountNumber || "",
+        salaryPercentageDistributed:
+          account.salaryPercentageDistributed != null
+            ? account.salaryPercentageDistributed.toString()
+            : "",
+        currencyCode: account.currencyCode || "GYD",
+      }));
+
+      setBankAccountsState(mappedAccounts);
+
+      const loadBranchesForBanks = async () => {
+        const bankIds = [...new Set(mappedAccounts.map(account => account.selectedBank))];
+
+        for (const bankId of bankIds) {
+          if (bankId && !branchesPerBank[bankId]) {
+            const branches = await getFilteredBranches(bankId);
+            setBranchesPerBank(prev => ({
+              ...prev,
+              [bankId]: branches
+            }));
+          }
+        }
+      };
+
+      loadBranchesForBanks();
     } else {
       setBankAccountsState([
         {
@@ -609,8 +666,10 @@ const EmployeeProfile = () => {
   const handleBankChange = async (value, index) => {
     const filteredBranches = await getFilteredBranches(value);
 
-    // Cache branches for this bank
-    setBranchesPerBank(filteredBranches);
+    setBranchesPerBank(prevState => ({
+      ...prevState,
+      [value]: filteredBranches
+    }));
 
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
@@ -755,7 +814,15 @@ const EmployeeProfile = () => {
     const newOvertimeDetails = [...overtimeDetails];
 
     if (field === "type") {
-      newOvertimeDetails[index].type = value; // Directly assign raw value
+      newOvertimeDetails[index].type = value;
+      debugger // Directly assign raw value
+      if (value === "WORKINGDAY") {
+        newOvertimeDetails[index].appliedRate = "1.5";
+      } else {
+        newOvertimeDetails[index].appliedRate = "2.0";
+      }
+
+
     } else {
       newOvertimeDetails[index][field] = value;
     }
@@ -1353,32 +1420,7 @@ const EmployeeProfile = () => {
               <Label text="Designation" value={selectedEmployee.designation} />
             </>
           )}
-        <div class="col-md-3">
-          <label class="form-label mb-1"> Attachments </label>
-          <input
-            type="file"
-            id="tempFileDetails"
-            className="form-control"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                setAttachmentFile(file);
-                //setEditFileName(file.name); // Set file name for custom display
-              }
-            }}
-          />
-          {editFileName && (
-            <span className="badge bg-label-info p-1">
-              {editFileName} &nbsp;&nbsp;
-              <label
-                className="cursor"
-                onClick={() => setShowConfirmModal(true)}
-              >
-                X
-              </label>
-            </span>
-          )}
-        </div>
+      
         </div>
         <h6>
           <strong>Bank Account Details</strong>
@@ -1421,7 +1463,7 @@ const EmployeeProfile = () => {
                         branchesPerBank[bank.selectedBranch]
                       )} */}
                       <Dropdown
-                        options={branchesPerBank || []}
+                        options={bank.selectedBank ? (branchesPerBank[bank.selectedBank] || []) : []}
                         name="branchName"
                         value={bank.selectedBranch}
                         onChange={(e) =>
@@ -1563,9 +1605,9 @@ const EmployeeProfile = () => {
             <table className="table table-sm mb-0 border">
               <thead>
                 <tr>
-                  <th>Days</th>
-                  <th className="text-nowrap">Hourly Rate</th>
-                  <th className="text-nowrap">Applied Rate</th>
+                  <th style={{ padding: "2px 2px" }}>Days</th>
+                  <th  style={{ padding: "2px 2px" }}  className="text-nowrap">Hourly Rate</th>
+                  <th style={{ padding: "2px 2px" }}  className="text-nowrap">Applied Rate</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1573,7 +1615,7 @@ const EmployeeProfile = () => {
                 {overtimeDetails.map((detail, index) => (
                   <React.Fragment key={index}>
                     <tr>
-                      <td className="col-md-3">
+                      <td className="col-md-3"style={{ padding: "2px 2px" }} >
                         <Dropdown
                           options={overtimeOptions}
                           name="overtimeDays"
@@ -1583,7 +1625,7 @@ const EmployeeProfile = () => {
                           }
                         />
                       </td>
-                      <td className="col-md-3">
+                      <td className="col-md-3" style={{ padding: "2px 2px" }} >
                         <input
                           type="text"
                           className="form-control"
@@ -1598,7 +1640,7 @@ const EmployeeProfile = () => {
                           }}
                         />
                       </td>
-                      <td className="col-md-3">
+                      <td className="col-md-3" style={{ padding: "2px 2px" }} >
                         <input
                           type="text"
                           maxLength="5"
@@ -1613,7 +1655,7 @@ const EmployeeProfile = () => {
                           }}
                         />
                       </td>
-                      <td className="col-md-1">
+                      <td className="col-md-1" style={{ padding: "2px 2px" }} >
                         <div
                           style={{
                             display: "flex",
@@ -1666,42 +1708,79 @@ const EmployeeProfile = () => {
             {/* Table Component Ends*/}
           </div>
           <div className="col-md-4">
-            <h6>
-              <strong>Add Budget Code</strong>
-            </h6>
-            <Dropdown
-              label="Budget Code"
-              options={[...budgetCodeOptions]}
-              name="budgetCode"
-              value={selectedBudgetCode}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedBudgetCode(value);
-                const selectedOption = budgetCodeOptions.find(
-                  (option) => option.value === value
-                );
-                if (selectedOption) {
-                  setBudgetCodeLabel(selectedOption.label);
-                }
-              }}
-            />
+  <h6>
+    <strong>Add Budget Code</strong>
+  </h6>
 
-            {employeeDetails.data && (
-              <Input
-                type="text"
-                name="childCount"
-                label="Child Count"
-                value={childCount}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^\d*$/.test(value)) {
-                    console.log("meeeeeeeeeeeeeeeeee", value);
-                    setChildCount(value);
-                  }
-                }}
-              />
-            )}
-          </div>
+  <Dropdown
+    label="Budget Code"
+    options={[...budgetCodeOptions]}
+    name="budgetCode"
+    value={selectedBudgetCode}
+    onChange={(e) => {
+      const value = e.target.value;
+      setSelectedBudgetCode(value);
+      const selectedOption = budgetCodeOptions.find(
+        (option) => option.value === value
+      );
+      if (selectedOption) {
+        setBudgetCodeLabel(selectedOption.label);
+      }
+    }}
+  />
+
+  
+ <div className="row d-flex align-items-end">
+      {/* Child Count Input */}
+      <div className="col-md-4">
+        <Input
+          type="text"
+          name="childCount" 
+          label="Child Count"
+          value={childCount}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d*$/.test(value)) {
+              setChildCount(value);
+            }
+          }}
+        />
+         {editFileName &&(
+        <span className="badge bg-label-info p-1 mt-2 d-inline-block">
+           
+          </span>)}
+      </div>
+
+      {/* Attachments Input */}
+      <div className="col-md-8 ">
+        <label className="form-label mb-1">Attachments</label>
+        <input
+          type="file"
+          id="tempFileDetails"
+          className="form-control"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setAttachmentFile(file);
+            }
+          }}
+        />
+        {editFileName && (
+          <span className="badge bg-label-info p-1 mt-2  d-inline-block">
+            {editFileName} &nbsp;&nbsp;
+            <label
+              className="cursor"
+              onClick={() => setShowConfirmModal(true)}
+            >
+              X
+            </label>
+          </span>
+        )}
+      </div>
+    </div>
+  
+</div>
+
         </div>
       </Modal>
 
