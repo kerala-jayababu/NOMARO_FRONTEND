@@ -41,6 +41,8 @@ const statusColor = [
     status: "interim approved",
     color: "bg-info",
   },
+  { status: "fm approved", color: "bg-info" },
+  { status: "hr approved", color: "bg-info" }
 ];
 
 const months = [

@@ -9,215 +9,222 @@ import Select from "react-select";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import axios from "axios";
+import secureLocalStorage from "react-secure-storage";
 import { API } from "../../redux/api/utils";
+
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const statusColor = [
-  {
-    status: "approved",
-    color: "bg-success",
-  },
-  {
-    status: "submitted",
-    color: "bg-warning",
-  },
-  {
-    status: "draft generated",
-    color: "bg-label-warning",
-  },
-  {
-    status: "draft",
-    color: "bg-label-warning",
-  },
-  {
-    status: "not generated",
-    color: "bg-dark",
-  },
-  {
-    status: "rejected",
-    color: "bg-danger",
-  },
-  {
-    status: "interim approved",
-    color: "bg-info",
-  },
+  { status: "approved", color: "bg-success" },
+  { status: "submitted", color: "bg-warning" },
+  { status: "draft generated", color: "bg-label-warning" },
+  { status: "draft", color: "bg-label-warning" },
+  { status: "not generated", color: "bg-dark" },
+  { status: "rejected", color: "bg-danger" },
+   { status: "fm approved", color: "bg-info" },
+  { status: "hr approved", color: "bg-info" }
 ];
 
 const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ];
 
 function SalaryApproved() {
   const dispatch = useDispatch();
+
+  // ✅ Correct place for useState hooks
+  const [statusOptions, setStatusOptions] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [showOverloay, setShowOverlay] = useState(false);
   const [salaryDraft, setSalaryDraft] = useState([]);
-  const optionsRef = useRef();
-  const statusRef = useRef();
-  const filterRef = useRef();
   const [filter, setFilter] = useState("");
   const [option, setOption] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
-  const [statusFilter, setStatusFilter] = useState({
-    value: "All",
-    label: "Select Status",
-  });
-  const { salaryGenerationList } = useSelector(
-    (state) => state.salaryGeneration
-  );
-  const { departments } = useSelector((state) => state.department);
-  const { designation } = useSelector((state) => state.designation);
+  const [statusFilter, setStatusFilter] = useState({ value: "All", label: "Select Status" });
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedCard, setSelectedCard] = useState("All");
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState({
-    type: "",
-    title: "",
-    message: "",
-  });
+  const [confirmAction, setConfirmAction] = useState({ type: "", title: "", message: "" });
+  const [initialApprovalStatus, setInitialApprovalStatus] = useState(null);
+  const optionsRef = useRef();
+  const statusRef = useRef();
+  const filterRef = useRef();
+
+  const { salaryGenerationList } = useSelector((state) => state.salaryGeneration);
+  const { departments } = useSelector((state) => state.department);
+  const { designation } = useSelector((state) => state.designation);
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
-  const getSalaryMonths = async () => {
-    const data = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
-    const currentStatus = statusOptions.find(
-      (option) => option.value.toLowerCase() === data?.data?.data?.ApprovalStatus?.toLowerCase()
-    );
-    
-    CommonService.getAllSalaryMonths().then((res) => {
-      const currentMonth = res.data
-        ?.filter((month) =>
-          month.salaryMonthText.includes(new Date().getFullYear().toString())
-        )
-        .find((month) => {
-          if (data.data) {
-            return month.idSalaryMonth === data?.data?.data?.MaxSalaryMonth
-          } else {
-            return month.salaryMonthText.includes(months[new Date().getMonth()])
-          }
-        }
-        );
+useEffect(() => {
+  const initialize = async () => {
+    try {
+      setShowOverlay(true);
 
-      const filteredMonths = res.data.filter((month) => {
-        const currentDate = new Date();
-        const currentMonthIndex = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
+      // Fetch token
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
+      if (!token) {
+        toast.error("Token not found");
+        return;
+      }
+
+      // 1. Fetch status options
+      const statusResponse = await axios.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const statusData = statusResponse?.data || [];
+      const formattedStatus = statusData.map((item) => ({
+        value: item.value,
+        label: item.label,
+      }));
+      const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
+      setStatusOptions(fullStatusOptions);
+
+      // 2. Get current approval status
+      const approvalRes = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
+      const approvalStatus = approvalRes?.data?.data?.approvalStatus;
+      setInitialApprovalStatus(approvalStatus);
+
+      const matchedStatus = fullStatusOptions.find(
+        (opt) => opt.value.toLowerCase() === approvalStatus?.toLowerCase()
+      );
+      setStatusFilter(matchedStatus || { value: "All", label: "All Status" });
+
+      // 3. Get salary months list
+      const monthsData = await CommonService.getAllSalaryMonths();
+      const monthList = monthsData?.data || [];
+
+      const currentMonthObject = monthList
+        .filter((m) => m.salaryMonthText.includes(new Date().getFullYear()))
+        .find((m) => m.idSalaryMonth === approvalRes?.data?.data?.maxSalaryMonth);
+
+      const filteredMonths = monthList.filter((month) => {
         const [monthName, year] = month.salaryMonthText.split(",");
         const monthIndex = months.indexOf(monthName);
+        const currentMonthIndex = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
 
-        if (year.trim() == currentYear) {
-          return (
-            monthIndex >= currentMonthIndex - 1 &&
-            monthIndex <= currentMonthIndex + 1
-          );
-        }
-        if (year.trim() == currentYear - 1) {
-          return monthIndex === 11 && currentMonthIndex === 0;
-        }
-        if (year.trim() == currentYear + 1) {
-          return monthIndex === 0 && currentMonthIndex === 11;
-        }
-        return false;
+        return (
+          (year.trim() == currentYear && monthIndex >= currentMonthIndex - 1 && monthIndex <= currentMonthIndex + 1) ||
+          (year.trim() == currentYear - 1 && monthIndex === 11 && currentMonthIndex === 0) ||
+          (year.trim() == currentYear + 1 && monthIndex === 0 && currentMonthIndex === 11)
+        );
       });
 
       setCurrentMonth({
-        value: currentMonth.idSalaryMonth,
-        label: currentMonth.salaryMonthText,
+        value: currentMonthObject.idSalaryMonth,
+        label: currentMonthObject.salaryMonthText,
       });
-      setStatusFilter(currentStatus)
+
       setSalaryMonthsList(filteredMonths);
-    });
+    } catch (error) {
+      console.error("Initialization error:", error);
+      toast.error("Initialization failed");
+    } finally {
+      setShowOverlay(false);
+    }
   };
 
-  useEffect(() => {
-    async function fetchData() {
+  initialize();
+}, []);
+
+useEffect(() => {
+  if (!currentMonth) return;
+
+  const fetchSalaryData = async () => {
+    try {
+      setShowOverlay(true);
       const params = {
-        idSalaryMonth: currentMonth?.value,
+        idSalaryMonth: currentMonth.value,
         status: "All",
       };
-      dispatch(getSalaryGenerations(params));
+
       const { payload } = await dispatch(getSalaryGenerations(params));
-      setAllSalaryList(payload.data);
+      const allData = payload?.data || [];
+      setAllSalaryList(allData);
+
+      const filteredData =
+        statusFilter.value === "All"
+          ? allData
+          : allData.filter(
+              (item) =>
+                item.approvalStatus.toLowerCase() ===
+                statusFilter.value.toLowerCase()
+            );
+
+      dispatch({
+        type: "salaryGeneration/getSalaryGenerations/fulfilled",
+        payload: { data: filteredData },
+      });
+    } catch (err) {
+      console.error("Error fetching salary data:", err);
+    } finally {
+      setShowOverlay(false);
     }
+  };
 
-    fetchData();
-  }, [dispatch, filter, currentMonth]);
+  fetchSalaryData();
+}, [dispatch, currentMonth, statusFilter]);
 
-  useEffect(() => {
-    getSalaryMonths();
-  }, []);
-
-  async function populateOptions(option) {
-    if (option) {
-      if (option.value === "designation") {
-        await dispatch(fetchDesignations());
-      } else {
-        await dispatch(fetchDepartments());
-      }
-      if (optionsRef.current) optionsRef.current.clearValue();
-      setOption(option.value);
-      setFilter("");
-      setSalaryDraft([]);
-      handelCheckboxCheck(false);
-    }
-  }
-
-  const statusOptions = [
-    { value: "All", label: "All Status" },
-    { value: "APPROVED", label: "Approved" },
-    { value: "SUBMITTED", label: "Submitted" },
-    { value: "INTERIM APPROVED", label: "Interim Approved" },
-    { value: "DRAFT GENERATED", label: "Draft Generated" },
-    { value: "NOT GENERATED", label: "Not Generated" },
-    { value: "REJECTED", label: "Rejected" },
-  ];
 
   const handleStatusChange = (status) => {
-    if (status) {
-      setStatusFilter(status);
-      setSelectedCard(status.value);
-      const params = {
-        idSalaryMonth: currentMonth?.value,
-        status: status?.value,
-      };
-      dispatch(getSalaryGenerations(params));
-      setSalaryDraft([]);
-      handelCheckboxCheck(false);
+    if (!status) return;
+    setStatusFilter(status);
+    setSelectedCard(status.value);
+    setSalaryDraft([]);
+    handelCheckboxCheck(false);
+    const params = {
+      idSalaryMonth: currentMonth?.value,
+      status: status.value,
+    };
+    dispatch(getSalaryGenerations(params));
+  };
+
+  const populateOptions = async (option) => {
+    if (option.value === "designation") {
+      await dispatch(fetchDesignations());
+    } else {
+      await dispatch(fetchDepartments());
     }
+    setOption(option.value);
+    setFilter("");
+    if (optionsRef.current) optionsRef.current.clearValue();
+    setSalaryDraft([]);
+    handelCheckboxCheck(false);
   };
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
-    clearAllFilter()
+    clearAllFilter();
   };
 
   const clearAllFilter = () => {
-    if (filterRef.current) filterRef.current.clearValue();
-    if (optionsRef.current) optionsRef.current.clearValue();
-    if (statusRef.current) statusRef.current.clearValue();
+    filterRef.current?.clearValue();
+    optionsRef.current?.clearValue();
+    statusRef.current?.clearValue();
     setStatusFilter({ value: "All", label: "Select Status" });
     setSelectedCard("All");
+    setInitialApprovalStatus(null);
     setSalaryDraft([]);
     handelCheckboxCheck(false);
-  }
+  };
+
+  const handelCheckboxCheck = (checked) => {
+    Array.from(document.querySelectorAll(".data-checkbox")).forEach((item) => {
+      if (!item.disabled) item.checked = checked;
+    });
+  };
 
   const uncheckCheckBox = () => {
-    Array.from(document.querySelectorAll(".form-check-input")).map((item) => {
-      item.checked = false;
-    });
+    document.querySelectorAll(".form-check-input").forEach((item) => (item.checked = false));
   };
 
   const handleApprovalWorkflow = async () => {
@@ -227,22 +234,20 @@ function SalaryApproved() {
       status: "APPROVED",
       idPayrollScreen,
     }));
+
     setShowOverlay(true);
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
     setShowOverlay(false);
+
     if (res.error) {
       toast.error(res.error);
     } else {
-      toast.success("Approval Workflow Updated Successfully");
+      toast.success("Approved successfully");
       uncheckCheckBox();
       setSalaryDraft([]);
-      const params = {
-        idSalaryMonth: currentMonth?.value,
-        status: "All",
-      };
-      const { payload } = await dispatch(getSalaryGenerations(params));
-      setAllSalaryList(payload.data);
-      clearAllFilter()
+      dispatch(getSalaryGenerations({ idSalaryMonth: currentMonth?.value, status: "All" }))
+        .then(({ payload }) => setAllSalaryList(payload.data));
+      clearAllFilter();
     }
   };
 
@@ -259,6 +264,7 @@ function SalaryApproved() {
       remarks: rejectReason,
       idPayrollScreen,
     }));
+
     setShowRejectModal(false);
     setShowOverlay(true);
     const res = await SalaryGenerationService.handleApprovalWorkflow(content);
@@ -267,29 +273,22 @@ function SalaryApproved() {
     if (res.error) {
       toast.error(res.error);
     } else {
-      toast.success("Records Rejected Successfully");
+      toast.success("Rejected successfully");
       uncheckCheckBox();
       setSalaryDraft([]);
       setRejectReason("");
-      const params = {
-        idSalaryMonth: currentMonth?.value,
-        status: "All",
-      };
-      const { payload } = await dispatch(getSalaryGenerations(params));
-      setAllSalaryList(payload.data);
-      clearAllFilter()
+      dispatch(getSalaryGenerations({ idSalaryMonth: currentMonth?.value, status: "All" }))
+        .then(({ payload }) => setAllSalaryList(payload.data));
+      clearAllFilter();
     }
   };
 
   const handleConfirmAction = () => {
-    switch (confirmAction.type) {
-      case "approve":
-        handleApprovalWorkflow();
-        break;
+    if (confirmAction.type === "approve") {
+      handleApprovalWorkflow();
     }
     setShowConfirmModal(false);
   };
-
   const showConfirmationModal = (type) => {
     let title = "";
     let message = "";
@@ -306,28 +305,15 @@ function SalaryApproved() {
   };
 
   const handleSelectAll = (e) => {
-    if (e.target.checked && salaryGenerationList) {
-      setSalaryDraft(
-        salaryGenerationList.filter(
-          (x) =>
-            statusFilter.value
-              .toLowerCase()
-              .search(x.approvalStatus.toLowerCase()) >= 0
-        )
-      );
-    } else {
-      setSalaryDraft([]);
-    }
-
-    handelCheckboxCheck(e.target.checked);
-  };
-
-  const handelCheckboxCheck = (checked) => {
-    Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
-      if (!item.disabled) {
-        item.checked = checked;
-      }
-    });
+    debugger
+    const checked = e.target.checked;
+      const filtered = salaryGenerationList.filter((x) => x.approvalEnabled);
+        setSalaryDraft(checked ? filtered : []);
+    // const filtered = salaryGenerationList.filter((x) =>
+    //   statusFilter.value.toLowerCase().includes(x.approvalStatus.toLowerCase())
+    // );
+   // setSalaryDraft(checked ? filtered : []);
+    handelCheckboxCheck(checked);
   };
 
   const exportSalaryApproved = async () => {
@@ -346,29 +332,43 @@ function SalaryApproved() {
     uncheckCheckBox();
     setSalaryDraft([]);
   };
+  const exportSalaryALLRecord = async () => {
+  const employeeIds = salaryGenerationList.map((item) => item.idEmployee).join(",");
+  if (!employeeIds) {
+    toast.error("No employee records found to export.");
+    return;
+  }
+
+  setShowOverlay(true);
+  const response = await SalaryGenerationService.exportSalaryApproved(
+    employeeIds,
+    currentMonth.value
+  );
+  setShowOverlay(false);
+
+  if (response.error) {
+    toast.error(response.error);
+  } else {
+    downloadFile(response.data);
+    toast.success("Exported all records successfully.");
+  }
+
+  uncheckCheckBox();
+  setSalaryDraft([]);
+};
 
   const downloadFile = (item) => {
-    const base64Data = item.fileContent;
-    const fileName = item.fileName || "downloaded-file";
-
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
+    const byteArray = Uint8Array.from(atob(item.fileContent), (c) => c.charCodeAt(0));
     const blob = new Blob([byteArray], { type: item.fileType });
-
-    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", fileName);
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", item.fileName || "downloaded-file");
     document.body.appendChild(link);
     link.click();
-
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    link.remove();
+    URL.revokeObjectURL(link.href);
   };
+
 
   return (
     <div class="container-xxl flex-grow-1 container-p-y">
@@ -598,18 +598,18 @@ function SalaryApproved() {
                 <table class="table table-sm">
                   <thead>
                     <tr>
-                      <th>
-                        {["submitted","interim approved","approved"].includes(statusFilter.value.toLowerCase()) && (
+                                  <th>
+                       
                           <input
                             type="checkbox"
                             class="form-check-input"
-                            checked={
-                              salaryDraft.length ===
-                              salaryGenerationList?.length && salaryDraft.length > 0
-                            }
+                           checked={
+  salaryGenerationList?.filter((item) => item.approvalEnabled).length > 0 &&
+  salaryDraft.length === salaryGenerationList?.filter((item) => item.approvalEnabled).length
+}
                             onChange={handleSelectAll}
                           />
-                        )}
+                        
                       </th>
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
@@ -634,33 +634,21 @@ function SalaryApproved() {
                       ?.map((item, index) => (
                         <tr key={index}>
                           <td>
-                            <input
-                              type="checkbox"
-                              className="form-check-input cursor-pointer data-checkbox"
-                              value={item.approvalStatus}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSalaryDraft((prev) => [...prev, item]);
-                                } else {
-                                  setSalaryDraft((prev) =>
-                                    prev.filter(
-                                      (x) =>
-                                        x.employeeCode !== item.employeeCode
-                                    )
-                                  );
-                                }
-                              }}
-                              disabled={
-                                !(
-                                  item.approvalStatus.toLowerCase() ===
-                                  "submitted"
-                                ) &&
-                                !(
-                                  item.approvalStatus.toLowerCase() ===
-                                  "interim approved"
-                                )
-                              }
-                            />
+                                          <input
+                type="checkbox"
+                className="form-check-input cursor-pointer data-checkbox"
+                value={item.approvalStatus}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSalaryDraft((prev) => [...prev, item]);
+                  } else {
+                    setSalaryDraft((prev) =>
+                      prev.filter((x) => x.employeeCode !== item.employeeCode)
+                    );
+                  }
+                }}
+                disabled={!item.approvalEnabled}
+              />
                           </td>
                           <td>{item.employeeCode}</td>
                           <td>{item.employeeName}</td>
@@ -729,7 +717,8 @@ function SalaryApproved() {
                 )}
 
                 <div class="text-center pt-3">
-                  <button
+
+                    <button
                     type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={exportSalaryApproved}
@@ -737,6 +726,15 @@ function SalaryApproved() {
                   >
                     Export to Excel for Detailed Review
                   </button>
+                   <button
+                    type="button"
+                    class="btn btn-primary btn-sm py-2 px-4 me-2"
+                    onClick={exportSalaryALLRecord}
+                    
+                  >
+                    Export  ALL RECORD
+                  </button>
+                
                   <button
                     type="button"
                     disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() === "approved"}
