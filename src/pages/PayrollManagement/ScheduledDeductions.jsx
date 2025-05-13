@@ -104,6 +104,30 @@ function ScheduledDeductions() {
     setTotalDeductions(roundedSum);
   }, [deductionGrid]);
 
+  const currentMonthPatch = () => {
+    // Find current month
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+
+    // Find matching month in data
+    const currentMonthData = salaryMonthsList.find(month => {
+      const monthDate = new Date(month.salaryMonthDate);
+      return (
+        monthDate.getFullYear() === currentYear &&
+        monthDate.getMonth() + 1 === currentMonth
+      );
+    });
+
+    // Set as default selected
+    if (currentMonthData) {
+      setNewData((prevData) => ({
+        ...prevData,
+        deductionFromSalaryMonthDate: currentMonthData.salaryMonthDate
+      }));
+    }
+  }
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -531,7 +555,8 @@ function ScheduledDeductions() {
     setNewData((prevData) => ({
       ...prevData,
       file: null,
-      documentFilePath: null
+      documentFilePath: null,
+      attachmentBlob: null
     }));
     setShowConfirmModal(false);
   }
@@ -562,7 +587,7 @@ function ScheduledDeductions() {
                     onKeyDown={e => e.key === 'Enter' ? getScheduledDeductions() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getScheduledDeductions()}></i>
                 </div>
-                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => { setShowModal(true); currentMonthPatch(); }}>Add</button>
               </div>
 
             </div>
@@ -597,7 +622,7 @@ function ScheduledDeductions() {
                           <td className="text-end">{Utils.formattedNumber(item.totalAmount)}</td>
                           <td>
                             {
-                              item.documentFilePath &&
+                              item.attachmentBlob != null &&
                               <button className="btn btn-outline-primary border-0 btn-sm">
                                 <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
                               </button>
@@ -751,7 +776,7 @@ function ScheduledDeductions() {
                       <label class="form-label"> Attachments </label>
                       <input type="file" className="form-control" onChange={handleFileChange} />
                       {
-                        newData.documentFilePath &&
+                        newData.attachmentBlob != null &&
                         <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
                           <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                         </span>

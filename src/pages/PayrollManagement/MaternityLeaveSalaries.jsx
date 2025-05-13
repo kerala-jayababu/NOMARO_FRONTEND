@@ -495,7 +495,8 @@ function MaternityLeaveSalaries() {
     setNewData((prevData) => ({
       ...prevData,
       file: null,
-      documentFilePath: null
+      documentFilePath: null,
+      attachmentBlob: null
     }));
     setShowConfirmModal(false);
   }
@@ -559,7 +560,7 @@ function MaternityLeaveSalaries() {
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
                           <td>
                             {
-                              item.documentFilePath &&
+                              item.attachmentBlob != null &&
                               <button className="btn btn-outline-primary border-0 btn-sm">
                                 <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
                               </button>
@@ -659,7 +660,7 @@ function MaternityLeaveSalaries() {
                     <label class="fform-label mb-1">Attachments </label>
                     <input type="file" className="form-control" onChange={handleFileChange} />
                     {
-                      newData.documentFilePath &&
+                      newData.attachmentBlob != null &&
                       <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
                         <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                       </span>
