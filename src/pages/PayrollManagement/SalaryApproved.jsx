@@ -73,12 +73,7 @@ useEffect(() => {
       }
 
       // 1. Fetch status options
-      const statusResponse = await axios.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
 
       const statusData = statusResponse?.data || [];
       const formattedStatus = statusData.map((item) => ({
@@ -141,7 +136,7 @@ useEffect(() => {
 
   const fetchSalaryData = async () => {
     try {
-      setShowOverlay(true);
+      // setShowOverlay(true);
       const params = {
         idSalaryMonth: currentMonth.value,
         status: "All",
@@ -166,9 +161,7 @@ useEffect(() => {
       });
     } catch (err) {
       console.error("Error fetching salary data:", err);
-    } finally {
-      setShowOverlay(false);
-    }
+    } 
   };
 
   fetchSalaryData();

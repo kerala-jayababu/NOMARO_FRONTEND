@@ -9,8 +9,9 @@ import Select from "react-select";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
 import { Modal } from "react-bootstrap";
 import Utils from "../../utils/Utils";
-import { getSalaryHeadList } from "../../utils/service";
+import { BASE_URL, getSalaryHeadList } from "../../utils/service";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import { API } from "../../redux/api/utils";
 
 const statusColor = [
   {
@@ -77,6 +78,7 @@ function SalaryGeneration() {
   const [draftSalary, setDraftSalary] = useState([]);
   const [importedData, setImportedData] = useState([]);
   const [showImportData, setShowImportData] = useState(false);
+  const [statusOptions,setStatusOptions] = useState([]);
   const [show, setShow] = useState(false);
   const optionsRef = useRef();
   const statusRef = useRef();
@@ -128,7 +130,7 @@ function SalaryGeneration() {
     });
   };
 
-  const getSalaryMonths = () => {
+  const getSalaryMonths = async () => {
     CommonService.getAllSalaryMonths().then((res) => {
       const currentMonth = res.data
         ?.filter((month) =>
@@ -167,6 +169,15 @@ function SalaryGeneration() {
       });
       setSalaryMonthsList(filteredMonths);
     });
+
+    const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
+    const statusData = statusResponse?.data || [];
+    const formattedStatus = statusData.map((item) => ({
+      value: item.value,
+      label: item.label,
+    }));
+    const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
+    setStatusOptions(fullStatusOptions);
   };
 
   useEffect(() => {
@@ -185,6 +196,7 @@ function SalaryGeneration() {
 
   useEffect(() => {
     getSalaryMonths();
+         
   }, []);
 
   async function populateOptions(option) {
@@ -919,7 +931,7 @@ function SalaryGeneration() {
                   <button
                     disabled={
                       salaryDraft.filter(
-                        (x) => x.approvalStatus.toLowerCase() === "draft"
+                        (x) => x.approvalStatus.toLowerCase() === "draft" || x.approvalStatus.toLowerCase() === "rejected"
                       ).length === 0
                     }
                     onClick={() => ExportSalaryGeneration()}
