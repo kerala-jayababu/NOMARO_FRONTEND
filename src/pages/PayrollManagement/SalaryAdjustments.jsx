@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SalaryAdjustmentService from '../../core/services/SalaryAdjustmentService';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -48,6 +48,7 @@ function SalaryAdjustments() {
   const rowsPerPage = 10;
   const totalPages = Math.ceil(salaryAdjustments.length / rowsPerPage);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getEmployeesData();
@@ -289,7 +290,6 @@ function SalaryAdjustments() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log(file)
     setNewData(prevState => ({
       ...prevState,
       file: file,
@@ -331,6 +331,16 @@ function SalaryAdjustments() {
     }));
     setShowConfirmModal(false);
   }
+
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+      }));
+    }
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -595,9 +605,30 @@ function SalaryAdjustments() {
                     />
                   </div>
 
-                  <div className="col-md-6 p-2">
+                  {/* <div className="col-md-6 p-2">
                     <label class="form-label mb-1"> Attachments </label>
                     <input type="file" className="form-control" onChange={handleFileChange} />
+                    {
+                      newData.attachmentBlob != null &&
+                      <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
+                  </div> */}
+
+                  <div className="col-md-12 p-2">
+                    <label class="form-label mb-1"> Attachments </label>
+                    <div className="row">
+                      <div className="col-md-6 p-1 mx-1">
+                        <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                      </div>
+                      <div className="col-md-5 p-1">
+                        {
+                          newData.file != null &&
+                          <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                        }
+                      </div>
+                    </div>
                     {
                       newData.attachmentBlob != null &&
                       <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;

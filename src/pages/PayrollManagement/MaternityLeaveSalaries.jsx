@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import MaternityService from '../../core/services/MaternityService';
 import moment from "moment";
 import CommonService from "../../core/services/CommonService";
@@ -53,6 +53,7 @@ function MaternityLeaveSalaries() {
   const rowsPerPage = 10;
   const totalPages = Math.ceil(maternityLeaveSalaries.length / rowsPerPage);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -501,6 +502,16 @@ function MaternityLeaveSalaries() {
     setShowConfirmModal(false);
   }
 
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+      }));
+    }
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -623,7 +634,7 @@ function MaternityLeaveSalaries() {
                     />
                   </div>
 
-                  <div class="col-md-3 p-2">
+                  <div class="col-md-2 p-2">
                     <label class="form-label mb-1">Month From</label>
                     <select
                       className="form-select controlHeight"
@@ -639,7 +650,7 @@ function MaternityLeaveSalaries() {
                       ))}
                     </select>
                   </div>
-                  <div class="col-md-3 p-2">
+                  <div class="col-md-2 p-2">
                     <label class="form-label mb-1">Month To</label>
                     <select
                       className="form-select controlHeight"
@@ -656,12 +667,32 @@ function MaternityLeaveSalaries() {
                     </select>
                   </div>
 
-                  <div class="col-md-3 p-2">
+                  {/* <div class="col-md-5 p-2">
                     <label class="fform-label mb-1">Attachments </label>
                     <input type="file" className="form-control" onChange={handleFileChange} />
                     {
                       newData.attachmentBlob != null &&
                       <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
+                  </div> */}
+                  <div className="col-md-5 p-2">
+                    <label class="form-label mb-1">Attachments </label>
+                    <div className="row">
+                      <div className="col-md-9">
+                        <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                      </div>
+                      <div className="col-md-2">
+                        {
+                          newData.file != null &&
+                          <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                        }
+                      </div>
+                    </div>
+                    {
+                      newData.attachmentBlob != null &&
+                      <span className="badge bg-label-info p-1 mx-1">{newData?.documentFilePath} &nbsp;&nbsp;
                         <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                       </span>
                     }

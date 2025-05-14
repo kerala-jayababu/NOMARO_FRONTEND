@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import OvertimeService from "../../core/services/OvertimeService";
@@ -45,6 +45,7 @@ function OvertimeTransaction() {
   const today = new Date();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [OTAmount, setOTAmount] = useState(0);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -325,6 +326,18 @@ function OvertimeTransaction() {
     setShowConfirmModal(false);
   }
 
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+        attachment: "",
+        attachmentDescription: "",
+      }));
+    }
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -554,11 +567,29 @@ function OvertimeTransaction() {
 
                         </div>
                         <div class="p-2">
-                          <label class="form-label mb-1"> Attachments </label>
+                          {/* <label class="form-label mb-1"> Attachments </label>
                           <input type="file" className="form-control" onChange={handleFileChange} />
                           {
                             newData.attachment &&
                             <span className="badge bg-label-info p-1">{newData.attachmentDescription} &nbsp;&nbsp;
+                              <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                            </span>
+                          } */}
+                          <label class="form-label mb-1">Attachments </label>
+                          <div className="row p-1">
+                            <div className="col-md-9 p-1">
+                              <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                            </div>
+                            <div className="col-md-2 p-1">
+                              {
+                                newData.file != null &&
+                                <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                              }
+                            </div>
+                          </div>
+                          {
+                            newData.attachment &&
+                            <span className="badge bg-label-info p-1">{newData?.attachmentDescription} &nbsp;&nbsp;
                               <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                             </span>
                           }
