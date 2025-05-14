@@ -95,7 +95,16 @@ const LeavePassage = () => {
         value: month.idSalaryMonth,
         label: month.salaryMonthText
       }));
-      setSalaryMonths(options);
+      const currentMonth = moment(); // today
+      const filteredSalaryMonths = options.filter(option => {
+        const date = moment(option.label, 'MMMM, YYYY');
+        return (
+          date.isValid && 
+          date.year() === currentMonth.year() && 
+          date.month() >= currentMonth.month()
+        );
+      });
+      setSalaryMonths(filteredSalaryMonths);
     } catch (err) {
       console.error('Failed to load salary months', err);
     }
