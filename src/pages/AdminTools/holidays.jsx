@@ -8,8 +8,10 @@ import CustomToolbar from '../../core/services/CustomCalenderToolBar';
 import { FaTrashAlt } from 'react-icons/fa';
 import './Holiday.css';
 import { useTranslation } from "react-i18next";
+import 'moment/locale/en-gb';
 
-
+moment.updateLocale('en-gb', { week: { dow: 1 } });
+moment.locale('en-gb');
 const localizer = momentLocalizer(moment);
 
 const Holiday = () => {
@@ -154,7 +156,7 @@ const Holiday = () => {
   const eventStyleGetter = (event) => {
     return {
       style: {
-        backgroundColor: event.isHoliday ? 'red' : undefined,
+        backgroundColor: event.isHoliday ? '#6f1d1f' : undefined,
         color: event.isHoliday ? 'white' : undefined,
         borderRadius: '4px',
         border: 'none',
@@ -221,14 +223,9 @@ const Holiday = () => {
             event.isHoliday && moment(event.start).isSame(date, 'day')
           );
 
-          return isHolidayDate
-            ? {
-                style: {
-                  backgroundColor: 'red',
-                  color: 'white'
-                }
-              }
-            : {};
+          return {
+            className: isHolidayDate ? 'holiday-cell' : ''
+          };
         }}
         tooltipAccessor={tooltipAccessor}
       />

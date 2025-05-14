@@ -1,11 +1,35 @@
 .holiday-popup {
-    position: fixed;
-    top: 30%;
-    left: 40%;
-    width: 350px;
-    background: white;
-    padding: 20px;
-    z-index: 2000;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  }
+  position: fixed;
+  top: 30%;
+  left: 40%;
+  width: 350px;
+  background: white;
+  padding: 20px;
+  z-index: 2000;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.rbc-date-cell {
+  font-size: 18px; 
+  font-weight: 600;
+  padding: 4px;
+  color: rgb(151, 143, 143);
+}
+
+.rbc-date-cell.rbc-now {
+  background-color: #e0f7fa;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.holiday-cell {
+  background-color: #6f1d1f !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.holiday-cell .rbc-button-link {
+  color: white !important;
+}
+
