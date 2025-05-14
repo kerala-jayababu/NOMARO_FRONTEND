@@ -138,7 +138,7 @@ function Menu({ viewType }) {
             </ul>
           </li>
         ))}
-        <li className={`menu-item ${menu === 'leavePassage' ? 'open active' : ''} cursor-pointer`}>
+        {/* <li className={`menu-item ${menu === 'leavePassage' ? 'open active' : ''} cursor-pointer`}>
           <a
             className="menu-link"
             onClick={() => {
@@ -160,7 +160,7 @@ function Menu({ viewType }) {
             <i className="menu-icon tf-icons bx bx-calendar-event"></i>
             <div data-i18n="leavepassage">Leave Passage</div>
           </a>
-        </li>
+        </li> */}
       </ul>
     </aside>
   );
