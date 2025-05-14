@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ScheduledDeductionService from "../../core/services/ScheduledDeductionService";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
@@ -53,6 +53,7 @@ function ScheduledDeductions() {
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [existingData, setExistingData] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -247,6 +248,7 @@ function ScheduledDeductions() {
       formData.append('scheduledDeductionDetailsJson', JSON.stringify(passData.ScheduledDeductionDetailsDto));
       formData.append('allocatingSalaryHead', passData.allocatingSalaryHead);
       formData.append('deductionFromSalaryMonth', passData.deductionFromSalaryMonth);
+      formData.append('deductionToSalaryMonth', passData.deductionToSalaryMonth);
       formData.append('deductionFromSalaryMonthDate', passData.deductionFromSalaryMonthDate);
       formData.append('deductionToSalaryMonthDate', passData.deductionToSalaryMonthDate);
       formData.append('totalAmount', passData.totalAmount);
@@ -561,6 +563,16 @@ function ScheduledDeductions() {
     setShowConfirmModal(false);
   }
 
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+      }));
+    }
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -771,7 +783,7 @@ function ScheduledDeductions() {
                     </div>
                   </div>
 
-                  <div className="col-lg-6">
+                  {/* <div className="col-lg-6">
                     <div className="mb-2">
                       <label class="form-label"> Attachments </label>
                       <input type="file" className="form-control" onChange={handleFileChange} />
@@ -782,6 +794,27 @@ function ScheduledDeductions() {
                         </span>
                       }
                     </div>
+                  </div> */}
+
+                  <div className="col-md-12 p-2">
+                    <label class="form-label mb-1 mx-1"> Attachments </label>
+                    <div className="row mx-1">
+                      <div className="col-md-6 p-1">
+                        <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                      </div>
+                      <div className="col-md-5 p-1">
+                        {
+                          newData.file != null &&
+                          <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                        }
+                      </div>
+                    </div>
+                    {
+                      newData.attachmentBlob != null &&
+                      <span className="badge bg-label-info p-1 mx-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
                   </div>
                 </div>
 
