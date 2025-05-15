@@ -74,7 +74,7 @@ function App() {
               <Route path='salary-report' element={<SalaryReport />} />
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
               <Route path="holiday-config" element={< Holidays/>} />
-              <Route path="leavepassage" element={<LeavePassage/>} />
+              <Route path="leave-passages" element={<LeavePassage/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
