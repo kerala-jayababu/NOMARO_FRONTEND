@@ -112,10 +112,10 @@ function OvertimeTransactionApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Overtime Transaction Approval
-              {selectedRow.actionStatus?.toLowerCase() === "approved"
+              {selectedRow.currentStatus?.toLowerCase() === "approved"
                 ? " (Already Approved)"
                 : ""}
-              {selectedRow.actionStatus?.toLowerCase() === "rejected"
+              {selectedRow.currentStatus?.toLowerCase() === "rejected"
                 ? " (Rejected)"
                 : ""}
             </h5>
@@ -248,7 +248,7 @@ function OvertimeTransactionApproval({
             )}
           </div>
 
-          {selectedRow.actionStatus?.toLowerCase() === "submitted" && (
+          {selectedRow.currentStatus?.toLowerCase() === "submitted" && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"
