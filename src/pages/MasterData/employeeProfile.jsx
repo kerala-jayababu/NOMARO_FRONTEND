@@ -1093,6 +1093,7 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
     } finally {
       setIsSubmitting(false);
     }
+    dispatch(getAllEmployeeDetails());
   };
 
   const handleReset = () => {
@@ -1148,6 +1149,35 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
     { key: "actions" },
   ];
 
+  const downloadFile = (id) => {
+    const employee = employees?.find((emp) => emp.idEmployee === id);
+    const item = employee?.attachmentBlobForchildcount;
+
+    const base64Data = item;
+    const fileName = employee.childCountDocumentFilePath || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -1179,9 +1209,11 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                   data={paginatedEmployeeData}
                   onEditClick={handleEditClick}
                   onEmpCodeClick={handleEmpCodeClick}
+                  onDownloadClick={downloadFile}
                   idKey="editId"
                   modalId="Add_EMP_Account"
                   popUpId="EMP_profileView"
+                  employees={employees}
                 />
               )}
               <div className="text-end pt-2">

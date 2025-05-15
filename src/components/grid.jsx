@@ -9,6 +9,8 @@ const Grid = ({
   modalId,
   popUpId,
   onEmpCodeClick,
+  onDownloadClick,
+  employees
 }) => {
   return (
     <div className="table-responsive text-nowrap" style={{maxHeight:'450px', overflowY:'auto'}}>
@@ -50,6 +52,11 @@ const Grid = ({
                       )
                     ) : column.key === "actions" ? (
                       <div className="text-end">
+                        { employees?.find((emp) => emp.idEmployee === row[idKey])?.attachmentBlobForchildcount && 
+                        <button class="btn btn-outline-primary border-0 btn-sm" fdprocessedid="wr0ef8" onClick={() => onDownloadClick(row[idKey])}>
+                          <i class="bx bx-paperclip cursor"></i>
+                        </button>
+                        }
                         <button
                           type="button"
                           className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
