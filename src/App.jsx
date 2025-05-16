@@ -38,6 +38,7 @@ import Reports from "./pages/PayrollManagement/Reports/Reports";
 import { LoaderProvider } from "./components/LoaderContext";
 import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
+import "../src/core/services/PreventMultipleClickButton"
 
 function App() {
   return (
