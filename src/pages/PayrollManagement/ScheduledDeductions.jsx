@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ScheduledDeductionService from "../../core/services/ScheduledDeductionService";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
@@ -29,6 +29,9 @@ function ScheduledDeductions() {
     allocatingSalaryHead: 0,
     monthCount: 0,
     monthlyDeductableAmount: 10,
+    file: null,
+    attachmentBlob: null,
+    documentFilePath: null
   });
   const [validated, setValidated] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -49,6 +52,8 @@ function ScheduledDeductions() {
   ]);
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [existingData, setExistingData] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -99,6 +104,30 @@ function ScheduledDeductions() {
     const roundedSum = Math.round(total); // Round to nearest cent
     setTotalDeductions(roundedSum);
   }, [deductionGrid]);
+
+  const currentMonthPatch = () => {
+    // Find current month
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+
+    // Find matching month in data
+    const currentMonthData = salaryMonthsList.find(month => {
+      const monthDate = new Date(month.salaryMonthDate);
+      return (
+        monthDate.getFullYear() === currentYear &&
+        monthDate.getMonth() + 1 === currentMonth
+      );
+    });
+
+    // Set as default selected
+    if (currentMonthData) {
+      setNewData((prevData) => ({
+        ...prevData,
+        deductionFromSalaryMonthDate: currentMonthData.salaryMonthDate
+      }));
+    }
+  }
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -166,6 +195,9 @@ function ScheduledDeductions() {
       allocatingSalaryHead: item.allocatingSalaryHead,
       monthCount: item.monthCount,
       monthlyDeductableAmount: 10,
+      file: item.file,
+      attachmentBlob: item.attachmentBlob,
+      documentFilePath: item.documentFilePath,
     });
     handleMonthFromChangeEdit(item.deductionFromSalaryMonthDate);
     setDeductionGrid(item.scheduledDeductionDetailsDto ?? []);
@@ -210,7 +242,26 @@ function ScheduledDeductions() {
       passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
       passData['monthlyDeductableAmount'] = 1;
-      ScheduledDeductionService.saveScheduledDeductionsData(passData).then(res => {
+
+      // Create a FormData object to handle file upload
+      const formData = new FormData();
+      formData.append('scheduledDeductionDetailsJson', JSON.stringify(passData.ScheduledDeductionDetailsDto));
+      formData.append('allocatingSalaryHead', passData.allocatingSalaryHead);
+      formData.append('deductionFromSalaryMonth', passData.deductionFromSalaryMonth);
+      formData.append('deductionToSalaryMonth', passData.deductionToSalaryMonth);
+      formData.append('deductionFromSalaryMonthDate', passData.deductionFromSalaryMonthDate);
+      formData.append('deductionToSalaryMonthDate', passData.deductionToSalaryMonthDate);
+      formData.append('totalAmount', passData.totalAmount);
+      formData.append('idEmployee', passData.idEmployee);
+      formData.append('monthCount', passData.monthCount);
+      formData.append('monthlyDeductableAmount', passData.monthlyDeductableAmount);
+
+      // Append the file if it exists
+      if (passData.file) {
+        formData.append('file', passData.file);
+      }
+
+      ScheduledDeductionService.saveScheduledDeductionsData(formData).then(res => {
         if (res.data.status === 200) {
           // toast.success('Scheduled deductions added successfully', {
           //   position: 'top-right',
@@ -250,7 +301,27 @@ function ScheduledDeductions() {
       passData['deductionToSalaryMonth'] = new Date(passData['deductionToSalaryMonthDate']).getMonth() + 1;
       passData['ScheduledDeductionDetailsDto'] = scheduledDeductionDetails;
       passData['monthlyDeductableAmount'] = 1;
-      ScheduledDeductionService.updateScheduledDeductionsData(passData).then(res => {
+
+      // Create a FormData object to handle file upload
+      const formData = new FormData();
+      formData.append('scheduledDeductionDetailsJson', JSON.stringify(passData.ScheduledDeductionDetailsDto));
+      formData.append('allocatingSalaryHead', passData.allocatingSalaryHead);
+      formData.append('deductionFromSalaryMonth', passData.deductionFromSalaryMonth);
+      formData.append('deductionToSalaryMonth', passData.deductionToSalaryMonth);
+      formData.append('deductionFromSalaryMonthDate', passData.deductionFromSalaryMonthDate);
+      formData.append('deductionToSalaryMonthDate', passData.deductionToSalaryMonthDate);
+      formData.append('totalAmount', passData.totalAmount);
+      formData.append('idEmployee', passData.idEmployee);
+      formData.append('idScheduledSalaryDeduction', passData.idScheduledSalaryDeduction);
+      formData.append('monthCount', passData.monthCount);
+      formData.append('monthlyDeductableAmount', passData.monthlyDeductableAmount);
+
+      // Append the file if it exists
+      if (passData.file) {
+        formData.append('file', passData.file);
+      }
+
+      ScheduledDeductionService.updateScheduledDeductionsData(formData).then(res => {
         if (res.data.status === 200) {
           // toast.success('Scheduled deductions updated successfully', {
           //   position: 'top-right',
@@ -286,6 +357,8 @@ function ScheduledDeductions() {
       allocatingSalaryHead: 0,
       monthCount: 0,
       monthlyDeductableAmount: 10,
+      file: null,
+      documentFilePath: null
     });
     setSelectedEmployee(null);
     setFilteredMonthsList(salaryMonthsList);
@@ -445,6 +518,61 @@ function ScheduledDeductions() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    console.log(file)
+    setNewData(prevState => ({
+      ...prevState,
+      file: file,
+    }));
+  };
+
+  const downloadFile = (item) => {
+    const base64Data = item.attachmentBlob;
+    const fileName = item.documentFilePath || 'downloaded-file';
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set the file name
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  const removeFile = () => {
+    setNewData((prevData) => ({
+      ...prevData,
+      file: null,
+      documentFilePath: null,
+      attachmentBlob: null
+    }));
+    setShowConfirmModal(false);
+  }
+
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+      }));
+    }
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -471,7 +599,7 @@ function ScheduledDeductions() {
                     onKeyDown={e => e.key === 'Enter' ? getScheduledDeductions() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getScheduledDeductions()}></i>
                 </div>
-                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => { setShowModal(true); currentMonthPatch(); }}>Add</button>
               </div>
 
             </div>
@@ -488,6 +616,7 @@ function ScheduledDeductions() {
                       <th className="text-center">No. of Months </th>
                       {/* <th className="text-end">Monthly Deduction</th> */}
                       <th className="text-end">Total Deduction</th>
+                      <th className="text-center"></th>
                       <th className="text-end"></th>
                     </tr>
                   </thead>
@@ -503,6 +632,14 @@ function ScheduledDeductions() {
                           <td className="text-center">{item.monthCount}</td>
                           {/* <td className="text-end">{Utils.formattedNumber(item.monthlyDeductableAmount)}</td> */}
                           <td className="text-end">{Utils.formattedNumber(item.totalAmount)}</td>
+                          <td>
+                            {
+                              item.attachmentBlob != null &&
+                              <button className="btn btn-outline-primary border-0 btn-sm">
+                                <i className="bx bx-paperclip cursor" onClick={() => downloadFile(item)}></i>
+                              </button>
+                            }
+                          </td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => getScheduledDeductionsById(item?.idScheduledSalaryDeduction)}>
                               <span className="tf-icons bx bx-pencil"></span>
@@ -645,6 +782,40 @@ function ScheduledDeductions() {
                       />
                     </div>
                   </div>
+
+                  {/* <div className="col-lg-6">
+                    <div className="mb-2">
+                      <label class="form-label"> Attachments </label>
+                      <input type="file" className="form-control" onChange={handleFileChange} />
+                      {
+                        newData.attachmentBlob != null &&
+                        <span className="badge bg-label-info p-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                          <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                        </span>
+                      }
+                    </div>
+                  </div> */}
+
+                  <div className="col-md-12 p-2">
+                    <label class="form-label mb-1 mx-1"> Attachments </label>
+                    <div className="row mx-1">
+                      <div className="col-md-6 p-1">
+                        <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                      </div>
+                      <div className="col-md-5 p-1">
+                        {
+                          newData.file != null &&
+                          <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                        }
+                      </div>
+                    </div>
+                    {
+                      newData.attachmentBlob != null &&
+                      <span className="badge bg-label-info p-1 mx-1">{newData?.documentFilePath} &nbsp;&nbsp;
+                        <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                      </span>
+                    }
+                  </div>
                 </div>
 
                 {/* Deduction Grid */}
@@ -744,6 +915,43 @@ function ScheduledDeductions() {
                 <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveScheduledDeductions(e)}>Submit</button>
               }
               <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+            </div>
+          </Modal.Body>
+        </Modal>
+
+        <Modal
+          show={showConfirmModal} onHide={() => { setShowConfirmModal(false); }} size='md'
+          aria-labelledby="contained-modal-title-vcenter"
+          centered backdrop="static"
+          keyboard={false}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5>Confirm Delete</h5>
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <div className="modal-body pt-1 text-center">
+              <div className="text-center mb-5">
+                <div className="mb-4 text-danger">
+                  <i className="bx bx-x-circle fs-2"></i>
+                </div>
+                <h6> Are you sure to remove this file?</h6>
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm py-2 px-4 me-2"
+                onClick={() => removeFile()}
+              >
+                Confirm
+              </button>
+              <button
+                type="submit"
+                className="btn btn-outline-secondary  btn-sm py-2 px-4"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
             </div>
           </Modal.Body>
         </Modal>

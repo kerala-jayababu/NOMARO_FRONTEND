@@ -141,8 +141,9 @@ function CurrencyConversion() {
       fromCurrency: formData.fromCurrency,
       toCurrency: formData.toCurrency,
       conversionRate: parseFloat(formData.conversionRate),
-      rateDate: moment(formData.rateDate).format()
+        rateDate: moment(formData.rateDate).format("YYYY-MM-DD")
     };
+    debugger
     setLoading(true);
     const service = (formData.idCurrencyConversion !== 0)
       ? CurrConversionService.updateCurrencyConversion

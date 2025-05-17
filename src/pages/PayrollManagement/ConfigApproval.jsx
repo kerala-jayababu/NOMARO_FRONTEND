@@ -7,6 +7,7 @@ import EmployeeSalaryConfigApproval from "./Components/EmployeeSalaryConfigAppro
 import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
 import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
 import DatePicker from "react-datepicker";
+import { API } from "../../redux/api/utils";
 
 const statusColor = [
     {
@@ -49,6 +50,7 @@ function ConfigApproval() {
   });
   const [refresh, setRefresh] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [entityTypes, setEntityTypes] = useState([]);
 
   useEffect(() => {
     const params = {
@@ -59,11 +61,17 @@ function ConfigApproval() {
     dispatch(getConfigApprovals(params));
     setSelectedItems([])
     handelCheckboxCheck(false)
+    getEntityTypes();
   }, [dateFrom, entityType, status, refresh]);
+
+  async function getEntityTypes() {
+    const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList");
+    setEntityTypes(res.data.data);
+  }
 
   const handleSelectAll = (e) => {
     if (e.target.checked && configApprovalList) {
-      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
+      setSelectedItems(configApprovalList.filter(x => x.currentStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
     } else {
       setSelectedItems([]);
     }
@@ -203,11 +211,7 @@ function ConfigApproval() {
                     onChange={(e) => setEntityType(e.target.value)}
                   >
                     <option value={""}>Select</option>
-                    <option value={"SALTEM"}>Salary Template</option>
-                    <option value={"EMPSALCONFIG"}>
-                      Employee Salary Configuration
-                    </option>
-                    <option value={"OVERTIME"}>Overtime Transaction</option>
+                    {entityTypes?.map(item => <option value={item.entityCode}>{item.entityName}</option>)}
                   </select>
                 </div>
                 <div class="col-md-3 p-2">
@@ -272,8 +276,8 @@ function ConfigApproval() {
                         <td>
                           <input
                             disabled={
-                              item.actionStatus.toLowerCase() === "approved" ||
-                              item.actionStatus.toLowerCase() === "rejected"
+                              item.currentStatus.toLowerCase() === "approved" ||
+                              item.currentStatus.toLowerCase() === "rejected"
                             }
                             type="checkbox"
                             class="form-check-input data-checkbox"
@@ -313,8 +317,8 @@ function ConfigApproval() {
                           })}
                         </td>
                         <td > 
-                          <p className={`badge ${statusColor.find(x => x.status == item?.actionStatus?.toLowerCase()).class}`}>
-                          {item.actionStatus}
+                          <p className={`badge ${statusColor.find(x => x.status == item?.currentStatus?.toLowerCase()).class}`}>
+                          {item.currentStatus}
                             </p> 
                           </td>
                         <td>{item.rejectionRemarks}</td>
