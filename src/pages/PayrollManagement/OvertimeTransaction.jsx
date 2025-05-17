@@ -6,7 +6,6 @@ import secureLocalStorage from "react-secure-storage";
 import moment from "moment";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
-import { toast } from "react-toastify";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
 import { NumericFormat } from "react-number-format";
@@ -130,7 +129,7 @@ function OvertimeTransaction() {
     const date = moment(startDate).format("YYYY-MM-DD");
     OvertimeService.getOvertimeTransactionsData(userData.idEmployee ?? 0, date, statusType, searchText).then(res => {
       setOvertimeTransactions(res.data.data);
-    }).catch(err => {
+    }).catch(() => {
       setOvertimeTransactions([]);
     });
   }
@@ -148,7 +147,7 @@ function OvertimeTransaction() {
   const getOTTranasactionsById = (id) => {
     OvertimeService.getOvertimeTransactionsById(id).then(res => {
       setOvertimeTransactions(res.data.data);
-    }).catch(err => {
+    }).catch(() => {
       setOvertimeTransactions([]);
     });
   }
@@ -175,9 +174,9 @@ function OvertimeTransaction() {
     setShowModal(true);
   }
 
-  const saveOvertimeTransactions = (e) => {
+  const  saveOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
+    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime || !newData.reasonForOvertime) {
       setValidated(true);
       return;
     }
@@ -211,7 +210,7 @@ function OvertimeTransaction() {
         resetValues();
         setShowModal(false);
       }
-    }).catch(err => {
+    }).catch(() => {
       // toast.error('Something went wrong!', {
       //   position: 'top-right',
       //   autoClose: 2000
@@ -221,7 +220,7 @@ function OvertimeTransaction() {
 
   const updateOvertimeTransactions = (e) => {
     e.preventDefault();
-    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime) {
+    if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime || !newData.reasonForOvertime) {
       setValidated(true);
       return;
     }
@@ -253,7 +252,7 @@ function OvertimeTransaction() {
         resetValues();
         setShowModal(false);
       }
-    }).catch(err => {
+    }).catch(() => {
       // toast.error('Something went wrong!', {
       //   position: 'top-right',
       //   autoClose: 2000
@@ -402,8 +401,8 @@ function OvertimeTransaction() {
                   </thead>
                   <tbody className="table-border-bottom-0">
                     {paginatedData?.length > 0 ? (
-                      paginatedData?.map((item, index) => (
-                        <tr>
+                      paginatedData?.map((item) => (
+                        <tr key={item.idOvertimeTransaction}>
                           {/* <td>
                             {" "}
                             <input type="checkbox" className="form-check-input" />
@@ -537,11 +536,10 @@ function OvertimeTransaction() {
                           </div>
                         </div>
                       </div>
-
-                      <div class="col-md-6 p-0">
+                      <div className="col-md-6 p-0">
                         <div className="row m-0">
                           <div className="col-md-4 p-2">
-                            <label class="form-label mb-1">Duration in Hrs</label>
+                            <label className="form-label mb-1">Duration in Hrs</label>
                             <input
                               type="number"
                               className="form-control"
@@ -551,7 +549,7 @@ function OvertimeTransaction() {
                             />
                           </div>
                           <div className="col-md-8 p-2">
-                            <label class="form-label mb-1">Overtime Amount</label>
+                            <label className="form-label mb-1">Overtime Amount</label>
                             <NumericFormat
                               className="form-control"
                               value={OTAmount}
@@ -566,7 +564,7 @@ function OvertimeTransaction() {
                           </div>
 
                         </div>
-                        <div class="p-2">
+                        <div className="p-2">
                           {/* <label class="form-label mb-1"> Attachments </label>
                           <input type="file" className="form-control" onChange={handleFileChange} />
                           {
@@ -575,7 +573,7 @@ function OvertimeTransaction() {
                               <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                             </span>
                           } */}
-                          <label class="form-label mb-1">Attachments </label>
+                          <label className="form-label mb-1">Attachments </label>
                           <div className="row p-1">
                             <div className="col-md-9 p-1">
                               <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
@@ -596,13 +594,16 @@ function OvertimeTransaction() {
                         </div>
                       </div>
 
-                      <div class="col-md-6 p-2">
-                        <label class="form-label mb-1">Reason for Overtime</label>
-                        <textarea className="form-control" rows={5}
-                          value={newData.reasonForOvertime} maxlength="100"
-                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })}>
+                      <div className="col-md-6 p-2">
+                        <label className="form-label mb-1">Reason for Overtime</label>
+                        <textarea className={`form-control ${validated && !newData.reasonForOvertime ? 'is-invalid' : ''}`} rows={5}
+                          value={newData.reasonForOvertime} maxLength="100"
+                          onChange={(e) => setNewData({ ...newData, reasonForOvertime: e.target.value })}> required
                         </textarea>
                         <small>{100 - newData.reasonForOvertime.length} / 100 characters remaining</small>
+                        {validated && !newData.reasonForOvertime && (
+                          <div className="invalid-feedback">Reason is required.</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -662,7 +663,7 @@ function OvertimeTransaction() {
           <div
             className="modal fade"
             id="Rejected_Overtime"
-            tabindex="-1"
+            tabIndex="-1"
             aria-hidden="true"
           >
             <div
@@ -712,7 +713,7 @@ function OvertimeTransaction() {
           <div
             className="modal fade"
             id="Approved_Overtime"
-            tabindex="-1"
+            tabIndex="-1"
             aria-hidden="true"
           >
             <div
