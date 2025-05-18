@@ -16,7 +16,7 @@ const statusColor = [
     },
     {
         status: "submitted",
-        class: "bs-bg-warning"
+        class: "bg-warning"
     },
     {
         status: "interim approved",
@@ -276,8 +276,8 @@ function ConfigApproval() {
                         <td>
                           <input
                             disabled={
-                              item.currentStatus.toLowerCase() === "approved" ||
-                              item.currentStatus.toLowerCase() === "rejected"
+                              item?.currentStatus?.toLowerCase() === "approved" ||
+                              item?.currentStatus?.toLowerCase() === "rejected"
                             }
                             type="checkbox"
                             class="form-check-input data-checkbox"
@@ -317,9 +317,11 @@ function ConfigApproval() {
                           })}
                         </td>
                         <td > 
-                          <p className={`badge ${statusColor.find(x => x.status == item?.currentStatus?.toLowerCase()).class}`}>
-                          {item.currentStatus}
-                            </p> 
+                          <p className={`badge ${
+  statusColor.find(x => x.status === item?.currentStatus?.trim().toLowerCase())?.class ?? ''
+}`}>
+  {item?.currentStatus}
+</p>
                           </td>
                         <td>{item.rejectionRemarks}</td>
                       </tr>
