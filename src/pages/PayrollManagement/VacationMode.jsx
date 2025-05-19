@@ -14,6 +14,7 @@ import { getVacationModeById } from "../../redux/reducers/vacationMode";
 import { updateVacationMode } from "../../redux/reducers/vacationMode";
 import secureLocalStorage from 'react-secure-storage';
 import CommonService from "../../core/services/CommonService";
+import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 
 const VacationMode = () => {
   const dispatch = useDispatch();
@@ -56,6 +57,7 @@ const VacationMode = () => {
   const [selectedDate, setSelectedDate] = useState(getFinancialYearStart());
 
   const today = new Date().toISOString().split("T")[0];
+  const [employeeData, setEmployeeData] = useState(null);
 
   useEffect(() => {
     if (
@@ -75,14 +77,22 @@ const VacationMode = () => {
   }, [dispatch]);
 
   useEffect(() => {
-  if (userData?.idEmployee && userData.idDesignation !== 19 && userData.idDesignation !== 37) {
-    getDirectReportees();
-  }
-}, [userData]);
+    const fetchData = async () => {
+      const emp = await getEmployeeDetails();
+      setEmployeeData(emp);
+      if (userData?.idEmployee && emp?.idDesignation !== 19 && emp?.idDesignation !== 37) {
+        getDirectReportees();
+      }
+    };
+
+    if (userData?.idEmployee) {
+      fetchData();
+    }
+  }, [userData]);
 
   const employeeOptions = React.useMemo(() => {
     // HR roles: designation IDs 19 and 37
-    const isHR = userData.idDesignation === 19 || userData.idDesignation === 37;
+    const isHR = employeeData?.idDesignation === 19 || employeeData?.idDesignation === 37;
     const baseList = isHR 
         ? getAllEmployeesState.options 
         : employeesListOption;
@@ -91,7 +101,19 @@ const VacationMode = () => {
       value: employee.idEmployee || employee.value,
       label: employee.fullName || employee.label,
     }));
-  }, [getAllEmployeesState.options, employeesListOption, userData.idDesignation]);
+  }, [getAllEmployeesState.options, employeesListOption, employeeData?.idDesignation]);
+
+  const getEmployeeDetails = async () => {
+      try {
+        const response = await dispatch(getEmployeeDetailsByID(userData.idEmployee));
+        if (response.payload?.data) {
+          setEmployeeData(response.payload.data);
+          return response.payload.data;
+        }
+      } catch (err) {
+        console.error('Failed to get employee details', err);
+      }
+    }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
