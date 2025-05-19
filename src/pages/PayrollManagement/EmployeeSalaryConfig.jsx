@@ -715,6 +715,7 @@ const EmployeeSalaryConfig = () => {
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
+      approvalStatus:"SUBMITTED",
       activeStatus: true,
       validFrom: dataToEdit.validFrom ?? moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
