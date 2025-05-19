@@ -1334,7 +1334,7 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
 
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">SSN</label>
-                      <p className="m-0">{profileData?.ssn || "N/A"}</p>
+                      <p className="m-0">{profileData?.ssnNumber || "N/A"}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Tax ID Number</label>

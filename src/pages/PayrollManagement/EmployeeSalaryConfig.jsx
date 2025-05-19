@@ -803,7 +803,8 @@ const EmployeeSalaryConfig = () => {
                       <th>Joining Date</th>
                       <th className="text-end">Total Earnings</th>
                       <th className="text-end">Total Deductions</th>
-                      <th className="text-end">Net Salary</th>
+                      <th className="text-end">Status</th>
+                      <th >Net Salary</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -818,6 +819,9 @@ const EmployeeSalaryConfig = () => {
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
+ <td>
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
+                          </td>
                           <td className="text-end">
                             {
                               item?.approvalStatus != "APPROVED" &&

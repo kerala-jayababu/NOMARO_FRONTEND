@@ -295,6 +295,9 @@ headerRow.eachCell((cell) => {
   };
 });
 
+
+
+const excludedColumns = ["employeecode", "abaroutingnumber", "accountnumber"];
     const numericColumnIndexes = columns.map((col, index) => {
       const values = rows.map((row) => row[col]);
       const number = values.find(
@@ -306,7 +309,7 @@ headerRow.eachCell((cell) => {
         isNumeric:
           number !== undefined &&
           number !== null &&
-          col.toLowerCase() != "employeecode",
+           !excludedColumns.includes(col.toLowerCase()),
         column: col,
       };
     });
