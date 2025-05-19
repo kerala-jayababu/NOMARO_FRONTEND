@@ -87,6 +87,7 @@ function ConfigApproval() {
   };
 
   const handleApproveWorkflow = async () => {
+    debugger
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
         (item) => item.idApprovalWorkFlow === id

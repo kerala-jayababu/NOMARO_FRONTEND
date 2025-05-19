@@ -18,6 +18,7 @@ const EmployeeSalaryConfig = () => {
   const [employeeSalaryDetails, setEmployeeSalaryDetails] = useState([]);
   const [netSalary, setNetSalary] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [previousSelectedEmployee, setPreviousSelectedEmployee] = useState(null);
   const [copyFromData, setCopyFromData] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -663,14 +664,16 @@ const EmployeeSalaryConfig = () => {
   };
 
   const handleSave = (e) => {
+    const employeeToUse = selectedEmployee || previousSelectedEmployee;
+    debugger
     e.preventDefault();
-    if (!selectedEmployee) {
+    if (!employeeToUse) {
       setValidated(true);
       return;
     }
     const payload = {
       idEmployeeSalaryConfig: null,
-      idEmployee: selectedEmployee?.value,
+      idEmployee: employeeToUse?.value,
       idDesignation: designation,
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
@@ -890,6 +893,8 @@ const EmployeeSalaryConfig = () => {
                       className="form-select form-select"
                       value={selectedTemplateId}
                       onChange={(e) => {
+                        debugger
+                         setPreviousSelectedEmployee(selectedEmployee);
                         setSelectedTemplateId(e.target.value);
                       }}>
                       <option value="">Select Templates</option>
