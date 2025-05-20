@@ -803,8 +803,9 @@ const EmployeeSalaryConfig = () => {
                       <th>Joining Date</th>
                       <th className="text-end">Total Earnings</th>
                       <th className="text-end">Total Deductions</th>
-                      <th className="text-end">Status</th>
-                      <th >Net Salary</th>
+                       <th className="text-end">Net Salary</th>
+                      <th >Status</th>
+                     
                       <th></th>
                     </tr>
                   </thead>

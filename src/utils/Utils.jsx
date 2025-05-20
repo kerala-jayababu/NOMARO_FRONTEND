@@ -244,7 +244,8 @@ export default class Utils {
     XLSX.writeFile(workbook, `${reportName}.xlsx`, writeOptions);
   }
 
-  static exportToExcelJS(rows, reportName, headerRequired,filter) {
+  static exportToExcelJS(rows, reportName, headerRequired,filter,reportColumns) {  
+      
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
 
@@ -258,46 +259,62 @@ export default class Utils {
         }` + "   ";
     });
 
-
+let staticRowsCount = 0;
+if(headerRequired){
 // Add company name row and make it span across all columns
 const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
 companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
 companyName.alignment = { horizontal: "left" };
+staticRowsCount++;
 
 // Add title row
 const titleRow = worksheet.addRow([reportName]);
 titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
 titleRow.alignment = { horizontal: "left" };
+staticRowsCount++;
 
 // Add filter row
 const filterRow = worksheet.addRow([filterText]);
 filterRow.font = { italic: true, color: { argb: "FF666666" } };
 filterRow.alignment = { horizontal: "left" };
+staticRowsCount++;
 
-// Add empty row
-worksheet.addRow([]);
 
-// Add header row
-const headerRow = worksheet.addRow(columns);
-headerRow.eachCell((cell) => {
-  cell.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FFCBD5E1" },
-  };
-  cell.font = { bold: true, color: { argb: "FF000000" } };
-  cell.alignment = { horizontal: "center", vertical: "middle" };
-  cell.border = {
-    top: { style: "thin" },
-    left: { style: "thin" },
-    bottom: { style: "thin" },
-    right: { style: "thin" },
-  };
+  // Add empty row
+  worksheet.addRow([]);
+  staticRowsCount++;
+  
+  // Add header row
+  const headerRow = worksheet.addRow(columns);
+  staticRowsCount++;
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCBD5E1" },
+    };
+    cell.font = { bold: true, color: { argb: "FF000000" } };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
+  
+}
+
+const columnMetaMap = {};
+reportColumns.forEach((col) => {
+  if (!["id", "slno", "employeecode"].includes(col.columnName.toLowerCase())) {
+    columnMetaMap[col.columnName] = {
+      alignment: col.alignment?.toLowerCase() || "left",
+      dataType: col.dataType?.toLowerCase() || "string",
+    };
+  }
 });
-
-
-
-const excludedColumns = ["employeecode", "abaroutingnumber", "accountnumber"];
+const excludedColumns = ["employeecode"];
     const numericColumnIndexes = columns.map((col, index) => {
       const values = rows.map((row) => row[col]);
       const number = values.find(
@@ -324,14 +341,18 @@ const excludedColumns = ["employeecode", "abaroutingnumber", "accountnumber"];
     rows.map((row, index) => {
       const rowValues = columns.map((col, index) => {
         const value = row[col];
+  const meta = columnMetaMap[col] || {};
+  
+        //const isNumericColumn = numericColumnIndexes[index].isNumeric;
 
-        const isNumericColumn = numericColumnIndexes[index].isNumeric;
-
-        if (isNumericColumn && value !== null && value !== undefined) {
-          if (typeof value === "string" && !isNaN(parseFloat(value))) {
-            return parseFloat(`${value}`.replaceAll(",", ""));
-          }
-        }
+       if (meta.dataType === "currency" && value !== null && value !== undefined) {
+        debugger
+    if (typeof value === "string" && !isNaN(parseFloat(value))) {
+      return parseFloat(value.replaceAll(",", ""));
+    } else if (typeof value === "number") {
+      return value;
+    }
+  }
 
         return value?.length > 0 ? value : " ";
       });
@@ -377,8 +398,11 @@ const excludedColumns = ["employeecode", "abaroutingnumber", "accountnumber"];
       });
     });
 
+    if(headerRequired){
+  worksheet.mergeCells(1, 1, 1, 3); 
+    }
     // Merge cells for all title rows
-    worksheet.mergeCells(1, 1, 1, 3); // Company name row
+  // Company name row
 
     // Calculate and set column widths
     columns.forEach((col, index) => {
@@ -427,7 +451,7 @@ const excludedColumns = ["employeecode", "abaroutingnumber", "accountnumber"];
     });
 
 if(!headerRequired){
-  worksheet.spliceRows(1, 5);
+  worksheet.spliceRows(1, staticRowsCount);
 }
     // Generate and save the file
     workbook.xlsx.writeBuffer().then((buffer) => {
@@ -485,6 +509,10 @@ if(!headerRequired){
           fillColor: [203, 213, 225],
           textColor: [0, 0, 0],
         },
+     bodyStyles: {
+     textColor: [26, 26, 26],        // black
+             // bold body
+  },
         columnStyles: {
           ...alignments,
         },
