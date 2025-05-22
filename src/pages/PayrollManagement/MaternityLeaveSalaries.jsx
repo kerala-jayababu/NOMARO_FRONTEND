@@ -792,18 +792,18 @@ function MaternityLeaveSalaries() {
                             <tr key={index}>
                               <td>
                                 <select className="form-select" value={detail.idSalaryHead} name="salaryHeadType"
-                                  onChange={(e) => handleSelectChange(index, e)} required style={{ width: '230px' }}>
+                                  onChange={(e) => handleSelectChange(index, e)} required style={{ width: '275px' }}>
                                   <option value={''}>Select</option>
                                   {
                                     salaryHeadList?.map((el) => (
-                                      <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                                      <option value={el.idSalaryHead} key={el.idSalaryHead}>[{el.headType == 'EARNING' ? 'E' : 'D'}] {el.salaryHeadName} ({el.salaryHeadCode})</option>
                                     ))
                                   }
                                 </select>
                               </td>
-                              <td>
+                              {/* <td>
                                 <label className="staticWidth">{Utils.capitalizeFirstLetter(detail.salaryHeadType)}</label>
-                              </td>
+                              </td> */}
                               <td>
                                 {/* <input type="number" class="form-control" value={detail.amount} name="amount"
                                   // onChange={(e) => { handleInputChange(index, e); }} 
@@ -833,14 +833,14 @@ function MaternityLeaveSalaries() {
                               </td>
                               <td>
                                 <div class="d-flex">
-                                  {(index == salaryDetails.length - 1) &&
-                                    <button type="button" class="btn btn-outline-primary border-0 btn-sm me-2" onClick={() => addRow()}>
-                                      <i class="bx bx-plus"></i>
-                                    </button>
-                                  }
                                   {(salaryDetails.length > 1) &&
                                     <button type="button" class="btn btn-outline-danger btn-sm border-0" onClick={() => removeRow(index)}>
                                       <i class="bx bx-trash"></i>
+                                    </button>
+                                  }
+                                  {(index == salaryDetails.length - 1) &&
+                                    <button type="button" class="btn btn-outline-primary border-0 btn-sm me-2" onClick={() => addRow()}>
+                                      <i class="bx bx-plus"></i>
                                     </button>
                                   }
                                 </div>
