@@ -924,7 +924,7 @@ const EmployeeSalaryConfig = () => {
                               <option value="">Select Salary Head</option>
                               {getAvailableSalaryHeads(row.id).map(head => (
                                 <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                  {head.salaryHeadName} ({head.salaryHeadCode})
+                                  [{head.headType == 'EARNING' ? 'E' : 'D'}] {head.salaryHeadName} ({head.salaryHeadCode}) 
                                 </option>
                               ))}
                             </select>
