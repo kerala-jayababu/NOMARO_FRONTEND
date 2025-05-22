@@ -10,6 +10,7 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 import LoadingOverlay from "../../components/LoadingOverlay";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+import { fetchBudgetCode } from "../../redux/reducers/budgetCode";
 import { API } from "../../redux/api/utils";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -56,6 +57,7 @@ function SalaryApproved() {
   const { salaryGenerationList } = useSelector((state) => state.salaryGeneration);
   const { departments } = useSelector((state) => state.department);
   const { designation } = useSelector((state) => state.designation);
+   const { options } = useSelector((state) => state.budgetCode);
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
 useEffect(() => {
@@ -184,7 +186,10 @@ useEffect(() => {
   const populateOptions = async (option) => {
     if (option.value === "designation") {
       await dispatch(fetchDesignations());
-    } else {
+    } else if (option.value === "budget") {
+            const result = await dispatch(fetchBudgetCode());
+            console.log("Fetched budget codes:", result?.payload?.data);
+          }else {
       await dispatch(fetchDepartments());
     }
     setOption(option.value);
@@ -530,6 +535,7 @@ useEffect(() => {
                         label: "Filter Designation Based",
                       },
                       { value: "department", label: "Filter Department Based" },
+                       { value: "budget", label: "Filter Budget Based" },
                     ]}
                     defaultValue={{ value: "all", label: "All Employees" }}
                     onChange={(option) => {
@@ -556,7 +562,25 @@ useEffect(() => {
                       placeholder={"Select Department"}
                       className="textSize"
                     />
-                  ) : (
+                  ) : option === "budget" ? (
+                                      <Select
+                                        ref={optionsRef}
+                                        options={[
+                                          { value: "", label: "All Budget Codes" },
+                                          ...(options?.data?.map((budget) => ({
+                                            value: budget.budgetCode,
+                                            label: budget.budgetCode,
+                                          })) || []),
+                                        ]}
+                                        isSearchable
+                                        onChange={(option) => {
+                                          if (statusRef.current) statusRef.current.value = "All";
+                                          setFilter(option?.value || "");
+                                        }}
+                                        placeholder={"Select Budget Code"}
+                                        className="textSize"
+                                      />
+                                    ) : (
                     <Select
                       ref={optionsRef}
                       options={[
@@ -608,6 +632,7 @@ useEffect(() => {
                       <th>Employee Name</th>
                       <th>Department</th>
                       <th>Designation</th>
+                       <th>Budget Code</th>
                       <th class="text-end">Total Earnings</th>
                       <th class="text-end">Total Deductions</th>
                       <th class="text-end">Net Salary</th>
@@ -616,14 +641,29 @@ useEffect(() => {
                   </thead>
                   <tbody>
                     {salaryGenerationList
-                      ?.filter(
-                        (x) =>
-                          x.departmentName.toLowerCase() ===
-                            filter.toLowerCase() ||
-                          x.designationName.toLowerCase() ===
-                            filter.toLowerCase() ||
-                          filter.length === 0
-                      )
+                        ?.filter((x) => {
+                        if (!filter) return true;
+
+                        if (option === "department")
+                          return (
+                            x?.departmentName?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        if (option === "designation")
+                          return (
+                            x?.designationName?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        if (option === "budget")
+                          return (
+                            x?.budgetCode?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        return true;
+                      })
                       ?.map((item, index) => (
                         <tr key={index}>
                           <td>
@@ -647,6 +687,7 @@ useEffect(() => {
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
+                             <td>{item.budgetCode}</td>
                           <td className="text-end">
                             {new Intl.NumberFormat("en-US", {
                               minimumFractionDigits: 2,
@@ -688,19 +729,19 @@ useEffect(() => {
                   <div className="p-2 mb-3 mt-3" style={{border:"1px solid black"}}>
                     <div className="d-flex justify-between" style={{justifyContent:"center"}}>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                        Total Earnings: {new Intl.NumberFormat("en-US", {
+                       G$ Total Earnings: {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalEarnings) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                        Total Deductions: {new Intl.NumberFormat("en-US", {
+                       G$ Total Deductions: {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalDeductions) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                        Total Net Salary: {new Intl.NumberFormat("en-US", {
+                      G$ Total Net Salary: {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.netSalary) || 0), 0))}

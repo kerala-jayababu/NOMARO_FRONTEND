@@ -38,6 +38,7 @@ import Reports from "./pages/PayrollManagement/Reports/Reports";
 import { LoaderProvider } from "./components/LoaderContext";
 import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
+import "../src/core/services/PreventMultipleClickButton"
 
 function App() {
   return (
@@ -74,7 +75,7 @@ function App() {
               <Route path='salary-report' element={<SalaryReport />} />
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
               <Route path="holiday-config" element={< Holidays/>} />
-              <Route path="leavepassage" element={<LeavePassage/>} />
+              <Route path="leave-passages" element={<LeavePassage/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>

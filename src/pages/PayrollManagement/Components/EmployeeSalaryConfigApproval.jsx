@@ -101,9 +101,9 @@ function EmployeeSalaryConfigApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Employee Salary Config Approval{" "}
-                {selectedRow.actionStatus?.toLowerCase() === "approved" ?
+                {selectedRow.currentStatus?.toLowerCase() === "approved" ?
                 " (Already Approved)":''}
-                {selectedRow.actionStatus?.toLowerCase() === "rejected" ?
+                {selectedRow.currentStatus?.toLowerCase() === "rejected" ?
                 " (Rejected)":''}
             </h5>
             <button
@@ -219,7 +219,7 @@ function EmployeeSalaryConfigApproval({
             </table>
           </div>
 
-          {selectedRow.actionStatus?.toLowerCase() === "submitted" && (
+          {selectedRow.currentStatus?.toLowerCase() === "submitted" && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"

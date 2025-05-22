@@ -23,6 +23,7 @@ function Authenticate() {
             setLoading(false);
           } else {
             secureLocalStorage.setItem("user", JSON.stringify(res.data));
+            secureLocalStorage.setItem("currentAuth", res.data.authorizedModules);
             setSuccess(true);
             setLoading(false);
             setTimeout(() => {

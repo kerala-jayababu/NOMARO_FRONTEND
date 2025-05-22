@@ -16,7 +16,7 @@ const statusColor = [
     },
     {
         status: "submitted",
-        class: "bs-bg-warning"
+        class: "bg-warning"
     },
     {
         status: "interim approved",
@@ -32,9 +32,11 @@ function ConfigApproval() {
   const dispatch = useDispatch();
   const { configApprovalList } = useSelector((state) => state.configApproval);
   const { idPayrollScreen } = useSelector((state) => state.auth);
-  const [dateFrom, setDateFrom] = React.useState(
-    new Date().toISOString().split("T")[0]
-  );
+const [dateFrom, setDateFrom] = React.useState(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 14);
+  return date.toISOString().split("T")[0];
+});
   const [entityType, setEntityType] = React.useState("");
   const [entityName, setEntityName] = React.useState("");
   const [entityId, setEntityId] = useState(0);
@@ -71,7 +73,7 @@ function ConfigApproval() {
 
   const handleSelectAll = (e) => {
     if (e.target.checked && configApprovalList) {
-      setSelectedItems(configApprovalList.filter(x => x.actionStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
+      setSelectedItems(configApprovalList.filter(x => x.currentStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
     } else {
       setSelectedItems([]);
     }
@@ -87,6 +89,7 @@ function ConfigApproval() {
   };
 
   const handleApproveWorkflow = async () => {
+    debugger
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
         (item) => item.idApprovalWorkFlow === id
@@ -276,8 +279,8 @@ function ConfigApproval() {
                         <td>
                           <input
                             disabled={
-                              item.actionStatus.toLowerCase() === "approved" ||
-                              item.actionStatus.toLowerCase() === "rejected"
+                              item?.currentStatus?.toLowerCase() === "approved" ||
+                              item?.currentStatus?.toLowerCase() === "rejected"
                             }
                             type="checkbox"
                             class="form-check-input data-checkbox"
@@ -317,9 +320,11 @@ function ConfigApproval() {
                           })}
                         </td>
                         <td > 
-                          <p className={`badge ${statusColor.find(x => x.status == item?.actionStatus?.toLowerCase()).class}`}>
-                          {item.actionStatus}
-                            </p> 
+                          <p className={`badge ${
+  statusColor.find(x => x.status === item?.currentStatus?.trim().toLowerCase())?.class ?? ''
+}`}>
+  {item?.currentStatus}
+</p>
                           </td>
                         <td>{item.rejectionRemarks}</td>
                       </tr>

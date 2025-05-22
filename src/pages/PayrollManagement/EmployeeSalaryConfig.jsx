@@ -18,6 +18,7 @@ const EmployeeSalaryConfig = () => {
   const [employeeSalaryDetails, setEmployeeSalaryDetails] = useState([]);
   const [netSalary, setNetSalary] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [previousSelectedEmployee, setPreviousSelectedEmployee] = useState(null);
   const [copyFromData, setCopyFromData] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -663,14 +664,16 @@ const EmployeeSalaryConfig = () => {
   };
 
   const handleSave = (e) => {
+    const employeeToUse = selectedEmployee || previousSelectedEmployee;
+    debugger
     e.preventDefault();
-    if (!selectedEmployee) {
+    if (!employeeToUse) {
       setValidated(true);
       return;
     }
     const payload = {
       idEmployeeSalaryConfig: null,
-      idEmployee: selectedEmployee?.value,
+      idEmployee: employeeToUse?.value,
       idDesignation: designation,
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
@@ -715,6 +718,7 @@ const EmployeeSalaryConfig = () => {
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
+      approvalStatus:"SUBMITTED",
       activeStatus: true,
       validFrom: dataToEdit.validFrom ?? moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
@@ -799,7 +803,9 @@ const EmployeeSalaryConfig = () => {
                       <th>Joining Date</th>
                       <th className="text-end">Total Earnings</th>
                       <th className="text-end">Total Deductions</th>
-                      <th className="text-end">Net Salary</th>
+                       <th className="text-end">Net Salary</th>
+                      <th >Status</th>
+                     
                       <th></th>
                     </tr>
                   </thead>
@@ -814,6 +820,9 @@ const EmployeeSalaryConfig = () => {
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
+ <td>
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
+                          </td>
                           <td className="text-end">
                             {
                               item?.approvalStatus != "APPROVED" &&
@@ -889,6 +898,8 @@ const EmployeeSalaryConfig = () => {
                       className="form-select form-select"
                       value={selectedTemplateId}
                       onChange={(e) => {
+                        debugger
+                         setPreviousSelectedEmployee(selectedEmployee);
                         setSelectedTemplateId(e.target.value);
                       }}>
                       <option value="">Select Templates</option>

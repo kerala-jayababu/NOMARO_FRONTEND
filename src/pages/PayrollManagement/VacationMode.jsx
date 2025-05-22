@@ -12,9 +12,17 @@ import { useState } from "react";
 import { addVacationMode } from "../../redux/reducers/vacationMode";
 import { getVacationModeById } from "../../redux/reducers/vacationMode";
 import { updateVacationMode } from "../../redux/reducers/vacationMode";
+import secureLocalStorage from 'react-secure-storage';
+import CommonService from "../../core/services/CommonService";
+import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 
 const VacationMode = () => {
   const dispatch = useDispatch();
+
+  const userData = React.useMemo(() => {
+    return JSON.parse(secureLocalStorage.getItem("user") || "{}");
+  }, []); 
+  const [employeesListOption, setEmployeesListOption] = useState([]);
 
   const vacationModeState = useSelector(
     (state) => state.vacationMode.vacationModeList
@@ -49,6 +57,7 @@ const VacationMode = () => {
   const [selectedDate, setSelectedDate] = useState(getFinancialYearStart());
 
   const today = new Date().toISOString().split("T")[0];
+  const [employeeData, setEmployeeData] = useState(null);
 
   useEffect(() => {
     if (
@@ -67,12 +76,44 @@ const VacationMode = () => {
     dispatch(fetchVacationMode());
   }, [dispatch]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const emp = await getEmployeeDetails();
+      setEmployeeData(emp);
+      if (userData?.idEmployee && emp?.idDesignation !== 19 && emp?.idDesignation !== 37) {
+        getDirectReportees();
+      }
+    };
+
+    if (userData?.idEmployee) {
+      fetchData();
+    }
+  }, [userData]);
+
   const employeeOptions = React.useMemo(() => {
-    return getAllEmployeesState.options.map((employee) => ({
-      value: employee.idEmployee,
-      label: employee.fullName,
+    // HR roles: designation IDs 19 and 37
+    const isHR = employeeData?.idDesignation === 19 || employeeData?.idDesignation === 37;
+    const baseList = isHR 
+        ? getAllEmployeesState.options 
+        : employeesListOption;
+
+    return baseList.map((employee) => ({
+      value: employee.idEmployee || employee.value,
+      label: employee.fullName || employee.label,
     }));
-  }, [getAllEmployeesState.options]);
+  }, [getAllEmployeesState.options, employeesListOption, employeeData?.idDesignation]);
+
+  const getEmployeeDetails = async () => {
+      try {
+        const response = await dispatch(getEmployeeDetailsByID(userData.idEmployee));
+        if (response.payload?.data) {
+          setEmployeeData(response.payload.data);
+          return response.payload.data;
+        }
+      } catch (err) {
+        console.error('Failed to get employee details', err);
+      }
+    }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -262,6 +303,18 @@ const VacationMode = () => {
     });
   }, [vacationList, selectedDate]);
 
+  const getDirectReportees = () => {
+    CommonService.getEmployeesByHierarchy(userData.idEmployee ?? 0).then(res => {
+      const options = res.data.data.map(employee => ({
+        value: employee.idEmployee,
+        label: employee.employeeName,
+      }));
+      setEmployeesListOption(options);
+    }).catch(err => {
+      console.error("Error fetching employee hierarchy:", err);
+    });
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -328,7 +381,10 @@ const VacationMode = () => {
               <Dropdown
                 label="Approval Authority Substituted to"
                 name="approvalAuthoritySubstitute"
-                options={employeeOptions}
+                options={getAllEmployeesState.options.map((employee) => ({
+                    value: employee.idEmployee,
+                    label: employee.fullName,
+                  }))}
                 value={formData.approvalAuthoritySubstitute}
                 onChange={handleInputChange}
               />
