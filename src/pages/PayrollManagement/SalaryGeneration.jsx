@@ -126,6 +126,7 @@ function SalaryGeneration() {
   };
 
   const handelCheckboxCheck = (checked) => {
+    
     Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
       if (!item.disabled) {
         item.checked = checked;
@@ -837,7 +838,7 @@ function SalaryGeneration() {
                   <thead>
                     <tr>
                       <th>
-                        {["not generated", "draft generated"].includes(
+                        {["not generated", "draft generated", "rejected"].includes(
                           statusFilter?.value?.toLowerCase()
                         ) && (
                           <input
