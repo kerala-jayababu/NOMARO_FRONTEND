@@ -153,8 +153,7 @@ useEffect(() => {
           ? allData
           : allData.filter(
               (item) =>
-                item.approvalStatus.toLowerCase() ===
-                statusFilter.value.toLowerCase()
+                statusFilter.value.toLowerCase().includes(item.approvalStatus.toLowerCase())
             );
 
       dispatch({
@@ -729,19 +728,19 @@ useEffect(() => {
                   <div className="p-2 mb-3 mt-3" style={{border:"1px solid black"}}>
                     <div className="d-flex justify-between" style={{justifyContent:"center"}}>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                       G$ Total Earnings: {new Intl.NumberFormat("en-US", {
+                        Total Earnings: {"  "}G$ {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalEarnings) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                       G$ Total Deductions: {new Intl.NumberFormat("en-US", {
+                        Total Deductions: {"  "}G$ {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalDeductions) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                      G$ Total Net Salary: {new Intl.NumberFormat("en-US", {
+                      Total Net Salary: {"  "}G$  {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.netSalary) || 0), 0))}
