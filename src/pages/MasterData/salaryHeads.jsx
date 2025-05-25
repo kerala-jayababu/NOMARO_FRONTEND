@@ -42,6 +42,24 @@ const SalaryHeads = () => {
 
   const dispatch = useDispatch();
 
+  const months = [
+    'January', 'February', 'March', 'April',
+    'May', 'June', 'July', 'August',
+    'September', 'October', 'November', 'December'
+  ];
+
+  const [selectedMonths, setSelectedMonths] = useState(months);
+
+  const handleMonthChange = (month) => {
+    setSelectedMonths(prevSelected => {
+      if (prevSelected.includes(month)) {
+        return prevSelected.filter(m => m !== month);
+      } else {
+        return [...prevSelected, month];
+      }
+    });
+  };
+
   // Access the fetched data from the Redux store
   const { salaryHeadList, status, error, currentSalaryHead } = useSelector(
     (state) => state.salaryHead
@@ -54,7 +72,7 @@ const SalaryHeads = () => {
   const columns = [
     { key: "salaryHeadCode", label: "S. H. Code" },
     { key: "salaryHeadName", label: "Salary Head Name" },
-    { key: "orderNumber", label: "Order Number" },
+    { key: "orderNumber", label: "Order" },
     { key: "isActive", label: "Active Status" },
     { key: "actions", label: "" },
   ];
@@ -90,7 +108,9 @@ const SalaryHeads = () => {
         // New fields
         taxExcemptionThresholdType: currentSalaryHead.taxExcemptionThresholdType || "FIXEDVALUE",
         taxExcemptionThresholdValue: currentSalaryHead.taxExcemptionThresholdValue || "",
+        disbursingMonths: currentSalaryHead.disbursingMonths || null,
       });
+      processMonthsOnLoad(currentSalaryHead.disbursingMonths);
     }
   }, [currentSalaryHead]);
 
@@ -132,6 +152,7 @@ const SalaryHeads = () => {
       orderNumber: "",
       customFormula: "",
     });
+    setSelectedMonths(months);
     dispatch({ type: "salaryHead/clearCurrentSalaryHead" });
   };
 
@@ -344,6 +365,7 @@ const SalaryHeads = () => {
       // New fields
       taxExcemptionThresholdType: formData.taxability === "Taxable" ? formData.taxExcemptionThresholdType : null,
       taxExcemptionThresholdValue: formData.taxability === "Taxable" ? formData.taxExcemptionThresholdValue : null,
+      disbursingMonths: processMonthsToSend()
     };
 
     // Check if it's an update
@@ -378,11 +400,28 @@ const SalaryHeads = () => {
     }
   };
 
+  const processMonthsToSend = () => {
+    if (selectedMonths.length == 12 || selectedMonths.length == 0) {
+      return null;
+    } else if (selectedMonths.length > 0 && selectedMonths.length < 12) {
+      return selectedMonths.map(month => month.toUpperCase()).join(',');
+    }
+  }
+
+  const processMonthsOnLoad = (data) => {
+    if (data == null) {
+      setSelectedMonths(months);
+    } else {
+      let monthsData = data.split(',');
+      setSelectedMonths(monthsData)
+    }
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
         {/* Salary Head List */}
-        <div className="col-lg-8">
+        <div className="col-lg-7">
           <Card title="List of Salary Heads">
             <Grid
               columns={columns}
@@ -420,7 +459,7 @@ const SalaryHeads = () => {
         </div>
 
         {/* Add/Update Salary Head */}
-        <div className="col-lg-4">
+        <div className="col-lg-5">
           <Card title="Add/Update Salary Head">
             <form onSubmit={handleSubmit}>
 
@@ -581,6 +620,28 @@ const SalaryHeads = () => {
                   pattern="^\d*\.?\d{0,2}$"
                 />
               )}
+              <div className="mb-3 pt-2">
+                <label className="form-label mb-2">Disbursing Months</label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '10px',
+                  marginBottom: '20px'
+                }}>
+                  {months.map(month => (
+                    <div key={month} style={{ display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type="checkbox"
+                        id={`month-${month}`}
+                        checked={selectedMonths.includes(month)}
+                        onChange={() => handleMonthChange(month)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <label htmlFor={`month-${month}`}>{month}</label>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="mb-3 pt-2">
                 <div className="form-check form-switch">
                   <label
