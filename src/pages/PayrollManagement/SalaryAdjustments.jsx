@@ -80,11 +80,21 @@ function SalaryAdjustments() {
     setSelectedEmployee(selected);
   }, [newData.idEmployee]);
 
+  // useEffect(() => {
+  //   if (newData.earningOrDeduction == "") return;
+  //   const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'DEDUCTION'));
+  //   setSalaryHeadListToShow(salHead);
+  // }, [newData.earningOrDeduction]);
+
   useEffect(() => {
-    if (newData.earningOrDeduction == "") return;
-    const salHead = salaryHeadList.filter(sal => sal.headType == (newData.earningOrDeduction == 'E' ? 'EARNING' : 'DEDUCTION'));
-    setSalaryHeadListToShow(salHead);
-  }, [newData.earningOrDeduction]);
+    if (newData.allocatingSalaryHead == 0) return;
+    const salHead = salaryHeadList.find(sal => sal.idSalaryHead == newData.allocatingSalaryHead);
+    setNewData((prevData) => ({
+      ...prevData,
+      earningOrDeduction: salHead.headType == 'EARNING' ? 'E' : 'D',
+      isTaxable: salHead.isTaxable ? 'Yes' : 'No'
+    }));
+  }, [newData.allocatingSalaryHead]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -505,39 +515,16 @@ function SalaryAdjustments() {
                   </div>
 
                   <div className="col-md-6 p-2">
-                    <div>
-                      <label className="form-label mb-1">Salary Adjustment Type</label>
-                    </div>
-                    <div className="form-check form-check-inline ">
-                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
-                        value={'E'} checked={newData.earningOrDeduction === 'E' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} required />
-                      <label className="form-check-label" for="inlineRadio1">Earning</label>
-                    </div>
-                    <div className="form-check form-check-inline">
-                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
-                        value={'D'} checked={newData.earningOrDeduction === 'D' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} required />
-                      <label className="form-check-label" for="inlineRadio2"> Deduction </label>
-                    </div>
-                  </div>
-
-                  <div className="col-md-6 p-2">
-                    <div>
-                      <label className="form-label mb-1">Taxable </label>
-                    </div>
-                    <div className="form-check form-check-inline ">
-                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable1"
-                        value={'Yes'} checked={newData.isTaxable === 'Yes' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} required />
-                      <label className="form-check-label" for="Taxable1">Yes</label>
-                    </div>
-                    <div className="form-check form-check-inline">
-                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable2"
-                        value={'No'} checked={newData.isTaxable === 'No' ? "checked" : ""}
-                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} required />
-                      <label className="form-check-label" for="Taxable2"> No </label>
-                    </div>
+                    <label className="form-label mb-1">Allocating Salary Head</label>
+                    <select className="form-select" value={newData.allocatingSalaryHead}
+                      onChange={(e) => setNewData({ ...newData, allocatingSalaryHead: e.target.value })} required>
+                      <option value={''}>Select</option>
+                      {
+                        salaryHeadList?.map((el) => (
+                          <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                        ))
+                      }
+                    </select>
                   </div>
 
                   <div className="col-md-6 p-2">
@@ -553,18 +540,44 @@ function SalaryAdjustments() {
                       }
                     </select>
                   </div>
+
                   <div className="col-md-6 p-2">
-                    <label className="form-label mb-1">Allocating Salary Head</label>
-                    <select className="form-select" value={newData.allocatingSalaryHead}
-                      onChange={(e) => setNewData({ ...newData, allocatingSalaryHead: e.target.value })} required>
-                      <option value={''}>Select</option>
-                      {
-                        salaryHeadListToShow?.map((el) => (
-                          <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
-                        ))
-                      }
-                    </select>
+                    <div>
+                      <label className="form-label mb-1">Salary Adjustment Type</label>
+                    </div>
+                    <div className="form-check form-check-inline ">
+                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
+                        value={'E'} checked={newData.earningOrDeduction === 'E' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} disabled={true}/>
+                      <label className="form-check-label" for="inlineRadio1">Earning</label>
+                    </div>
+                    <div className="form-check form-check-inline">
+                      <input className="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
+                        value={'D'} checked={newData.earningOrDeduction === 'D' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, earningOrDeduction: e.target.value })} disabled={true}/>
+                      <label className="form-check-label" for="inlineRadio2"> Deduction </label>
+                    </div>
                   </div>
+
+                  <div className="col-md-6 p-2">
+                    <div>
+                      <label className="form-label mb-1">Taxable </label>
+                    </div>
+                    <div className="form-check form-check-inline ">
+                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable1"
+                        value={'Yes'} checked={newData.isTaxable === 'Yes' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} disabled={true}/>
+                      <label className="form-check-label" for="Taxable1">Yes</label>
+                    </div>
+                    <div className="form-check form-check-inline">
+                      <input className="form-check-input" type="radio" name="Taxable" id="Taxable2"
+                        value={'No'} checked={newData.isTaxable === 'No' ? "checked" : ""}
+                        onChange={(e) => setNewData({ ...newData, isTaxable: e.target.value })} disabled={true}/>
+                      <label className="form-check-label" for="Taxable2"> No </label>
+                    </div>
+                  </div>
+
+
                   <div className="col-md-6 p-2">
                     <label className="form-label mb-1">Amount</label>
                     {/* <input className="form-control" type="number" value={newData.amount}
