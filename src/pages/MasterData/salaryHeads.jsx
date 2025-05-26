@@ -107,7 +107,7 @@ const SalaryHeads = () => {
         orderNumber: currentSalaryHead.orderNumber,
         // New fields
         taxExcemptionThresholdType: currentSalaryHead.taxExcemptionThresholdType || "FIXEDVALUE",
-        taxExcemptionThresholdValue: currentSalaryHead.taxExcemptionThresholdValue || "",
+        taxExcemptionThresholdValue: currentSalaryHead.taxExcemptionThresholdValue,
         disbursingMonths: currentSalaryHead.disbursingMonths || null,
       });
       processMonthsOnLoad(currentSalaryHead.disbursingMonths);
@@ -408,12 +408,22 @@ const SalaryHeads = () => {
     }
   }
 
+  const convertToTitleCase = (monthString) => {
+  if (!monthString) return [];
+  
+  return monthString
+    .split(',')
+    .map(month => month.trim().toLowerCase())
+    .filter(month => month.length > 0)
+    .map(month => month.charAt(0).toUpperCase() + month.slice(1));
+}
+
   const processMonthsOnLoad = (data) => {
     if (data == null) {
       setSelectedMonths(months);
     } else {
-      let monthsData = data.split(',');
-      setSelectedMonths(monthsData)
+      let monthsData = convertToTitleCase(data);
+      setSelectedMonths(monthsData);
     }
   }
 
