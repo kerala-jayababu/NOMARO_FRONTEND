@@ -401,9 +401,9 @@ const SalaryHeads = () => {
   };
 
   const processMonthsToSend = () => {
-    if (selectedMonths.length == 12 || selectedMonths.length == 0) {
+    if (selectedMonths.length == 0) {
       return null;
-    } else if (selectedMonths.length > 0 && selectedMonths.length < 12) {
+    } else {
       return selectedMonths.map(month => month.toUpperCase()).join(',');
     }
   }
