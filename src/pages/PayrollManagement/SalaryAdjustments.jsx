@@ -352,6 +352,30 @@ function SalaryAdjustments() {
     }
   };
 
+  const currentMonthPatch = () => {
+    // Find current month
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+
+    // Find matching month in data
+    const currentMonthData = salaryMonthsList.find(month => {
+      const monthDate = new Date(month.salaryMonthDate);
+      return (
+        monthDate.getFullYear() === currentYear &&
+        monthDate.getMonth() + 1 === currentMonth
+      );
+    });
+
+    // Set as default selected
+    if (currentMonthData) {
+      setNewData((prevData) => ({
+        ...prevData,
+        allocatingSalaryMonth: currentMonthData.idSalaryMonth
+      }));
+    }
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -379,7 +403,7 @@ function SalaryAdjustments() {
                     onKeyDown={e => e.key === 'Enter' ? getSalaryAdjustments() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getSalaryAdjustments()}></i>
                 </div>
-                <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>Add</button>
+                <button className="btn btn-primary btn-sm px-4" onClick={() => {setShowModal(true);currentMonthPatch();}}>Add</button>
               </div>
 
             </div>
