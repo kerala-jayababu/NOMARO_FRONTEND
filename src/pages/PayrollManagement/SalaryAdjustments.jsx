@@ -521,7 +521,7 @@ function SalaryAdjustments() {
                       <option value={''}>Select</option>
                       {
                         salaryHeadList?.map((el) => (
-                          <option value={el.idSalaryHead} key={el.idSalaryHead}>{el.salaryHeadName}</option>
+                          <option value={el.idSalaryHead} key={el.idSalaryHead}>[{el.headType == 'EARNING' ? 'E' : 'D'}] {el.salaryHeadName} ({el.salaryHeadCode}) </option>
                         ))
                       }
                     </select>
