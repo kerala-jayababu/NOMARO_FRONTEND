@@ -667,7 +667,6 @@ const EmployeeSalaryConfig = () => {
 
   const handleSave = (e) => {
     const employeeToUse = selectedEmployee || previousSelectedEmployee;
-    debugger
     e.preventDefault();
     if (!employeeToUse) {
       setValidated(true);
@@ -902,7 +901,6 @@ const EmployeeSalaryConfig = () => {
                       className="form-select form-select"
                       value={selectedTemplateId}
                       onChange={(e) => {
-                        debugger
                         setPreviousSelectedEmployee(selectedEmployee);
                         setSelectedTemplateId(e.target.value);
                       }}>

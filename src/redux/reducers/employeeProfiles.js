@@ -108,7 +108,6 @@ export const deleteEmployeeAttachment = createAsyncThunk(
   "employeeBankAccount/DeleteEmployeeAttachment",
   async (idEmployee) => {
     try {
-      debugger
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
