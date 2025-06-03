@@ -346,7 +346,6 @@ const excludedColumns = ["employeecode"];
         //const isNumericColumn = numericColumnIndexes[index].isNumeric;
 
        if (meta.dataType === "currency" && value !== null && value !== undefined) {
-        debugger
     if (typeof value === "string" && !isNaN(parseFloat(value))) {
       return parseFloat(value.replaceAll(",", ""));
     } else if (typeof value === "number") {

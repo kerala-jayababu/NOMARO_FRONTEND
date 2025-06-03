@@ -10,11 +10,12 @@ import Select from 'react-select';
 import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 function ViewPaySlips() {
   const [salarySlips, setSalarySlips] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(1000);
   const totalPages = Math.ceil(salarySlips.length / rowsPerPage);
   const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
@@ -24,6 +25,8 @@ function ViewPaySlips() {
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [filteredMonthsList, setFilteredMonthsList] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     getEmployeesData();
@@ -37,10 +40,13 @@ function ViewPaySlips() {
   }, [fromMonth, toMonth]);
 
   const getSalarySlips = () => {
+    setLoading(true);
     ViewPaySlipService.getSalarySlipsData(fromMonth, toMonth, searchText).then(res => {
       setSalarySlips(res.data.data);
+      setLoading(false);
     }).catch(err => {
       setSalarySlips([]);
+      setLoading(false);
     });
   }
 
@@ -107,8 +113,21 @@ function ViewPaySlips() {
 
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
-      setSalaryMonthsList(res.data);
-      setFilteredMonthsList(res.data);
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 2;
+
+      const filtered = res.data.filter(month => {
+        const monthDate = new Date(month.salaryMonthDate);
+        const monthYear = monthDate.getFullYear();
+        const monthMonth = monthDate.getMonth() + 1;
+
+        return monthYear < currentYear ||
+          (monthYear === currentYear && monthMonth <= currentMonth);
+      });
+
+      setSalaryMonthsList(filtered);
+      setFilteredMonthsList(filtered);
     }).catch(err => {
     });
   };
@@ -172,6 +191,33 @@ function ViewPaySlips() {
 
   const isAllSelected = validPaySlips.length > 0 && selectedRows.length === validPaySlips.length;
 
+  const confirmFinalize = (val) => {
+    setShowConfirmation(false);
+    if (val) {
+      sendEmailNotification();
+    }
+  };
+
+  const sendEmailNotification = () => {
+    const ids = [];
+    selectedRows.forEach(el => {
+      if ((salarySlips.find(x => x.idEmployeeSalary == el).emailStatus != 'PROCESSING')) {
+        ids.push(el);
+      }
+    })
+    const result = ids.join(",");
+    ViewPaySlipService.sendEmail(result).then(res => {
+      console.log(res)
+      if (res.data.status == 200 || res.data.status == 202) {
+        toast.success(res.data.data.data, {
+          position: 'top-right',
+          autoClose: 2000
+        });
+      }
+    }).catch(err => {
+    });
+  }
+
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -229,7 +275,7 @@ function ViewPaySlips() {
 
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap">
+              <div className="table-responsive text-nowrap" style={{ maxHeight: '500px', overflow: 'auto' }}>
                 <table className="table table-sm">
                   <thead>
                     <tr>
@@ -295,31 +341,33 @@ function ViewPaySlips() {
                 <button className="btn btn-primary btn-sm px-4"
                   disabled={selectedRows.length === 0} onClick={() => downloadMultipleSalarySlips()}>
                   Download selected
+                </button> &nbsp;
+                <button className="btn btn-primary btn-sm px-4"
+                  disabled={selectedRows.length === 0 || loading} onClick={() => setShowConfirmation(true)}>
+                  Send notification
                 </button>
-                {/* <button className="btn btn-primary btn-sm px-4"
-                  disabled={selectedRows.length === 0}>
-                  Send notification – Selected employees
-                </button> */}
               </div>
-              <div className="text-end pt-2">
-                {/* <select className='form-select' onChange={(e)=>setRowsPerPage(e.target.value)}>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select> */}
+              {/* <div className="text-end pt-2">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
-
-
       </div >
+      {
+        showConfirmation &&
+        <ConfirmationModal
+          modalShow={true}
+          messageText={"Are you sure to send email notification for the selected rows?"}
+          callbackModal={confirmFinalize}
+          confirmBtn={"Confirm"}
+          CancelBtn={"Cancel"}
+        />
+      }
     </div >
 
   )

@@ -25,7 +25,6 @@ export const getAllOptions = createAsyncThunk(
           "Content-Type": "application/json",
         },
       });
-      debugger
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to fetch options");
