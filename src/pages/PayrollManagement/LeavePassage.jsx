@@ -23,7 +23,7 @@ const LeavePassage = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [formSalaryMonth, setFormSalaryMonth] = useState("");
   const [loading, setLoading] = useState(false);
-  const [refreshFlag, setRefreshFlag] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const [newData, setNewData] = useState({
     idLeavePassage: 0,
     idEmployee: 0,
@@ -50,28 +50,17 @@ const LeavePassage = () => {
       await getAllSalaryMonths();
       await getFinancialYears();
       await getEmployeeDetails();
-      await getLeavePassagesByEmployeeId();
-      setNewDataValues();
+      setRefreshCounter(prev => prev + 1); // trigger initial fetch
     })();
-  }, [])
+  }, []);
 
   useEffect(() => {
-    if (employeeData) {
-      setNewDataValues();
-    }
-  }, [employeeData]); 
-
-  useEffect(() => {
-    console.log("Fetching Leave Passages...");
-    (async () => {
-    await getLeavePassagesByEmployeeId();
-    })();
-  }, [refreshFlag]);  
+    getLeavePassagesByEmployeeId();
+  }, [refreshCounter]);  
 
   const handleFormSalaryMonthChange = (option) => {
-    setFormSalaryMonth(option); // set whole object: { value, label }
+    setFormSalaryMonth(option);
     const selectedDate = moment(option.label);
-
     const matched = financialYears.find((fy) => {
       const from = moment(fy.financialYearFrom);
       const to = moment(fy.financialYearTo);
@@ -82,9 +71,9 @@ const LeavePassage = () => {
       ...prevData,
       salaryMonthText: option.label,
       idSalaryMonth: option.value,
-      idFinancialYear: matched.idFinancialYear,
-      financialYearFrom: matched.financialYearFrom,
-      financialYearTo: matched.financialYearTo
+      idFinancialYear: matched?.idFinancialYear ?? 0,
+      financialYearFrom: matched?.financialYearFrom ?? "",
+      financialYearTo: matched?.financialYearTo ?? "",
     }));
   };
 
@@ -95,7 +84,7 @@ const LeavePassage = () => {
         value: month.idSalaryMonth,
         label: month.salaryMonthText
       }));
-      const currentMonth = moment(); // today
+      const currentMonth = moment();
       const filteredSalaryMonths = options.filter(option => {
         const date = moment(option.label, 'MMMM, YYYY');
         return (
@@ -112,36 +101,66 @@ const LeavePassage = () => {
 
   const getLeavePassagesByEmployeeId = async () => {
     setLoading(true);
-    await LeavePassageService.getLeavePassagesByEmployeeId(userData.idEmployee?? 0).then(res => {
+    try {
+      const res = await LeavePassageService.getLeavePassagesByEmployeeId(userData.idEmployee ?? 0);
       setLeavePassages(res.data.data || []);
       setCurrentPage(1);
-    }).catch(() => {
+    } catch {
       setLeavePassages([]);
-    })
-    .finally(() => {
+    } finally {
       setLoading(false);
-    });
   }
+  };
 
-  const getLeavePassagesList = () => {
-    setLoading(true);
-    LeavePassageService.getLeavePassagesList(userData.employeeCode?? "", null).then(res => {
-      setLeavePassages(res.data.data || []);
-      setCurrentPage(1);
-    }).catch(() => {
-      setLeavePassages([]);
-    })
-    .finally(() => {
-      setLoading(false);
+  const getFinancialYears = async () => {
+    try {
+      const res = await CommonService.getAllFinancialYears();
+      setFinancialYears(res.data || []);
+    } catch (err) {
+      console.error('Failed to load financial years', err);
+    }
+  };
+
+  const getEmployeeDetails = async () => {
+    try {
+      const response = await dispatch(getEmployeeDetailsByID(userData.idEmployee));
+        if (response.payload && response.payload.data) {
+        const empData = response.payload.data;
+        setEmployeeData(empData);
+        setNewDataValues(empData);
+        }
+    } catch (err) {
+      console.error('Failed to get employee details', err);
+    }
+  };
+
+  const setNewDataValues = (empData = employeeData) => {
+    if (!empData) return;
+    setNewData({
+      idLeavePassage: 0,
+      idEmployee: userData.idEmployee,
+      idFinancialYear: 0,
+      idSalaryMonth: 0,
+      remarks: "",
+      approvalStatus: "",
+      employeeCode: empData.employeeCode,
+      employeeName: empData.fullName,
+      departmentName: empData.department,
+      designationName: empData.designation,
+      idDepartment: empData.idDepartment,
+      idDesignation: empData.idDesignation,
+      salaryMonthText: "",
+      financialYearFrom: "",
+      financialYearTo: "",
     });
-  }
+  };
 
   const handlePageChange = (page) => setCurrentPage(page);
 
   const paginatedData = useMemo(() => {
     const getDate = (monthText) => new Date(`01 ${monthText}`);
-    const sortedData = [...leavePassages].sort((a, b) => 
-      getDate(a.salaryMonthText) - getDate(b.salaryMonthText) 
+    const sortedData = [...leavePassages].sort((a, b) =>
+      getDate(a.salaryMonthText) - getDate(b.salaryMonthText)
     );
     const startIndex = (currentPage - 1) * rowsPerPage;
     return sortedData.slice(startIndex, startIndex + rowsPerPage);
@@ -151,70 +170,12 @@ const LeavePassage = () => {
     setValidated(false);
     setIsEdit(false);
     setFormSalaryMonth(null);
-    setNewData({
-      idLeavePassage: 0,
-      idEmployee: 0,
-      idFinancialYear: 0,
-      idSalaryMonth: 0,
-      remarks: "",
-      approvalStatus: "",
-      employeeCode: 0,
-      employeeName: "",
-      departmentName: "",
-      designationName: "",
-      idDepartment: 0,
-      idDesignation: 0,
-      salaryMonthText: "",
-      financialYearFrom: "",
-      financialYearTo: "",
-    });
-  }
-
-  const getFinancialYears = async () => {
-    try {
-      const res = await CommonService.getAllFinancialYears();
-      setFinancialYears(res.data || []);
-    } catch (err) {
-      console.error('Failed to load financial months', err);
-    }
-  }
-
-  const getEmployeeDetails = async () => {
-    try {
-      await dispatch(getEmployeeDetailsByID(userData.idEmployee)).then((response) => {
-        if (response.payload && response.payload.data) {
-          setEmployeeData(response.payload.data);
-        }
-      });
-    } catch (err) {
-      console.error('Failed to get employee details', err);
-    }
-  }
-
-  const setNewDataValues = () => {
-    setNewData({
-      idLeavePassage: 0,
-      idEmployee: userData.idEmployee,
-      idFinancialYear: 0,
-      idSalaryMonth: 0,
-      remarks: "",
-      approvalStatus: "",
-      employeeCode: employeeData?.employeeCode,
-      employeeName: employeeData?.fullName,
-      departmentName: employeeData?.department,
-      designationName: employeeData?.designation,
-      idDepartment: employeeData?.idDepartment,
-      idDesignation: employeeData?.idDesignation,
-      salaryMonthText: "",
-      financialYearFrom: "",
-      financialYearTo: "",
-    });
-  }
+    setNewDataValues();
+  };
 
   const saveLeavePassage = async (e) => {
     e.preventDefault();
-    const isFormValid = newData.salaryMonthText && newData.remarks;
-    if (!isFormValid) {
+    if (!newData.salaryMonthText || !newData.remarks) {
       setValidated(true);
       showToast("Please fill all required fields", 'warning');
       return;
@@ -226,9 +187,9 @@ const LeavePassage = () => {
         const res = await LeavePassageService.addLeavePassage(formData);
         if (res.data.status === 200) {
           showToast.success('Leave Passage added successfully');
-          setLeavePassages(...leavePassages, formData);
-          setRefreshFlag(prev => !prev);
           setShowModal(false);
+          resetValues();
+          setRefreshCounter(prev => prev + 1);
         }
       }
     } catch (err) {
@@ -236,7 +197,7 @@ const LeavePassage = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const updateLeavePassage = async (e) => {
     e.preventDefault();
@@ -249,15 +210,11 @@ const LeavePassage = () => {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
       if(validateForm(formData, "EDIT")){
         const res = await LeavePassageService.updateLeavePassage(formData);
-        let updatedLeavePassages;
         if (res.data.status === 200) {
           showToast.success('Leave Passage updated successfully');
-          updatedLeavePassages = leavePassages.map(e =>
-                    e.idLeavePassage = formData.idLeavePassage ? formData : e
-                  );
-          setLeavePassages(updatedLeavePassages);
-          setRefreshFlag(prev => !prev);
           setShowModal(false);
+          resetValues();
+          setRefreshCounter(prev => prev + 1);
         }
       }
     } catch (err) {
@@ -265,7 +222,7 @@ const LeavePassage = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const setupEdit = (item) => {
     setIsEdit(true);
@@ -275,33 +232,22 @@ const LeavePassage = () => {
       label: item.salaryMonthText
     });
     setShowModal(true);
-  }
+  };
 
   const validateForm = (formData, mode) => {
     const currentFY = getFinancialYear(formData.salaryMonthText);
-  
     const duplicateRecord = leavePassages.some((entry) => {
       const sameEmployee = entry.employeeCode === formData.employeeCode;
       const sameFY = getFinancialYear(entry.salaryMonthText) === currentFY;
       const isDifferentRecord = entry.idLeavePassage !== formData.idLeavePassage;
   
       if (sameEmployee && sameFY) {
-        // ADD mode: block if any matching record exists
-        if (mode === 'ADD') {
-          return true;
-        }
-  
-        // EDIT mode
-        if (mode === 'EDIT' && isDifferentRecord) {
-          return true; // there's another record in same FY
-        }
-  
+        if (mode === 'ADD') return true;
+        if (mode === 'EDIT' && isDifferentRecord) return true;
         if (mode === 'EDIT' && !isDifferentRecord) {
-          // If trying to update the same record, allow only if not approved
           return entry.approvalStatus === 'APPROVED';
         }
       }
-  
       return false;
     });
   
@@ -309,18 +255,14 @@ const LeavePassage = () => {
       showToast(`Leave Passage already claimed for FY ${currentFY}`, 'error');
       return false;
     }
-  
     return true;
   };
-  
 
   const getFinancialYear = (monthStr) => {
     const date = moment(monthStr, 'YYYY-MM');
     const year = date.year();
     const month = date.month() + 1;
-    return month <= 3
-      ? `${year - 1}-${year}`
-      : `${year}-${year + 1}`;
+    return month <= 3 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
   };
 
   return (
@@ -457,7 +399,7 @@ const LeavePassage = () => {
                             className={`textSize ${validated && !formSalaryMonth ? 'is-invalid-select' : ''}`} required
                           />
                           {validated && !formSalaryMonth && (
-                              <div className='red'>Salary Month is required</div>
+                              <div className='red' style={{color : 'red'}}>Salary Month is required</div>
                           )}
                       </div>
                       <div className="col-md-6 p-2">
@@ -480,9 +422,7 @@ const LeavePassage = () => {
                 </button>
                 <button className="btn btn-primary" onClick={(e) => {
                     isEdit ? updateLeavePassage(e) : saveLeavePassage(e);
-                    setShowModal(false);
-                    resetValues();
-                    setRefreshFlag(prev => !prev);
+                    setRefreshCounter(prev => prev + 1);
                   }}
                 >
                   {isEdit ? 'Update' : 'Submit'}
