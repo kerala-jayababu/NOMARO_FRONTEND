@@ -103,7 +103,7 @@ function Reports() {
       return "left";
     } else if (config?.alignment === "RIGHT") {
       return "right";
-    } else if (/Amt|Amount|Discount|Balance/i.test(key) || !isNaN(value)) {
+    } else if (/Amt|Amount|Discount|Balance/i.test(key) ) {
       return "right";
     } else {
       return "left";
