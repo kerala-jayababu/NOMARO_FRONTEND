@@ -278,6 +278,7 @@ function OvertimeTransaction() {
       attachmentDescription: "",
     });
     setSelectedEmployee(null)
+    handleClear();
   }
 
   const handleChange = (selectedOption) => {

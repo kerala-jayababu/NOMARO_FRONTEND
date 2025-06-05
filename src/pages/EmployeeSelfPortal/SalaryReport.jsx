@@ -178,9 +178,9 @@ function SalaryReport() {
                                                 />
                                             </th>
                                             <th>Month</th>
-                                            <th className="text-end">Total Earnings</th>
-                                            <th className="text-end">Total Deductions</th>
-                                            <th className="text-end">Net Salary</th>
+                                            <th className="text-end">Total Earnings (G$)</th>
+                                            <th className="text-end">Total Deductions (G$)</th>
+                                            <th className="text-end">Net Salary (G$)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
