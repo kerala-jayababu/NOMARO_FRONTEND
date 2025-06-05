@@ -10,6 +10,7 @@ import moment from "moment";
 import Select from 'react-select';
 import { NumericFormat } from "react-number-format";
 import { useLoader } from "../../components/LoaderContext";
+import DatePicker from "react-datepicker";
 
 const EmployeeSalaryConfig = () => {
   const [designation, setDesignation] = useState("");
@@ -18,6 +19,7 @@ const EmployeeSalaryConfig = () => {
   const [employeeSalaryDetails, setEmployeeSalaryDetails] = useState([]);
   const [netSalary, setNetSalary] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [previousSelectedEmployee, setPreviousSelectedEmployee] = useState(null);
   const [copyFromData, setCopyFromData] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +44,7 @@ const EmployeeSalaryConfig = () => {
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
   const { showLoader, hideLoader } = useLoader();
+  const [validFrom, setValidFrom] = useState('')
 
   useEffect(() => {
     getSalaryHeadData();
@@ -376,7 +379,7 @@ const EmployeeSalaryConfig = () => {
         const earningHeads = rows.filter(r =>
           r.selectedSalaryHead?.headType === "EARNING" &&
           r.selectedSalaryHead?.salaryHeadCode !== "NIS" &&
-          r.id !== row.id 
+          r.id !== row.id
         );
 
         const sumOfRelevantHeads = earningHeads.reduce(
@@ -394,7 +397,7 @@ const EmployeeSalaryConfig = () => {
         return {
           ...row,
           calculatedValue,
-          customFormula: currentFormula 
+          customFormula: currentFormula
         };
       } catch (error) {
         console.error("NIS calculation error:", error);
@@ -547,7 +550,7 @@ const EmployeeSalaryConfig = () => {
         percentageOf: detail.percentageOfIdSalaryHead,
         calculatedValue: detail.salaryAmount,
       }));
-
+      setValidFrom(moment(data.validFrom).format("MM-DD-YYYY"));
       setRows(mappedRows);
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
@@ -618,7 +621,6 @@ const EmployeeSalaryConfig = () => {
         percentageOf: detail.percentageOfIdSalaryHead,
         calculatedValue: detail.salaryAmount,
       }));
-
       setRows(mappedRows);
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
@@ -660,23 +662,25 @@ const EmployeeSalaryConfig = () => {
     setEmpDescDept("");
     setSelectedEmpConfigId('');
     setCopyFromData(false);
+    setValidFrom('');
   };
 
   const handleSave = (e) => {
+    const employeeToUse = selectedEmployee || previousSelectedEmployee;
     e.preventDefault();
-    if (!selectedEmployee) {
+    if (!employeeToUse) {
       setValidated(true);
       return;
     }
     const payload = {
       idEmployeeSalaryConfig: null,
-      idEmployee: selectedEmployee?.value,
+      idEmployee: employeeToUse?.value,
       idDesignation: designation,
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
-      validFrom: moment().format("YYYY-MM-DD"),
+      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
@@ -715,8 +719,9 @@ const EmployeeSalaryConfig = () => {
       totalEarnings: totalEarnings,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
+      approvalStatus: "SUBMITTED",
       activeStatus: true,
-      validFrom: dataToEdit.validFrom ?? moment().format("YYYY-MM-DD"),
+      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
         idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail,
@@ -797,9 +802,12 @@ const EmployeeSalaryConfig = () => {
                       <th>Employee Name</th>
                       <th>Designation</th>
                       <th>Joining Date</th>
+                      <th>Valid From</th>
                       <th className="text-end">Total Earnings</th>
                       <th className="text-end">Total Deductions</th>
                       <th className="text-end">Net Salary</th>
+                      <th >Status</th>
+
                       <th></th>
                     </tr>
                   </thead>
@@ -809,11 +817,15 @@ const EmployeeSalaryConfig = () => {
                         <tr key={item.idEmployeeSalaryConfig}>
                           <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
-                          <td>{item?.designationName}</td>
+                          <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
                           <td>{moment(item?.joiningDate).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.validFrom).format("MM/DD/YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
+                          <td>
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
+                          </td>
                           <td className="text-end">
                             {
                               item?.approvalStatus != "APPROVED" &&
@@ -866,7 +878,7 @@ const EmployeeSalaryConfig = () => {
             <Modal.Body>
               <Form noValidate validated={validated}>
                 <div className="row m-0">
-                  <div className="col-md-4 p-2">
+                  <div className="col-md-3 p-2">
                     <label className="form-label mb-1">Employee Name</label>
                     <Select
                       options={employeesListOption}
@@ -878,17 +890,18 @@ const EmployeeSalaryConfig = () => {
                     />
                   </div>
 
-                  <div className="col-md-4 p-2">
+                  <div className="col-md-3 p-2">
                     <label className="form-label mb-1">Designation</label>
                     <input className='form-control' value={empDescDept} disabled />
                   </div>
 
-                  <div className="col-md-4 p-2">
+                  <div className="col-md-3 p-2">
                     <label className="form-label mb-1">Templates</label>
                     <select
                       className="form-select form-select"
                       value={selectedTemplateId}
                       onChange={(e) => {
+                        setPreviousSelectedEmployee(selectedEmployee);
                         setSelectedTemplateId(e.target.value);
                       }}>
                       <option value="">Select Templates</option>
@@ -898,6 +911,16 @@ const EmployeeSalaryConfig = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="col-md-3 p-2">
+                    <label className="form-label mb-1">Valid From</label>
+                    <DatePicker className="form-control" selected={validFrom}
+                      onChange={(date) => setValidFrom(date)}
+                      required wrapperClassName="datePicker"
+                      dateFormat="MM/dd/yyyy"
+                      placeholderText='Select Date' showMonthDropdown
+                      showYearDropdown dropdownMode="select" />
                   </div>
                 </div>
 
@@ -924,7 +947,7 @@ const EmployeeSalaryConfig = () => {
                               <option value="">Select Salary Head</option>
                               {getAvailableSalaryHeads(row.id).map(head => (
                                 <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                  {head.salaryHeadName} ({head.salaryHeadCode})
+                                  [{head.headType == 'EARNING' ? 'E' : 'D'}] {head.salaryHeadName} ({head.salaryHeadCode})
                                 </option>
                               ))}
                             </select>
@@ -1091,7 +1114,7 @@ const EmployeeSalaryConfig = () => {
             </Modal.Header>
 
             <Modal.Body>
-              <h6>{employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode})</h6>
+              <h6>{employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode}) &nbsp; | &nbsp; Valid from: {moment(employeeSalaryDetails?.validFrom).format("MM-DD-YYYY")}</h6>
               <div className="px-2">
                 <table className="table table-sm">
                   <thead>

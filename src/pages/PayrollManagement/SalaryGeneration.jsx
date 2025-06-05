@@ -12,6 +12,8 @@ import Utils from "../../utils/Utils";
 import { BASE_URL, getSalaryHeadList } from "../../utils/service";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import { API } from "../../redux/api/utils";
+import { fetchBudgetCode } from "../../redux/reducers/budgetCode";
+import { compare } from "mathjs";
 
 const statusColor = [
   {
@@ -43,7 +45,7 @@ const statusColor = [
     color: "bg-info",
   },
   { status: "fm approved", color: "bg-info" },
-  { status: "hr approved", color: "bg-info" }
+  { status: "hr approved", color: "bg-info" },
 ];
 
 const months = [
@@ -72,13 +74,13 @@ const statusOptions = [
 
 function SalaryGeneration() {
   const dispatch = useDispatch();
-  const [showOverloay,setShowOverlay] = useState(false)
+  const [showOverloay, setShowOverlay] = useState(false);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryDraft, setSalaryDraft] = useState([]);
   const [draftSalary, setDraftSalary] = useState([]);
   const [importedData, setImportedData] = useState([]);
   const [showImportData, setShowImportData] = useState(false);
-  const [statusOptions,setStatusOptions] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
   const [show, setShow] = useState(false);
   const optionsRef = useRef();
   const statusRef = useRef();
@@ -96,6 +98,7 @@ function SalaryGeneration() {
   );
   const { departments } = useSelector((state) => state.department);
   const { designation } = useSelector((state) => state.designation);
+  const { options } = useSelector((state) => state.budgetCode);
   const [selectedCard, setSelectedCard] = useState("All");
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -123,6 +126,7 @@ function SalaryGeneration() {
   };
 
   const handelCheckboxCheck = (checked) => {
+    
     Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
       if (!item.disabled) {
         item.checked = checked;
@@ -170,13 +174,18 @@ function SalaryGeneration() {
       setSalaryMonthsList(filteredMonths);
     });
 
-    const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
+    const statusResponse = await API.get(
+      `${BASE_URL}/api/v1/Common/GetSalaryOptions`
+    );
     const statusData = statusResponse?.data || [];
     const formattedStatus = statusData.map((item) => ({
       value: item.value,
       label: item.label,
     }));
-    const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
+    const fullStatusOptions = [
+      { value: "All", label: "All Status" },
+      ...formattedStatus,
+    ];
     setStatusOptions(fullStatusOptions);
   };
 
@@ -188,7 +197,7 @@ function SalaryGeneration() {
       };
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
-      clearAllFilter()
+      clearAllFilter();
     }
 
     fetchData();
@@ -196,16 +205,18 @@ function SalaryGeneration() {
 
   useEffect(() => {
     getSalaryMonths();
-         
   }, []);
 
   async function populateOptions(option) {
     if (option) {
       if (option.value === "designation") {
         await dispatch(fetchDesignations());
+      } else if (option.value === "budget") {
+        const result = await dispatch(fetchBudgetCode());
+        console.log("Fetched budget codes:", result?.payload?.data);
       } else {
         await dispatch(fetchDepartments());
-      }
+      }      
       if (optionsRef.current) optionsRef.current.clearValue();
       setOption(option.value);
       setSalaryDraft([]);
@@ -233,9 +244,8 @@ function SalaryGeneration() {
 
   const handleMonthFromChange = (option) => {
     setCurrentMonth(option);
-    clearAllFilter()
-  }
-   
+    clearAllFilter();
+  };
 
   const clearAllFilter = () => {
     setSalaryDraft([]);
@@ -244,8 +254,7 @@ function SalaryGeneration() {
     if (filterRef.current) filterRef.current.clearValue();
     if (optionsRef.current) optionsRef.current.clearValue();
     if (statusRef.current) statusRef.current.clearValue();
-  }
-  
+  };
 
   function disableCheckBox(item) {
     return (
@@ -266,18 +275,18 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    setShowOverlay(true)
+    setShowOverlay(true);
     const response = await SalaryGenerationService.generateDraftSalary(
       employeeIds,
       currentMonth.value
     );
-    setShowOverlay(false)
+    setShowOverlay(false);
     if (!response.error) {
       setDraftSalary(response.data.data);
       setShow(true);
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
-      clearAllFilter()
+      clearAllFilter();
     } else {
       toast.error(response.error);
     }
@@ -341,7 +350,7 @@ function SalaryGeneration() {
           onHide={() => {
             setShowImportData(false);
           }}
-         size="xl"
+          size="xl"
           aria-labelledby="contained-modal-title-vcenter"
           backdrop="static"
           keyboard={false}
@@ -383,17 +392,17 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    setShowOverlay(true)
+    setShowOverlay(true);
     const response = await SalaryGenerationService.undoGeneratedDraftSalary(
       employeeIds,
       currentMonth.value
     );
-    setShowOverlay(false)
+    setShowOverlay(false);
     if (!response.error) {
       toast.success("Draft Salary Generation Undone Successfully");
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
-      clearAllFilter()
+      clearAllFilter();
     } else {
       toast.error(response.error);
     }
@@ -407,17 +416,17 @@ function SalaryGeneration() {
       status: "All",
     };
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    setShowOverlay(true)
+    setShowOverlay(true);
     const response = await SalaryGenerationService.submitSalaryDetails(
       employeeIds,
       currentMonth.value
     );
-    setShowOverlay(false)
+    setShowOverlay(false);
     if (!response.error) {
       toast.success("Salary Submitted for Approval Successfully");
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
-      clearAllFilter()
+      clearAllFilter();
     } else {
       toast.error(response.error);
     }
@@ -427,8 +436,11 @@ function SalaryGeneration() {
 
   const disableApprovalbtn = () => {
     return (
-      salaryDraft.filter((x) => x.approvalStatus.toLowerCase() === "draft" || x.approvalStatus.toLowerCase() === "rejected")
-        .length === 0
+      salaryDraft.filter(
+        (x) =>
+          x.approvalStatus.toLowerCase() === "draft" ||
+          x.approvalStatus.toLowerCase() === "rejected"
+      ).length === 0
     );
   };
 
@@ -481,12 +493,12 @@ function SalaryGeneration() {
 
   const ExportSalaryGeneration = async () => {
     const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
-    setShowOverlay(true)
+    setShowOverlay(true);
     const response = await SalaryGenerationService.exportSalaryGeneration(
       employeeIds,
       currentMonth.value
     );
-    setShowOverlay(false)
+    setShowOverlay(false);
     if (response.error) {
       toast.error(response.error);
     } else {
@@ -532,10 +544,10 @@ function SalaryGeneration() {
         idSalaryMonth: currentMonth.value,
         employeeSalaryJsonData: data,
       };
-      setShowOverlay(true)
+      setShowOverlay(true);
       const response =
         await SalaryGenerationService.UploadSalaryGenerationDetails(content);
-      setShowOverlay(false)
+      setShowOverlay(false);
       if (response.error) {
         toast.error(response.error);
       } else {
@@ -549,7 +561,7 @@ function SalaryGeneration() {
       };
       const { payload } = await dispatch(getSalaryGenerations(params));
       setAllSalaryList(payload.data);
-      clearAllFilter()
+      clearAllFilter();
     } catch (error) {
       console.error("Error processing Excel file:", error);
     }
@@ -741,6 +753,7 @@ function SalaryGeneration() {
                         label: "Filter Designation Based",
                       },
                       { value: "department", label: "Filter Department Based" },
+                      { value: "budget", label: "Filter Budget Based" },
                     ]}
                     isSearchable
                     ref={filterRef}
@@ -766,6 +779,24 @@ function SalaryGeneration() {
                         setFilter(option?.value || "");
                       }}
                       placeholder={"Select Department"}
+                      className="textSize"
+                    />
+                  ) : option === "budget" ? (
+                    <Select
+                      ref={optionsRef}
+                      options={[
+                        { value: "", label: "All Budget Codes" },
+                        ...(options?.data?.map((budget) => ({
+                          value: budget.budgetCode,
+                          label: budget.budgetCode,
+                        })) || []),
+                      ]}
+                      isSearchable
+                      onChange={(option) => {
+                        if (statusRef.current) statusRef.current.value = "All";
+                        setFilter(option?.value || "");
+                      }}
+                      placeholder={"Select Budget Code"}
                       className="textSize"
                     />
                   ) : (
@@ -807,7 +838,7 @@ function SalaryGeneration() {
                   <thead>
                     <tr>
                       <th>
-                        {["not generated", "draft generated"].includes(
+                        {["not generated", "draft generated", "rejected"].includes(
                           statusFilter?.value?.toLowerCase()
                         ) && (
                           <input
@@ -825,6 +856,7 @@ function SalaryGeneration() {
                       <th>Employee Name</th>
                       <th>Department</th>
                       <th>Designation</th>
+                      <th>Budget Code</th>
                       <th className="text-end">Total Earnings</th>
                       <th className="text-end">Total Deductions</th>
                       <th className="text-end">Net Salary</th>
@@ -833,14 +865,29 @@ function SalaryGeneration() {
                   </thead>
                   <tbody>
                     {salaryGenerationList
-                      ?.filter(
-                        (x) =>
-                          x?.departmentName.toLowerCase() ===
-                            filter.toLowerCase() ||
-                          x?.designationName.toLowerCase() ===
-                            filter.toLowerCase() ||
-                          filter.length === 0
-                      )
+                      ?.filter((x) => {
+                        if (!filter) return true;
+
+                        if (option === "department")
+                          return (
+                            x?.departmentName?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        if (option === "designation")
+                          return (
+                            x?.designationName?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        if (option === "budget")
+                          return (
+                            x?.budgetCode?.toLowerCase() ===
+                            filter.toLowerCase()
+                          );
+
+                        return true;
+                      })
                       ?.map((item, index) => (
                         <tr key={index}>
                           <td>
@@ -867,6 +914,7 @@ function SalaryGeneration() {
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
+                          <td>{item.budgetCode}</td>
                           <td className="text-end">
                             {new Intl.NumberFormat("en-US", {
                               minimumFractionDigits: 2,
@@ -931,7 +979,9 @@ function SalaryGeneration() {
                   <button
                     disabled={
                       salaryDraft.filter(
-                        (x) => x.approvalStatus.toLowerCase() === "draft" || x.approvalStatus.toLowerCase() === "rejected"
+                        (x) =>
+                          x.approvalStatus.toLowerCase() === "draft" ||
+                          x.approvalStatus.toLowerCase() === "rejected"
                       ).length === 0
                     }
                     onClick={() => ExportSalaryGeneration()}
@@ -1044,7 +1094,7 @@ function SalaryGeneration() {
         showImportData={showImportData}
         setShowImportData={setShowImportData}
       />
-      <LoadingOverlay isLoading={showOverloay}/>
+      <LoadingOverlay isLoading={showOverloay} />
     </div>
   );
 }

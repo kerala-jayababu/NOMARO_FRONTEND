@@ -32,9 +32,11 @@ function ConfigApproval() {
   const dispatch = useDispatch();
   const { configApprovalList } = useSelector((state) => state.configApproval);
   const { idPayrollScreen } = useSelector((state) => state.auth);
-  const [dateFrom, setDateFrom] = React.useState(
-    new Date().toISOString().split("T")[0]
-  );
+const [dateFrom, setDateFrom] = React.useState(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 14);
+  return date.toISOString().split("T")[0];
+});
   const [entityType, setEntityType] = React.useState("");
   const [entityName, setEntityName] = React.useState("");
   const [entityId, setEntityId] = useState(0);
@@ -87,6 +89,7 @@ function ConfigApproval() {
   };
 
   const handleApproveWorkflow = async () => {
+    debugger
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
         (item) => item.idApprovalWorkFlow === id

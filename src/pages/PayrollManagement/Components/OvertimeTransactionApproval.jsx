@@ -238,7 +238,7 @@ function OvertimeTransactionApproval({
                       <button className="btn btn-outline-primary border-0 btn-sm">
                         <i
                           className="bx bx-paperclip cursor"
-                          onClick={() => downloadFile(item)}
+                          onClick={() => downloadFile(overtimeTransaction)}
                         ></i>
                       </button>
                     </td>

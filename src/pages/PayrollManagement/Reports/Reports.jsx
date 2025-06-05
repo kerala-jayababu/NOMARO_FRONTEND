@@ -46,13 +46,14 @@ function Reports() {
     dispatch(getReportsConditionAction(report.idReport));
   };
 
-  function downloadFile(format, filter) {
+  function downloadFile(format, filter) {    
     if (format === "excel") {
       Utils.exportToExcelJS(
         reportData,
         report?.reportName,
         report?.headerRequired,
-        filter
+        filter,
+        reportColumns 
       );
     } else {
       Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
@@ -102,7 +103,7 @@ function Reports() {
       return "left";
     } else if (config?.alignment === "RIGHT") {
       return "right";
-    } else if (/Amt|Amount|Discount|Balance/i.test(key) || !isNaN(value)) {
+    } else if (/Amt|Amount|Discount|Balance/i.test(key) ) {
       return "right";
     } else {
       return "left";

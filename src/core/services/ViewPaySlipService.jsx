@@ -44,4 +44,14 @@ export default class ViewPaySlipService {
     }
   }
 
+  static sendEmail = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/SalaryGeneration/GenerateNotificationForEmployeeSalary?idEmployeeSalary=" + payload, {});
+      handleApiSuccessOrError(res, false);
+      return { error: null, data: res };
+    } catch (error) {
+      return handleApiSuccessOrError(res.data, true);
+    }
+  }
+
 }

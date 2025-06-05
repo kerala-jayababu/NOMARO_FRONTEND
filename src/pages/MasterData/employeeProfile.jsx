@@ -23,6 +23,7 @@ import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfi
 import Input from "../../components/input";
 import secureLocalStorage from "react-secure-storage";
 export const BASE_URL = import.meta.env.VITE_API_URL;
+import { toast } from "react-toastify";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
@@ -71,6 +72,7 @@ const EmployeeProfile = () => {
     },
   ]);
   const [overtimeOptions, setOvertimeOptions] = useState([]);
+  const [disbursementType, setDisbursementType] = useState("PERCENTAGE");
 
   const bankOptions = useMemo(
     () =>
@@ -119,10 +121,9 @@ const EmployeeProfile = () => {
     setSelectedEmployee(null);
     setBankAccountsState([]);
     setOvertimeDetails([]);
-    debugger;
     const employee = employees?.find((emp) => emp.idEmployee === id);
     const path = employee?.childCountDocumentFilePath;
-   
+
     // Extract file name regardless of path format (Windows or Unix)
     //const fileName = path?.split(/[\\/]/).pop();  // This handles both \ and /
     //const parts = fileName.split("_");
@@ -130,14 +131,13 @@ const EmployeeProfile = () => {
     setEditFileName(path);
     if (employee) {
       setSelectedEmployee(employee);
-    
+
       // Fetch employee details
       // dispatch(getEmployeeDetailsByID(id));
       dispatch(getEmployeeDetailsByID(id)).then((response) => {
         if (response.payload && response.payload.data) {
-          debugger
           setChildCount(response.payload.data.childrenCount || 0); // Update child count state
-        }else{
+        } else {
           setChildCount(0)
         }
       });
@@ -158,7 +158,6 @@ const EmployeeProfile = () => {
       ])
         .then(([bankAccountsResult, overtimeConfigsResult]) => {
           // Handle bank accounts
-          debugger;
           if (
             bankAccountsResult.payload &&
             bankAccountsResult.payload.data &&
@@ -182,6 +181,7 @@ const EmployeeProfile = () => {
               })
             );
 
+            mappedBankAccounts.length > 0 ? setDisbursementType(mappedBankAccounts[0].disbursementType) : setDisbursementType("PERCENTAGE");
 
             const loadBranchesForBanks = async () => {
               const bankIds = [...new Set(mappedBankAccounts.map(account => account.selectedBank))];
@@ -249,13 +249,12 @@ const EmployeeProfile = () => {
         .catch((error) => {
           console.error("Error fetching employee data:", error);
         });
-debugger
-if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
-  const budgetCodeValue = employee.idBudgetCode.toString();
-  setSelectedBudgetCode(budgetCodeValue);
-} else {
-  setSelectedBudgetCode("");
-}
+      if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
+        const budgetCodeValue = employee.idBudgetCode.toString();
+        setSelectedBudgetCode(budgetCodeValue);
+      } else {
+        setSelectedBudgetCode("");
+      }
     }
     document.getElementById("tempFileDetails").value = "";
     setIsModalOpen(true);
@@ -552,9 +551,9 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
     dispatch(getAllOptions());
   }, [dispatch]);
 
-  useEffect(() => {}, [bankAccountsState]);
+  useEffect(() => { }, [bankAccountsState]);
 
-  useEffect(() => {}, [selectedEmployee]);
+  useEffect(() => { }, [selectedEmployee]);
 
   const employeeData =
     employees?.map((employee) => ({
@@ -815,7 +814,7 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
 
     if (field === "type") {
       newOvertimeDetails[index].type = value;
-      debugger // Directly assign raw value
+      // Directly assign raw value
       if (value === "WORKINGDAY") {
         newOvertimeDetails[index].appliedRate = "1.5";
       } else {
@@ -875,20 +874,34 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
         isValid = false;
         errors[`accountNumber_${index}`] = "Account number is required.";
       }
-      if (
-        !account.salaryPercentageDistributed ||
-        isNaN(parseFloat(account.salaryPercentageDistributed)) ||
-        parseFloat(account.salaryPercentageDistributed) <= 0 ||
-        parseFloat(account.salaryPercentageDistributed) > 100
-      ) {
-        isValid = false;
-        errors[`salaryPercentage_${index}`] =
-          "Salary percentage must be a number greater than 0 and less than 100.";
+      if (disbursementType === "PERCENTAGE") {
+        if (
+          !account.salaryPercentageDistributed ||
+          isNaN(parseFloat(account.salaryPercentageDistributed)) ||
+          parseFloat(account.salaryPercentageDistributed) <= 0 ||
+          parseFloat(account.salaryPercentageDistributed) > 100
+        ) {
+          isValid = false;
+          errors[`salaryPercentage_${index}`] =
+            "Salary percentage must be a number between 0 and 100.";
+        }
+      } else {
+        if (
+          !account.salaryPercentageDistributed ||
+          isNaN(parseFloat(account.salaryPercentageDistributed)) ||
+          parseFloat(account.salaryPercentageDistributed) < 0 ||
+          account.salaryPercentageDistributed.length > 12
+        ) {
+          isValid = false;
+          errors[`salaryPercentage_${index}`] =
+            "Fixed amount must be a positive number with up to 12 digits.";
+        }
       }
       if (!["GYD", "USD"].includes(account.currencyCode)) {
         isValid = false;
         errors[`currencyCode_${index}`] = "Currency must be 'GYD' or 'USD'.";
       }
+
     });
     setBankAccountErrors(errors);
     return isValid;
@@ -929,6 +942,10 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateSalaryPercentage = () => {
+    if (disbursementType !== "PERCENTAGE") {
+      return { isValid: true, error: "" };
+    }
+
     const totalPercentage = bankAccountsState.reduce((sum, account) => {
       const percentage = parseFloat(account.salaryPercentageDistributed) || 0;
       return sum + percentage;
@@ -968,11 +985,9 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     try {
-      debugger;
       const response = await dispatch(
         deleteEmployeeAttachment(selectedEmployee.idEmployee)
       );
-      debugger;
       if (response?.payload?.success) {
         setAttachmentFile(null);
         setEditFileName(null);
@@ -1030,14 +1045,9 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
       salaryPercentageDistributed: parseFloat(
         account.salaryPercentageDistributed
       ),
+      disbursementType: disbursementType,
       currencyCode: account.currencyCode,
     }));
-
-    // const employeeDetailsPayload = {
-    //   employeeId: selectedEmployee.idEmployee,
-    //   budgetCodeId: parseInt(selectedBudgetCode, 10) || 0,
-    //   childCount: parseInt(childCount, 10) || 0,
-    // };
 
     const formData = new FormData();
     formData.append("EmployeeId", selectedEmployee.idEmployee);
@@ -1065,35 +1075,77 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
     });
     // return
     setIsSubmitting(true);
-    try {
-      const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
-        await Promise.all([
-          dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-          dispatch(updateEmployeeDetails(formData)),
-          dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
-        ]);
+    if (disbursementType == 'PERCENTAGE') {
+      try {
+        const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
+          await Promise.all([
+            dispatch(manageEmployeeBankAccount(bankAccountPayload)),
+            dispatch(updateEmployeeDetails(formData)),
+            dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
+          ]);
 
-      const errors = [];
-      if (bankAccountAction.error) errors.push("Bank Account update failed");
-      if (employeeDetailsAction.error)
-        errors.push("Employee Details update failed");
-      if (overtimeConfigsAction.error)
-        errors.push("Overtime Configs update failed");
+        const errors = [];
+        if (bankAccountAction.error) errors.push("Bank Account update failed");
+        if (employeeDetailsAction.error)
+          errors.push("Employee Details update failed");
+        if (overtimeConfigsAction.error)
+          errors.push("Overtime Configs update failed");
 
-      if (errors.length > 0) {
-        console.error("API Errors:", errors);
-        return false;
-      } else {
-        setIsModalOpen(false); // Close the modal only on successful submission
-        return true;
+        if (errors.length > 0) {
+          console.error("API Errors:", errors);
+          return false;
+        } else {
+          setIsModalOpen(false); // Close the modal only on successful submission
+          return true;
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        // Don't close the modal if there's an unexpected error
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      // Don't close the modal if there's an unexpected error
-    } finally {
-      setIsSubmitting(false);
+      dispatch(getAllEmployeeDetails());
+    } else {
+      let accountLength = bankAccountPayload.length;
+      if (accountLength < 2 || bankAccountPayload[accountLength - 1].salaryPercentageDistributed != 0) {
+        toast.warning("Required atleast 2 bank accounts with last row with amount 0 for type fixed amount", {
+          position: 'top-right',
+          autoClose: 5000
+        });
+        setIsSubmitting(false)
+      } else {
+        try {
+          const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
+            await Promise.all([
+              dispatch(manageEmployeeBankAccount(bankAccountPayload)),
+              dispatch(updateEmployeeDetails(formData)),
+              dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
+            ]);
+
+          const errors = [];
+          if (bankAccountAction.error) errors.push("Bank Account update failed");
+          if (employeeDetailsAction.error)
+            errors.push("Employee Details update failed");
+          if (overtimeConfigsAction.error)
+            errors.push("Overtime Configs update failed");
+
+          if (errors.length > 0) {
+            console.error("API Errors:", errors);
+            return false;
+          } else {
+            setIsModalOpen(false); // Close the modal only on successful submission
+            return true;
+          }
+        } catch (error) {
+          console.error("Unexpected error:", error);
+          // Don't close the modal if there's an unexpected error
+        } finally {
+          setIsSubmitting(false);
+        }
+        dispatch(getAllEmployeeDetails());
+      }
     }
-    dispatch(getAllEmployeeDetails());
+
   };
 
   const handleReset = () => {
@@ -1334,7 +1386,7 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
 
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">SSN</label>
-                      <p className="m-0">{profileData?.ssn || "N/A"}</p>
+                      <p className="m-0">{profileData?.ssnNumber || "N/A"}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Tax ID Number</label>
@@ -1452,11 +1504,42 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
               <Label text="Designation" value={selectedEmployee.designation} />
             </>
           )}
-      
+
         </div>
         <h6>
           <strong>Bank Account Details</strong>
         </h6>
+
+        <div className="mb-3">
+          <div className="form-check form-check-inline">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="disbursementType"
+              id="percentageType"
+              value="PERCENTAGE"
+              checked={disbursementType === "PERCENTAGE"}
+              onChange={() => setDisbursementType("PERCENTAGE")}
+            />
+            <label className="form-check-label" htmlFor="percentageType">
+              Percentage
+            </label>
+          </div>
+          <div className="form-check form-check-inline">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="disbursementType"
+              id="fixedAmountType"
+              value="FIXEDAMOUNT"
+              checked={disbursementType === "FIXEDAMOUNT"}
+              onChange={() => setDisbursementType("FIXEDAMOUNT")}
+            />
+            <label className="form-check-label" htmlFor="fixedAmountType">
+              Fixed Amount
+            </label>
+          </div>
+        </div>
 
         {/* Bank Account Details Table Component Starts */}
         <table className="table table-sm mb-0 border custom-table-emp-bank">
@@ -1468,7 +1551,9 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                 Account Number
               </th>{" "}
               {/* Increase width */}
-              <th className="salary-percentage">% Salary</th>
+              <th className="salary-percentage">
+                {disbursementType === "PERCENTAGE" ? "% Salary" : "Fixed Amount"}
+              </th>
               <th className="currency">Currency</th>
               <th style={{ width: "10%" }}></th> {/* Reduce width */}
             </tr>
@@ -1525,12 +1610,17 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                         value={bank.salaryPercentageDistributed}
                         onChange={(e) => {
                           const value = e.target.value;
-                          if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                            handleInputChange(
-                              e,
-                              index,
-                              "salaryPercentageDistributed"
-                            );
+                          if (disbursementType === "PERCENTAGE") {
+                            // For percentage, allow numbers up to 100 with optional decimal
+                            if (/^[0-9]*\.?[0-9]*$/.test(value) &&
+                              (value === "" || parseFloat(value) <= 100)) {
+                              handleInputChange(e, index, "salaryPercentageDistributed");
+                            }
+                          } else {
+                            // For fixed amount, allow up to 12 digits
+                            if (/^\d{0,12}$/.test(value)) {
+                              handleInputChange(e, index, "salaryPercentageDistributed");
+                            }
                           }
                         }}
                       />
@@ -1571,36 +1661,36 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                   {Object.keys(bankAccountErrors).some((key) =>
                     key.endsWith(`_${index}`)
                   ) && (
-                    <tr>
-                      <td className="error-message" colSpan="6">
-                        <div>
-                          {bankAccountErrors[`idBank_${index}`] && (
-                            <div>{bankAccountErrors[`idBank_${index}`]}</div>
-                          )}
-                          {bankAccountErrors[`idBankBranch_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`idBankBranch_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`accountNumber_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`accountNumber_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`salaryPercentage_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`salaryPercentage_${index}`]}
-                            </div>
-                          )}
-                          {bankAccountErrors[`currencyCode_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`currencyCode_${index}`]}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                      <tr>
+                        <td className="error-message" colSpan="6">
+                          <div>
+                            {bankAccountErrors[`idBank_${index}`] && (
+                              <div>{bankAccountErrors[`idBank_${index}`]}</div>
+                            )}
+                            {bankAccountErrors[`idBankBranch_${index}`] && (
+                              <div>
+                                {bankAccountErrors[`idBankBranch_${index}`]}
+                              </div>
+                            )}
+                            {bankAccountErrors[`accountNumber_${index}`] && (
+                              <div>
+                                {bankAccountErrors[`accountNumber_${index}`]}
+                              </div>
+                            )}
+                            {bankAccountErrors[`salaryPercentage_${index}`] && (
+                              <div>
+                                {bankAccountErrors[`salaryPercentage_${index}`]}
+                              </div>
+                            )}
+                            {bankAccountErrors[`currencyCode_${index}`] && (
+                              <div>
+                                {bankAccountErrors[`currencyCode_${index}`]}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                 </React.Fragment>
               ))
             ) : (
@@ -1638,8 +1728,8 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
               <thead>
                 <tr>
                   <th style={{ padding: "2px 2px" }}>Days</th>
-                  <th  style={{ padding: "2px 2px" }}  className="text-nowrap">Hourly Rate</th>
-                  <th style={{ padding: "2px 2px" }}  className="text-nowrap">Applied Rate</th>
+                  <th style={{ padding: "2px 2px" }} className="text-nowrap">Hourly Rate</th>
+                  <th style={{ padding: "2px 2px" }} className="text-nowrap">Applied Rate</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1647,7 +1737,7 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                 {overtimeDetails.map((detail, index) => (
                   <React.Fragment key={index}>
                     <tr>
-                      <td className="col-md-3"style={{ padding: "2px 2px" }} >
+                      <td className="col-md-3" style={{ padding: "2px 2px" }} >
                         <Dropdown
                           options={overtimeOptions}
                           name="overtimeDays"
@@ -1712,26 +1802,26 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
                     {Object.keys(overtimeErrors).some((key) =>
                       key.endsWith(`_${index}`)
                     ) && (
-                      <tr>
-                        <td colSpan="4">
-                          <div style={{ color: "red" }}>
-                            {overtimeErrors[`overtimeType_${index}`] && (
-                              <div>
-                                {overtimeErrors[`overtimeType_${index}`]}
-                              </div>
-                            )}
-                            {overtimeErrors[`hourlyRate_${index}`] && (
-                              <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
-                            )}
-                            {overtimeErrors[`appliedRate_${index}`] && (
-                              <div>
-                                {overtimeErrors[`appliedRate_${index}`]}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
+                        <tr>
+                          <td colSpan="4">
+                            <div style={{ color: "red" }}>
+                              {overtimeErrors[`overtimeType_${index}`] && (
+                                <div>
+                                  {overtimeErrors[`overtimeType_${index}`]}
+                                </div>
+                              )}
+                              {overtimeErrors[`hourlyRate_${index}`] && (
+                                <div>{overtimeErrors[`hourlyRate_${index}`]}</div>
+                              )}
+                              {overtimeErrors[`appliedRate_${index}`] && (
+                                <div>
+                                  {overtimeErrors[`appliedRate_${index}`]}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -1740,78 +1830,78 @@ if (employee.idBudgetCode != null && employee.idBudgetCode !== undefined) {
             {/* Table Component Ends*/}
           </div>
           <div className="col-md-4">
-  <h6>
-    <strong>Add Budget Code</strong>
-  </h6>
+            <h6>
+              <strong>Add Budget Code</strong>
+            </h6>
 
-  <Dropdown
-    label="Budget Code"
-    options={[...budgetCodeOptions]}
-    name="budgetCode"
-    value={selectedBudgetCode}
-    onChange={(e) => {
-      const value = e.target.value;
-      setSelectedBudgetCode(value);
-      const selectedOption = budgetCodeOptions.find(
-        (option) => option.value === value
-      );
-      if (selectedOption) {
-        setBudgetCodeLabel(selectedOption.label);
-      }
-    }}
-  />
+            <Dropdown
+              label="Budget Code"
+              options={[...budgetCodeOptions]}
+              name="budgetCode"
+              value={selectedBudgetCode}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedBudgetCode(value);
+                const selectedOption = budgetCodeOptions.find(
+                  (option) => option.value === value
+                );
+                if (selectedOption) {
+                  setBudgetCodeLabel(selectedOption.label);
+                }
+              }}
+            />
 
-  
- <div className="row d-flex align-items-end">
-      {/* Child Count Input */}
-      <div className="col-md-4">
-        <Input
-          type="text"
-          name="childCount" 
-          label="Child Count"
-          value={childCount}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (/^\d*$/.test(value)) {
-              setChildCount(value);
-            }
-          }}
-        />
-         {editFileName &&(
-        <span className="badge bg-label-info p-1 mt-2 d-inline-block">
-           
-          </span>)}
-      </div>
 
-      {/* Attachments Input */}
-      <div className="col-md-8 ">
-        <label className="form-label mb-1">Attachments</label>
-        <input
-          type="file"
-          id="tempFileDetails"
-          className="form-control"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (file) {
-              setAttachmentFile(file);
-            }
-          }}
-        />
-        {editFileName && (
-          <span className="badge bg-label-info p-1 mt-2  d-inline-block">
-            {editFileName} &nbsp;&nbsp;
-            <label
-              className="cursor"
-              onClick={() => setShowConfirmModal(true)}
-            >
-              X
-            </label>
-          </span>
-        )}
-      </div>
-    </div>
-  
-</div>
+            <div className="row d-flex align-items-end">
+              {/* Child Count Input */}
+              <div className="col-md-4">
+                <Input
+                  type="text"
+                  name="childCount"
+                  label="Child Count"
+                  value={childCount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) {
+                      setChildCount(value);
+                    }
+                  }}
+                />
+                {editFileName && (
+                  <span className="badge bg-label-info p-1 mt-2 d-inline-block">
+
+                  </span>)}
+              </div>
+
+              {/* Attachments Input */}
+              <div className="col-md-8 ">
+                <label className="form-label mb-1">Attachments</label>
+                <input
+                  type="file"
+                  id="tempFileDetails"
+                  className="form-control"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setAttachmentFile(file);
+                    }
+                  }}
+                />
+                {editFileName && (
+                  <span className="badge bg-label-info p-1 mt-2  d-inline-block">
+                    {editFileName} &nbsp;&nbsp;
+                    <label
+                      className="cursor"
+                      onClick={() => setShowConfirmModal(true)}
+                    >
+                      X
+                    </label>
+                  </span>
+                )}
+              </div>
+            </div>
+
+          </div>
 
         </div>
       </Modal>

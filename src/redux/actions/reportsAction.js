@@ -41,6 +41,12 @@ export const getReportDataAction =
   (content, reportColumns) => async (dispatch) => {
     try {
       const { data } = await api.getReportData(content);
+      debugger
+          if (!data || data.length === 0) {
+        dispatch(setReportData([])); // Clear old data in the store
+        return;
+      }
+
       var reportData = data.map((item, index) => {
         Object.keys(item).forEach((key) => {
           if (typeof item[key] === "number") {
