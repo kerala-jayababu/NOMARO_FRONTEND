@@ -87,6 +87,7 @@ function SalarySlipsView() {
     };
 
     const downloadSalarySlips = () => {
+        const date = moment(startDate).format("MMMM, YYYY");
         ViewPaySlipService.downloadSalarySlips(salarySlipData.idEmployeeSalary ?? 0).then(res => {
             if (!res.data.data || !(res.data.data instanceof Blob)) {
                 throw new Error("Invalid file data received");
@@ -98,7 +99,7 @@ function SalarySlipsView() {
             const link = document.createElement('a');
             link.href = url;
 
-            const defaultName = `payslip_${salarySlipData.idEmployeeSalary}.pdf`;
+            const defaultName = `${salarySlipData.employeeCode}_${salarySlipData.employeeName}_${date}.pdf`;
             link.download = res.data.headers['content-disposition']
                 ? res.headers['content-disposition'].split('filename=')[1].replace(/"/g, '')
                 : defaultName;
@@ -119,12 +120,12 @@ function SalarySlipsView() {
                 <div className="col-lg-12 ">
                     <div className="card">
                         <div className="card-header d-flex align-items-center justify-content-between pb-3">
-                            <h5 className="m-0">Pay Slip Details</h5>
+                            <h5 className="m-0">Salary Slip</h5>
                             <div className="list_menu">
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MMMM YYYY" placeholderText={'Start Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthYearPicker={true} />
-                                        {/* <MonthSelector months={salaryMonthsList} onSelection={(id)=> getSalaryDetails(id)} /> */}
+                                    {/* <MonthSelector months={salaryMonthsList} onSelection={(id)=> getSalaryDetails(id)} /> */}
                                 </div>
                             </div>
                         </div>
