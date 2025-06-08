@@ -291,6 +291,7 @@ const LeavePassage = () => {
                     <tr>
                       <th>Employee Name</th>
                       <th>Salary Month</th>
+                      <th>Leave Passage Amount</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -300,6 +301,14 @@ const LeavePassage = () => {
                         <tr key={item.idLeavePassage}>
                           <td>{item.employeeName}</td>
                           <td>{item.salaryMonthText?moment(item.salaryMonthText).format("MMM YYYY"):''}</td>
+                          <td >
+  {item.leavePassageAmount && Number(item.leavePassageAmount) !== 0
+    ? Number(item.leavePassageAmount).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : ""}
+</td>
                           <td>
                             <span
                               className={`badge ${

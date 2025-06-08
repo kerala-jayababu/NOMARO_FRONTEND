@@ -4,10 +4,12 @@ import { getConfigApprovals } from "../../redux/reducers/ConfigApprovals";
 import { toast } from "react-hot-toast";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
 import EmployeeSalaryConfigApproval from "./Components/EmployeeSalaryConfigApproval";
+import LeavePassageApproval from "./Components/LeavePassageApproval";
 import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
 import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
 import DatePicker from "react-datepicker";
 import { API } from "../../redux/api/utils";
+
 
 const statusColor = [
     {
@@ -189,6 +191,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
   };
 
   const handleSelectEmployee = (item) => {
+    debugger
     setEntityName(item.entityName);
     setEntityId(item.entityTablePrimaryKeyID);
     setSelectedRow(item);
@@ -280,7 +283,8 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                           <input
                             disabled={
                               item?.currentStatus?.toLowerCase() === "approved" ||
-                              item?.currentStatus?.toLowerCase() === "rejected"
+                              item?.currentStatus?.toLowerCase() === "rejected" ||
+                               item.entityName.toLowerCase() === "leave passage"
                             }
                             type="checkbox"
                             class="form-check-input data-checkbox"
@@ -464,6 +468,15 @@ const [dateFrom, setDateFrom] = React.useState(() => {
 
       {entityName === "Salary Template" && (
         <SalaryTemplateApproval
+          setEntityType={setEntityName}
+          entityId={entityId}
+          setRefresh={setRefresh}
+          selectedRow={selectedRow}
+        />
+      )}
+
+         {entityName === "Leave Passage" && (
+        <LeavePassageApproval
           setEntityType={setEntityName}
           entityId={entityId}
           setRefresh={setRefresh}
