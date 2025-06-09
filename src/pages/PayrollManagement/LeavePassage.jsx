@@ -266,11 +266,11 @@ const LeavePassage = () => {
   };
 
   return (
-    <div className="container-xxl flex-grow-1 container-p-y">
+    <div className="container-xxl flex-grow-1 container-p-y LeavePassageSection">
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+            <div className="card-header pb-3">
               <h5 className="m-0">Leave Passage</h5>
               <div className="list_menu">
                 <button
@@ -289,10 +289,10 @@ const LeavePassage = () => {
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                      <th>Employee Name</th>
-                      <th>Salary Month</th>
-                      <th>Leave Passage Amount</th>
-                      <th>Status</th>
+                      <th className="white-space-nowrap">Employee Name</th>
+                      <th className="white-space-nowrap">Salary Month</th>
+                      <th className="white-space-nowrap">Leave Passage Amount</th>
+                      <th className="white-space-nowrap">Status</th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
@@ -336,9 +336,9 @@ const LeavePassage = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={3} className="text-center">
-                          <div className="Nodatafound_box">
-                            <h6>
+                        <td colSpan={4} className="text-center">
+                          <div className="Nodatafound_box p-2">
+                            <h6 className='m-0'>
                               <i className="bx bx-search"></i> No data available!
                             </h6>
                           </div>

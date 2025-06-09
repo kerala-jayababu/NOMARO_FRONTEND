@@ -328,5 +328,104 @@ body::-webkit-scrollbar {
 .MuiTablePagination-displayedRows {
   margin: 0 !important;
 }
+.white-space-nowrap {
+  white-space: nowrap;
+}
+.SalarySlipSection {
+  .card {
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
+.OvertimeTransactionSection{
+  .card {
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
+.SalaryReportSection{
+  .card {
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
+.LeavePassageSection{
+  .card {
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
 
-
+@media (max-width: 426px) {
+  .SalarySlipSection {
+    .card {
+      .card-header {
+        h5 {
+          width: 150px;
+          margin-bottom: 10px !important;
+        }
+      }
+    }
+  }
+  .OvertimeTransactionSection {
+    .card {
+      .card-header {
+        display: block;
+        h5 {
+          margin-bottom: 10px !important;
+        }
+        .list_searchbox {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          label {
+          width: 110px;
+          }
+          .form-control {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+  .SalaryReportSection {
+    .card {
+      .card-header {
+        display: block;
+        h5 {
+          margin-bottom: 10px !important;
+        }
+        .list_searchbox {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+    }
+  }
+}
+@media (max-width: 376px) {
+  .LeavePassageSection {
+    .card {
+      .card-header {
+        display: block;
+        h5 {
+          margin-bottom: 10px !important;
+        }
+       
+      }
+    }
+  }
+}
