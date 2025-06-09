@@ -327,11 +327,11 @@ function EmployeeOvertimeTransaction() {
   };
 
   return (
-    <div className="container-xxl flex-grow-1 container-p-y">
+    <div className="container-xxl flex-grow-1 container-p-y OvertimeTransactionSection">
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+            <div className="card-header  pb-3">
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
                 {/* <div className="list_searchbox">
@@ -379,8 +379,8 @@ function EmployeeOvertimeTransaction() {
                       <th>Name</th>
                       {/* <th>Type</th> */}
                       <th>Date</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
+                      <th className="white-space-nowrap">Start Time</th>
+                      <th className="white-space-nowrap">End Time</th>
                       <th className="text-center">Duration</th>
                       {/* <th>Reason</th> */}
                       <th>Status</th>
@@ -397,7 +397,7 @@ function EmployeeOvertimeTransaction() {
                             <input type="checkbox" className="form-check-input" />
                           </td> */}
                           <td>{item?.employeeCode}</td>
-                          <td>{item?.employeeName}</td>
+                          <td className="white-space-nowrap">{item?.employeeName}</td>
                           {/* <td>{item?.overtimeTypeName}</td> */}
                           <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
