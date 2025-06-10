@@ -115,11 +115,11 @@ function SalarySlipsView() {
     }
 
     return (
-        <div className="container-xxl flex-grow-1 container-p-y">
+        <div className="container-xxl flex-grow-1 container-p-y SalarySlipSection">
             <div className="row">
                 <div className="col-lg-12 ">
                     <div className="card">
-                        <div className="card-header d-flex align-items-center justify-content-between pb-3">
+                        <div className="card-header  pb-3">
                             <h5 className="m-0">Salary Slip</h5>
                             <div className="list_menu">
                                 <div className="list_searchbox">
