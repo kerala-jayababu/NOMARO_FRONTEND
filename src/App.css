@@ -429,3 +429,7 @@ body::-webkit-scrollbar {
     }
   }
 }
+.custom-col-md-9 {
+  flex: 0 0 auto;
+  width: 80% !important;
+}
