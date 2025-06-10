@@ -183,7 +183,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
     <div className="m-3 mt-4">
       <div className="row">
         {/* Filter fields in a row with proper wrapping */}
-        <div className="col-md-10">
+        <div className="custom-col-md-9">
           <div className="row">
             {reportCondition.map((field, index) => (
               <ReportFilterItem
@@ -216,6 +216,15 @@ export default function Filter({ reportCondition, report, downloadFile }) {
                 disabled={reportData == null || reportData?.length <= 0}
               >
                 EXCEL
+              </Button>
+                <Button
+                variant="contained"
+                color="success"
+                sx={{ backgroundColor: "#203e69"}}
+                onClick={() => downloadFile("text",AppliedFilters)}
+                disabled={reportData == null || reportData?.length <= 0}
+              >
+                TEXT
               </Button>
               {report?.pdfViewable && <Button
                 variant="contained"

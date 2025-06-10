@@ -55,7 +55,17 @@ function Reports() {
         filter,
         reportColumns 
       );
-    } else {
+    }
+     if (format === "text") {
+      Utils.exportToTxt(
+        reportData,
+        report?.reportName,
+        report?.headerRequired,
+        filter,
+        reportColumns 
+      );
+    } 
+    else {
       Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
     }
   }
