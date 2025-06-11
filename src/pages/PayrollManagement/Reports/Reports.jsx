@@ -55,8 +55,7 @@ function Reports() {
         filter,
         reportColumns 
       );
-    }
-     if (format === "text") {
+    }else if (format === "text") {
       Utils.exportToTxt(
         reportData,
         report?.reportName,
@@ -66,7 +65,7 @@ function Reports() {
       );
     } 
     else {
-      Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
+      Utils.exportToPdf(reportData, report?.reportName, "landscape", filter,reportColumns);
     }
   }
 

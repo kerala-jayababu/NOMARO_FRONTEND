@@ -525,7 +525,8 @@ static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
 
 
 
-  static exportToPdf(rows, reportName, orientation, filter) {
+  static exportToPdf(rows, reportName, orientation, filter,reportColumns) {
+    
     try {
       const doc = new jsPDF({
         orientation: orientation,
@@ -554,14 +555,26 @@ static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
 
       var alignments = new Object();
 
-      Object.keys(tableData[0]).map((item, index) => {
-        if (!isNaN(tableData[0][item])) {
-          if (!item.includes("EmployeeCode"))
-            alignments[index] = { halign: "right" };
-        } else {
-          alignments[index] = { halign: "left" };
-        }
-      });
+     // Match alignment based on reportColumns
+tableHeaders.forEach((header, index) => {
+  // Find the report column that matches the header
+  const reportColumn = reportColumns.find(
+    (col) => col.columnName === header
+  );
+
+  if (reportColumn && reportColumn.alignment) {
+    // Use the alignment from reportColumns
+    alignments[index] = { halign: reportColumn.alignment.toLowerCase() }; // convert to lowercase to match jsPDF autoTable format
+  } else {
+    // Default alignment logic if no report column or alignment found
+    if (!isNaN(tableData[0][index])) {
+      alignments[index] = { halign: "right" };
+    } else {
+      alignments[index] = { halign: "left" };
+    }
+  }
+});
+
 
       autoTable(doc, {
         head: [tableHeaders],
