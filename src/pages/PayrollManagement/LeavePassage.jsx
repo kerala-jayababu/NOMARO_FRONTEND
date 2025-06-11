@@ -50,7 +50,6 @@ const LeavePassage = () => {
       await getAllSalaryMonths();
       await getFinancialYears();
       await getEmployeeDetails();
-      setRefreshCounter(prev => prev + 1); // trigger initial fetch
     })();
   }, []);
 
@@ -177,7 +176,7 @@ const LeavePassage = () => {
     e.preventDefault();
     if (!newData.salaryMonthText || !newData.remarks) {
       setValidated(true);
-      showToast("Please fill all required fields", 'warning');
+      showToast("Please fill all required fields", 'error');
       return;
     }
     setLoading(true);
@@ -185,11 +184,10 @@ const LeavePassage = () => {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
       if(validateForm(formData, "ADD")){
         const res = await LeavePassageService.addLeavePassage(formData);
-        if (res.data.status === 200) {
-          showToast.success('Leave Passage added successfully');
+        if (res.data.success) {
+          showToast('Leave Passage added successfully', 'success');
           setShowModal(false);
           resetValues();
-          setRefreshCounter(prev => prev + 1);
         }
       }
     } catch (err) {
@@ -210,11 +208,10 @@ const LeavePassage = () => {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
       if(validateForm(formData, "EDIT")){
         const res = await LeavePassageService.updateLeavePassage(formData);
-        if (res.data.status === 200) {
-          showToast.success('Leave Passage updated successfully');
+        if (res.data.success) {
+          showToast('Leave Passage updated successfully', 'success');
           setShowModal(false);
           resetValues();
-          setRefreshCounter(prev => prev + 1);
         }
       }
     } catch (err) {
@@ -252,7 +249,7 @@ const LeavePassage = () => {
     });
   
     if (duplicateRecord) {
-      showToast(`Leave Passage already claimed for FY ${currentFY}`, 'error');
+      showToast(`Leave Passage already claimed for ${currentFY}`, 'error');
       return false;
     }
     return true;
@@ -261,8 +258,7 @@ const LeavePassage = () => {
   const getFinancialYear = (monthStr) => {
     const date = moment(monthStr, 'YYYY-MM');
     const year = date.year();
-    const month = date.month() + 1;
-    return month <= 3 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
+    return year;
   };
 
   return (
@@ -280,7 +276,7 @@ const LeavePassage = () => {
               </div>
             </div>
             <div className="card-body">
-              <div className="table-responsive">
+              <div className="table-responsive" style={{ maxWidth: "800px", marginLeft: '0' }}>
                 {loading ? (
                   <div className="text-center">
                     <Spinner animation="border" variant="primary" />
@@ -289,27 +285,18 @@ const LeavePassage = () => {
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                      <th className="white-space-nowrap">Employee Name</th>
-                      <th className="white-space-nowrap">Salary Month</th>
-                      <th className="white-space-nowrap">Leave Passage Amount</th>
-                      <th className="white-space-nowrap">Status</th>
+                      <th className="text-center">Month</th>
+                      <th className="text-center">Amount</th>
+                      <th className="text-center">Status</th>
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
                     {paginatedData.length > 0 ? (
                       paginatedData.map((item) => (
                         <tr key={item.idLeavePassage}>
-                          <td>{item.employeeName}</td>
-                          <td>{item.salaryMonthText?moment(item.salaryMonthText).format("MMM YYYY"):''}</td>
-                          <td >
-  {item.leavePassageAmount && Number(item.leavePassageAmount) !== 0
-    ? Number(item.leavePassageAmount).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    : ""}
-</td>
-                          <td>
+                          <td className="text-center">{item.salaryMonthText?moment(item.salaryMonthText).format("MMM YYYY"):''}</td>
+                          <td className="text-center">{item.leavePassageAmount === null? 0: item.leavePassageAmount}</td>
+                          <td className="text-center">
                             <span
                               className={`badge ${
                                 item.approvalStatus === 'APPROVED'
@@ -418,6 +405,9 @@ const LeavePassage = () => {
                           onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
                         />
                         <small>{100 - newData.remarks.length} / 100 characters remaining</small>
+                        {validated && !newData.remarks && (
+                              <div className='red' style={{color : 'red'}}>Remarks is required</div>
+                          )}
                       </div>
                     </div>
                   </div>
