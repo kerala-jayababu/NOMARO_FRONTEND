@@ -460,6 +460,70 @@ if(!headerRequired){
       saveAs(blob, `${reportName}.xlsx`);
     });
   }
+static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
+  const columns = Object.keys(rows[0]).filter((x) => x !== "id");
+
+  // Prepare the filter text row
+  let filterText = "";
+  Object.keys(filter).forEach((item) => {
+    filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]}   `;
+  });
+
+  // Table header
+  const columnHeaders = columns.map((col) => col.toUpperCase());
+
+  // Determine column widths based on max content length
+  const colWidths = columns.map((col) => {
+    let maxLen = col.length;
+    rows.forEach((row) => {
+      const value = row[col] ?? "";
+      maxLen = Math.max(maxLen, String(value).length);
+    });
+    return maxLen + 2; // Add padding
+  });
+
+  // Function to create a row string (no separators)
+  const createRow = (values) => {
+    return values.map((val, index) => {
+      const str = String(val ?? "");
+      return str.padEnd(colWidths[index], " ");
+    }).join(" ");
+  };
+
+  // Build the table
+  let content = "";
+
+  if (headerRequired) {
+    content += `GEORGETOWN INTERNATIONAL ACADEMY\n`;
+    content += `${reportName}\n`;
+    content += `${filterText}\n`;
+  }
+
+  // Add the header row
+  content += createRow(columnHeaders) + "\n";
+
+  // Add data rows
+  rows.forEach((row) => {
+    const rowValues = columns.map((col) => row[col] ?? "");
+    content += createRow(rowValues) + "\n";
+  });
+
+  // Create a Blob and download the .txt file
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${reportName}.txt`;
+  document.body.appendChild(link);
+  link.click();
+
+  // Cleanup
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+
 
   static exportToPdf(rows, reportName, orientation, filter) {
     try {

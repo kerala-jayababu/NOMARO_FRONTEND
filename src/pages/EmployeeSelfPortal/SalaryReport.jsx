@@ -126,11 +126,11 @@ function SalaryReport() {
     }
 
     return (
-        <div className="container-xxl flex-grow-1 container-p-y">
+        <div className="container-xxl flex-grow-1 container-p-y SalaryReportSection">
             <div className="row">
                 <div className="col-lg-12 ">
                     <div className="card">
-                        <div className="card-header d-flex align-items-center justify-content-between pb-3">
+                        <div className="card-header pb-3">
                             <h5 className="m-0">Salary Report</h5>
                             <div className="list_menu">
                                 <div className="list_searchbox">
@@ -178,9 +178,9 @@ function SalaryReport() {
                                                 />
                                             </th>
                                             <th>Month</th>
-                                            <th className="text-end">Total Earnings</th>
-                                            <th className="text-end">Total Deductions</th>
-                                            <th className="text-end">Net Salary</th>
+                                            <th className="text-end">Total Earnings (G$)</th>
+                                            <th className="text-end">Total Deductions (G$)</th>
+                                            <th className="text-end">Net Salary (G$)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -219,7 +219,7 @@ function SalaryReport() {
                                 </table>
                             </div>
                             <div className="row m-0">
-                                <div className="col-lg-6">
+                                <div className="col-lg-6 p-0">
                                     <table className="table border">
                                         <thead>
                                             <tr>

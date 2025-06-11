@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import OvertimeService from "../../core/services/OvertimeService";
@@ -13,7 +13,7 @@ import { NumericFormat } from "react-number-format";
 
 function EmployeeOvertimeTransaction() {
 
-  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [startDate, setStartDate] = useState(new Date('2025-01-01'));
   const [overtimeTransactions, setOvertimeTransactions] = useState([]);
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const [overtimeTypes, setOvertimeTypes] = useState([]);
@@ -44,6 +44,7 @@ function EmployeeOvertimeTransaction() {
   const totalPages = Math.ceil(overtimeTransactions.length / rowsPerPage);
   const today = new Date();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -264,7 +265,8 @@ function EmployeeOvertimeTransaction() {
       attachment: "",
       attachmentDescription: "",
     });
-    setSelectedEmployee(null)
+    setSelectedEmployee(null);
+    handleClear();
   }
 
   const handleChange = (selectedOption) => {
@@ -312,12 +314,24 @@ function EmployeeOvertimeTransaction() {
     setShowConfirmModal(false);
   }
 
+  const handleClear = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setNewData(prevState => ({
+        ...prevState,
+        file: null,
+        attachment: "",
+        attachmentDescription: "",
+      }));
+    }
+  };
+
   return (
-    <div className="container-xxl flex-grow-1 container-p-y">
+    <div className="container-xxl flex-grow-1 container-p-y OvertimeTransactionSection">
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+            <div className="card-header  pb-3">
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
                 {/* <div className="list_searchbox">
@@ -365,8 +379,8 @@ function EmployeeOvertimeTransaction() {
                       <th>Name</th>
                       {/* <th>Type</th> */}
                       <th>Date</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
+                      <th className="white-space-nowrap">Start Time</th>
+                      <th className="white-space-nowrap">End Time</th>
                       <th className="text-center">Duration</th>
                       {/* <th>Reason</th> */}
                       <th>Status</th>
@@ -383,7 +397,7 @@ function EmployeeOvertimeTransaction() {
                             <input type="checkbox" className="form-check-input" />
                           </td> */}
                           <td>{item?.employeeCode}</td>
-                          <td>{item?.employeeName}</td>
+                          <td className="white-space-nowrap">{item?.employeeName}</td>
                           {/* <td>{item?.overtimeTypeName}</td> */}
                           <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
@@ -522,12 +536,32 @@ function EmployeeOvertimeTransaction() {
                             required
                           />
                         </div>
-                        <div class="p-2">
+                        {/* <div class="p-2">
                           <label class="form-label mb-1"> Attachments </label>
                           <input type="file" className="form-control" onChange={handleFileChange} />
                           {
                             newData.attachment &&
                             <span className="badge bg-label-info p-1">{newData.attachmentDescription} &nbsp;&nbsp;
+                              <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
+                            </span>
+                          }
+                        </div> */}
+                        <div className="p-2">
+                          <label className="form-label mb-1">Attachments </label>
+                          <div className="row p-1">
+                            <div className="col-md-9 p-1">
+                              <input type="file" className="form-control" onChange={handleFileChange} ref={fileInputRef} />
+                            </div>
+                            <div className="col-md-2 p-1">
+                              {
+                                newData.file != null &&
+                                <button className="btn btn-outline-secondary btn-sm py-2 px-2" onClick={() => handleClear()}>Clear</button>
+                              }
+                            </div>
+                          </div>
+                          {
+                            newData.attachment &&
+                            <span className="badge bg-label-info p-1">{newData?.attachmentDescription} &nbsp;&nbsp;
                               <label className="cursor" onClick={() => setShowConfirmModal(true)}>X</label>
                             </span>
                           }

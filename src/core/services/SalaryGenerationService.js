@@ -33,6 +33,24 @@ export default class SalaryGenerationService {
       return handleApiError(error);
     }
   };
+  static getLeavePassageById = async (entityId) => {
+  try {    
+    const res = await API.get(`/api/v1/LeavePassages/GetLeavePassageById?id=${entityId}`);    
+    return { error: null, data: res.data };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+static getPayslipDetailsForLeavePassage = async (idEmployee) => {
+  try {
+    const res = await API.post(
+      `/api/v1/SalaryGeneration/GetPayslipDetailsForLeavePassage?IdEmployee=${idEmployee}`
+    );
+    return { error: null, data: res.data.data }; // adjust if your API returns differently
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
 
   static handleApprovalWorkflow = async (content) => {
     try {
