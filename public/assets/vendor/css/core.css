@@ -16528,12 +16528,12 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
   align-items: stretch;
 }
 
-.layout-page,
+/* .layout-page,
 .content-wrapper,
 .content-wrapper>*,
 .layout-menu {
   min-height: 1px;
-}
+} */
 
 .layout-navbar,
 .content-footer {
