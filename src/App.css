@@ -359,12 +359,24 @@ body::-webkit-scrollbar {
   }
 }
 .LeavePassageSection{
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+
   .card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+
     .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+  }
+
+  .table-responsive {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 

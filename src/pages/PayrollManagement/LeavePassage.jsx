@@ -87,7 +87,7 @@ const LeavePassage = () => {
       const filteredSalaryMonths = options.filter(option => {
         const date = moment(option.label, 'MMMM, YYYY');
         return (
-          date.isValid && 
+          date.isValid() &&
           date.year() === currentMonth.year() && 
           date.month() >= currentMonth.month()
         );
@@ -257,94 +257,106 @@ const LeavePassage = () => {
 
   const getFinancialYear = (monthStr) => {
     const date = moment(monthStr, 'YYYY-MM');
-    const year = date.year();
-    return year;
+    return date.year();
   };
 
   return (
-    <div className="container-xxl flex-grow-1 container-p-y LeavePassageSection">
-      <div className="row">
-        <div className="col-lg-12">
-          <div className="card">
-            <div className="card-header pb-3">
-              <h5 className="m-0">Leave Passage</h5>
-              <div className="list_menu">
-                <button
-                  className="btn btn-primary btn-sm px-4" onClick={() => {setShowModal(true); setNewDataValues();}}>
-                  Add Leave Passage
+    <div className="container-fluid p-0 LeavePassageSection">
+      <div className="row m-0">
+        <div className="col-lg-12 p-0">
+          <div className="card w-100 mx-0">
+            <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Leave Passage</h5>
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => {
+                  resetValues();
+                  setShowModal(true);
+                }}>
+                  + Add New
                 </button>
               </div>
-            </div>
-            <div className="card-body">
-              <div className="table-responsive" style={{ maxWidth: "800px", marginLeft: '0' }}>
+            <div className="card-body p-2">
                 {loading ? (
-                  <div className="text-center">
-                    <Spinner animation="border" variant="primary" />
+                <div className="text-start">
+                    <Spinner animation="border"/>
                   </div>
                 ) : (
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-center">Month</th>
-                      <th className="text-center">Amount</th>
-                      <th className="text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {paginatedData.length > 0 ? (
-                      paginatedData.map((item) => (
-                        <tr key={item.idLeavePassage}>
-                          <td className="text-center">{item.salaryMonthText?moment(item.salaryMonthText).format("MMM YYYY"):''}</td>
-                          <td className="text-center">{item.leavePassageAmount === null? 0: item.leavePassageAmount}</td>
-                          <td className="text-center">
-                            <span
-                              className={`badge ${
-                                item.approvalStatus === 'APPROVED'
-                                  ? 'bg-label-success'
-                                  : item.approvalStatus === 'SUBMITTED'
-                                  ? 'bg-label-warning'
-                                  : item.approvalStatus === 'REJECTED'
-                                  ? 'bg-label-danger'
-                                  : 'bg-label-primary'
-                              }`}
-                            >
-                              {item.approvalStatus}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            {
-                              item.approvalStatus != 'APPROVED' &&
-                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0" onClick={() => setupEdit(item)}>
-                                <span className="tf-icons bx bx-pencil"></span>
-                              </button>
-                            }
-                          </td>
+                  <>
+                  <div className="table-responsive">
+                    <table className="table table-sm" style={{ borderCollapse: 'collapse', border: 'none' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left' }}>Month</th>
+                          <th style={{ textAlign: 'left' }}>Amount</th>
+                          <th style={{ textAlign: 'left' }}>Status</th>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="text-center">
-                          <div className="Nodatafound_box p-2">
-                            <h6 className='m-0'>
-                              <i className="bx bx-search"></i> No data available!
-                            </h6>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-                )}
+                      </thead>
+                      <tbody>
+                        {paginatedData.length > 0 ? (
+                          paginatedData.map((item) => (
+                            <tr key={item.idLeavePassage}>
+                              <td style={{ textAlign: 'left' }}>
+                                {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}
+                              </td>
+                              <td style={{ textAlign: 'left' }}>
+                                {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
+                              </td>
+                              <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span
+                                  className={`badge ${
+                                    item.approvalStatus === 'APPROVED'
+                                      ? 'bg-label-success'
+                                      : item.approvalStatus === 'SUBMITTED'
+                                      ? 'bg-label-warning'
+                                      : item.approvalStatus === 'REJECTED'
+                                      ? 'bg-label-danger'
+                                      : 'bg-label-primary'
+                                  }`}
+                                >
+                                  {item.approvalStatus}
+                                </span>
+                                <button
+                                  className="btn btn-sm btn-link p-0"
+                                  disabled={item.approvalStatus === 'APPROVED'}
+                                  onClick={() => setupEdit(item)}
+                                  aria-label="Edit Leave Passage"
+                                  title="Edit Leave Passage"
+                                >
+                                  <i className="bx bx-pencil fs-5"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={3} className="text-start">
+                              <div className="Nodatafound_box p-2">
+                                <h6 className='m-0'>
+                                  <i className="bx bx-search"></i> No data available!
+                                </h6>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
               </div>
-              <div className="text-end pt-2">
+            <div className="text-start pt-2">
                 <Pagination currentPage={currentPage} totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
-              </div>
             </div>
           </div>
           {showModal &&
-          <Modal show={showModal} onHide={() => { setShowModal(false); resetValues() }} size='lg'
+            <Modal
+              show={showModal}
+              onHide={() => { setShowModal(false); resetValues(); }}
+              size='lg'
             aria-labelledby="contained-modal-title-vcenter" centered backdrop="static" keyboard={false}>
             <Modal.Header closeButton>
               <Modal.Title>
@@ -357,77 +369,54 @@ const LeavePassage = () => {
                 <Form noValidate validated={validated}>
                   <div className="accountDetail_card">
                     <div className="row m-0">
-                      <div className="col-md-6 p-2">
+                      <div className="col-12 p-2">
                         <label className="form-label mb-1">Employee Name</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={newData.employeeName}
-                            disabled
-                          />
+                        <p>{newData?.employeeName}</p>
                       </div>
-                      <div className="col-md-6 p-2">
-                        <label className="form-label mb-1">Department Name</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={newData.departmentName}
-                            disabled
-                          />
+                      <div className="col-md-4 p-2">
+                        <label className="form-label mb-1">Salary Month<span className="text-danger">*</span></label>
+                        <Select
+                          options={salaryMonths}
+                          isSearchable
+                          onChange={handleFormSalaryMonthChange}
+                          value={formSalaryMonth}
+                          placeholder="Select Salary Month"
+                          className={`textSize ${validated && !formSalaryMonth ? 'is-invalid-select' : ''}`} required
+                        />
+                        {validated && !formSalaryMonth && (
+                            <div className='red' style={{color : 'red'}}>Salary Month is required</div>
+                        )}
                       </div>
-                      <div className="col-md-6 p-2">
-                        <label className="form-label mb-1">Designation Name</label>
-                          <input
-                              type="text"
-                              className="form-control"
-                          value={newData.designationName}
-                          disabled
-                          />
-                      </div>
-                        <div className="col-md-6 p-2">
-                          <label className="form-label mb-1">Salary Month<span className="text-danger">*</span></label>
-                          <Select
-                            options={salaryMonths}
-                            isSearchable
-                            onChange={handleFormSalaryMonthChange}
-                            value={formSalaryMonth}
-                            placeholder="Select Salary Month"
-                            className={`textSize ${validated && !formSalaryMonth ? 'is-invalid-select' : ''}`} required
-                          />
-                          {validated && !formSalaryMonth && (
-                              <div className='red' style={{color : 'red'}}>Salary Month is required</div>
-                          )}
-                      </div>
-                      <div className="col-md-6 p-2">
-                        <label className="form-label mb-1">Remarks</label>
+                      <div className="col-md-6 px-2 d-flex flex-column">
+                        <label className="form-label mb-1">Remarks<span className="text-danger">*</span></label>
                         <textarea className="form-control" rows={5}
                           value={newData.remarks} maxLength="100"
                           onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
                         />
-                        <small>{100 - newData.remarks.length} / 100 characters remaining</small>
+                        <small className = "text-muted mt-1">{100 - newData.remarks.length} / 100 characters remaining</small>
                         {validated && !newData.remarks && (
-                              <div className='red' style={{color : 'red'}}>Remarks is required</div>
-                          )}
+                          <div className="text-danger mt-1">Remarks is required</div>
+                        )}
+
+                      <div className="mt-2 d-flex">
+                          <button className="btn btn-secondary me-2" type="button"
+                          onClick={() => { setShowModal(false); resetValues(); }}>
+                        Cancel
+                        </button>
+                        <button className="btn btn-primary" type="button"
+                          onClick={(e) => {
+                              isEdit ? updateLeavePassage(e) : saveLeavePassage(e);
+                              setRefreshCounter(prev => prev + 1);
+                            }}>
+                          {isEdit ? 'Update' : 'Submit'}
+                        </button>
+                      </div>
                       </div>
                     </div>
                   </div>
                 </Form>
               </div>
             </Modal.Body>
-
-              <Modal.Footer>
-                <button className="btn btn-secondary btn-sm" onClick={() => { setShowModal(false); resetValues(); }}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" onClick={(e) => {
-                    isEdit ? updateLeavePassage(e) : saveLeavePassage(e);
-                    setRefreshCounter(prev => prev + 1);
-                  }}
-                >
-                  {isEdit ? 'Update' : 'Submit'}
-                </button>
-
-              </Modal.Footer>
           </Modal>}
         </div>
       </div>
