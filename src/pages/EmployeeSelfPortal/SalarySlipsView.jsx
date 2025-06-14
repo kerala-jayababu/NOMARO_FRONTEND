@@ -112,6 +112,7 @@ function SalarySlipsView() {
                 window.URL.revokeObjectURL(url);
             }, 100);
         });
+        
     }
 
     return (
@@ -257,6 +258,7 @@ function SalarySlipsView() {
                     <button className="btn btn-primary" onClick={() => downloadSalarySlips()}>Download</button>
                 </div>
             </div>
+
 
             <div className="container-xxl flex-grow-1 container-p-y SalarySlipSection ShowBigDevice">
                 <div className="row">
