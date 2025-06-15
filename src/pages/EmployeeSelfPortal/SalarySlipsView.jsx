@@ -150,15 +150,15 @@ function SalarySlipsView() {
                                             <h6 className='mb-2'>{slip?.salaryHeadName}</h6>
                                             <div className='EarningsBox_innerDt'>
                                                 <div className='EarningsBox_innerDt_01'>
-                                                    <label>Amounts(G$)</label>
+                                                    <label>Amount (G$)</label>
                                                     <p>{Utils.formattedNumber(slip?.amountGYD)}</p>
                                                 </div>
                                                 <div className='EarningsBox_innerDt_01'>
-                                                    <label>Amounts(US$)</label>
+                                                    <label>Amount (US$)</label>
                                                     <p>{Utils.formattedNumber(slip?.amountUSD)}</p>
                                                 </div>
                                                 <div className='EarningsBox_innerDt_01'>
-                                                    <label>YTDAmounts(G$)</label>
+                                                    <label>YTD Amount (G$)</label>
                                                     <p>{Utils.formattedNumber(slip?.ytdAmount)}</p>
                                                 </div>
                                             </div>
@@ -168,15 +168,15 @@ function SalarySlipsView() {
                                         <h6 className='mb-2'>Total</h6>
                                         <div className='TotalEarningsBox_innerDt'>
                                             <div className='TotalEarningsBox_innerDt_01'>
-                                                <label>Amounts(G$)</label>
+                                                <label>Amount (G$)</label>
                                                 <p>{Utils.formattedNumber(totalValues?.gyd?.earnings)}</p>
                                             </div>
                                             <div className='TotalEarningsBox_innerDt_01'>
-                                                <label>Amounts(US$)</label>
+                                                <label>Amount (US$)</label>
                                                 <p>{Utils.formattedNumber(totalValues?.usd?.earnings)}</p>
                                             </div>
                                             <div className='TotalEarningsBox_innerDt_01'>
-                                                <label>YTDAmounts(G$)</label>
+                                                <label>YTD Amount (G$)</label>
                                                 <p>{Utils.formattedNumber(totalValues?.ytd?.earnings)}</p>
                                             </div>
                                         </div>

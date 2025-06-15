@@ -333,16 +333,17 @@ function EmployeeOvertimeTransaction() {
           <div className="card-header">
             <div className="card-header_in">
               <h5 >List of Overtime Transaction</h5>
-              <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>
-                Add
-              </button>
+              
             </div>
-            <div className="list_menu">
+            <div className="list_menu justify-content-between">
               <div className="list_searchbox">
                 <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
                   selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                   showYearDropdown dropdownMode="select" />
               </div>
+              <button className="btn btn-primary btn-sm px-4" onClick={() => setShowModal(true)}>
+                Add
+              </button>
             </div>
           </div>
           <div className="card-body">
@@ -369,23 +370,24 @@ function EmployeeOvertimeTransaction() {
                       <label>Start Time</label>
                       <p className="m-0">{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</p>
                     </div>
-                    <div className="col-4 px-0 py-1">
+                    {/* <div className="col-4 px-0 py-1">
                       <label>End Time</label>
                       <p className="m-0">{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</p>
-                    </div>
+                    </div> */}
                     <div className="col-4 px-0 py-1">
                       <label>Duration</label>
                       <p className="m-0">{item.durationInHours} Hr</p>
                     </div>
-                  </div>
-                  <div className="row m-0 align-items-end">
-
-                    <div className="col-9 px-0 py-1">
+                    <div className="col-4 px-0 py-1">
                       <label>Status</label>
                       <div>
                         <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
                       </div>
                     </div>
+                  </div>
+                  <div className="row m-0 align-items-end">
+
+                    
                     <div className="col-3 px-0 py-1">
                       {
                         item.attachment &&

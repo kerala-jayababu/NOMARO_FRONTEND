@@ -437,7 +437,7 @@ body::-webkit-scrollbar {
 
             .EarningsBox_innerDt {
               display: flex;
-              gap: 15px;
+              gap: 10px;
               justify-content: space-between;
               font-size: 12px;
 
@@ -464,7 +464,7 @@ body::-webkit-scrollbar {
 
             .TotalEarningsBox_innerDt {
               display: flex;
-              gap: 15px;
+              gap: 10px;
               justify-content: space-between;
               font-size: 12px;
 
@@ -508,7 +508,7 @@ body::-webkit-scrollbar {
 
             .DeductionsBx_innerDt {
               display: flex;
-              gap: 15px;
+              gap: 10px;
               justify-content: space-between;
               font-size: 12px;
 
@@ -535,7 +535,7 @@ body::-webkit-scrollbar {
 
             .TotalDeductionsBox_innerDt {
               display: flex;
-              gap: 15px;
+              gap: 10px;
               justify-content: space-between;
               font-size: 12px;
 
