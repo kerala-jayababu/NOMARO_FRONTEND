@@ -352,42 +352,42 @@ function EmployeeOvertimeTransaction() {
 
                 <div className="OvertimeTransaction_list ">
                   <div className="row m-0">
-                    <div className="col-12 px-0 py-1">
+                    {/* <div className="col-12 px-0 py-1">
                       <label>Name</label>
                       <p className="m-0">{item?.employeeName}</p>
                     </div>
                     <div className="col-4 px-0 py-1">
                       <label>ID</label>
                       <p className="m-0">{item?.employeeCode}</p>
-                    </div>
+                    </div> */}
                     <div className="col-4 px-0 py-1">
                       <label>Date</label>
                       <p className="m-0">{moment(item?.startDate).format("MM/DD/YYYY")}</p>
                     </div>
-                  </div>
-                  <div className="row m-0">
+
                     <div className="col-4 px-0 py-1">
                       <label>Start Time</label>
                       <p className="m-0">{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</p>
                     </div>
-                    {/* <div className="col-4 px-0 py-1">
-                      <label>End Time</label>
-                      <p className="m-0">{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</p>
-                    </div> */}
                     <div className="col-4 px-0 py-1">
                       <label>Duration</label>
                       <p className="m-0">{item.durationInHours} Hr</p>
                     </div>
-                    <div className="col-4 px-0 py-1">
+
+                  </div>
+                  <div className="row m-0 align-items-end">
+                    
+                    {/* <div className="col-4 px-0 py-1">
+                      <label>End Time</label>
+                      <p className="m-0">{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</p>
+                    </div> */}
+                    
+                    <div className="col-9 px-0 py-1">
                       <label>Status</label>
                       <div>
                         <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
                       </div>
                     </div>
-                  </div>
-                  <div className="row m-0 align-items-end">
-
-                    
                     <div className="col-3 px-0 py-1">
                       {
                         item.attachment &&
@@ -403,7 +403,6 @@ function EmployeeOvertimeTransaction() {
                       }
                     </div>
                   </div>
-
 
                 </div>
 
