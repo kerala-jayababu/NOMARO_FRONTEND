@@ -276,7 +276,6 @@ body {
   display: none;
 }
 
-
 .scroll-side-menu {
   height: calc(100vh - 100px) !important;
   overflow-y: auto;
@@ -356,6 +355,10 @@ body::-webkit-scrollbar {
     }
   }
 }
+.custom-col-md-9 {
+  flex: 0 0 auto;
+  width: 80% !important;
+}
 
 @media (max-width: 426px) {
   .modal-dialog {
@@ -409,12 +412,11 @@ body::-webkit-scrollbar {
           .EMPDt_rowIn {
             width: 50%;
           }
-
         }
 
         .EarningsBox {
           border: 1px solid #ddd;
-          background-color: #F7F7F7;
+          background-color: #f7f7f7;
           padding: 8px;
           border-radius: 6px;
 
@@ -424,12 +426,11 @@ body::-webkit-scrollbar {
           }
 
           .EarningsBox_inner {
-            background-color: #FFFFFF;
-            border: 1px solid #EDEDED;
+            background-color: #ffffff;
+            border: 1px solid #ededed;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 5px;
-
 
             h6 {
               font-size: 13px;
@@ -484,7 +485,7 @@ body::-webkit-scrollbar {
 
         .DeductionsBx {
           border: 1px solid #ddd;
-          background-color: #F7F7F7;
+          background-color: #f7f7f7;
           padding: 8px;
           border-radius: 6px;
           margin-top: 10px;
@@ -495,12 +496,11 @@ body::-webkit-scrollbar {
           }
 
           .DeductionsBx_inner {
-            background-color: #FFFFFF;
-            border: 1px solid #EDEDED;
+            background-color: #ffffff;
+            border: 1px solid #ededed;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 5px;
-
 
             h6 {
               font-size: 13px;
@@ -551,7 +551,6 @@ body::-webkit-scrollbar {
               }
             }
           }
-
         }
       }
     }
@@ -574,7 +573,7 @@ body::-webkit-scrollbar {
 
       p {
         margin-bottom: 0px;
-        opacity: .5;
+        opacity: 0.5;
       }
     }
   }
@@ -620,12 +619,11 @@ body::-webkit-scrollbar {
           .EMPDt_rowIn {
             width: 50%;
           }
-
         }
 
         .monthSalary_Section {
           border: 1px solid #ddd;
-          background-color: #F7F7F7;
+          background-color: #f7f7f7;
           padding: 8px;
           border-radius: 6px;
 
@@ -641,14 +639,14 @@ body::-webkit-scrollbar {
           }
 
           .MonthSalary_dts {
-            background-color: #FFFFFF;
-            border: 1px solid #EDEDED;
+            background-color: #ffffff;
+            border: 1px solid #ededed;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 5px;
 
             .MonthSalary_dts_head {
-              border-bottom: 1px solid #EDEDED;
+              border-bottom: 1px solid #ededed;
               margin-bottom: 10px;
             }
 
@@ -697,8 +695,6 @@ body::-webkit-scrollbar {
             }
           }
         }
-
-
       }
     }
   }
@@ -744,16 +740,11 @@ body::-webkit-scrollbar {
           label {
             color: #aab1b6;
           }
-
-         
-          
-
-          
         }
       }
     }
   }
-  .badge{
+  .badge {
     padding: 7px 15px !important;
   }
 }
