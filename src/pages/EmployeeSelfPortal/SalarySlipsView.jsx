@@ -487,7 +487,10 @@ function SalarySlipsView() {
                   </h5>
                 </div>
                 <div className="Payslip_geneBox">
-                  <p>Payslip generated on : 01/01/2025</p>
+                  <p>
+                    Payslip generated on :{" "}
+                    {moment(salarySlipData?.approvedDate).format("MM/DD/YYYY")}
+                  </p>
                   <button
                     className="btn btn-primary"
                     onClick={() => downloadSalarySlips()}
