@@ -12,7 +12,7 @@ import { NumericFormat } from "react-number-format";
 
 function OvertimeTransaction() {
 
-  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
   const [overtimeTransactions, setOvertimeTransactions] = useState([]);
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const [overtimeTypes, setOvertimeTypes] = useState([]);
