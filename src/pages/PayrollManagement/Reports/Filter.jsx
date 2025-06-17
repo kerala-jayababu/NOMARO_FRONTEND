@@ -25,16 +25,23 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
 
   // Move API call to useEffect
   useEffect(() => {
-    if (controlType === "COMBOBOX" && field.tableName && field.valueColumn && field.displayColumn) {
+    if (
+      controlType === "COMBOBOX" &&
+      field.tableName &&
+      field.valueColumn &&
+      field.displayColumn
+    ) {
       setLoading(true);
-      API.post(`api/v1/Reports/GetReportsTableValue?tableName=${field.tableName}&valueColumn=${field.valueColumn}&displayColumn=${field.displayColumn}`)
-        .then(response => {
+      API.post(
+        `api/v1/Reports/GetReportsTableValue?tableName=${field.tableName}&valueColumn=${field.valueColumn}&displayColumn=${field.displayColumn}`
+      )
+        .then((response) => {
           if (response?.data) {
             setOptions(response.data);
           }
           setLoading(false);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error fetching options:", error);
           setLoading(false);
         });
@@ -52,11 +59,11 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
           <DatePicker
             className="form-control"
             dateFormat="MM/dd/yyyy"
-            selected={selectedDate} 
+            selected={selectedDate}
             placeholderText="Date"
             onChange={(date) => {
               var value = date.toISOString().slice(0, 10);
-              setSelectedDate(value)
+              setSelectedDate(value);
               handleInputChange(
                 conditionName,
                 spParameterName,
@@ -100,21 +107,24 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
             key={spParameterName + report?.reportName}
             className="form-select"
             onChange={(e) => {
-              handleInputChange(
-                conditionName,
-                spParameterName,
-                e.target.value
-              );
+              handleInputChange(conditionName, spParameterName, e.target.value);
             }}
             disabled={loading}
           >
-            {!validValues && <option value={JSON.stringify({ value: "0", label: "ALL" })}>Select</option>}
+            {!validValues && (
+              <option value={JSON.stringify({ value: "0", label: "ALL" })}>
+                Select
+              </option>
+            )}
             {loading ? (
               <option>Loading...</option>
             ) : (
               options.map((item, index) => (
-                <option 
-                  value={JSON.stringify({ value: item.valueColumn, label: item.displayColumn })} 
+                <option
+                  value={JSON.stringify({
+                    value: item.valueColumn,
+                    label: item.displayColumn,
+                  })}
                   key={item.displayColumn + index}
                 >
                   {item.displayColumn}
@@ -129,22 +139,32 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
   }
 };
 
-export default function Filter({ reportCondition, report, downloadFile }) {
+export default function Filter({
+  reportCondition,
+  report,
+  downloadFile,
+  onFilterChange,
+}) {
   const dispatch = useDispatch();
   const [AppliedFilters, setAppliedFilters] = useState();
   const [filter, setFilter] = useState();
-  const { reportData,reportColumns } = useSelector((state) => state.reports);
+  const { reportData, reportColumns } = useSelector((state) => state.reports);
 
-  const handleInputChange = (conditionName,field, value) => {
+  const handleInputChange = (conditionName, field, value) => {
     const data = JSON.parse(value);
-    setAppliedFilters((prevValues) => ({
-      ...prevValues,
+    const updatedAppliedFilters = {
+      ...AppliedFilters,
       [conditionName]: data.label,
-    }));
-    setFilter((prevValues) => ({
-      ...prevValues,
+    };
+    const updatedFilter = {
+      ...filter,
       [field]: data.value,
-    }));
+    };
+    setAppliedFilters(updatedAppliedFilters);
+    setFilter(updatedFilter);
+
+    // Send updated filters to parent
+    onFilterChange(updatedFilter, updatedAppliedFilters);
   };
 
   async function getReportData() {
@@ -153,7 +173,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
       parameters: filter,
     };
     dispatch(showLoader());
-    await dispatch(getReportDataAction(content,reportColumns));
+    await dispatch(getReportDataAction(content, reportColumns));
     dispatch(hideLoader());
   }
 
@@ -161,23 +181,26 @@ export default function Filter({ reportCondition, report, downloadFile }) {
     var defaultDate = new Object();
     var appliedFilter = new Object();
     reportCondition.map((field) => {
-      const { defaultValue, spParameterName,controlType,conditionName } = field;
+      const { defaultValue, spParameterName, controlType, conditionName } =
+        field;
       if (controlType === "DATE") {
-        const defaultDateValue = defaultValue.length > 0 ? getDefaultDate(defaultValue) : ""
+        const defaultDateValue =
+          defaultValue.length > 0 ? getDefaultDate(defaultValue) : "";
         defaultDate[spParameterName] = defaultDateValue;
-        appliedFilter[conditionName] = defaultDateValue
+        appliedFilter[conditionName] = defaultDateValue;
       } else {
         defaultDate[spParameterName] = defaultValue;
-        appliedFilter[conditionName] = defaultValue
+        appliedFilter[conditionName] = defaultValue;
       }
     });
     setFilter({
-    ...defaultDate
+      ...defaultDate,
     });
     setAppliedFilters({
-    ...appliedFilter
-  });
-  }, [report, reportCondition])
+      ...appliedFilter,
+    });
+    onFilterChange({ ...defaultDate }, { ...appliedFilter });
+  }, [report, reportCondition]);
 
   return (
     <div className="m-3 mt-4">
@@ -195,7 +218,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
             ))}
           </div>
         </div>
-        
+
         {/* Buttons in a separate column that stays aligned */}
         <div className="col-md-2 mt-3">
           {report?.reportName && (
@@ -203,7 +226,7 @@ export default function Filter({ reportCondition, report, downloadFile }) {
               <Button
                 variant="contained"
                 color="primary"
-                sx={{ backgroundColor: "#75869e"}}
+                sx={{ backgroundColor: "#75869e" }}
                 onClick={getReportData}
               >
                 RUN
@@ -211,30 +234,32 @@ export default function Filter({ reportCondition, report, downloadFile }) {
               <Button
                 variant="contained"
                 color="success"
-                sx={{ backgroundColor: "#203e69"}}
-                onClick={() => downloadFile("excel",AppliedFilters)}
+                sx={{ backgroundColor: "#203e69" }}
+                onClick={() => downloadFile("excel", AppliedFilters)}
                 disabled={reportData == null || reportData?.length <= 0}
               >
                 EXCEL
               </Button>
-                <Button
+              <Button
                 variant="contained"
                 color="success"
-                sx={{ backgroundColor: "#203e69"}}
-                onClick={() => downloadFile("text",AppliedFilters)}
+                sx={{ backgroundColor: "#203e69" }}
+                onClick={() => downloadFile("text", AppliedFilters)}
                 disabled={reportData == null || reportData?.length <= 0}
               >
                 TEXT
               </Button>
-              {report?.pdfViewable && <Button
-                variant="contained"
-                color="secondary"
-                sx={{ backgroundColor: "#75869e"}}
-                onClick={() => downloadFile("pdf",AppliedFilters)}
-                disabled={reportData == null || reportData?.length <= 0}
-              >
-                PDF
-              </Button>}
+              {report?.pdfViewable && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  sx={{ backgroundColor: "#75869e" }}
+                  onClick={() => downloadFile("pdf", AppliedFilters)}
+                  disabled={reportData == null || reportData?.length <= 0}
+                >
+                  PDF
+                </Button>
+              )}
             </div>
           )}
         </div>

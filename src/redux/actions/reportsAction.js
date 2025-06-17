@@ -41,8 +41,7 @@ export const getReportDataAction =
   (content, reportColumns) => async (dispatch) => {
     try {
       const { data } = await api.getReportData(content);
-      debugger
-          if (!data || data.length === 0) {
+      if (!data || data.length === 0) {
         dispatch(setReportData([])); // Clear old data in the store
         return;
       }
