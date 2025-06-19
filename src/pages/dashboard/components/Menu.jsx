@@ -138,11 +138,11 @@ function Menu({ viewType }) {
             </ul>
           </li>
         ))}
-        {/* <li className={`menu-item ${menu === 'leavePassage' ? 'open active' : ''} cursor-pointer`}>
+        <li className={`menu-item ${menu === 'shiftManagement' ? 'open active' : ''} cursor-pointer`}>
           <a
             className="menu-link"
             onClick={() => {
-              setMenu('leavePassage');
+              setMenu('shiftManagement');
               setSubMenu('');
               const html = document.documentElement;
               html.classList.remove(
@@ -152,15 +152,38 @@ function Menu({ viewType }) {
                 "layout-menu-expanded"
               );
               dispatch(setIdPayrollScreen(null));
-              dispatch(setComponent('LeavePassage'));
+              dispatch(setComponent('ShiftManagement'));
 
-              navigate('/dashboard/leavepassage');
+              navigate('/dashboard/shiftManagement');
             }}
           >
             <i className="menu-icon tf-icons bx bx-calendar-event"></i>
-            <div data-i18n="leavepassage">Leave Passage</div>
+            <div data-i18n="shiftManagement">Shift Management</div>
           </a>
-        </li> */}
+        </li>
+        <li className={`menu-item ${menu === 'shiftAssignment' ? 'open active' : ''} cursor-pointer`}>
+          <a
+            className="menu-link"
+            onClick={() => {
+              setMenu('shiftAssignment');
+              setSubMenu('');
+              const html = document.documentElement;
+              html.classList.remove(
+                "light-style",
+                "layout-menu-fixed",
+                "layout-menu-100vh",
+                "layout-menu-expanded"
+              );
+              dispatch(setIdPayrollScreen(null));
+              dispatch(setComponent('shiftAssignment'));
+
+              navigate('/dashboard/shiftAssignment');
+            }}
+          >
+            <i className="menu-icon tf-icons bx bx-calendar-event"></i>
+            <div data-i18n="shiftAssignment">Shift Assignment</div>
+          </a>
+        </li>
       </ul>
     </aside>
   );
