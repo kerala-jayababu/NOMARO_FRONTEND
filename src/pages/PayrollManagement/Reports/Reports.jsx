@@ -92,7 +92,7 @@ function Reports() {
             return;
           }
           if (!ageGroup || ageGroup.trim() === "") {
-            ageGroup = "ABOVE60";
+            ageGroup = "60ANDABOVE";
           }
           const res = await API.post(
             `/api/v1/Reports/generate-nis?payrollId=${payrollId}&ageGroup=${encodeURIComponent(
