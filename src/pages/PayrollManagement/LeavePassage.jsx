@@ -277,7 +277,7 @@ const LeavePassage = () => {
                   + Add New
                 </button>
               </div>
-            <div className="card-body p-2">
+            <div className="card-body p-1">
                 {loading ? (
                 <div className="text-start">
                     <Spinner animation="border"/>
@@ -298,7 +298,7 @@ const LeavePassage = () => {
                           paginatedData.map((item) => (
                             <tr key={item.idLeavePassage}>
                               <td style={{ textAlign: 'left' }}>
-                                {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}
+                                {item.salaryMonthText}
                               </td>
                               <td style={{ textAlign: 'left' }}>
                                 {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
