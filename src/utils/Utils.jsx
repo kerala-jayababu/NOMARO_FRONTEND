@@ -2,8 +2,8 @@ import { Tooltip } from "react-bootstrap";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default class Utils {
   static encodeBase64(string) {
@@ -197,7 +197,7 @@ export default class Utils {
 
     worksheet["!cols"] = columns.map((col, colIndex) => {
       let maxWidth = col.length * 1.2;
-      rows.forEach(row => {
+      rows.forEach((row) => {
         if (row[col] !== null && row[col] !== undefined) {
           const cellContentLength = String(row[col]).length;
           maxWidth = Math.max(maxWidth, cellContentLength * 1.2);
@@ -211,11 +211,14 @@ export default class Utils {
     const headerStyle = {
       fill: { fgColor: { rgb: "CBD5E1" } },
       font: { bold: true, color: { rgb: "000000" } },
-      alignment: { horizontal: "center", vertical: "center" }
+      alignment: { horizontal: "center", vertical: "center" },
     };
 
     columns.forEach((col, colIndex) => {
-      const cellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c: colIndex });
+      const cellRef = XLSX.utils.encode_cell({
+        r: headerRowIndex,
+        c: colIndex,
+      });
       if (!worksheet[cellRef]) worksheet[cellRef] = {};
       worksheet[cellRef].s = headerStyle;
     });
@@ -244,8 +247,13 @@ export default class Utils {
     XLSX.writeFile(workbook, `${reportName}.xlsx`, writeOptions);
   }
 
-  static exportToExcelJS(rows, reportName, headerRequired,filter,reportColumns) {  
-      
+  static exportToExcelJS(
+    rows,
+    reportName,
+    headerRequired,
+    filter,
+    reportColumns
+  ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
 
@@ -259,62 +267,64 @@ export default class Utils {
         }` + "   ";
     });
 
-let staticRowsCount = 0;
-if(headerRequired){
-// Add company name row and make it span across all columns
-const companyName = worksheet.addRow(["GEORGETOWN INTERNATIONAL ACADEMY"]);
-companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
-companyName.alignment = { horizontal: "left" };
-staticRowsCount++;
+    let staticRowsCount = 0;
+    if (headerRequired) {
+      // Add company name row and make it span across all columns
+      const companyName = worksheet.addRow([
+        "GEORGETOWN INTERNATIONAL ACADEMY",
+      ]);
+      companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
+      companyName.alignment = { horizontal: "left" };
+      staticRowsCount++;
 
-// Add title row
-const titleRow = worksheet.addRow([reportName]);
-titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
-titleRow.alignment = { horizontal: "left" };
-staticRowsCount++;
+      // Add title row
+      const titleRow = worksheet.addRow([reportName]);
+      titleRow.font = { bold: true, size: 14, color: { argb: "FF0064E6" } };
+      titleRow.alignment = { horizontal: "left" };
+      staticRowsCount++;
 
-// Add filter row
-const filterRow = worksheet.addRow([filterText]);
-filterRow.font = { italic: true, color: { argb: "FF666666" } };
-filterRow.alignment = { horizontal: "left" };
-staticRowsCount++;
+      // Add filter row
+      const filterRow = worksheet.addRow([filterText]);
+      filterRow.font = { italic: true, color: { argb: "FF666666" } };
+      filterRow.alignment = { horizontal: "left" };
+      staticRowsCount++;
 
+      // Add empty row
+      worksheet.addRow([]);
+      staticRowsCount++;
 
-  // Add empty row
-  worksheet.addRow([]);
-  staticRowsCount++;
-  
-  // Add header row
-  const headerRow = worksheet.addRow(columns);
-  staticRowsCount++;
-  headerRow.eachCell((cell) => {
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFCBD5E1" },
-    };
-    cell.font = { bold: true, color: { argb: "FF000000" } };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-    cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" },
-    };
-  });
-  
-}
+      // Add header row
+      const headerRow = worksheet.addRow(columns);
+      staticRowsCount++;
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFCBD5E1" },
+        };
+        cell.font = { bold: true, color: { argb: "FF000000" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    }
 
-const columnMetaMap = {};
-reportColumns.forEach((col) => {
-  if (!["id", "slno", "employeecode"].includes(col.columnName.toLowerCase())) {
-    columnMetaMap[col.columnName] = {
-      alignment: col.alignment?.toLowerCase() || "left",
-      dataType: col.dataType?.toLowerCase() || "string",
-    };
-  }
-});
-const excludedColumns = ["employeecode"];
+    const columnMetaMap = {};
+    reportColumns.forEach((col) => {
+      if (
+        !["id", "slno", "employeecode"].includes(col.columnName.toLowerCase())
+      ) {
+        columnMetaMap[col.columnName] = {
+          alignment: col.alignment?.toLowerCase() || "left",
+          dataType: col.dataType?.toLowerCase() || "string",
+        };
+      }
+    });
+    const excludedColumns = ["employeecode"];
     const numericColumnIndexes = columns.map((col, index) => {
       const values = rows.map((row) => row[col]);
       const number = values.find(
@@ -326,40 +336,51 @@ const excludedColumns = ["employeecode"];
         isNumeric:
           number !== undefined &&
           number !== null &&
-           !excludedColumns.includes(col.toLowerCase()),
+          !excludedColumns.includes(col.toLowerCase()),
         column: col,
       };
     });
 
-    const boldColumnIndex = columns.map((col,index) => {
-      if(["totalearnings","netsalary","totaldeductions"].includes(col.toLowerCase())) {
+    const boldColumnIndex = columns.map((col, index) => {
+      if (
+        ["totalearnings", "netsalary", "totaldeductions"].includes(
+          col.toLowerCase()
+        )
+      ) {
         return index + 1;
       }
-    })
+    });
 
     // Add data rows
     rows.map((row, index) => {
       const rowValues = columns.map((col, index) => {
         const value = row[col];
-  const meta = columnMetaMap[col] || {};
-  
+        const meta = columnMetaMap[col] || {};
+
         //const isNumericColumn = numericColumnIndexes[index].isNumeric;
 
-       if (meta.dataType === "currency" && value !== null && value !== undefined) {
-    if (typeof value === "string" && !isNaN(parseFloat(value))) {
-      return parseFloat(value.replaceAll(",", ""));
-    } else if (typeof value === "number") {
-      return value;
-    }
-  }
+        if (
+          meta.dataType === "currency" &&
+          value !== null &&
+          value !== undefined
+        ) {
+          if (typeof value === "string" && !isNaN(parseFloat(value))) {
+            return parseFloat(value.replaceAll(",", ""));
+          } else if (typeof value === "number") {
+            return value;
+          }
+        }
 
         return value?.length > 0 ? value : " ";
       });
 
       const dataRow = worksheet.addRow(rowValues);
-      if (index == rows.length - 1 && rows[rows.length - 1][Object.keys(rows[0])[0]].includes("Grand Total")) {
+      if (
+        index == rows.length - 1 &&
+        rows[rows.length - 1][Object.keys(rows[0])[0]].includes("Grand Total")
+      ) {
         dataRow.eachCell((cell) => {
-          cell.font = { bold: true }
+          cell.font = { bold: true };
           cell.fill = {
             type: "pattern",
             pattern: "solid",
@@ -380,15 +401,19 @@ const excludedColumns = ["employeecode"];
           (col) => col.index === colNumber
         );
 
-        if(boldColumnIndex.includes(colNumber)) {
-          cell.font = { bold: true }
+        if (boldColumnIndex.includes(colNumber)) {
+          cell.font = { bold: true };
         }
 
         if (columnInfo && columnInfo.isNumeric) {
           cell.alignment = { horizontal: "right" };
           cell.numFmt = "#,##0.00";
           const cellValue = cell.value;
-          if (cellValue && typeof cellValue === 'number' && cellValue > 1000000) {
+          if (
+            cellValue &&
+            typeof cellValue === "number" &&
+            cellValue > 1000000
+          ) {
             worksheet.getColumn(colNumber).width = 18;
           }
         } else {
@@ -397,11 +422,11 @@ const excludedColumns = ["employeecode"];
       });
     });
 
-    if(headerRequired){
-  worksheet.mergeCells(1, 1, 1, 3); 
+    if (headerRequired) {
+      worksheet.mergeCells(1, 1, 1, 3);
     }
     // Merge cells for all title rows
-  // Company name row
+    // Company name row
 
     // Calculate and set column widths
     columns.forEach((col, index) => {
@@ -427,10 +452,10 @@ const excludedColumns = ["employeecode"];
             const commaCount = Math.floor((integerPart.length - 1) / 3);
 
             const formattedLength =
-              numStr.length + 
-              commaCount + 
-              (numStr.includes('.') ? 0 : 3) +
-              (numValue < 0 ? 1 : 0); 
+              numStr.length +
+              commaCount +
+              (numStr.includes(".") ? 0 : 3) +
+              (numValue < 0 ? 1 : 0);
             maxLength = Math.max(maxLength, formattedLength);
           } else {
             maxLength = Math.max(maxLength, String(value).length);
@@ -449,9 +474,9 @@ const excludedColumns = ["employeecode"];
       worksheet.getColumn(colIndex).width = columnWidth;
     });
 
-if(!headerRequired){
-  worksheet.spliceRows(1, staticRowsCount);
-}
+    if (!headerRequired) {
+      worksheet.spliceRows(1, staticRowsCount);
+    }
     // Generate and save the file
     workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], {
@@ -460,73 +485,75 @@ if(!headerRequired){
       saveAs(blob, `${reportName}.xlsx`);
     });
   }
-static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
-  const columns = Object.keys(rows[0]).filter((x) => x !== "id");
+  static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
+    const columns = Object.keys(rows[0]).filter((x) => x !== "id");
 
-  // Prepare the filter text row
-  let filterText = "";
-  Object.keys(filter).forEach((item) => {
-    filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]}   `;
-  });
-
-  // Table header
-  const columnHeaders = columns.map((col) => col.toUpperCase());
-
-  // Determine column widths based on max content length
-  const colWidths = columns.map((col) => {
-    let maxLen = col.length;
-    rows.forEach((row) => {
-      const value = row[col] ?? "";
-      maxLen = Math.max(maxLen, String(value).length);
+    // Prepare the filter text row
+    let filterText = "";
+    Object.keys(filter).forEach((item) => {
+      filterText += `${item}: ${
+        filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+      }   `;
     });
-    return maxLen + 2; // Add padding
-  });
 
-  // Function to create a row string (no separators)
-  const createRow = (values) => {
-    return values.map((val, index) => {
-      const str = String(val ?? "");
-      return str.padEnd(colWidths[index], " ");
-    }).join(" ");
-  };
+    // Table header
+    const columnHeaders = columns.map((col) => col.toUpperCase());
 
-  // Build the table
-  let content = "";
+    // Determine column widths based on max content length
+    const colWidths = columns.map((col) => {
+      let maxLen = col.length;
+      rows.forEach((row) => {
+        const value = row[col] ?? "";
+        maxLen = Math.max(maxLen, String(value).length);
+      });
+      return maxLen + 2; // Add padding
+    });
 
-  if (headerRequired) {
-    content += `GEORGETOWN INTERNATIONAL ACADEMY\n`;
-    content += `${reportName}\n`;
-    content += `${filterText}\n`;
+    // Function to create a row string (no separators)
+    const createRow = (values) => {
+      return values
+        .map((val, index) => {
+          const str = String(val ?? "");
+          return str.padEnd(colWidths[index], " ");
+        })
+        .join(" ");
+    };
+
+    // Build the table
+    let content = "";
+
+    if (headerRequired) {
+      content += `GEORGETOWN INTERNATIONAL ACADEMY\n`;
+      content += `${reportName}\n`;
+      content += `${filterText}\n`;
+    }
+
+    // Add the header row
+    content += createRow(columnHeaders) + "\n";
+
+    // Add data rows
+    rows.forEach((row) => {
+      const rowValues = columns.map((col) => row[col] ?? "");
+      content += createRow(rowValues) + "\n";
+    });
+
+    // Create a Blob and download the .txt file
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${reportName}.txt`;
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  // Add the header row
-  content += createRow(columnHeaders) + "\n";
-
-  // Add data rows
-  rows.forEach((row) => {
-    const rowValues = columns.map((col) => row[col] ?? "");
-    content += createRow(rowValues) + "\n";
-  });
-
-  // Create a Blob and download the .txt file
-  const blob = new Blob([content], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${reportName}.txt`;
-  document.body.appendChild(link);
-  link.click();
-
-  // Cleanup
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-
-
-  static exportToPdf(rows, reportName, orientation, filter,reportColumns) {
-    
+  static exportToPdf(rows, reportName, orientation, filter, reportColumns) {
+    debugger;
     try {
       const doc = new jsPDF({
         orientation: orientation,
@@ -555,26 +582,25 @@ static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
 
       var alignments = new Object();
 
-     // Match alignment based on reportColumns
-tableHeaders.forEach((header, index) => {
-  // Find the report column that matches the header
-  const reportColumn = reportColumns.find(
-    (col) => col.columnName === header
-  );
+      // Match alignment based on reportColumns
+      tableHeaders.forEach((header, index) => {
+        // Find the report column that matches the header
+        const reportColumn = reportColumns.find(
+          (col) => col.columnName === header
+        );
 
-  if (reportColumn && reportColumn.alignment) {
-    // Use the alignment from reportColumns
-    alignments[index] = { halign: reportColumn.alignment.toLowerCase() }; // convert to lowercase to match jsPDF autoTable format
-  } else {
-    // Default alignment logic if no report column or alignment found
-    if (!isNaN(tableData[0][index])) {
-      alignments[index] = { halign: "right" };
-    } else {
-      alignments[index] = { halign: "left" };
-    }
-  }
-});
-
+        if (reportColumn && reportColumn.alignment) {
+          // Use the alignment from reportColumns
+          alignments[index] = { halign: reportColumn.alignment.toLowerCase() }; // convert to lowercase to match jsPDF autoTable format
+        } else {
+          // Default alignment logic if no report column or alignment found
+          if (!isNaN(tableData[0][index])) {
+            alignments[index] = { halign: "right" };
+          } else {
+            alignments[index] = { halign: "left" };
+          }
+        }
+      });
 
       autoTable(doc, {
         head: [tableHeaders],
@@ -585,10 +611,10 @@ tableHeaders.forEach((header, index) => {
           fillColor: [203, 213, 225],
           textColor: [0, 0, 0],
         },
-     bodyStyles: {
-     textColor: [26, 26, 26],        // black
-             // bold body
-  },
+        bodyStyles: {
+          textColor: [26, 26, 26], // black
+          // bold body
+        },
         columnStyles: {
           ...alignments,
         },
