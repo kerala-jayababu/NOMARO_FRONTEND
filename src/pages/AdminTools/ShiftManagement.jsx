@@ -251,7 +251,7 @@ const ShiftManagement = () => {
               {shifts.map((shift) => (
                 <li key={shift.idShift} className="list-group-item d-flex justify-content-between align-items-center">
                   {shift.shiftName}
-                  <span onClick={() => handleShiftEdit(shift.idShift)} style={{ cursor: "pointer" }}>✏️</span>
+                  <span onClick={() => handleShiftEdit(shift.idShift)} style={{ cursor: "pointer" }} className="bx bx-pencil"></span>
                 </li>
               ))}
             </ul>
@@ -271,15 +271,15 @@ const ShiftManagement = () => {
               </div>
             )}
           <Card title="Add/Update Shifts">
-            <Input label="Shift Name" value={shiftName} onChange={(e) => setShiftName(e.target.value)} placeholder="Shift Name" />
-          </Card>
-
-          <Card title="Employees">
+            <Input label="Shift Name" value={shiftName} onChange={(e) => setShiftName(e.target.value)} placeholder="Shift Name"/>
+            <br/>
+            <label className="form-label mb-1"><b>Employees</b></label>
             <table className="table table-sm" style={{ tableLayout: "fixed", width: "100%" }}>
               <colgroup>
                 <col style={{ width: "40%" }} />
-                <col style={{ width: "25%" }} />
+                <col style={{ width: "20%" }} />
                 <col style={{ width: "30%" }} />
+                <col style={{ width: "15%"}} />
               </colgroup>
               <thead>
                 <tr>
@@ -302,26 +302,28 @@ const ShiftManagement = () => {
                     <td>{emp.employeeCode}</td>
                     <td>{emp.department}</td>
                     <td>
-                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteEmployee(emp.idEmployee)} />  
+                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteEmployee(emp.idEmployee)} />
+                      <AddIcon className="add-icon" onClick={handleAddEmployeeRow}/>
                     </td>
                   </tr>
                 ))}
+                {employeeRows.length === 0?
                 <tr>
                   <td colSpan={4} align="right">
                     <AddIcon className="add-icon" onClick={handleAddEmployeeRow}/>
                   </td>
-                </tr>
+                </tr>:<tr></tr>
+                }
               </tbody>
             </table>
-          </Card>
-
-          <Card title="Schedules">
+          <br/>
+            <label className="form-label mb-1"><b>Schedules</b></label>
             <table className="table table-bordered" style={{ tableLayout: "fixed", width: "100%" }}>
               <colgroup>
-                <col style={{ width: "35%" }} />
+                <col style={{ width: "28%" }} />
                 <col style={{ width: "10%" }} />
                 <col style={{ width: "40%" }} />
-                <col style={{ width: "10%" }} />
+                <col style={{ width: "12%" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -376,15 +378,19 @@ const ShiftManagement = () => {
                     </div>
                     </td>
                     <td>
-                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteSchedule(s.idShiftSchedule)} />    
+                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteSchedule(s.idShiftSchedule)} />
+                      <AddIcon className="add-icon" onClick={handleAddScheduleRow}/>    
                     </td>
                   </tr>
                 ))}
-                <tr>
-                  <td colSpan={4} align="right">
-                    <AddIcon className="add-icon" onClick={handleAddScheduleRow}/>
-                  </td>
-                </tr>
+                {scheduleRows.length === 0 ?
+                  <tr>
+                    <td colSpan={4} align="right">
+                      <AddIcon className="add-icon" onClick={handleAddScheduleRow}/>
+                    </td>
+                  </tr>
+                  : <tr></tr>
+                }
               </tbody>
             </table>
           </Card>

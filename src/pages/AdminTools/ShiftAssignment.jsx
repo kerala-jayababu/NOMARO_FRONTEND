@@ -91,7 +91,7 @@ const ShiftAssignment = () => {
   };
 
   const handleCellClick = (date, slot) => {
-    if (isPastWeek) return;
+    if (isPastWeek || date.isBefore(today, 'day')) return;
     const schedule = scheduleList[shiftTimes.indexOf(slot)];
     if (!schedule?.workDays.includes(date.format('dddd').toUpperCase())) return;
     setPopupInfo({ date, slot });
@@ -128,7 +128,6 @@ const ShiftAssignment = () => {
 
     setExistingAssignments(prev => {
       const prevKey = prev[key] || {};
-      console.log(prev);
       if (!isSelected) {
         if(isChecked) {
           return {
@@ -247,7 +246,14 @@ const ShiftAssignment = () => {
           <tr>
             <th style={{ minWidth: '180px' }}>Shift Time</th>
             {weekDays.map(day => (
-              <th key={day.format('YYYY-MM-DD')} style={{ minWidth: '180px'}}>
+              <th
+                key={day.format('YYYY-MM-DD')}
+                style={{
+                  minWidth: '180px',
+                  backgroundColor: day.isSame(today, 'day') ? '#d1e7dd' : undefined,
+                  color: day.isSame(today, 'day') ? '#0f5132' : undefined
+                }}
+              >
                 {day.format('DD MMM')}<br />{day.format('dddd')}
               </th>
             ))}
@@ -261,7 +267,7 @@ const ShiftAssignment = () => {
                 const dateStr = day.format('YYYY-MM-DD');
                 const schedule = scheduleList[index];
                 const isWorkDay = schedule?.workDays.includes(day.format('dddd').toUpperCase());
-                const isDisabled = isPastWeek || !isWorkDay;
+                const isDisabled = isPastWeek || !isWorkDay || day.isBefore(today, 'day');
                 const assigned = getAssignedEmployees(day, slot);
                 return (
                   <td
