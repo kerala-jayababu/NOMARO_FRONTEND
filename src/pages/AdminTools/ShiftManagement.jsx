@@ -3,7 +3,6 @@ import Card from "../../components/card";
 import Input from "../../components/input";
 import Button from "../../components/button";
 import Select from "react-select";
-import { DeleteIcon, AddIcon } from "../../components/icons";
 import CommonService from "../../core/services/CommonService";
 import ShiftManagementService from "../../core/services/ShiftManagementService";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -11,7 +10,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileTimePicker } from '@mui/x-date-pickers/MobileTimePicker';
 import dayjs from 'dayjs';
 import { showToast } from '../../components/ToastNotifications/toastUtils';
-import { Modal as BootstrapModal} from "react-bootstrap";
 
 const ShiftManagement = () => {
   const [shiftName, setShiftName] = useState("");
@@ -32,6 +30,15 @@ const ShiftManagement = () => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirm, setOnConfirm] = useState(() => () => {});
+  const [errors, setErrors] = useState({});
+  const [shiftNameError, setShiftNameError] = useState(false);
+  const [employeeErrors, setEmployeeErrors] = useState(false);
+  const [scheduleErrors, setScheduleErrors] = useState(false);
+  const [workingDaysModal, setWorkingDaysModal] = useState({
+    visible: false,
+    index: null,
+    selectedDays: [],
+  });
 
   useEffect(() => {
     getEmployeeOptions();
@@ -92,13 +99,14 @@ const ShiftManagement = () => {
 
   const handleShiftSubmit = async () => {
     let shiftPayload;
-
+    if (!validateForm()) return;
+    let shiftResponse;
     if (editingShiftId) {
       shiftPayload = { idShift: editingShiftId, shiftName };
-      await ShiftManagementService.updateShift(shiftPayload);
+      shiftResponse = await ShiftManagementService.updateShift(shiftPayload);
     } else {
       shiftPayload = { shiftName };
-      await ShiftManagementService.saveShift(shiftPayload);
+      shiftResponse = await ShiftManagementService.saveShift(shiftPayload);
       await getShiftList();
       const createdShift = shifts.find((s) => s.shiftName === shiftName);
       shiftPayload.idShift = createdShift?.idShift;
@@ -109,7 +117,7 @@ const ShiftManagement = () => {
       ...row,
       idShift: shiftPayload.idShift,
     }));
-    await ShiftManagementService.saveEmployeeInShift(updatedEmployeeRows);
+    let employeeRes = await ShiftManagementService.saveEmployeeInShift(updatedEmployeeRows);
 
     const updatedScheduleRows = scheduleRows.map((row) => ({
       ...row,
@@ -118,13 +126,15 @@ const ShiftManagement = () => {
       endTime: dayjs(row.endTime).format("HH:mm:ss"),
       workDays: (row.workDays || []).join(','),
     }));
-    await ShiftManagementService.saveScheduleInShift(updatedScheduleRows);
+    let scheduleRes = await ShiftManagementService.saveScheduleInShift(updatedScheduleRows);
 
     await Promise.all([
       getEmployeeList(shiftPayload.idShift),
       getScheduleList(shiftPayload.idShift)
     ]);
-    showToast("Shift saved successfully", "success");
+    if(shiftResponse.data.success && employeeRes.data.success && scheduleRes.data.success){
+      showToast("Shift saved successfully", "success");
+    }
   };
 
   const handleAddEmployeeRow = () => {
@@ -151,7 +161,7 @@ const ShiftManagement = () => {
   };
 
   const handleDeleteEmployee = (idEmployee) => {
-    setConfirmMessage(`Are you sure you want to delete"?`);
+    setConfirmMessage(`Are you sure you want to delete?`);
       setOnConfirm(() => async () => {
         try {
           setEmployeeRows(employeeRows.filter((emp) => emp.idEmployee !== idEmployee));
@@ -172,25 +182,27 @@ const ShiftManagement = () => {
     }]);
   };
 
-  const handleDayToggle = (index, day) => {
-    const updated = [...scheduleRows];
-    const days = new Set(updated[index].workDays);
-    if (days.has(day)) days.delete(day);
-    else days.add(day);
-    updated[index].workDays = [...days];
-    setScheduleRows(updated);
+  const handleOpenWorkingDaysModal = (index) => {
+    setWorkingDaysModal({
+      visible: true,
+      index,
+      selectedDays: [...scheduleRows[index].workDays],
+    });
   };
 
-  const getDuration = (index) => {
-    const from = scheduleRows[index].startTime;
-    const to = scheduleRows[index].endTime;
-    if (!from || !to || !dayjs.isDayjs(from) || !dayjs.isDayjs(to)) return "";
-    let diff = to.diff(from, 'minute');
-    if (diff < 0) diff += 24 * 60;
+  const toggleModalDay = (day) => {
+    const updated = [...workingDaysModal.selectedDays];
+    const idx = updated.indexOf(day);
+    if (idx > -1) updated.splice(idx, 1);
+    else updated.push(day);
+    setWorkingDaysModal((prev) => ({ ...prev, selectedDays: updated }));
+  };
 
-    const hours = Math.floor(diff / 60);
-    const minutes = diff % 60;
-    return `${hours}h ${minutes}m`;
+  const saveWorkingDays = () => {
+    const updated = [...scheduleRows];
+    updated[workingDaysModal.index].workDays = [...workingDaysModal.selectedDays];
+    setScheduleRows(updated);
+    setWorkingDaysModal({ visible: false, index: null, selectedDays: [] });
   };
 
   const handleDeleteSchedule = (idShiftSchedule) => {
@@ -232,6 +244,70 @@ const ShiftManagement = () => {
     });
   };
 
+  const getDuration = (index) => {
+    const from = scheduleRows[index].startTime;
+    const to = scheduleRows[index].endTime;
+    if (!from || !to || !dayjs.isDayjs(from) || !dayjs.isDayjs(to)) return "";
+    let diff = to.diff(from, 'minute');
+    if (diff < 0) diff += 24 * 60;
+    const hours = Math.floor(diff / 60);
+    const minutes = diff % 60;
+    return `${hours}h ${minutes}m`;
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    let errorMessages = [];
+
+    // Shift Name
+    if (!shiftName.trim()) {
+      setShiftNameError(true);
+      errorMessages.push("Shift Name is required.");
+      isValid = false;
+    } else {
+      setShiftNameError(false);
+    }
+
+    // Employee list
+    if (employeeRows.length === 0) {
+      errorMessages.push("At least one employee must be added.");
+      isValid = false;
+    }
+
+    const empErrors = employeeRows.map(emp =>
+      !emp.employeeName || !emp.employeeCode || !emp.department
+    );
+    setEmployeeErrors(empErrors);
+
+    if (empErrors.some(err => err)) {
+      errorMessages.push("Some employee rows have missing fields.");
+      isValid = false;
+    }
+
+    // Schedule list
+    if (scheduleRows.length === 0) {
+      errorMessages.push("At least one schedule must be added.");
+      isValid = false;
+    }
+
+    const schedErrors = scheduleRows.map(s =>
+      !s.startTime || !s.endTime || !dayjs(s.startTime).isValid() || !dayjs(s.endTime).isValid() || !(s.workDays?.length > 0)
+    );
+    setScheduleErrors(schedErrors);
+
+    if (schedErrors.some(err => err)) {
+      errorMessages.push("Some schedule rows have missing data.");
+      isValid = false;
+    }
+
+    if (!isValid) {
+      errorMessages.forEach(msg => showToast(msg, "error"));
+    }
+
+    return isValid;
+  };
+
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       {loadingShift && (
@@ -271,15 +347,15 @@ const ShiftManagement = () => {
               </div>
             )}
           <Card title="Add/Update Shifts">
-            <Input label="Shift Name" value={shiftName} onChange={(e) => setShiftName(e.target.value)} placeholder="Shift Name"/>
+            <Input label="Shift Name" value={shiftName} onChange={(e) => {setShiftName(e.target.value);setShiftNameError(false);}} placeholder="Shift Name" className={shiftNameError ? "is-invalid" : ""}/>
             <br/>
             <label className="form-label mb-1"><b>Employees</b></label>
-            <table className="table table-sm" style={{ tableLayout: "fixed", width: "100%" }}>
+            <table className="table table-bordered table-sm" style={{ tableLayout: "fixed", width: "100%" }}>
               <colgroup>
                 <col style={{ width: "40%" }} />
                 <col style={{ width: "20%" }} />
                 <col style={{ width: "30%" }} />
-                <col style={{ width: "15%"}} />
+                <col style={{ width: "10%"}} />
               </colgroup>
               <thead>
                 <tr>
@@ -291,39 +367,49 @@ const ShiftManagement = () => {
               </thead>
               <tbody>
                 {employeeRows.map((emp, index) => (
-                  <tr key={emp.idShiftEmployee}>
+                  <tr key={emp.idShiftEmployee} className={errors[`emp-${index}`] ? 'table-danger' : ''}>
                     <td>
                       <Select ref={selectRef} options={employeesListOption} onChange={(selected) => handleEmployeeSelect(index, selected)} 
                       value={employeesListOption.find(opt => opt.value === emp.idEmployee) || null} placeholder="Select Employee"
                         menuPortalTarget={document.body}
                         styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                        className={employeeErrors[index] ? "is-invalid" : ""}
                       />
                     </td>
                     <td>{emp.employeeCode}</td>
                     <td>{emp.department}</td>
                     <td>
-                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteEmployee(emp.idEmployee)} />
-                      <AddIcon className="add-icon" onClick={handleAddEmployeeRow}/>
+                      <button className="btn btn-outline-danger border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.01rem"}} onClick={() => handleDeleteEmployee(emp.idEmployee)}>
+                        <i className="bx bx-trash"></i>
+                      </button>
+                      {index === employeeRows.length - 1 && (
+                        <button className="btn btn-outline-primary border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.1rem"}} onClick={handleAddEmployeeRow}>
+                          <i className="bx bx-plus"></i>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {employeeRows.length === 0?
                 <tr>
                   <td colSpan={4} align="right">
-                    <AddIcon className="add-icon" onClick={handleAddEmployeeRow}/>
+                    <button className="btn btn-outline-primary border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.1rem"}} onClick={handleAddEmployeeRow}>
+                      <i className="bx bx-plus"></i>
+                    </button>
                   </td>
                 </tr>:<tr></tr>
                 }
               </tbody>
             </table>
+            {errors.employeeRows && <div className="text-danger">Please add at least one employee</div>}
           <br/>
             <label className="form-label mb-1"><b>Schedules</b></label>
             <table className="table table-bordered" style={{ tableLayout: "fixed", width: "100%" }}>
               <colgroup>
-                <col style={{ width: "28%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "40%" }} />
-                <col style={{ width: "12%" }} />
+                <col style={{ width: "30%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "35%" }} />
+                <col style={{ width: "15%" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -335,19 +421,58 @@ const ShiftManagement = () => {
               </thead>
               <tbody>
                 {scheduleRows.map((s, index) => (
-                  <tr key={s.idShiftSchedule}>
+                  <tr key={s.idShiftSchedule} className={errors[`sch-${index}`] ? 'table-danger' : ''}>
                     <td>
                       <LocalizationProvider dateAdapter={AdapterDayjs} >
-                        <div className="d-flex align-items-center gap-2">
-                          <MobileTimePicker label="Start Time" value={s.startTime ? dayjs(s.startTime) : null}
+                        <div className={scheduleErrors[index] ? "border border-danger rounded p-2" : ""}>
+                          <MobileTimePicker value={s.startTime ? dayjs(s.startTime) : null}
                             onChange={(newValue) => {
                               const updated = [...scheduleRows];
                               updated[index].startTime = newValue;
                               setScheduleRows(updated);
                             }}
-                            ampm={false}
-                            minutesStep={1} />
-                          <MobileTimePicker label="End Time" value={s.endTime ? dayjs(s.endTime) : null}
+                            ampm={true}
+                            minutesStep={1} 
+                            slotProps={{
+                              textField: {
+                                variant: 'standard', // or 'filled', or remove completely
+                                InputLabelProps: {
+                                  style: { fontSize: '0.6rem' }, // 👈 shrink the label size here
+                                },
+                                InputProps: {
+                                  disableUnderline: true, // removes underline
+                                  style: {
+                                    border: 'none', // removes border
+                                    backgroundColor: 'transparent', // optional
+                                    padding: 0,
+                                    fontSize: '0.60rem',
+                                  },
+                                },
+                              },
+                              popper: {
+                                modifiers: [
+                                  {
+                                    name: 'offset',
+                                    options: {
+                                      offset: [0, 2],
+                                    },
+                                  },
+                                ],
+                                sx: {
+                                  '& .MuiClock-root': {
+                                    transform: 'scale(0.10)', // Reduce size
+                                  },
+                                  '& .MuiTypography-root': {
+                                    fontSize: '0.10rem', // Reduce font inside clock
+                                  },
+                                },
+                              },
+                              openPickerIcon: {
+                                sx: { fontSize: 12 } // ✅ Set desired icon size here
+                              }
+                            }}
+                            />
+                          <MobileTimePicker value={s.endTime ? dayjs(s.endTime) : null}
                             onChange={(newValue) => {
                               const updated = [...scheduleRows];
                               updated[index].endTime = newValue;
@@ -361,32 +486,72 @@ const ShiftManagement = () => {
                               }
                               setScheduleRows(updated);
                             }}
-                            ampm={false}
-                            minutesStep={1} />
+                            ampm={true}
+                            minutesStep={1} 
+                            slotProps={{
+                              textField: {
+                                variant: 'standard', // or 'filled', or remove completely
+                                InputLabelProps: {
+                                  style: { fontSize: '0.6rem' }, // 👈 shrink the label size here
+                                },
+                                InputProps: {
+                                  disableUnderline: true, // removes underline
+                                  style: {
+                                    border: 'none', // removes border
+                                    backgroundColor: 'transparent', // optional
+                                    padding: 0,
+                                    fontSize: '0.60rem',
+                                  },
+                                },
+                              },
+                              popper: {
+                                modifiers: [
+                                  {
+                                    name: 'offset',
+                                    options: {
+                                      offset: [0, 4],
+                                    },
+                                  },
+                                ],
+                                sx: {
+                                  '& .MuiClock-root': {
+                                    transform: 'scale(0.60)', // Reduce size
+                                  },
+                                  '& .MuiTypography-root': {
+                                    fontSize: '0.60rem', // Reduce font inside clock
+                                  },
+                                },
+                              },
+                              openPickerIcon: {
+                                sx: { fontSize: 12 } // ✅ Set desired icon size here
+                              }
+                            }}
+                            />
                         </div>
                       </LocalizationProvider>   
                     </td>
                     <td>{getDuration(index)}</td>
-                    <td>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 10px' }}>
-                        {daysOfWeek.map((day) => (
-                        <label key={day} className="me-2" style={{ marginBottom: '10px' }}>
-                          <input type="checkbox" checked={s.workDays.includes(day)} onChange={() => handleDayToggle(index, day)}/>
-                          {' '}{day}
-                        </label>
-                        ))}
-                    </div>
+                    <td onClick={() => handleOpenWorkingDaysModal(index)} style={{ cursor: 'pointer', fontSize: '0.6rem' }}>
+                      {s.workDays.length > 0 ? s.workDays.join(', ') : <i className="text-muted">Click to select</i>}
                     </td>
                     <td>
-                      <DeleteIcon className="delete-icon" onClick={() => handleDeleteSchedule(s.idShiftSchedule)} />
-                      <AddIcon className="add-icon" onClick={handleAddScheduleRow}/>    
+                      <button className="btn btn-outline-danger border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={() => handleDeleteSchedule(s.idShiftSchedule)}>
+                        <i className="bx bx-trash"></i>
+                      </button>
+                      {index === scheduleRows.length - 1 && (
+                        <button className="btn btn-outline-primary border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={handleAddScheduleRow}>
+                          <i className="bx bx-plus"></i>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {scheduleRows.length === 0 ?
                   <tr>
                     <td colSpan={4} align="right">
-                      <AddIcon className="add-icon" onClick={handleAddScheduleRow}/>
+                      <button className="btn btn-outline-primary border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.1rem"}} onClick={handleAddScheduleRow}>
+                        <i className="bx bx-plus"></i>
+                      </button>
                     </td>
                   </tr>
                   : <tr></tr>
@@ -399,7 +564,6 @@ const ShiftManagement = () => {
             <Button className="btn btn-primary px-4 me-2" onClick={handleShiftSubmit}>Submit</Button>
             <Button className="btn btn-outline-secondary px-4" onClick={handleReset}>Reset</Button>
           </div>
-          
           {confirmModalVisible && (
             <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} >
               <div className="modal-dialog">
@@ -418,6 +582,46 @@ const ShiftManagement = () => {
                     <button type="button" className="btn btn-outline-secondary" onClick={() => setConfirmModalVisible(false)}>
                       Cancel
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Working Days Modal */}
+          {workingDaysModal.visible && (
+            <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+              <div className="modal-dialog" style={{width: "300px"}}>
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Select Working Days</h5>
+                    <button type="button" className="btn-close" onClick={() => setWorkingDaysModal({ visible: false, index: null, selectedDays: [] })}></button>
+                  </div>
+                  <div className="modal-body">
+                    <button className="btn btn-sm btn-outline-primary mb-2"
+                      onClick={() => {
+                        const allSelected = daysOfWeek.every(day => workingDaysModal.selectedDays.includes(day));
+                        setWorkingDaysModal(prev => ({
+                          ...prev,
+                          selectedDays: allSelected ? [] : [...daysOfWeek],
+                        }));
+                      }}
+                    >
+                      {daysOfWeek.every(day => workingDaysModal.selectedDays.includes(day)) ? 'Unselect All' : 'Select All'}
+                    </button>
+                    {daysOfWeek.map((day) => (
+                      <div key={day} className="form-check">
+                        <input className="form-check-input" type="checkbox" id={day}
+                          checked={workingDaysModal.selectedDays.includes(day)}
+                          onChange={() => toggleModalDay(day)} />
+                        <label className="form-check-label" htmlFor={day}>
+                          {day}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="modal-footer">
+                    <button className="btn btn-primary" onClick={saveWorkingDays}>Save</button>
+                    <button className="btn btn-outline-secondary" onClick={() => setWorkingDaysModal({ visible: false, index: null, selectedDays: [] })}>Cancel</button>
                   </div>
                 </div>
               </div>
