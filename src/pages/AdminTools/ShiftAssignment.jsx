@@ -4,12 +4,14 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import ShiftManagementService from "../../core/services/ShiftManagementService";
 import { showToast } from '../../components/ToastNotifications/toastUtils';
+import isoWeek from 'dayjs/plugin/isoWeek';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
+dayjs.extend(isoWeek);
 
 const ShiftAssignment = () => {
-  const [weekStart, setWeekStart] = useState(dayjs().startOf('week'));
+  const [weekStart, setWeekStart] = useState(dayjs().startOf('isoWeek'));
   const [selectedShift, setSelectedShift] = useState(null);
   const [shiftOptions, setShiftOptions] = useState([]);
   const [scheduleList, setScheduleList] = useState([]);
@@ -225,9 +227,10 @@ const ShiftAssignment = () => {
           </select>
         </div>
         <div className="ms-auto d-flex align-items-center gap-2">
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => setWeekStart(prev => prev.subtract(7, 'day'))}>←</button>
+          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.subtract(7, 'day'))}>←</button>
           <strong>{weekStart.format("DD MMM")} - {weekStart.add(6, 'day').format("DD MMM YYYY")}</strong>
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => setWeekStart(prev => prev.add(7, 'day'))}>→</button>
+          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.add(7, 'day'))}>→</button>
+          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(dayjs().startOf('isoWeek'))}><strong>Current Week</strong></button>
         </div>
       </div>
 
