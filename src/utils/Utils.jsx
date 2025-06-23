@@ -181,8 +181,7 @@ export default class Utils {
     Object.keys(filter).map((item) => {
       filterText =
         filterText +
-        `${item}: ${
-          filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` +
         "   ";
     });
@@ -262,8 +261,7 @@ export default class Utils {
     let filterText = "";
     Object.keys(filter).map((item) => {
       filterText +=
-        `${item}: ${
-          filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` + "   ";
     });
 
@@ -491,9 +489,8 @@ export default class Utils {
     // Prepare the filter text row
     let filterText = "";
     Object.keys(filter).forEach((item) => {
-      filterText += `${item}: ${
-        filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
-      }   `;
+      filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        }   `;
     });
 
     // Table header
@@ -564,8 +561,7 @@ export default class Utils {
       Object.keys(filter).map((item) => {
         filterText =
           filterText +
-          `${item}: ${
-            filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+          `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
           }` +
           "   ";
       });
@@ -634,8 +630,7 @@ export default class Utils {
         doc.setFontSize(10);
         const pageHeight = doc.internal.pageSize.getHeight();
         doc.text(
-          `Page ${
-            i == 0 ? doc.getNumberOfPages() : i
+          `Page ${i == 0 ? doc.getNumberOfPages() : i
           } of ${doc.getNumberOfPages()}`,
           14,
           pageHeight - 10,
@@ -658,5 +653,11 @@ export default class Utils {
       hour12: true,
     });
     return formatter.format(date).replace("pm", "PM").replace("am", "AM");
+  }
+
+  static getLastDayFor = (date) => {
+    let d = new Date(date);
+    const lastday = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return lastday.getDate();
   }
 }

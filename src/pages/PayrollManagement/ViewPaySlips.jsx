@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import CommonService from '../../core/services/CommonService';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Button, Form, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
@@ -11,6 +11,7 @@ import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function ViewPaySlips() {
   const [salarySlips, setSalarySlips] = useState([]);
@@ -234,6 +235,10 @@ function ViewPaySlips() {
     });
   }
 
+    const renderTooltip = (text) =>{
+    return <Tooltip>Refresh</Tooltip>;
+  }
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -243,8 +248,9 @@ function ViewPaySlips() {
               <h5 className="m-0">List of Salary Slips</h5>
 
               <div className="list_menu">
+                <label className='p-2'>Email Status</label>
                 <div className="list_searchbox">
-                  {/* <label>Salary Month From</label> */}
+
                   <select
                     className="form-select"
                     value={selectedStatus}
@@ -265,7 +271,7 @@ function ViewPaySlips() {
                     onChange={handleMonthFromChange}
                     required
                   >
-                    <option value={''}>Select From</option>
+                    <option value={''}>Salary From</option>
                     {salaryMonthsList.map((el) => (
                       <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
                         {el.salaryMonthText}
@@ -281,7 +287,7 @@ function ViewPaySlips() {
                     onChange={handleMonthToChange}
                     required
                   >
-                    <option value={''}>Select To</option>
+                    <option value={''}>Salary To</option>
                     {filteredMonthsList.map((el) => (
                       <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
                         {el.salaryMonthText}
@@ -301,9 +307,13 @@ function ViewPaySlips() {
                   <i className="bx bx-search cursor" onClick={() => getSalarySlips()}></i>
                 </div>
                 <div className="list_searchbox">
-                  <button className="btn btn-primary btn-sm px-4" onClick={() => getSalarySlips()}>
-                    Refresh
-                  </button>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={renderTooltip()}>
+                    <button className="btn btn-primary btn-sm px-4" onClick={() => getSalarySlips()}>
+                      <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                  </OverlayTrigger>
                 </div>
               </div>
 
