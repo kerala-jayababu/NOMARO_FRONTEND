@@ -132,8 +132,10 @@ const ShiftManagement = () => {
       getEmployeeList(shiftPayload.idShift),
       getScheduleList(shiftPayload.idShift)
     ]);
-    if(shiftResponse.data.success && employeeRes.data.success && scheduleRes.data.success){
+    if(shiftResponse.data.success === true && employeeRes.data.success === true 
+      && scheduleRes.data.success === true){
       showToast("Shift saved successfully", "success");
+      handleReset();
     }
   };
 
@@ -161,7 +163,7 @@ const ShiftManagement = () => {
   };
 
   const handleDeleteEmployee = (idEmployee) => {
-    setConfirmMessage(`Are you sure you want to delete?`);
+    setConfirmMessage(`Are you sure you want to delete this employee?`);
       setOnConfirm(() => async () => {
         try {
           setEmployeeRows(employeeRows.filter((emp) => emp.idEmployee !== idEmployee));
@@ -205,11 +207,13 @@ const ShiftManagement = () => {
     setWorkingDaysModal({ visible: false, index: null, selectedDays: [] });
   };
 
-  const handleDeleteSchedule = (idShiftSchedule) => {
-    setConfirmMessage(`Are you sure you want to delete?`);
+  const handleDeleteSchedule = (index) => {
+    setConfirmMessage(`Are you sure you want to delete this schedule?`);
       setOnConfirm(() => async () => {
         try {
-          setScheduleRows(scheduleRows.filter((s) => s.idShiftSchedule !== idShiftSchedule));
+          const updated = [...scheduleRows];
+          updated.splice(index, 1); // Remove by index
+          setScheduleRows(updated);
         } catch (err) {
           console.error("error in removing schedule ", err);
         }
@@ -379,14 +383,16 @@ const ShiftManagement = () => {
                     <td>{emp.employeeCode}</td>
                     <td>{emp.department}</td>
                     <td>
-                      <button className="btn btn-outline-danger border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.01rem"}} onClick={() => handleDeleteEmployee(emp.idEmployee)}>
-                        <i className="bx bx-trash"></i>
-                      </button>
-                      {index === employeeRows.length - 1 && (
-                        <button className="btn btn-outline-primary border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.1rem"}} onClick={handleAddEmployeeRow}>
-                          <i className="bx bx-plus"></i>
+                      <div className="d-flex align-items-center" style={{ gap: "6px" }}>
+                        <button className="btn btn-outline-danger border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.01rem"}} onClick={() => handleDeleteEmployee(emp.idEmployee)}>
+                          <i className="bx bx-trash"></i>
                         </button>
-                      )}
+                        {index === employeeRows.length - 1 && (
+                          <button className="btn btn-outline-primary border-0" style={{padding: "0.2rem 0.1rem", fontSize: "0.60rem", borderRadius:" 0.1rem"}} onClick={handleAddEmployeeRow}>
+                            <i className="bx bx-plus"></i>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -421,7 +427,7 @@ const ShiftManagement = () => {
               </thead>
               <tbody>
                 {scheduleRows.map((s, index) => (
-                  <tr key={s.idShiftSchedule} className={errors[`sch-${index}`] ? 'table-danger' : ''}>
+                  <tr key={s.id} className={errors[`sch-${index}`] ? 'table-danger' : ''}>
                     <td>
                       <LocalizationProvider dateAdapter={AdapterDayjs} >
                         <div className={scheduleErrors[index] ? "border border-danger rounded p-2" : ""}>
@@ -445,7 +451,7 @@ const ShiftManagement = () => {
                                     border: 'none', // removes border
                                     backgroundColor: 'transparent', // optional
                                     padding: 0,
-                                    fontSize: '0.60rem',
+                                    fontSize: '0.80rem',
                                   },
                                 },
                               },
@@ -500,7 +506,7 @@ const ShiftManagement = () => {
                                     border: 'none', // removes border
                                     backgroundColor: 'transparent', // optional
                                     padding: 0,
-                                    fontSize: '0.60rem',
+                                    fontSize: '0.80rem',
                                   },
                                 },
                               },
@@ -535,14 +541,16 @@ const ShiftManagement = () => {
                       {s.workDays.length > 0 ? s.workDays.join(', ') : <i className="text-muted">Click to select</i>}
                     </td>
                     <td>
-                      <button className="btn btn-outline-danger border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={() => handleDeleteSchedule(s.idShiftSchedule)}>
-                        <i className="bx bx-trash"></i>
-                      </button>
-                      {index === scheduleRows.length - 1 && (
-                        <button className="btn btn-outline-primary border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={handleAddScheduleRow}>
-                          <i className="bx bx-plus"></i>
+                      <div className="d-flex align-items-center" style={{ gap: "6px" }}>
+                        <button className="btn btn-outline-danger border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={() => handleDeleteSchedule(index)}>
+                          <i className="bx bx-trash"></i>
                         </button>
-                      )}
+                        {index === scheduleRows.length - 1 && (
+                          <button className="btn btn-outline-primary border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={handleAddScheduleRow}>
+                            <i className="bx bx-plus"></i>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
