@@ -116,6 +116,7 @@ const ShiftManagement = () => {
     const updatedEmployeeRows = employeeRows.map((row) => ({
       ...row,
       idShift: shiftPayload.idShift,
+      shiftName: shiftName,
     }));
     let employeeRes = await ShiftManagementService.saveEmployeeInShift(updatedEmployeeRows);
 
@@ -125,6 +126,7 @@ const ShiftManagement = () => {
       startTime: dayjs(row.startTime).format("HH:mm:ss"),
       endTime: dayjs(row.endTime).format("HH:mm:ss"),
       workDays: (row.workDays || []).join(','),
+      shiftName: shiftName,
     }));
     let scheduleRes = await ShiftManagementService.saveScheduleInShift(updatedScheduleRows);
 
@@ -412,9 +414,9 @@ const ShiftManagement = () => {
             <label className="form-label mb-1"><b>Schedules</b></label>
             <table className="table table-bordered" style={{ tableLayout: "fixed", width: "100%" }}>
               <colgroup>
-                <col style={{ width: "30%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "35%" }} />
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "45%" }} />
                 <col style={{ width: "15%" }} />
               </colgroup>
               <thead>
@@ -537,7 +539,7 @@ const ShiftManagement = () => {
                       </LocalizationProvider>   
                     </td>
                     <td>{getDuration(index)}</td>
-                    <td onClick={() => handleOpenWorkingDaysModal(index)} style={{ cursor: 'pointer', fontSize: '0.6rem' }}>
+                    <td onClick={() => handleOpenWorkingDaysModal(index)} style={{ cursor: 'pointer', fontSize: '0.8rem' }}>
                       {s.workDays.length > 0 ? s.workDays.join(', ') : <i className="text-muted">Click to select</i>}
                     </td>
                     <td>
