@@ -345,6 +345,7 @@ body::-webkit-scrollbar {
   display: block;
 }
 
+.OvertimeTransactionSection,
 .SalaryReportSection,
 .SalarySlipSection {
   .card {
@@ -712,6 +713,7 @@ body::-webkit-scrollbar {
     .card {
       .card-header {
         padding: 10px;
+        display: block;
 
         .card-header_in {
           display: flex;
@@ -766,23 +768,31 @@ body::-webkit-scrollbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
+
+        h5 {
+          margin: 10px 0px;
+          font-size: 14px;
+          font-weight: 800;
+        }
       }
-      .card-body{
+
+      .card-body {
         padding: 10px;
       }
     }
 
-    .LeavePassage_listbox{
+    .LeavePassage_listbox {
       background-color: #ffffff;
       border: 1px solid #ddd;
       padding: 8px;
       border-radius: 6px;
       margin-bottom: 5px;
 
-      label{
+      label {
         color: #aab1b6;
       }
-      p{
+
+      p {
         font-weight: 600;
       }
     }
