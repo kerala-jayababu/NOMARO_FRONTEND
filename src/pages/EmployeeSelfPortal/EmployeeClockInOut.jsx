@@ -11,6 +11,7 @@ import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
+import { useLoader } from "../../components/LoaderContext";
 
 function EmployeeClockInOut() {
     const [clockInDetails, setClockInDetails] = useState([]);
@@ -20,7 +21,9 @@ function EmployeeClockInOut() {
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const today = moment(new Date()).format('MM-DD-YYYY');
     const [loading, setLoading] = useState(false);
+    const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
     const [showModal, setShowModal] = useState(false);
     const [selectedData, setSelectedData] = useState({});
@@ -35,23 +38,48 @@ function EmployeeClockInOut() {
     }, [startDate, endDate]);
 
     const getClockInOutDetails = () => {
-        setLoading(true);
-        const sDate = moment(startDate).format("YYYY-MM-DD");
-        const eDate = moment(endDate).format("YYYY-MM-DD");
-        ClockInOutService.getClockInOutData(userData.idEmployee ?? 0, sDate, eDate).then(res => {
+        if (!startDate || !endDate) {
+            toast.warning("Please select both start and end dates", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        const sDate = moment(startDate);
+        const eDate = moment(endDate);
+        const daysDifference = eDate.diff(sDate, 'days');
+
+        if (daysDifference > 30) {
+            toast.warning("Date range cannot be more than 30 days", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+
+            return;
+        }
+
+        showLoader();
+        const formattedStartDate = sDate.format("YYYY-MM-DD");
+        const formattedEndDate = eDate.format("YYYY-MM-DD");
+        ClockInOutService.getClockInOutData(userData.idEmployee ?? 0, '', formattedStartDate, formattedEndDate).then(res => {
             setClockInDetails(res.data.data);
-            setLoading(false);
+            hideLoader();
         }).catch(err => {
             setClockInDetails([]);
-            setLoading(false);
+            hideLoader();
         });
     }
 
     const checkMissingDetails = () => {
-        if (selectedType == 'IN') {
-            let outTime = moment(selectedData.outTime).format('hh:mm');
-            console.log(outTime)
-            if (moment(newTime).isSameOrBefore(moment(outTime))) {
+        const newTimeMoment = moment(newTime, 'hh:mm A');
+
+        if (selectedType === 'IN') {
+            let outTime = selectedData.outTime;
+
+            const outTimeMoment = moment(outTime, 'hh:mm A');
+
+            if (newTimeMoment.isSameOrBefore(outTimeMoment)) {
                 saveMissingDetails();
             } else {
                 toast.warning("Cannot enter time same or after out-time", {
@@ -60,9 +88,11 @@ function EmployeeClockInOut() {
                 });
             }
         } else {
-            let inTime = moment(selectedData.inTime).format('hh:mm');
-            console.log(inTime)
-            if (moment(newTime).isSameOrAfter(moment(inTime))) {
+            let inTime = selectedData.inTime;
+
+            const inTimeMoment = moment(inTime, 'hh:mm A');
+
+            if (newTimeMoment.isSameOrAfter(inTimeMoment)) {
                 saveMissingDetails();
             } else {
                 toast.warning("Cannot enter time same or before in-time", {
@@ -71,25 +101,30 @@ function EmployeeClockInOut() {
                 });
             }
         }
-    }
+    };
 
     const saveMissingDetails = () => {
+        const date = moment(selectedData.clockDate).format('YYYY-MM-DD');
+        const time24hrWithSeconds = moment(newTime, 'hh:mm A').format('HH:mm:ss');
         let payload = {
             idClockDetail: selectedData.idClockDetails,
             idEmployee: selectedData.idEmployee,
             clockType: selectedType,
-            time: moment(newTime).format('hh:mm'),
+            time: date + 'T' + time24hrWithSeconds,
             reason: reason
         }
-        console.log(payload);
-        // ClockInOutService.saveMissingEntries([payload]).then(res => {
-        //   if (res.data.status === 200) {
-        //     getClockInOutDetails();
-        //     resetValues();
-        //     setShowModal(false);
-        //   }
-        // }).catch(err => {
-        // });
+        ClockInOutService.saveMissingEntries([payload]).then(res => {
+            if (res.data.status === 200) {
+                toast.success("Data updated successfully", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                getClockInOutDetails();
+                resetValues();
+                setShowModal(false);
+            }
+        }).catch(err => {
+        });
     }
 
     const resetValues = () => {
@@ -121,18 +156,18 @@ function EmployeeClockInOut() {
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" />
+                                        showYearDropdown dropdownMode="select" maxDate={today}/>
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
                                         selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                                        showYearDropdown dropdownMode="select" />
+                                        maxDate={today} showYearDropdown dropdownMode="select" />
                                 </div>
                             </div>
                         </div>
 
                         <div className="card-body">
-                            <div className="table-responsive text-nowrap" style={{ maxHeight: '500px', overflow: 'auto' }}>
+                            <div className="table-responsive text-nowrap" style={{ maxHeight: '430px', overflow: 'auto' }}>
                                 <table className="table table-sm">
                                     <thead>
                                         <tr>
@@ -150,11 +185,11 @@ function EmployeeClockInOut() {
                                                     <td>{moment(item.clockDate).format('dddd')}</td>
                                                     <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
                                                     {
-                                                        item.clockType == 'LEAVE' &&
+                                                        (item.clockType == 'LEAVE' || item.clockType == 'UNAUTH') &&
                                                         <td colSpan={3} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
                                                     }
                                                     {
-                                                        item.clockType != 'LEAVE' &&
+                                                        (item.clockType != 'LEAVE' && item.clockType != 'UNAUTH') &&
                                                         <>
                                                             {
                                                                 item.inTime != null &&

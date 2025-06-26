@@ -12,6 +12,7 @@ import { NumericFormat } from "react-number-format";
 import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
+import { useLoader } from "../../components/LoaderContext";
 
 function AttendanceDetails() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -23,12 +24,14 @@ function AttendanceDetails() {
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const today = moment(new Date()).format('MM-DD-YYYY')
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const filteredEmployees = selectedDepartment === ''
         ? employeesList
         : employeesList.filter(emp => emp.idDepartment === parseInt(selectedDepartment));
     const [loading, setLoading] = useState(false);
+    const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
     const [showModal, setShowModal] = useState(false);
     const [selectedData, setSelectedData] = useState({});
@@ -50,15 +53,41 @@ function AttendanceDetails() {
     }, [startDate, endDate, selectedDepartment, selectedEmployee]);
 
     const getAttendanceDetails = () => {
-        setLoading(true);
-        const sDate = moment(startDate).format("YYYY-MM-DD");
-        const eDate = moment(endDate).format("YYYY-MM-DD");
-        AttendanceService.getAttendanceData(selectedEmployee ?? '', selectedDepartment ?? '', sDate, eDate).then(res => {
+        if (!startDate || !endDate) {
+            toast.warning("Please select both start and end dates", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        const sDate = moment(startDate);
+        const eDate = moment(endDate);
+        const daysDifference = eDate.diff(sDate, 'days');
+
+        if (daysDifference > 30) {
+            toast.warning("Date range cannot be more than 30 days", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        showLoader();
+        const formattedStartDate = sDate.format("YYYY-MM-DD");
+        const formattedEndDate = eDate.format("YYYY-MM-DD");
+
+        AttendanceService.getAttendanceData(
+            selectedEmployee ?? '',
+            selectedDepartment ?? '',
+            formattedStartDate,
+            formattedEndDate
+        ).then(res => {
             setAttendanceDetails(res.data.data);
-            setLoading(false);
+            hideLoader();
         }).catch(err => {
             setAttendanceDetails([]);
-            setLoading(false);
+            hideLoader();
         });
     }
 
@@ -150,12 +179,12 @@ function AttendanceDetails() {
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" />
+                                        showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
                                         selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                                        showYearDropdown dropdownMode="select" />
+                                        maxDate={today} showYearDropdown dropdownMode="select" />
                                 </div>
                                 <div className="list_searchbox">
                                     <select
@@ -191,7 +220,7 @@ function AttendanceDetails() {
                         </div>
 
                         <div className="card-body">
-                            <div class="row m-0 align-items-center">
+                            {/* <div class="row m-0 align-items-center">
                                 <div class="col-md-3 p-2">
                                     <div class="form-check form-check-inline ">
                                         <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
@@ -207,8 +236,8 @@ function AttendanceDetails() {
                                         <label class="form-check-label" for="inlineRadio2">Show Late Check-in/Early Check-out Records</label>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="table-responsive text-nowrap" style={{ maxHeight: '450px', overflow: 'auto' }}>
+                            </div> */}
+                            <div className="table-responsive text-nowrap" style={{ maxHeight: '440px', overflow: 'auto' }}>
                                 <table className="table table-sm">
                                     <thead>
                                         <tr>
@@ -265,13 +294,27 @@ function AttendanceDetails() {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className='row'>
+                                <div className='col-lg-4'>
+                                    <label style={{ marginTop: '15px' }}>Total records selected {selectedRows.length} out of {paginatedData.length}</label>
+                                </div>
+                                <div className='col-lg-4'>
+                                    <div className="text-center py-2">
+                                        <button className="btn btn-primary btn-sm px-4"
+                                            disabled={selectedRows.length === 0} onClick={() => null}>
+                                            Approve selected
+                                        </button> &nbsp;
+                                    </div>
+                                </div>
+                                <div className='col-lg-4'></div>
+                            </div>
                             {/* <div className="text-end pt-2">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div> */}
+                                <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                                />
+                            </div> */}
                         </div>
                     </div>
                 </div>

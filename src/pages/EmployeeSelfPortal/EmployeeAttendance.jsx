@@ -12,6 +12,7 @@ import { NumericFormat } from "react-number-format";
 import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
+import { useLoader } from "../../components/LoaderContext";
 
 function EmployeeAttendance() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -21,7 +22,9 @@ function EmployeeAttendance() {
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const today = moment(new Date()).format('MM-DD-YYYY')
     const [loading, setLoading] = useState(false);
+    const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
     const [showModal, setShowModal] = useState(false);
     const [selectedData, setSelectedData] = useState({});
@@ -36,17 +39,44 @@ function EmployeeAttendance() {
     }, [startDate, endDate]);
 
     const getAttendanceDetails = () => {
-        setLoading(true);
-        const sDate = moment(startDate).format("YYYY-MM-DD");
-        const eDate = moment(endDate).format("YYYY-MM-DD");
-        AttendanceService.getAttendanceData(userData.idEmployee ?? 0, '', sDate, eDate).then(res => {
-            setAttendanceDetails(res.data.data);
-            setLoading(false);
-        }).catch(err => {
-            setAttendanceDetails([]);
-            setLoading(false);
-        });
-    }
+            if (!startDate || !endDate) {
+                toast.warning("Please select both start and end dates", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                return;
+            }
+    
+            const sDate = moment(startDate);
+            const eDate = moment(endDate);
+            const daysDifference = eDate.diff(sDate, 'days');
+    
+            if (daysDifference > 30) {
+                toast.warning("Date range cannot be more than 30 days", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                
+                return;
+            }
+    
+            showLoader();
+            const formattedStartDate = sDate.format("YYYY-MM-DD");
+            const formattedEndDate = eDate.format("YYYY-MM-DD");
+    
+            AttendanceService.getAttendanceData(
+                userData.idEmployee ?? 0,
+                '',
+                formattedStartDate,
+                formattedEndDate
+            ).then(res => {
+                setAttendanceDetails(res.data.data);
+                hideLoader();
+            }).catch(err => {
+                setAttendanceDetails([]);
+                hideLoader();
+            });
+        }
 
     const saveShortTimeDetails = () => {
         if (reason != '') {
@@ -96,12 +126,12 @@ function EmployeeAttendance() {
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" />
+                                        showYearDropdown dropdownMode="select" maxDate={today}/>
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
                                         selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                                        showYearDropdown dropdownMode="select" />
+                                        maxDate={today} showYearDropdown dropdownMode="select" />
                                 </div>
                             </div>
                         </div>

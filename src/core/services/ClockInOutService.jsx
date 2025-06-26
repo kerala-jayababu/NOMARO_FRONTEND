@@ -3,9 +3,9 @@ import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class ClockInOutService {
 
-  static getClockInOutData = async (empId, fromDate, toDate) => {
+  static getClockInOutData = async (empId, dept, fromDate, toDate) => {
     try {
-      const res = await API.get("/api/v1/Shift/GetClockInClockOutDetails?idEmployeeString=" + empId + "&dateFrom=" + fromDate + '&dateTo=' + toDate);
+      const res = await API.get("/api/v1/Shift/GetClockInClockOutDetails?idDepartment=" + dept + "&idEmployeeString=" + empId + "&dateFrom=" + fromDate + '&dateTo=' + toDate);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
