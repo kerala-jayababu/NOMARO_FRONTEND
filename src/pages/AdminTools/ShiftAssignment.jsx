@@ -54,6 +54,7 @@ const ShiftAssignment = () => {
   const handleChangeShift = async (e) => {
     const selected = shiftOptions.find(opt => opt.value === parseInt(e.target.value));
     setSelectedShift(selected);
+    setWeekStart(dayjs().startOf('isoWeek'));
     setLoading(true);
 
     const scheduleRes = await getScheduleList(selected?.value);
@@ -227,10 +228,9 @@ const ShiftAssignment = () => {
           </select>
         </div>
         <div className="ms-auto d-flex align-items-center gap-2">
-          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.subtract(7, 'day'))}>←</button>
-          <strong>{weekStart.format("DD MMM")} - {weekStart.add(6, 'day').format("DD MMM YYYY")}</strong>
-          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.add(7, 'day'))}>→</button>
+          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.subtract(7, 'day'))}><strong style={{ fontSize: '1.5rem', lineHeight: .5 }}>←</strong></button>
           <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(dayjs().startOf('isoWeek'))}><strong>Current Week</strong></button>
+          <button className="btn btn-sm btn-outline-primary" onClick={() => setWeekStart(prev => prev.add(7, 'day'))}><strong style={{ fontSize: '1.5rem', lineHeight: .5 }}>→</strong></button>
         </div>
       </div>
 
@@ -284,13 +284,13 @@ const ShiftAssignment = () => {
                       padding: '10px',
                       minWidth: '150px',
                       textAlign: 'left',
-                      verticalAlign: 'top',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {assigned.map(idEmployee => {
                       const emp = employeeList.find(e => e.idEmployee === idEmployee);
                       return (
-                        <div key={idEmployee} style={{ fontSize: '10px', paddingBottom: '5px' }}>
+                        <div key={idEmployee} style={{ fontSize: '10px', paddingBottom: '5px', alignContent: 'center'}}>
                           {emp?.employeeName.substring(0, 20)}
                         </div>
                       );
@@ -330,7 +330,7 @@ const ShiftAssignment = () => {
                                 {emp.employeeName}
                             </label>
                         </li>
-                      );
+                      );f
                     })) : (
                       <tr>
                         <td colSpan={3} className="text-start">
