@@ -191,7 +191,7 @@ function SalarySlipsView() {
                     </div>
                   ))}
                   <div className="TotalEarningsBox_inner">
-                    <h6 className="mb-2">Total</h6>
+                    <h6 className="mb-2">Earning Total</h6>
                     <div className="TotalEarningsBox_innerDt">
                       <div className="TotalEarningsBox_innerDt_01">
                         <label>Amount (G$)</label>
@@ -249,7 +249,7 @@ function SalarySlipsView() {
                     </div>
                   ))}
                   <div className="TotalDeductionsBox_inner">
-                    <h6 className="mb-2">Total</h6>
+                    <h6 className="mb-2">Deduction Total</h6>
                     <div className="TotalDeductionsBox_innerDt">
                       <div className="TotalDeductionsBox_innerDt_01">
                         <label>Amount(G$)</label>

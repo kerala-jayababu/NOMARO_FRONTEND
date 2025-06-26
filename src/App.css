@@ -355,6 +355,7 @@ body::-webkit-scrollbar {
     }
   }
 }
+
 .custom-col-md-9 {
   flex: 0 0 auto;
   width: 80% !important;
@@ -569,11 +570,17 @@ body::-webkit-scrollbar {
 
       h5 {
         margin-bottom: 5px;
+        font-size: 16px;
       }
 
       p {
         margin-bottom: 0px;
         opacity: 0.5;
+        font-size: 12px;
+      }
+
+      .btn {
+        font-size: 12px;
       }
     }
   }
@@ -731,6 +738,7 @@ body::-webkit-scrollbar {
           border: 1px solid #ddd;
           padding: 8px;
           border-radius: 6px;
+          margin-bottom: 5px;
 
           p {
             margin: 0px;
@@ -744,7 +752,39 @@ body::-webkit-scrollbar {
       }
     }
   }
+
   .badge {
     padding: 7px 15px !important;
+  }
+
+  .LeavePassageSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card-body{
+        padding: 10px;
+      }
+    }
+
+    .LeavePassage_listbox{
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+
+      label{
+        color: #aab1b6;
+      }
+      p{
+        font-weight: 600;
+      }
+    }
   }
 }
