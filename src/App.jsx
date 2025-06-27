@@ -78,8 +78,8 @@ function App() {
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
               <Route path="holiday-config" element={< Holidays/>} />
               <Route path="leave-passages" element={<LeavePassage/>} />
-              <Route path="shiftManagement" element={<ShiftManagement/>} />.
-              <Route path="shiftAssignment" element={<ShiftAssignment/>} />
+              <Route path="shift-config" element={<ShiftManagement/>} />.
+              <Route path="shift-assignment" element={<ShiftAssignment/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
