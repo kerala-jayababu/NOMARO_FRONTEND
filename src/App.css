@@ -748,3 +748,15 @@ body::-webkit-scrollbar {
     padding: 7px 15px !important;
   }
 }
+
+.AttendanceTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid black;
+  margin-bottom: 5px;
+}
+
+.AttendanceTable tr td{
+  padding: 5px;
+  border: 1px solid black
+}

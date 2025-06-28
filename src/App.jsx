@@ -41,6 +41,10 @@ import LeavePassage from "./pages/PayrollManagement/LeavePassage";
 import ShiftManagement from "./pages/AdminTools/ShiftManagement"
 import ShiftAssignment from "./pages/AdminTools/ShiftAssignment"
 import "../src/core/services/PreventMultipleClickButton"
+import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
+import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
+import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
+import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 
 function App() {
   return (
@@ -78,7 +82,13 @@ function App() {
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
               <Route path="holiday-config" element={< Holidays/>} />
               <Route path="leave-passages" element={<LeavePassage/>} />
-              <Route path="shift-config" element={<ShiftManagement/>} />.
+              <Route path="shiftManagement" element={<ShiftManagement/>} />.
+              <Route path="shiftAssignment" element={<ShiftAssignment/>} />
+              <Route path="clock-inout" element={<ClockInClockOut/>} />
+              <Route path="clock-in-out-details" element={<EmployeeClockInOut/>} />
+              <Route path="attendance-report" element={<EmployeeAttendance/>} />
+              <Route path="attendance" element={<AttendanceDetails/>} />
+              <Route path="shift-config" element={<ShiftManagement/>} />
               <Route path="shift-assignment" element={<ShiftAssignment/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
