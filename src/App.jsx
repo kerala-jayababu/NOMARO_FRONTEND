@@ -88,6 +88,8 @@ function App() {
               <Route path="clock-in-out-details" element={<EmployeeClockInOut/>} />
               <Route path="attendance-report" element={<EmployeeAttendance/>} />
               <Route path="attendance" element={<AttendanceDetails/>} />
+              <Route path="shift-config" element={<ShiftManagement/>} />
+              <Route path="shift-assignment" element={<ShiftAssignment/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
