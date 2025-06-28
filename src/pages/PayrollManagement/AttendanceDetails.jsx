@@ -13,6 +13,7 @@ import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 function AttendanceDetails() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -40,6 +41,7 @@ function AttendanceDetails() {
     const [reason, setReason] = useState('');
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     useEffect(() => {
         getEmployeesData();
@@ -119,7 +121,6 @@ function AttendanceDetails() {
                 idEmployee: selectedData.idEmployee,
                 reasonForShortTime: reason
             }
-            console.log(payload);
             AttendanceService.saveShortTimeEntries([payload]).then(res => {
                 if (res.data.status === 200) {
                     getAttendanceDetails();
@@ -136,6 +137,24 @@ function AttendanceDetails() {
         }
     }
 
+    const approveSelected = () => {
+        AttendanceService.approveData(selectedRows).then(res => {
+            if (res.data.status === 200) {
+                getAttendanceDetails();
+                setSelectedRows([]);
+                resetValues();
+            }
+        }).catch(err => {
+        });
+    }
+
+    const confirmApprove = (val) => {
+        setShowConfirmation(false);
+        if (val) {
+            approveSelected();
+        }
+    };
+
     const resetValues = () => {
         setSelectedData({});
         setReason('');
@@ -149,24 +168,42 @@ function AttendanceDetails() {
 
     const handlePageChange = (page) => setCurrentPage(page);
 
-    const handleRowSelect = (idDayAttendance) => {
-        if (selectedRows.includes(idDayAttendance)) {
-            setSelectedRows(selectedRows.filter(code => code !== idDayAttendance));
+    // Updated handler functions
+    const handleRowSelect = (item) => {
+        const selectedItem = {
+            idDayAttendance: item.idDayAttendance,
+            idEmployee: item.idEmployee,
+            approvalStatus: 'APPROVED'
+        };
+
+        const isSelected = selectedRows.some(row =>
+            row.idDayAttendance === item.idDayAttendance
+        );
+
+        if (isSelected) {
+            setSelectedRows(selectedRows.filter(row =>
+                row.idDayAttendance !== item.idDayAttendance
+            ));
         } else {
-            setSelectedRows([...selectedRows, idDayAttendance]);
+            setSelectedRows([...selectedRows, selectedItem]);
         }
     };
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            const allEmployeeSalIds = attendanceDetails.map(att => att.idDayAttendance);
-            setSelectedRows(allEmployeeSalIds);
+            const allSelectedItems = attendanceDetails.map(att => ({
+                idDayAttendance: att.idDayAttendance,
+                idEmployee: att.idEmployee,
+                approvalStatus: 'APPROVED'
+            }));
+            setSelectedRows(allSelectedItems);
         } else {
             setSelectedRows([]);
         }
     };
 
-    const isAllSelected = attendanceDetails.length > 0 && selectedRows.length === attendanceDetails.length;
+    const isAllSelected = attendanceDetails.length > 0 &&
+        selectedRows.length === attendanceDetails.length;
 
     return (
         <div className="container-xxl flex-grow-1 container-p-y">
@@ -266,8 +303,10 @@ function AttendanceDetails() {
                                                     <td>
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedRows.includes(item.idDayAttendance)}
-                                                            onChange={() => handleRowSelect(item.idDayAttendance)}
+                                                            checked={selectedRows.some(row =>
+                                                                row.idDayAttendance === item.idDayAttendance
+                                                            )}
+                                                            onChange={() => handleRowSelect(item)}
                                                         />
                                                     </td>
                                                     <td>{item.employeeCode}</td>
@@ -301,7 +340,7 @@ function AttendanceDetails() {
                                 <div className='col-lg-4'>
                                     <div className="text-center py-2">
                                         <button className="btn btn-primary btn-sm px-4"
-                                            disabled={selectedRows.length === 0} onClick={() => null}>
+                                            disabled={selectedRows.length === 0} onClick={() => { setShowConfirmation(true) }}>
                                             Approve selected
                                         </button> &nbsp;
                                     </div>
@@ -436,6 +475,17 @@ function AttendanceDetails() {
                     </div>
                 </Modal.Body>
             </Modal >
+
+            {
+                showConfirmation &&
+                <ConfirmationModal
+                    modalShow={true}
+                    messageText={"Are you sure to approved selected items?"}
+                    callbackModal={confirmApprove}
+                    confirmBtn={"Confirm"}
+                    CancelBtn={"Cancel"}
+                />
+            }
 
         </div >
 

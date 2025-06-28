@@ -148,7 +148,7 @@ function ClockInClockOut() {
       idClockDetail: selectedData.idClockDetails,
       idEmployee: selectedData.idEmployee,
       clockType: selectedType,
-      time: date + 'T' + time24hrWithSeconds,
+      time: date + ' ' + time24hrWithSeconds,
       reason: reason
     }
     ClockInOutService.saveMissingEntries([payload]).then(res => {
