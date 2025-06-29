@@ -14,6 +14,7 @@ import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { useNavigate } from 'react-router-dom';
 
 function AttendanceDetails() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -24,7 +25,7 @@ function AttendanceDetails() {
     const [filteredData, setFilteredData] = useState(attendanceDetails);
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
-    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
     const today = moment(new Date()).format('MM-DD-YYYY')
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -42,6 +43,7 @@ function AttendanceDetails() {
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         getEmployeesData();
@@ -121,7 +123,7 @@ function AttendanceDetails() {
                 idEmployee: selectedData.idEmployee,
                 reasonForShortTime: reason
             }
-            AttendanceService.saveShortTimeEntries([payload]).then(res => {
+            AttendanceService.saveShortTimeEntries(payload).then(res => {
                 if (res.data.status === 200) {
                     getAttendanceDetails();
                     resetValues();
@@ -204,6 +206,40 @@ function AttendanceDetails() {
 
     const isAllSelected = attendanceDetails.length > 0 &&
         selectedRows.length === attendanceDetails.length;
+
+    const gotoOTTransactions = (item) => {
+        const dataToSend = {
+            actualDurationInHours: item.actualDurationInHours,
+            actualDurationInMinutes: item.actualDurationInMinutes,
+            actualHoursText: item.actualHoursText,
+            allowedTolerenceInMinutes: item.allowedTolerenceInMinutes,
+            attendanceDate: item.attendanceDate,
+            deficitHours: item.deficitHours,
+            departmentName: item.departmentName,
+            designationName: item.designationName,
+            employeeName: item.employeeName,
+            expectedDurationInMinutes: item.expectedDurationInMinutes,
+            expectedInDateTime: item.expectedInDateTime,
+            expectedOutDateTime: item.expectedOutDateTime,
+            firstInDateTime: item.firstInDateTime,
+            idDayAttendance: item.idDayAttendance,
+            idDepartment: item.idDepartment,
+            idDesignation: item.idDesignation,
+            idEmployee: item.idEmployee,
+            idShiftSchedule: item.idShiftSchedule,
+            lastOutDateTime: item.lastOutDateTime,
+            minuteDifference: item.minuteDifference,
+            reasonForShortTime: item.reasonForShortTime,
+            regularDayType: item.regularDayType,
+            statusDetails: item.statusDetails,
+            statusType: item.statusType,
+            timeSheetApprovalStatus: item.timeSheetApprovalStatus,
+            totalDurationHoursText: item.totalDurationHoursText,
+            totalDurationInHours: item.totalDurationInHours,
+            totalDurationInMinutes: item.totalDurationInMinutes,
+        };
+        navigate("/dashboard/overtime-transactions", { state: dataToSend });
+    }
 
     return (
         <div className="container-xxl flex-grow-1 container-p-y">
@@ -314,11 +350,31 @@ function AttendanceDetails() {
                                                     <td>
                                                         <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { setSelectedData(item); setShowDetailsModal(true) }}>{moment(item.attendanceDate).format('MM-DD-YYYY')}</a>
                                                     </td>
-                                                    <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
-                                                    <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
-                                                    <td>{item.totalDurationHoursText}</td>
-                                                    <td>{item.totalDurationInHours}</td>
-                                                    <td>{item.statusDetails}</td>
+                                                    {
+                                                        item.statusType == 'INOUTMISS' &&
+                                                        <>
+                                                            <td colSpan={4} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
+                                                        </>
+                                                    }
+                                                    {
+                                                        (item.statusType == 'UNAUTH' || item.statusType == 'LEAVE') &&
+                                                        <>
+                                                            <td colSpan={4} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
+                                                        </>
+                                                    }
+                                                    {
+                                                        (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
+                                                        <>
+                                                            <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
+                                                            <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
+                                                            <td>{item.totalDurationHoursText}</td>
+                                                            <td>{item.totalDurationInHours}</td>
+                                                        </>
+                                                    }
+                                                    <td>{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
+                                                        item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
+                                                            item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                                item.statusDetails}</td>
                                                 </tr>
                                             ))
                                         ) : (
@@ -371,9 +427,12 @@ function AttendanceDetails() {
                 </Modal.Header>
 
                 <Modal.Body>
-
                     <div className="accountDetail_card">
                         <div className="row m-0">
+                            <div className="col-md-12 p-2">
+                                <label className="form-label mb-1">Employee Name: <b>{selectedData?.employeeName}</b></label>
+                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                            </div>
                             <div className="col-md-12 p-2">
                                 <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</b></label>
                                 {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}

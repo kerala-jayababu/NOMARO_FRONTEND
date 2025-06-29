@@ -9,6 +9,7 @@ import { Form, Modal } from "react-bootstrap";
 import Select from 'react-select';
 import Pagination from "../../components/pagination";
 import { NumericFormat } from "react-number-format";
+import { useLocation } from "react-router-dom";
 
 function OvertimeTransaction() {
 
@@ -45,6 +46,14 @@ function OvertimeTransaction() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [OTAmount, setOTAmount] = useState(0);
   const fileInputRef = useRef(null);
+  const location = useLocation();
+  const receivedData = location.state || null;
+
+  useEffect(() => {
+    if(receivedData) {
+      setupEditForAttendance(receivedData);
+    }
+  }, []);
 
   useEffect(() => {
     getEmployeesHeirarchy();
@@ -170,6 +179,28 @@ function OvertimeTransaction() {
       attachmentDescription: item.attachmentDescription,
     });
     const selected = employeesListOption.find(option => option.value === newData.idEmployee);
+    setSelectedEmployee(selected);
+    setShowModal(true);
+  }
+
+  const setupEditForAttendance = (item) => {
+    setIsEdit(true);
+    setNewData({
+      idOvertimeTransaction: null,
+      idEmployee: item.idEmployee,
+      // idOvertimeType: item.idOvertimeType,
+      overtimeTypeName: '',
+      startDate: moment(item.firstInDateTime).format('MM-DD-YYYY'),
+      startTime: null,
+      endDate: moment(item.lastOutDateTime).format('MM-DD-YYYY'),
+      endTime: null,
+      durationInHours: 0,
+      reasonForOvertime: '',
+      file: null,
+      attachment: null,
+      attachmentDescription: null,
+    });
+    const selected = employeesListOption.find(option => option.value === item.idEmployee);
     setSelectedEmployee(selected);
     setShowModal(true);
   }
