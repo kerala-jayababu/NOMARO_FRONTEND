@@ -16,11 +16,11 @@ import { useLoader } from "../../components/LoaderContext";
 function EmployeeClockInOut() {
     const [clockInDetails, setClockInDetails] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(1000);
+    const [rowsPerPage, setRowsPerPage] = useState(50);
     const [filteredData, setFilteredData] = useState(clockInDetails);
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    const totalPages = Math.ceil(clockInDetails.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
-    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
     const today = moment(new Date()).format('MM-DD-YYYY');
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
@@ -156,7 +156,7 @@ function EmployeeClockInOut() {
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" maxDate={today}/>
+                                        showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
@@ -224,13 +224,13 @@ function EmployeeClockInOut() {
                                     </tbody>
                                 </table>
                             </div>
-                            {/* <div className="text-end pt-2">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div> */}
+                            <div className="text-end pt-2">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

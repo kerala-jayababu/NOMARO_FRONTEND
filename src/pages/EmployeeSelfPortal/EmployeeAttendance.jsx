@@ -13,6 +13,7 @@ import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
+import { useNavigate } from 'react-router-dom';
 
 function EmployeeAttendance() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -21,7 +22,7 @@ function EmployeeAttendance() {
     const [filteredData, setFilteredData] = useState(attendanceDetails);
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
-    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
     const today = moment(new Date()).format('MM-DD-YYYY')
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
@@ -31,6 +32,7 @@ function EmployeeAttendance() {
     const [selectedType, setSelectedType] = useState('');
     const [newTime, setNewTime] = useState('');
     const [reason, setReason] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (startDate != '' && endDate != '') {
@@ -39,44 +41,44 @@ function EmployeeAttendance() {
     }, [startDate, endDate]);
 
     const getAttendanceDetails = () => {
-            if (!startDate || !endDate) {
-                toast.warning("Please select both start and end dates", {
-                    position: "top-right",
-                    autoClose: 2000,
-                });
-                return;
-            }
-    
-            const sDate = moment(startDate);
-            const eDate = moment(endDate);
-            const daysDifference = eDate.diff(sDate, 'days');
-    
-            if (daysDifference > 30) {
-                toast.warning("Date range cannot be more than 30 days", {
-                    position: "top-right",
-                    autoClose: 2000,
-                });
-                
-                return;
-            }
-    
-            showLoader();
-            const formattedStartDate = sDate.format("YYYY-MM-DD");
-            const formattedEndDate = eDate.format("YYYY-MM-DD");
-    
-            AttendanceService.getAttendanceData(
-                userData.idEmployee ?? 0,
-                '',
-                formattedStartDate,
-                formattedEndDate
-            ).then(res => {
-                setAttendanceDetails(res.data.data);
-                hideLoader();
-            }).catch(err => {
-                setAttendanceDetails([]);
-                hideLoader();
+        if (!startDate || !endDate) {
+            toast.warning("Please select both start and end dates", {
+                position: "top-right",
+                autoClose: 2000,
             });
+            return;
         }
+
+        const sDate = moment(startDate);
+        const eDate = moment(endDate);
+        const daysDifference = eDate.diff(sDate, 'days');
+
+        if (daysDifference > 30) {
+            toast.warning("Date range cannot be more than 30 days", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+
+            return;
+        }
+
+        showLoader();
+        const formattedStartDate = sDate.format("YYYY-MM-DD");
+        const formattedEndDate = eDate.format("YYYY-MM-DD");
+
+        AttendanceService.getAttendanceData(
+            userData.idEmployee ?? 0,
+            '',
+            formattedStartDate,
+            formattedEndDate
+        ).then(res => {
+            setAttendanceDetails(res.data.data);
+            hideLoader();
+        }).catch(err => {
+            setAttendanceDetails([]);
+            hideLoader();
+        });
+    }
 
     const saveShortTimeDetails = () => {
         if (reason != '') {
@@ -86,7 +88,7 @@ function EmployeeAttendance() {
                 reasonForShortTime: reason
             }
             console.log(payload);
-            AttendanceService.saveShortTimeEntries([payload]).then(res => {
+            AttendanceService.saveShortTimeEntries(payload).then(res => {
                 if (res.data.status === 200) {
                     getAttendanceDetails();
                     resetValues();
@@ -115,6 +117,40 @@ function EmployeeAttendance() {
 
     const handlePageChange = (page) => setCurrentPage(page);
 
+    const gotoOTTransactions = (item) => {
+        const dataToSend = {
+            actualDurationInHours: item.actualDurationInHours,
+            actualDurationInMinutes: item.actualDurationInMinutes,
+            actualHoursText: item.actualHoursText,
+            allowedTolerenceInMinutes: item.allowedTolerenceInMinutes,
+            attendanceDate: item.attendanceDate,
+            deficitHours: item.deficitHours,
+            departmentName: item.departmentName,
+            designationName: item.designationName,
+            employeeName: item.employeeName,
+            expectedDurationInMinutes: item.expectedDurationInMinutes,
+            expectedInDateTime: item.expectedInDateTime,
+            expectedOutDateTime: item.expectedOutDateTime,
+            firstInDateTime: item.firstInDateTime,
+            idDayAttendance: item.idDayAttendance,
+            idDepartment: item.idDepartment,
+            idDesignation: item.idDesignation,
+            idEmployee: item.idEmployee,
+            idShiftSchedule: item.idShiftSchedule,
+            lastOutDateTime: item.lastOutDateTime,
+            minuteDifference: item.minuteDifference,
+            reasonForShortTime: item.reasonForShortTime,
+            regularDayType: item.regularDayType,
+            statusDetails: item.statusDetails,
+            statusType: item.statusType,
+            timeSheetApprovalStatus: item.timeSheetApprovalStatus,
+            totalDurationHoursText: item.totalDurationHoursText,
+            totalDurationInHours: item.totalDurationInHours,
+            totalDurationInMinutes: item.totalDurationInMinutes,
+        };
+        navigate("/dashboard/overtime-transactions", { state: dataToSend });
+    }
+
     return (
         <div className="container-xxl flex-grow-1 container-p-y">
             <div className="row">
@@ -126,7 +162,7 @@ function EmployeeAttendance() {
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" maxDate={today}/>
+                                        showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
@@ -155,31 +191,28 @@ function EmployeeAttendance() {
                                                     <td>{moment(item.clockDate).format('dddd')}</td>
                                                     <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
                                                     {
-                                                        item.clockType == 'LEAVE' &&
-                                                        <td colSpan={3} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
-                                                    }
-                                                    {
-                                                        item.clockType != 'LEAVE' &&
+                                                        item.statusType == 'INOUTMISS' &&
                                                         <>
-                                                            {
-                                                                item.firstInDateTime != null &&
-                                                                <td className='text-center'>{item.firstInDateTime}</td>
-                                                            }
-                                                            {
-                                                                item.firstInDateTime == null &&
-                                                                <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>Missing</a></td>
-                                                            }
-                                                            {
-                                                                item.lastOutDateTime != null &&
-                                                                <td className='text-center'>{item.lastOutDateTime}</td>
-                                                            }
-                                                            {
-                                                                item.lastOutDateTime == null &&
-                                                                <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>Missing</a></td>
-                                                            }
-                                                            <td>{item.statusDetails || 'NA'}</td>
+                                                            <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
                                                         </>
                                                     }
+                                                    {
+                                                        (item.statusType == 'UNAUTH' || item.statusType == 'LEAVE') &&
+                                                        <>
+                                                            <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
+                                                        </>
+                                                    }
+                                                    {
+                                                        (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
+                                                        <>
+                                                            <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
+                                                            <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
+                                                        </>
+                                                    }
+                                                    <td>{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
+                                                        item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
+                                                            item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                                item.statusDetails}</td>
                                                 </tr>
                                             ))
                                         ) : (

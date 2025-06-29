@@ -24,7 +24,7 @@ function ClockInClockOut() {
   const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
   // let endingDay = Utils.getLastDayFor(moment(startDate).format('YYYY-MM-DD'));
   // const [endDate, setEndDate] = useState(moment(new Date()).format(`DD-${endingDay}-YYYY`));
-  const [endDate, setEndDate] = useState(moment(new Date()).format('MM-30-YYYY'));
+  const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
   const today = moment(new Date()).format('MM-DD-YYYY');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
