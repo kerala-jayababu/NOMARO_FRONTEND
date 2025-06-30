@@ -65,8 +65,8 @@ function ClockInClockOut() {
     const eDate = moment(endDate);
     const daysDifference = eDate.diff(sDate, 'days');
 
-    if (daysDifference > 30) {
-      toast.warning("Date range cannot be more than 30 days", {
+    if (daysDifference > 31) {
+      toast.warning("Date range cannot be more than 31 days", {
         position: "top-right",
         autoClose: 2000,
       });

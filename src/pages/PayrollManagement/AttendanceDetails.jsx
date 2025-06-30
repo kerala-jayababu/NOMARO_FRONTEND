@@ -69,8 +69,8 @@ function AttendanceDetails() {
         const eDate = moment(endDate);
         const daysDifference = eDate.diff(sDate, 'days');
 
-        if (daysDifference > 30) {
-            toast.warning("Date range cannot be more than 30 days", {
+        if (daysDifference > 31) {
+            toast.warning("Date range cannot be more than 31 days", {
                 position: "top-right",
                 autoClose: 2000,
             });
@@ -371,8 +371,8 @@ function AttendanceDetails() {
                                                             <td>{item.totalDurationInHours}</td>
                                                         </>
                                                     }
-                                                    <td>{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
-                                                        item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
+                                                    <td>{item.statusType == 'SHORTTIME' ? <span>{item.reasonForShortTime ?? item.statusDetails}</span> :
+                                                        item.statusType == 'EXTRAHOURS' ? <span>{item.statusDetails}</span> :
                                                             item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
                                                                 item.statusDetails}</td>
                                                 </tr>
