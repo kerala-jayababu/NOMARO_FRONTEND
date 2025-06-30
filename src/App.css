@@ -345,6 +345,7 @@ body::-webkit-scrollbar {
   display: block;
 }
 
+.OvertimeTransactionSection,
 .SalaryReportSection,
 .SalarySlipSection {
   .card {
@@ -355,6 +356,7 @@ body::-webkit-scrollbar {
     }
   }
 }
+
 .custom-col-md-9 {
   flex: 0 0 auto;
   width: 80% !important;
@@ -556,7 +558,7 @@ body::-webkit-scrollbar {
     }
 
     .SSV_NetPaySection {
-      padding: 20px 20px;
+      padding: 20px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -567,13 +569,17 @@ body::-webkit-scrollbar {
       margin: 15px -10px 0px;
       box-shadow: 0px 0px 10px #bdbdbd;
 
-      h5 {
+      h6 {
         margin-bottom: 5px;
       }
 
       p {
         margin-bottom: 0px;
         opacity: 0.5;
+      }
+
+      .btn {
+        font-size: 12px;
       }
     }
   }
@@ -705,6 +711,7 @@ body::-webkit-scrollbar {
     .card {
       .card-header {
         padding: 10px;
+        display: block;
 
         .card-header_in {
           display: flex;
@@ -731,6 +738,7 @@ body::-webkit-scrollbar {
           border: 1px solid #ddd;
           padding: 8px;
           border-radius: 6px;
+          margin-bottom: 5px;
 
           p {
             margin: 0px;
@@ -744,6 +752,48 @@ body::-webkit-scrollbar {
       }
     }
   }
+
+  .LeavePassageSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .LeavePassageList {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+          margin-bottom: 5px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+
+  }
+
   .badge {
     padding: 7px 15px !important;
   }
@@ -759,4 +809,15 @@ body::-webkit-scrollbar {
 .AttendanceTable tr td{
   padding: 5px;
   border: 1px solid black
+}
+@media (max-width: 345px) {
+
+  .TotalEarningsBox_innerDt,
+  .DeductionsBx_innerDt,
+  .TotalDeductionsBox_innerDt,
+  .EarningsBox_innerDt,
+  .MonthSalary_dts_inner,
+  .MonthperiodSection_inner {
+    flex-wrap: wrap;
+  }
 }
