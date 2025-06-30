@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import CommonService from '../../core/services/CommonService';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Button, Form, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { toast } from "react-toastify";
 import Utils from '../../utils/Utils';
 // import DatePicker from '../../components/datePicker';
@@ -11,12 +11,14 @@ import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function ViewPaySlips() {
   const [salarySlips, setSalarySlips] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(1000);
-  const totalPages = Math.ceil(salarySlips.length / rowsPerPage);
+  const [filteredData, setFilteredData] = useState(salarySlips);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const [startDate, setStartDate] = useState(new Date('01-01-2025'));
   const [searchText, setSearchText] = useState('');
   const [fromMonth, setFromMonth] = useState('');
@@ -27,6 +29,7 @@ function ViewPaySlips() {
   const [employeesList, setEmployeesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
 
   useEffect(() => {
     getEmployeesData();
@@ -39,10 +42,24 @@ function ViewPaySlips() {
     }
   }, [fromMonth, toMonth]);
 
+  useEffect(() => {
+    let filtered = salarySlips;
+    if (selectedStatus !== 'ALL') {
+      if (selectedStatus === 'NOT INITIATED') {
+        filtered = salarySlips.filter(emp => emp.emailStatus === "");
+      } else {
+        filtered = salarySlips.filter(emp => emp.emailStatus === selectedStatus);
+      }
+    }
+    setFilteredData(filtered);
+    setSelectedRows([]);
+  }, [selectedStatus, salarySlips]);
+
   const getSalarySlips = () => {
     setLoading(true);
     ViewPaySlipService.getSalarySlipsData(fromMonth, toMonth, searchText).then(res => {
       setSalarySlips(res.data.data);
+      setSelectedRows([]);
       setLoading(false);
     }).catch(err => {
       setSalarySlips([]);
@@ -165,10 +182,10 @@ function ViewPaySlips() {
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return salarySlips.slice(startIndex, endIndex);
-  }, [salarySlips, currentPage, rowsPerPage]);
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, rowsPerPage]);
 
-  const validPaySlips = salarySlips.filter(slip => slip.employeeCode);
+  const validPaySlips = filteredData.filter(slip => slip.employeeCode);
 
   const handlePageChange = (page) => setCurrentPage(page);
 
@@ -201,7 +218,7 @@ function ViewPaySlips() {
   const sendEmailNotification = () => {
     const ids = [];
     selectedRows.forEach(el => {
-      if ((salarySlips.find(x => x.idEmployeeSalary == el).emailStatus != 'PROCESSING')) {
+      if ((filteredData.find(x => x.idEmployeeSalary == el).emailStatus != 'PROCESSING')) {
         ids.push(el);
       }
     })
@@ -218,6 +235,9 @@ function ViewPaySlips() {
     });
   }
 
+    const renderTooltip = (text) =>{
+    return <Tooltip>Refresh</Tooltip>;
+  }
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -228,6 +248,21 @@ function ViewPaySlips() {
               <h5 className="m-0">List of Salary Slips</h5>
 
               <div className="list_menu">
+                <label className='p-2'>Email Status</label>
+                <div className="list_searchbox">
+
+                  <select
+                    className="form-select"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                  >
+                    <option value="ALL">All</option>
+                    <option value="SENT">Sent</option>
+                    <option value="INPROGRESS">In Progress</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="NOT INITIATED">Not Initiated</option>
+                  </select>
+                </div>
                 <div className="list_searchbox">
                   {/* <label>Salary Month From</label> */}
                   <select
@@ -236,7 +271,7 @@ function ViewPaySlips() {
                     onChange={handleMonthFromChange}
                     required
                   >
-                    <option value={''}>Select From</option>
+                    <option value={''}>Salary From</option>
                     {salaryMonthsList.map((el) => (
                       <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
                         {el.salaryMonthText}
@@ -252,7 +287,7 @@ function ViewPaySlips() {
                     onChange={handleMonthToChange}
                     required
                   >
-                    <option value={''}>Select To</option>
+                    <option value={''}>Salary To</option>
                     {filteredMonthsList.map((el) => (
                       <option value={el.idSalaryMonth} key={el.idSalaryMonth}>
                         {el.salaryMonthText}
@@ -270,6 +305,15 @@ function ViewPaySlips() {
                     }}
                     onKeyDown={e => e.key === 'Enter' ? getSalarySlips() : ''} />
                   <i className="bx bx-search cursor" onClick={() => getSalarySlips()}></i>
+                </div>
+                <div className="list_searchbox">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={renderTooltip()}>
+                    <button className="btn btn-primary btn-sm px-4" onClick={() => getSalarySlips()}>
+                      <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                  </OverlayTrigger>
                 </div>
               </div>
 
@@ -337,16 +381,25 @@ function ViewPaySlips() {
                   </tbody>
                 </table>
               </div>
-              <div className="text-center py-2">
-                <button className="btn btn-primary btn-sm px-4"
-                  disabled={selectedRows.length === 0} onClick={() => downloadMultipleSalarySlips()}>
-                  Download selected
-                </button> &nbsp;
-                <button className="btn btn-primary btn-sm px-4"
-                  disabled={selectedRows.length === 0 || loading} onClick={() => setShowConfirmation(true)}>
-                  Send notification
-                </button>
+              <div className='row'>
+                <div className='col-lg-4'>
+                  <label style={{ marginTop: '15px' }}>Total records selected {selectedRows.length} out of {paginatedData.length}</label>
+                </div>
+                <div className='col-lg-4'>
+                  <div className="text-center py-2">
+                    <button className="btn btn-primary btn-sm px-4"
+                      disabled={selectedRows.length === 0} onClick={() => downloadMultipleSalarySlips()}>
+                      Download selected
+                    </button> &nbsp;
+                    <button className="btn btn-primary btn-sm px-4"
+                      disabled={selectedRows.length === 0 || loading} onClick={() => setShowConfirmation(true)}>
+                      Send notification
+                    </button>
+                  </div>
+                </div>
+                <div className='col-lg-4'></div>
               </div>
+
               {/* <div className="text-end pt-2">
                 <Pagination
                   currentPage={currentPage}

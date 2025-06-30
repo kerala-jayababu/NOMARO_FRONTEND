@@ -23,6 +23,10 @@ import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
 import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
 import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
+import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
+import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
+import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
+import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 
 export const privateRoutes = [
   {
@@ -116,6 +120,22 @@ export const privateRoutes = [
   {
     path: "/dashboard/overtime-details",
     element: <EmployeeOvertimeTransaction />,
+  },
+  {
+    path: "/dashboard/clock-inout",
+    element: <ClockInClockOut />,
+  },
+  {
+    path: "/dashboard/clock-in-out-details",
+    element: <EmployeeClockInOut />,
+  },
+  {
+    path: "/dashboard/attendance-report",
+    element: <EmployeeAttendance/>,
+  },
+  {
+    path: "/dashboard/attendance",
+    element: <AttendanceDetails />,
   },
 ];
 

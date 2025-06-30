@@ -18,7 +18,7 @@ function MaternityLeaveSalaries() {
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [salaryStructure, setSalaryStructure] = useState([]);
   const [salaryStructureToDisplay, setSalaryStructureToDisplay] = useState(null);
-  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idMaternityLeaveSalary: 0,

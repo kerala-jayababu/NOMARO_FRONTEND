@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Box,
@@ -7,9 +7,11 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
+import { saveAs } from "file-saver";
 import { Toolbar } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { DataGrid } from "@mui/x-data-grid";
+import { API } from "../../../redux/api/utils";
 import {
   getReportsConditionAction,
   getReportsMasterAction,
@@ -27,6 +29,8 @@ import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
 function Reports() {
   const targetRef = useRef();
   const dispatch = useDispatch();
+  const [filterParams, setFilterParams] = useState({});
+  const [appliedFilters, setAppliedFilters] = useState({});
   const {
     reports,
     reportCondition,
@@ -45,31 +49,104 @@ function Reports() {
     dispatch(setReport(report));
     dispatch(getReportsConditionAction(report.idReport));
   };
+  const handleFilterChange = (filter, applied) => {
+    setFilterParams(filter);
+    setAppliedFilters(applied);
+  };
 
-  function downloadFile(format, filter) {    
+  async function downloadFile(format, filter) {
+    const isGuyanaTaxReport = report?.reportName === "Guyana Tax Report";
+    const isGuyanaNISReport = report?.reportName === "Guyana NIS Report";
+
+    if (format === "pdf" && (isGuyanaTaxReport || isGuyanaNISReport)) {
+      try {
+        if (isGuyanaTaxReport) {
+          const payrollId = filterParams["@SalaryMonth"];
+          if (!payrollId) {
+            return;
+          }
+          const res = await API.post(
+            `/api/v1/Reports/GenerateIncomeTax?payrollId=${payrollId}`
+          );
+
+          const { fileName, contentType, fileBytes } = res.data;
+
+          const byteCharacters = atob(fileBytes);
+          const byteArray = new Uint8Array(
+            Array.from(byteCharacters).map((char) => char.charCodeAt(0))
+          );
+
+          const blob = new Blob([byteArray], {
+            type: contentType || "application/pdf",
+          });
+
+          saveAs(blob, fileName || "Guyana_Income_Tax_Report.pdf");
+        }
+
+        if (isGuyanaNISReport) {
+          debugger;
+          const payrollId = filterParams["@SalaryMonth"];
+          let ageGroup = filterParams["@AgeGroup"];
+
+          if (!payrollId) {
+            return;
+          }
+          if (!ageGroup || ageGroup.trim() === "") {
+            ageGroup = "60ANDABOVE";
+          }
+          const res = await API.post(
+            `/api/v1/Reports/generate-nis?payrollId=${payrollId}&ageGroup=${encodeURIComponent(
+              ageGroup
+            )}`
+          );
+
+          const { fileName, contentType, fileBytes } = res.data;
+
+          const byteCharacters = atob(fileBytes);
+          const byteArray = new Uint8Array(
+            Array.from(byteCharacters).map((char) => char.charCodeAt(0))
+          );
+
+          const blob = new Blob([byteArray], {
+            type: contentType || "application/pdf",
+          });
+          saveAs(blob, fileName || "Guyana_NIS_Contribution_Report.pdf");
+        }
+      } catch (err) {
+        console.error("Error generating PDF report:", err);
+        alert("Failed to generate the report.");
+      }
+
+      return;
+    }
+
+    // Fallback for other report types
     if (format === "excel") {
       Utils.exportToExcelJS(
         reportData,
         report?.reportName,
         report?.headerRequired,
         filter,
-        reportColumns 
+        reportColumns
       );
-    }
-     if (format === "text") {
+    } else if (format === "text") {
       Utils.exportToTxt(
         reportData,
         report?.reportName,
         report?.headerRequired,
         filter,
-        reportColumns 
+        reportColumns
       );
-    } 
-    else {
-      Utils.exportToPdf(reportData, report?.reportName, "landscape", filter);
+    } else {
+      Utils.exportToPdf(
+        reportData,
+        report?.reportName,
+        "landscape",
+        filter,
+        reportColumns
+      );
     }
   }
-
   const columns =
     reportData && reportData.length > 0
       ? Object.keys(reportData[0]).map((key, index) => {
@@ -113,7 +190,7 @@ function Reports() {
       return "left";
     } else if (config?.alignment === "RIGHT") {
       return "right";
-    } else if (/Amt|Amount|Discount|Balance/i.test(key) ) {
+    } else if (/Amt|Amount|Discount|Balance/i.test(key)) {
       return "right";
     } else {
       return "left";
@@ -246,6 +323,7 @@ function Reports() {
         reportCondition={reportCondition}
         report={report}
         downloadFile={downloadFile}
+        onFilterChange={handleFilterChange}
       />
       <div
         className="m-3 mt-3 d-flex justify-content-center "

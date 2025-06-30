@@ -18,7 +18,7 @@ function ScheduledDeductions() {
   const [salaryHeadList, setSalaryHeadList] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [filteredMonthsList, setFilteredMonthsList] = useState([]);
-  const [startDate, setStartDate] = useState(new Date('01-01-2025'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idScheduledSalaryDeduction: 0,

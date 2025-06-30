@@ -276,10 +276,9 @@ body {
   display: none;
 }
 
-
 .scroll-side-menu {
-  height: 90vh !important;
-  overflow-y: scroll;
+  height: calc(100vh - 100px) !important;
+  overflow-y: auto;
   overflow-x: hidden;
 }
 
@@ -328,9 +327,25 @@ body::-webkit-scrollbar {
 .MuiTablePagination-displayedRows {
   margin: 0 !important;
 }
+
 .white-space-nowrap {
   white-space: nowrap;
 }
+
+.react-datepicker__month .react-datepicker__month-text,
+.react-datepicker__month .react-datepicker__quarter-text {
+  width: 3rem !important;
+}
+
+.ShowMobile {
+  display: none;
+}
+
+.ShowBigDevice {
+  display: block;
+}
+
+.SalaryReportSection,
 .SalarySlipSection {
   .card {
     .card-header {
@@ -340,108 +355,408 @@ body::-webkit-scrollbar {
     }
   }
 }
-.OvertimeTransactionSection{
-  .card {
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-}
-.SalaryReportSection{
-  .card {
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-}
-.LeavePassageSection{
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-
-  .card {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-
-  .table-responsive {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-}
-
-@media (max-width: 426px) {
-  .SalarySlipSection {
-    .card {
-      .card-header {
-        h5 {
-          width: 150px;
-          margin-bottom: 10px !important;
-        }
-      }
-    }
-  }
-  .OvertimeTransactionSection {
-    .card {
-      .card-header {
-        display: block;
-        h5 {
-          margin-bottom: 10px !important;
-        }
-        .list_searchbox {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          label {
-          width: 110px;
-          }
-          .form-control {
-            width: 100%;
-          }
-        }
-      }
-    }
-  }
-  .SalaryReportSection {
-    .card {
-      .card-header {
-        display: block;
-        h5 {
-          margin-bottom: 10px !important;
-        }
-        .list_searchbox {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-      }
-    }
-  }
-}
-@media (max-width: 376px) {
-  .LeavePassageSection {
-    .card {
-      .card-header {
-        display: block;
-        h5 {
-          margin-bottom: 10px !important;
-        }
-       
-      }
-    }
-  }
-}
 .custom-col-md-9 {
   flex: 0 0 auto;
   width: 80% !important;
+}
+
+@media (max-width: 426px) {
+  .modal-dialog {
+    margin: 0.6rem !important;
+  }
+
+  .ShowMobile {
+    display: block;
+  }
+
+  .ShowBigDevice {
+    display: none;
+  }
+
+  .footer {
+    display: none;
+  }
+
+  .SalarySlipSection {
+    padding: 10px;
+
+    .card {
+      min-height: calc(100vh - 171px);
+
+      .card-header {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .form-control {
+          font-size: 13px;
+          padding: 8px 10px;
+        }
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .EMPDt_row {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .EMPDt_rowIn {
+            width: 50%;
+          }
+        }
+
+        .EarningsBox {
+          border: 1px solid #ddd;
+          background-color: #f7f7f7;
+          padding: 8px;
+          border-radius: 6px;
+
+          h5 {
+            margin: 5px 0px 10px;
+            font-size: 14px;
+          }
+
+          .EarningsBox_inner {
+            background-color: #ffffff;
+            border: 1px solid #ededed;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+
+            h6 {
+              font-size: 13px;
+            }
+
+            .EarningsBox_innerDt {
+              display: flex;
+              gap: 10px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              .EarningsBox_innerDt_01 {
+                label {
+                  color: #aab1b6;
+                }
+
+                p {
+                  margin: 0px;
+                  font-weight: 600;
+                }
+              }
+            }
+          }
+
+          .TotalEarningsBox_inner {
+            padding: 10px;
+
+            h6 {
+              font-size: 14px;
+              font-weight: 600;
+            }
+
+            .TotalEarningsBox_innerDt {
+              display: flex;
+              gap: 10px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              .TotalEarningsBox_innerDt_01 {
+                label {
+                  color: #aab1b6;
+                }
+
+                p {
+                  margin: 0px;
+                  font-weight: 600;
+                }
+              }
+            }
+          }
+        }
+
+        .DeductionsBx {
+          border: 1px solid #ddd;
+          background-color: #f7f7f7;
+          padding: 8px;
+          border-radius: 6px;
+          margin-top: 10px;
+
+          h5 {
+            margin: 5px 0px 10px;
+            font-size: 14px;
+          }
+
+          .DeductionsBx_inner {
+            background-color: #ffffff;
+            border: 1px solid #ededed;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+
+            h6 {
+              font-size: 13px;
+            }
+
+            .DeductionsBx_innerDt {
+              display: flex;
+              gap: 10px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              .DeductionsBx_innerDt_01 {
+                label {
+                  color: #aab1b6;
+                }
+
+                p {
+                  margin: 0px;
+                  font-weight: 600;
+                }
+              }
+            }
+          }
+
+          .TotalDeductionsBox_inner {
+            padding: 10px;
+
+            h6 {
+              font-size: 14px;
+              font-weight: 600;
+            }
+
+            .TotalDeductionsBox_innerDt {
+              display: flex;
+              gap: 10px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              .TotalDeductionsBox_innerDt_01 {
+                label {
+                  color: #aab1b6;
+                }
+
+                p {
+                  margin: 0px;
+                  font-weight: 600;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .SSV_NetPaySection {
+      padding: 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: sticky;
+      bottom: 0px;
+      background-color: #f3f4f8;
+      margin: 15px -10px 0px;
+      box-shadow: 0px 0px 10px #bdbdbd;
+
+      h5 {
+        margin-bottom: 5px;
+      }
+
+      p {
+        margin-bottom: 0px;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .SalaryReportSection {
+    padding: 10px;
+
+    .card {
+      /* min-height: calc(100vh - 171px); */
+
+      .card-header {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+
+        .list_menu {
+          width: 250px;
+        }
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .form-control {
+          font-size: 13px;
+          padding: 8px 10px;
+        }
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .EMPDt_row {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .EMPDt_rowIn {
+            width: 50%;
+          }
+        }
+
+        .monthSalary_Section {
+          border: 1px solid #ddd;
+          background-color: #f7f7f7;
+          padding: 8px;
+          border-radius: 6px;
+
+          .monthSalary_Section_head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            h5 {
+              margin: 5px 0px 10px;
+              font-size: 14px;
+            }
+          }
+
+          .MonthSalary_dts {
+            background-color: #ffffff;
+            border: 1px solid #ededed;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+
+            .MonthSalary_dts_head {
+              border-bottom: 1px solid #ededed;
+              margin-bottom: 10px;
+            }
+
+            h6 {
+              font-size: 13px;
+            }
+
+            .MonthSalary_dts_inner {
+              display: flex;
+              gap: 15px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              label {
+                color: #aab1b6;
+              }
+
+              p {
+                margin: 0px;
+                font-weight: 600;
+              }
+            }
+          }
+
+          .MonthperiodSection {
+            padding: 10px;
+
+            h6 {
+              font-size: 13px;
+            }
+
+            .MonthperiodSection_inner {
+              display: flex;
+              gap: 15px;
+              justify-content: space-between;
+              font-size: 12px;
+
+              label {
+                color: #aab1b6;
+              }
+
+              p {
+                margin: 0px;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .OvertimeTransactionSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+
+        .card-header_in {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        h5 {
+          margin: 10px 0px;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .form-control {
+          font-size: 13px;
+          padding: 8px 10px;
+        }
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .OvertimeTransaction_list {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+  }
+  .badge {
+    padding: 7px 15px !important;
+  }
+}
+
+.AttendanceTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid black;
+  margin-bottom: 5px;
+}
+
+.AttendanceTable tr td{
+  padding: 5px;
+  border: 1px solid black
 }

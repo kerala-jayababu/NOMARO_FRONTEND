@@ -19,20 +19,18 @@ export const screenPermission = createAsyncThunk(
       if (!token) {
         console.error("Authorization token missing");
       }
-      const response = await axios.get(
-        `${API_BASE_URL}/GetAllPayrollScreens`,
-       
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const appType = "PAYROLL";
+      const response = await axios.get(`${API_BASE_URL}/GetAllPayrollScreens`, {
+        params: { appType }, // query string ?appType=PAYROLL
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (error) {
       // return error;
-      return handleApiSuccessOrError(error,true);
+      return handleApiSuccessOrError(error, true);
     }
   }
 );
@@ -61,7 +59,7 @@ export const getEmployeePermissionsById = createAsyncThunk(
       return response.data;
     } catch (error) {
       // return error;
-      return handleApiSuccessOrError(error,true);
+      return handleApiSuccessOrError(error, true);
     }
   }
 );
@@ -88,11 +86,11 @@ export const manageEmployeePermissions = createAsyncThunk(
           },
         }
       );
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(response.data, false);
       return response.data;
     } catch (error) {
-      console.log('error',error)
-      return handleApiSuccessOrError(error,true);
+      console.log("error", error);
+      return handleApiSuccessOrError(error, true);
       // return error;
     }
   }
@@ -122,7 +120,7 @@ export const getRoleBasedPermissionsByDesignationId = createAsyncThunk(
       return response.data;
     } catch (error) {
       // return error;
-      return handleApiSuccessOrError(error,true);
+      return handleApiSuccessOrError(error, true);
     }
   }
 );
@@ -149,16 +147,14 @@ export const manageRoleBasedPermissions = createAsyncThunk(
           },
         }
       );
-      handleApiSuccessOrError(response.data,false);
+      handleApiSuccessOrError(response.data, false);
       return response.data;
     } catch (error) {
       // return error;
-      return handleApiSuccessOrError(error,true);
+      return handleApiSuccessOrError(error, true);
     }
   }
 );
-
-
 
 const screenPermissionSlice = createSlice({
   name: "screenPermission",
@@ -200,12 +196,18 @@ const screenPermissionSlice = createSlice({
     builder.addCase(getRoleBasedPermissionsByDesignationId.pending, (state) => {
       state.error = null;
     });
-    builder.addCase(getRoleBasedPermissionsByDesignationId.fulfilled, (state, action) => {
-      state.designationPermission = action.payload.data;
-    });
-    builder.addCase(getRoleBasedPermissionsByDesignationId.rejected, (state, action) => {
-      state.error = action.error.message;
-    });
+    builder.addCase(
+      getRoleBasedPermissionsByDesignationId.fulfilled,
+      (state, action) => {
+        state.designationPermission = action.payload.data;
+      }
+    );
+    builder.addCase(
+      getRoleBasedPermissionsByDesignationId.rejected,
+      (state, action) => {
+        state.error = action.error.message;
+      }
+    );
     builder.addCase(manageRoleBasedPermissions.pending, (state) => {
       state.error = null;
     });
