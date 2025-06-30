@@ -382,13 +382,13 @@ function EmployeeOvertimeTransaction() {
                       <p className="m-0">{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</p>
                     </div> */}
                     
-                    <div className="col-9 px-0 py-1">
+                    <div className="col-6 px-0 py-1">
                       <label>Status</label>
                       <div>
                         <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
                       </div>
                     </div>
-                    <div className="col-3 px-0 py-1">
+                    <div className="col-6 px-0 py-1 text-end">
                       {
                         item.attachment &&
                         <button className="btn btn-outline-primary border-0 btn-sm">
