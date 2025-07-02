@@ -263,10 +263,9 @@ const LeavePassage = () => {
   return (
     <>
       <div className="LeavePassageSection ShowMobile ">
-
-        <div className='card'>
+        <div className="card">
           <div className="card-header">
-            <h5 className="mb-0">Leave Passage</h5>
+            <h5>Leave Passage</h5>
             <button
               className="btn btn-primary btn-sm"
               style={{ marginLeft: 'auto' }}
@@ -277,82 +276,81 @@ const LeavePassage = () => {
               + Add New
             </button>
           </div>
-          <div className='card-body'>
+          <div className="card-body">
             {loading ? (
               <div className="text-start">
                 <Spinner animation="border" />
               </div>
             ) : (
               <>
-                <div className='LeavePassageList'>
-                  <div className='row m-0'>
-                    {paginatedData.length > 0 ? (
-                      paginatedData.map((item) => (
-                        <>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item) => (
+                    <>
+                      <div className='LeavePassage_listbox' key={item.idLeavePassage}>
+                        <div className='row m-0'>
                           <div className='col-6 px-0 py-1'>
                             <label>Month</label>
-                            <p className='m-0'>
-                              {item.salaryMonthText}
-                            </p>
+                            <p className='m-0'> {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}</p>
                           </div>
                           <div className='col-6 px-0 py-1'>
                             <label>Amount</label>
-                            <p className='m-0'>
-                              {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
-                            </p>
+                            <p className='m-0'>{item.leavePassageAmount === null ? 0 : item.leavePassageAmount}</p>
                           </div>
-                          <div className='col-6 px-0 py-1'>
-                            <label>Status</label>
-                            <p className='m-0'>
-                              <span
-                                className={`badge ${item.approvalStatus === 'APPROVED'
-                                  ? 'bg-label-success'
-                                  : item.approvalStatus === 'SUBMITTED'
-                                    ? 'bg-label-warning'
-                                    : item.approvalStatus === 'REJECTED'
-                                      ? 'bg-label-danger'
-                                      : 'bg-label-primary'
-                                  }`}
+                          <div className='col-12 px-0 py-1 d-flex justify-content-between align-items-end'>
+                            <div>
+                              <label>Status</label>
+                              <div>
+                                <span
+                                  className={`badge ${item.approvalStatus === 'APPROVED'
+                                    ? 'bg-label-success'
+                                    : item.approvalStatus === 'SUBMITTED'
+                                      ? 'bg-label-warning'
+                                      : item.approvalStatus === 'REJECTED'
+                                        ? 'bg-label-danger'
+                                        : 'bg-label-primary'
+                                    }`}
+                                >
+                                  {item.approvalStatus}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <button
+                                className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                                disabled={item.approvalStatus === 'APPROVED'}
+                                onClick={() => setupEdit(item)}
+                                aria-label="Edit Leave Passage"
+                                title="Edit Leave Passage"
                               >
-                                {item.approvalStatus}
-                              </span>
-                            </p>
+                                <i className="bx bx-pencil fs-5"></i>
+                              </button>
+                            </div>
                           </div>
-                          <div className='col-6 px-0 py-1 text-end'>
-                            <button
-                              className="btn btn-sm btn-link"
-                              disabled={item.approvalStatus === 'APPROVED'}
-                              onClick={() => setupEdit(item)}
-                              aria-label="Edit Leave Passage"
-                              title="Edit Leave Passage"
-                            >
-                              <i className="bx bx-pencil fs-5"></i>
-                            </button>
-                          </div>
-                        </>
-                      ))
-                    ) : (
-                      <div className='LeavePassageList'>
-                        <div className="Nodatafound_box p-2">
-                          <h6 className='m-0'>
-                            <i className="bx bx-search"></i> No data available!
-                          </h6>
                         </div>
                       </div>
-                    )}
+                    </>
+                  ))
+                ) : (
+                  <div className='LeavePassage_listbox'>
+                    <div className="Nodatafound_box p-2 text-center">
+                      <h6 className='m-0'>
+                        <i className="bx bx-search"></i> No data available!
+                      </h6>
+                    </div>
                   </div>
-                </div>
+                )}
+
               </>
             )}
-            <div className="text-start pt-2 ">
-              <Pagination className="mb-0" currentPage={currentPage} totalPages={totalPages}
+
+            <div className="text-start pt-2">
+              <Pagination currentPage={currentPage} totalPages={totalPages}
                 onPageChange={handlePageChange}
               />
             </div>
           </div>
-        </div>
 
-       
+        </div>
       </div>
       <div className="container-xxl flex-grow-1 container-p-y LeavePassageSection ShowBigDevice ">
         <div className="row m-0">
@@ -391,7 +389,7 @@ const LeavePassage = () => {
                             paginatedData.map((item) => (
                               <tr key={item.idLeavePassage}>
                                 <td style={{ textAlign: 'left' }}>
-                                  {item.salaryMonthText}
+                                  {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}
                                 </td>
                                 <td style={{ textAlign: 'left' }}>
                                   {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
@@ -399,12 +397,12 @@ const LeavePassage = () => {
                                 <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                   <span
                                     className={`badge ${item.approvalStatus === 'APPROVED'
-                                      ? 'bg-label-success'
-                                      : item.approvalStatus === 'SUBMITTED'
-                                        ? 'bg-label-warning'
-                                        : item.approvalStatus === 'REJECTED'
-                                          ? 'bg-label-danger'
-                                          : 'bg-label-primary'
+                                        ? 'bg-label-success'
+                                        : item.approvalStatus === 'SUBMITTED'
+                                          ? 'bg-label-warning'
+                                          : item.approvalStatus === 'REJECTED'
+                                            ? 'bg-label-danger'
+                                            : 'bg-label-primary'
                                       }`}
                                   >
                                     {item.approvalStatus}

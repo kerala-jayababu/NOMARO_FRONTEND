@@ -571,11 +571,13 @@ body::-webkit-scrollbar {
 
       h6 {
         margin-bottom: 5px;
+        font-size: 16px;
       }
 
       p {
         margin-bottom: 0px;
         opacity: 0.5;
+        font-size: 12px;
       }
 
       .btn {
@@ -797,6 +799,46 @@ body::-webkit-scrollbar {
   .badge {
     padding: 7px 15px !important;
   }
+
+  .LeavePassageSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h5 {
+          margin: 10px 0px;
+          font-size: 14px;
+          font-weight: 800;
+        }
+      }
+
+      .card-body {
+        padding: 10px;
+      }
+    }
+
+    .LeavePassage_listbox {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+
+      label {
+        color: #aab1b6;
+      }
+
+      p {
+        font-weight: 600;
+      }
+    }
+  }
+}
 }
 
 .AttendanceTable {
