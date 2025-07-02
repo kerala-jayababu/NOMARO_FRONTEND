@@ -389,6 +389,7 @@ function EmployeeOvertimeTransaction() {
                           <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
                         </div>
                       </div>
+                      
                       <div>
                         {
                           item.attachment &&
