@@ -47,7 +47,7 @@ const EmployeeSalaryConfig = () => {
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
   const { showLoader, hideLoader } = useLoader();
   const [validFrom, setValidFrom] = useState('')
-  const [status, setStatus] = useState(0);
+  const [status, setStatus] = useState(1);
   const [withoutConfigList, setWithoutConfigList] = useState([]);
 
   useEffect(() => {

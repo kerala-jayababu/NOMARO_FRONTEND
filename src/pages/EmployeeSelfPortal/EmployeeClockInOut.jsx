@@ -50,8 +50,8 @@ function EmployeeClockInOut() {
         const eDate = moment(endDate);
         const daysDifference = eDate.diff(sDate, 'days');
 
-        if (daysDifference > 31) {
-            toast.warning("Date range cannot be more than 31 days", {
+        if (daysDifference > 60) {
+            toast.warning("Date range cannot be more than 60 days", {
                 position: "top-right",
                 autoClose: 2000,
             });
