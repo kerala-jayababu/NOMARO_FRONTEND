@@ -55,7 +55,7 @@ const LeavePassage = () => {
 
   useEffect(() => {
     getLeavePassagesByEmployeeId();
-  }, [refreshCounter]);  
+  }, [refreshCounter]);
 
   const handleFormSalaryMonthChange = (option) => {
     setFormSalaryMonth(option);
@@ -88,7 +88,7 @@ const LeavePassage = () => {
         const date = moment(option.label, 'MMMM, YYYY');
         return (
           date.isValid() &&
-          date.year() === currentMonth.year() && 
+          date.year() === currentMonth.year() &&
           date.month() >= currentMonth.month()
         );
       });
@@ -108,7 +108,7 @@ const LeavePassage = () => {
       setLeavePassages([]);
     } finally {
       setLoading(false);
-  }
+    }
   };
 
   const getFinancialYears = async () => {
@@ -123,11 +123,11 @@ const LeavePassage = () => {
   const getEmployeeDetails = async () => {
     try {
       const response = await dispatch(getEmployeeDetailsByID(userData.idEmployee));
-        if (response.payload && response.payload.data) {
+      if (response.payload && response.payload.data) {
         const empData = response.payload.data;
         setEmployeeData(empData);
         setNewDataValues(empData);
-        }
+      }
     } catch (err) {
       console.error('Failed to get employee details', err);
     }
@@ -182,7 +182,7 @@ const LeavePassage = () => {
     setLoading(true);
     try {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
-      if(validateForm(formData, "ADD")){
+      if (validateForm(formData, "ADD")) {
         const res = await LeavePassageService.addLeavePassage(formData);
         if (res.data.success) {
           showToast('Leave Passage added successfully', 'success');
@@ -206,7 +206,7 @@ const LeavePassage = () => {
     setLoading(true);
     try {
       const formData = { ...newData, approvalStatus: 'SUBMITTED' };
-      if(validateForm(formData, "EDIT")){
+      if (validateForm(formData, "EDIT")) {
         const res = await LeavePassageService.updateLeavePassage(formData);
         if (res.data.success) {
           showToast('Leave Passage updated successfully', 'success');
@@ -237,7 +237,7 @@ const LeavePassage = () => {
       const sameEmployee = entry.employeeCode === formData.employeeCode;
       const sameFY = getFinancialYear(entry.salaryMonthText) === currentFY;
       const isDifferentRecord = entry.idLeavePassage !== formData.idLeavePassage;
-  
+
       if (sameEmployee && sameFY) {
         if (mode === 'ADD') return true;
         if (mode === 'EDIT' && isDifferentRecord) return true;
@@ -247,7 +247,7 @@ const LeavePassage = () => {
       }
       return false;
     });
-  
+
     if (duplicateRecord) {
       showToast(`Leave Passage already claimed for ${currentFY}`, 'error');
       return false;
@@ -261,11 +261,102 @@ const LeavePassage = () => {
   };
 
   return (
-    <div className="container-fluid p-0 LeavePassageSection">
-      <div className="row m-0">
-        <div className="col-lg-12 p-0">
-          <div className="card w-100 mx-0">
-            <div className="card-header d-flex justify-content-between align-items-center">
+    <>
+      <div className="LeavePassageSection ShowMobile ">
+        <div className="card">
+          <div className="card-header">
+            <h5>Leave Passage</h5>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginLeft: 'auto' }}
+              onClick={() => {
+                resetValues();
+                setShowModal(true);
+              }}>
+              + Add New
+            </button>
+          </div>
+          <div className="card-body">
+            {loading ? (
+              <div className="text-start">
+                <Spinner animation="border" />
+              </div>
+            ) : (
+              <>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item) => (
+                    <>
+                      <div className='LeavePassage_listbox' key={item.idLeavePassage}>
+                        <div className='row m-0'>
+                          <div className='col-6 px-0 py-1'>
+                            <label>Month</label>
+                            <p className='m-0'> {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}</p>
+                          </div>
+                          <div className='col-6 px-0 py-1'>
+                            <label>Amount</label>
+                            <p className='m-0'>{item.leavePassageAmount === null ? 0 : item.leavePassageAmount}</p>
+                          </div>
+                          <div className='col-12 px-0 py-1 d-flex justify-content-between align-items-end'>
+                            <div>
+                              <label>Status</label>
+                              <div>
+                                <span
+                                  className={`badge ${item.approvalStatus === 'APPROVED'
+                                    ? 'bg-label-success'
+                                    : item.approvalStatus === 'SUBMITTED'
+                                      ? 'bg-label-warning'
+                                      : item.approvalStatus === 'REJECTED'
+                                        ? 'bg-label-danger'
+                                        : 'bg-label-primary'
+                                    }`}
+                                >
+                                  {item.approvalStatus}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <button
+                                className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                                disabled={item.approvalStatus === 'APPROVED'}
+                                onClick={() => setupEdit(item)}
+                                aria-label="Edit Leave Passage"
+                                title="Edit Leave Passage"
+                              >
+                                <i className="bx bx-pencil fs-5"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ))
+                ) : (
+                  <div className='LeavePassage_listbox'>
+                    <div className="Nodatafound_box p-2 text-center">
+                      <h6 className='m-0'>
+                        <i className="bx bx-search"></i> No data available!
+                      </h6>
+                    </div>
+                  </div>
+                )}
+
+              </>
+            )}
+
+            <div className="text-start pt-2">
+              <Pagination currentPage={currentPage} totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div className="container-xxl flex-grow-1 container-p-y LeavePassageSection ShowBigDevice ">
+        <div className="row m-0">
+          <div className="col-lg-12 p-0">
+            <div className="card w-100 mx-0">
+              <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Leave Passage</h5>
               <button
                 className="btn btn-primary btn-sm"
@@ -274,153 +365,153 @@ const LeavePassage = () => {
                   resetValues();
                   setShowModal(true);
                 }}>
-                  + Add New
+                  Request
                 </button>
               </div>
-            <div className="card-body p-1">
+              <div className="card-body">
                 {loading ? (
-                <div className="text-start">
-                    <Spinner animation="border"/>
+                  <div className="text-start">
+                    <Spinner animation="border" />
                   </div>
                 ) : (
                   <>
-                  <div className="table-responsive">
-                    <table className="table table-sm" style={{ borderCollapse: 'collapse', border: 'none' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left' }}>Month</th>
-                          <th style={{ textAlign: 'left' }}>Amount</th>
-                          <th style={{ textAlign: 'left' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedData.length > 0 ? (
-                          paginatedData.map((item) => (
-                            <tr key={item.idLeavePassage}>
-                              <td style={{ textAlign: 'left' }}>
-                                {item.salaryMonthText}
-                              </td>
-                              <td style={{ textAlign: 'left' }}>
-                                {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
-                              </td>
-                              <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span
-                                  className={`badge ${
-                                    item.approvalStatus === 'APPROVED'
-                                      ? 'bg-label-success'
-                                      : item.approvalStatus === 'SUBMITTED'
-                                      ? 'bg-label-warning'
-                                      : item.approvalStatus === 'REJECTED'
-                                      ? 'bg-label-danger'
-                                      : 'bg-label-primary'
-                                  }`}
-                                >
-                                  {item.approvalStatus}
-                                </span>
-                                <button
-                                  className="btn btn-sm btn-link p-0"
-                                  disabled={item.approvalStatus === 'APPROVED'}
-                                  onClick={() => setupEdit(item)}
-                                  aria-label="Edit Leave Passage"
-                                  title="Edit Leave Passage"
-                                >
-                                  <i className="bx bx-pencil fs-5"></i>
-                                </button>
+                    <div className="table-responsive">
+                      <table className="table table-sm" style={{ borderCollapse: 'collapse', border: 'none' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'left' }}>Month</th>
+                            <th style={{ textAlign: 'left' }}>Amount</th>
+                            <th style={{ textAlign: 'left' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedData.length > 0 ? (
+                            paginatedData.map((item) => (
+                              <tr key={item.idLeavePassage}>
+                                <td style={{ textAlign: 'left' }}>
+                                  {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}
+                                </td>
+                                <td style={{ textAlign: 'left' }}>
+                                  {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
+                                </td>
+                                <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span
+                                    className={`badge ${item.approvalStatus === 'APPROVED'
+                                        ? 'bg-label-success'
+                                        : item.approvalStatus === 'SUBMITTED'
+                                          ? 'bg-label-warning'
+                                          : item.approvalStatus === 'REJECTED'
+                                            ? 'bg-label-danger'
+                                            : 'bg-label-primary'
+                                      }`}
+                                  >
+                                    {item.approvalStatus}
+                                  </span>
+                                  <button
+                                    className="btn btn-sm btn-link p-0"
+                                    disabled={item.approvalStatus === 'APPROVED'}
+                                    onClick={() => setupEdit(item)}
+                                    aria-label="Edit Leave Passage"
+                                    title="Edit Leave Passage"
+                                  >
+                                    <i className="bx bx-pencil fs-5"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={3} className="text-start">
+                                <div className="Nodatafound_box p-2">
+                                  <h6 className='m-0'>
+                                    <i className="bx bx-search"></i> No data available!
+                                  </h6>
+                                </div>
                               </td>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={3} className="text-start">
-                              <div className="Nodatafound_box p-2">
-                                <h6 className='m-0'>
-                                  <i className="bx bx-search"></i> No data available!
-                                </h6>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
-            <div className="text-start pt-2">
+              <div className="text-start pt-2">
                 <Pagination currentPage={currentPage} totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
-            </div>
-          </div>
-          {showModal &&
-            <Modal
-              show={showModal}
-              onHide={() => { setShowModal(false); resetValues(); }}
-              size='lg'
-            aria-labelledby="contained-modal-title-vcenter" centered backdrop="static" keyboard={false}>
-            <Modal.Header closeButton>
-              <Modal.Title>
-                <h5>{isEdit? 'Update Leave Passage' : 'Add Leave Passage'}</h5>
-              </Modal.Title>
-            </Modal.Header>
-
-            <Modal.Body>
-              <div className="accountDetail_card">
-                <Form noValidate validated={validated}>
-                  <div className="accountDetail_card">
-                    <div className="row m-0">
-                      <div className="col-12 p-2">
-                        <label className="form-label mb-1">Employee Name</label>
-                        <p>{newData?.employeeName}</p>
-                      </div>
-                      <div className="col-md-4 p-2">
-                        <label className="form-label mb-1">Salary Month<span className="text-danger">*</span></label>
-                        <Select
-                          options={salaryMonths}
-                          isSearchable
-                          onChange={handleFormSalaryMonthChange}
-                          value={formSalaryMonth}
-                          placeholder="Select Salary Month"
-                          className={`textSize ${validated && !formSalaryMonth ? 'is-invalid-select' : ''}`} required
-                        />
-                        {validated && !formSalaryMonth && (
-                            <div className='red' style={{color : 'red'}}>Salary Month is required</div>
-                        )}
-                      </div>
-                      <div className="col-md-6 px-2 d-flex flex-column">
-                        <label className="form-label mb-1">Remarks<span className="text-danger">*</span></label>
-                        <textarea className="form-control" rows={5}
-                          value={newData.remarks} maxLength="100"
-                          onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
-                        />
-                        <small className = "text-muted mt-1">{100 - newData.remarks.length} / 100 characters remaining</small>
-                        {validated && !newData.remarks && (
-                          <div className="text-danger mt-1">Remarks is required</div>
-                        )}
-
-                      <div className="mt-2 d-flex">
-                          <button className="btn btn-secondary me-2" type="button"
-                          onClick={() => { setShowModal(false); resetValues(); }}>
-                        Cancel
-                        </button>
-                        <button className="btn btn-primary" type="button"
-                          onClick={(e) => {
-                              isEdit ? updateLeavePassage(e) : saveLeavePassage(e);
-                              setRefreshCounter(prev => prev + 1);
-                            }}>
-                          {isEdit ? 'Update' : 'Submit'}
-                        </button>
-                      </div>
-                      </div>
-                    </div>
-                  </div>
-                </Form>
               </div>
-            </Modal.Body>
-          </Modal>}
+            </div>
+            {showModal &&
+              <Modal
+                show={showModal}
+                onHide={() => { setShowModal(false); resetValues(); }}
+                size='lg'
+                aria-labelledby="contained-modal-title-vcenter" centered backdrop="static" keyboard={false}>
+                <Modal.Header closeButton>
+                  <Modal.Title>
+                    <h5>{isEdit ? 'Update Leave Passage' : 'Add Leave Passage'}</h5>
+                  </Modal.Title>
+                </Modal.Header>
+
+                <Modal.Body>
+                  <div className="accountDetail_card">
+                    <Form noValidate validated={validated}>
+                      <div className="accountDetail_card">
+                        <div className="row m-0">
+                          <div className="col-12 p-2">
+                            <label className="form-label mb-1">Employee Name</label>
+                            <p>{newData?.employeeName}</p>
+                          </div>
+                          <div className="col-md-4 p-2">
+                            <label className="form-label mb-1">Salary Month<span className="text-danger">*</span></label>
+                            <Select
+                              options={salaryMonths}
+                              isSearchable
+                              onChange={handleFormSalaryMonthChange}
+                              value={formSalaryMonth}
+                              placeholder="Select Salary Month"
+                              className={`textSize ${validated && !formSalaryMonth ? 'is-invalid-select' : ''}`} required
+                            />
+                            {validated && !formSalaryMonth && (
+                              <div className='red' style={{ color: 'red' }}>Salary Month is required</div>
+                            )}
+                          </div>
+                          <div className="col-md-6 px-2 d-flex flex-column">
+                            <label className="form-label mb-1">Remarks<span className="text-danger">*</span></label>
+                            <textarea className="form-control" rows={5}
+                              value={newData.remarks} maxLength="100"
+                              onChange={(e) => setNewData({ ...newData, remarks: e.target.value })}
+                            />
+                            <small className="text-muted mt-1">{100 - newData.remarks.length} / 100 characters remaining</small>
+                            {validated && !newData.remarks && (
+                              <div className="text-danger mt-1">Remarks is required</div>
+                            )}
+
+                            <div className="mt-2 d-flex">
+                              <button className="btn btn-secondary me-2" type="button"
+                                onClick={() => { setShowModal(false); resetValues(); }}>
+                                Cancel
+                              </button>
+                              <button className="btn btn-primary" type="button"
+                                onClick={(e) => {
+                                  isEdit ? updateLeavePassage(e) : saveLeavePassage(e);
+                                  setRefreshCounter(prev => prev + 1);
+                                }}>
+                                {isEdit ? 'Update' : 'Submit'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Form>
+                  </div>
+                </Modal.Body>
+              </Modal>}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
