@@ -358,14 +358,14 @@ const LeavePassage = () => {
             <div className="card w-100 mx-0">
               <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Leave Passage</h5>
-                <button
-                  className="btn btn-primary btn-sm"
-                  style={{ marginLeft: 'auto' }}
-                  onClick={() => {
-                    resetValues();
-                    setShowModal(true);
-                  }}>
-                  + Add New
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => {
+                  resetValues();
+                  setShowModal(true);
+                }}>
+                  Request
                 </button>
               </div>
               <div className="card-body">
