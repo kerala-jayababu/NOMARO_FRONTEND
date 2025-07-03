@@ -839,7 +839,6 @@ body::-webkit-scrollbar {
     }
   }
 }
-}
 
 .AttendanceTable {
   width: 100%;
@@ -852,6 +851,7 @@ body::-webkit-scrollbar {
   padding: 5px;
   border: 1px solid black
 }
+
 @media (max-width: 345px) {
 
   .TotalEarningsBox_innerDt,
@@ -862,4 +862,10 @@ body::-webkit-scrollbar {
   .MonthperiodSection_inner {
     flex-wrap: wrap;
   }
+}
+
+.CommonTableList thead th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
 }

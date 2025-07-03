@@ -69,8 +69,8 @@ function AttendanceDetails() {
         const eDate = moment(endDate);
         const daysDifference = eDate.diff(sDate, 'days');
 
-        if (daysDifference > 31) {
-            toast.warning("Date range cannot be more than 31 days", {
+        if (daysDifference > 60) {
+            toast.warning("Date range cannot be more than 60 days", {
                 position: "top-right",
                 autoClose: 2000,
             });
@@ -194,7 +194,7 @@ function AttendanceDetails() {
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             const allSelectedItems = attendanceDetails
-                .filter(att => att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH')
+                .filter(att => att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED')
                 .map(att => ({
                     idDayAttendance: att.idDayAttendance,
                     idEmployee: att.idEmployee,
@@ -208,8 +208,7 @@ function AttendanceDetails() {
 
     const isAllSelected = attendanceDetails.length > 0 &&
         selectedRows.length === attendanceDetails.filter(att =>
-            att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
-        ).length;
+            att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED').length;
 
     const gotoOTTransactions = (item) => {
         const dataToSend = {
@@ -315,7 +314,7 @@ function AttendanceDetails() {
                                 </div>
                             </div> */}
                             <div className="table-responsive text-nowrap" style={{ maxHeight: '440px', overflow: 'auto' }}>
-                                <table className="table table-sm">
+                                <table className="CommonTableList table table-sm">
                                     <thead>
                                         <tr>
                                             <th>
@@ -324,7 +323,7 @@ function AttendanceDetails() {
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
                                                     disabled={attendanceDetails.filter(att =>
-                                                        att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
+                                                        att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED'
                                                     ).length === 0}
                                                 />
                                             </th>
@@ -343,7 +342,7 @@ function AttendanceDetails() {
                                             paginatedData?.map((item, index) => (
                                                 <tr key={index}>
                                                     <td>
-                                                        {item.statusType !== 'INOUTMISS' && item.statusType !== 'UNAUTH' && (
+                                                        {item.statusType !== 'INOUTMISS' && item.statusType !== 'UNAUTH' && item.timeSheetApprovalStatus !== 'APPROVED' && (
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedRows.some(row =>
@@ -379,10 +378,12 @@ function AttendanceDetails() {
                                                             <td>{item.totalDurationInHours}</td>
                                                         </>
                                                     }
-                                                    <td>{item.statusType == 'SHORTTIME' ? <span>{item.reasonForShortTime ?? item.statusDetails}</span> :
-                                                        item.statusType == 'EXTRAHOURS' ? <span>{item.statusDetails}</span> :
-                                                            item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
-                                                                item.statusDetails}</td>
+                                                    <td>{
+                                                        item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                            item.statusType == 'SHORTTIME' ? <span>{item.reasonForShortTime ?? item.statusDetails}</span> :
+                                                                item.statusType == 'EXTRAHOURS' ? <span>{item.statusDetails}</span> :
+                                                                    item.statusDetails}
+                                                    </td>
                                                 </tr>
                                             ))
                                         ) : (
@@ -402,7 +403,7 @@ function AttendanceDetails() {
                                     <label style={{ marginTop: '15px' }}>
                                         Total records selected {selectedRows.length} out of {
                                             attendanceDetails.filter(att =>
-                                                att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
+                                                att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED'
                                             ).length
                                         }
                                     </label>
@@ -553,7 +554,7 @@ function AttendanceDetails() {
                 showConfirmation &&
                 <ConfirmationModal
                     modalShow={true}
-                    messageText={"Are you sure to approved selected items?"}
+                    messageText={"Are you sure to approve selected items?"}
                     callbackModal={confirmApprove}
                     confirmBtn={"Confirm"}
                     CancelBtn={"Cancel"}

@@ -65,8 +65,8 @@ function ClockInClockOut() {
     const eDate = moment(endDate);
     const daysDifference = eDate.diff(sDate, 'days');
 
-    if (daysDifference > 31) {
-      toast.warning("Date range cannot be more than 31 days", {
+    if (daysDifference > 60) {
+      toast.warning("Date range cannot be more than 60 days", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -236,7 +236,7 @@ function ClockInClockOut() {
 
             <div className="card-body">
               <div className="table-responsive text-nowrap" style={{ maxHeight: '430px', overflow: 'auto' }}>
-                <table className="table table-sm">
+                <table className="CommonTableList table table-sm">
                   <thead>
                     <tr>
                       <th>Emp Code</th>
