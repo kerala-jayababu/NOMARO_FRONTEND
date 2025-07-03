@@ -1256,17 +1256,23 @@ const EmployeeProfile = () => {
               ) : error ? (
                 <p className="text-danger">{error}</p>
               ) : (
-                <Grid
-                  columns={columns}
-                  data={paginatedEmployeeData}
-                  onEditClick={handleEditClick}
-                  onEmpCodeClick={handleEmpCodeClick}
-                  onDownloadClick={downloadFile}
-                  idKey="editId"
-                  modalId="Add_EMP_Account"
-                  popUpId="EMP_profileView"
-                  employees={employees}
-                />
+                <>
+                  <Grid
+                    columns={columns}
+                    data={paginatedEmployeeData}
+                    onEditClick={handleEditClick}
+                    onEmpCodeClick={handleEmpCodeClick}
+                    onDownloadClick={downloadFile}
+                    idKey="editId"
+                    modalId="Add_EMP_Account"
+                    popUpId="EMP_profileView"
+                    employees={employees}
+                  />
+                  <div className="mt-3 mx-2">
+                    <strong>No. of Active Employees: </strong>
+                    {employees?.filter(emp => emp.currentStatus === 'Working').length || 0}
+                  </div>
+                </>
               )}
               <div className="text-end pt-2">
                 <Pagination
