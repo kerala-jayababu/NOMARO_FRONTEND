@@ -193,11 +193,13 @@ function AttendanceDetails() {
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            const allSelectedItems = attendanceDetails.map(att => ({
-                idDayAttendance: att.idDayAttendance,
-                idEmployee: att.idEmployee,
-                approvalStatus: 'APPROVED'
-            }));
+            const allSelectedItems = attendanceDetails
+                .filter(att => att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH')
+                .map(att => ({
+                    idDayAttendance: att.idDayAttendance,
+                    idEmployee: att.idEmployee,
+                    approvalStatus: 'APPROVED'
+                }));
             setSelectedRows(allSelectedItems);
         } else {
             setSelectedRows([]);
@@ -205,7 +207,9 @@ function AttendanceDetails() {
     };
 
     const isAllSelected = attendanceDetails.length > 0 &&
-        selectedRows.length === attendanceDetails.length;
+        selectedRows.length === attendanceDetails.filter(att =>
+            att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
+        ).length;
 
     const gotoOTTransactions = (item) => {
         const dataToSend = {
@@ -319,7 +323,9 @@ function AttendanceDetails() {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={attendanceDetails.length === 0}
+                                                    disabled={attendanceDetails.filter(att =>
+                                                        att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
+                                                    ).length === 0}
                                                 />
                                             </th>
                                             <th>Emp Code</th>
@@ -337,13 +343,15 @@ function AttendanceDetails() {
                                             paginatedData?.map((item, index) => (
                                                 <tr key={index}>
                                                     <td>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedRows.some(row =>
-                                                                row.idDayAttendance === item.idDayAttendance
-                                                            )}
-                                                            onChange={() => handleRowSelect(item)}
-                                                        />
+                                                        {item.statusType !== 'INOUTMISS' && item.statusType !== 'UNAUTH' && (
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedRows.some(row =>
+                                                                    row.idDayAttendance === item.idDayAttendance
+                                                                )}
+                                                                onChange={() => handleRowSelect(item)}
+                                                            />
+                                                        )}
                                                     </td>
                                                     <td>{item.employeeCode}</td>
                                                     <td>{item.employeeName}</td>
@@ -391,7 +399,13 @@ function AttendanceDetails() {
                             </div>
                             <div className='row'>
                                 <div className='col-lg-4'>
-                                    <label style={{ marginTop: '15px' }}>Total records selected {selectedRows.length} out of {paginatedData.length}</label>
+                                    <label style={{ marginTop: '15px' }}>
+                                        Total records selected {selectedRows.length} out of {
+                                            attendanceDetails.filter(att =>
+                                                att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH'
+                                            ).length
+                                        }
+                                    </label>
                                 </div>
                                 <div className='col-lg-4'>
                                     <div className="text-center py-2">

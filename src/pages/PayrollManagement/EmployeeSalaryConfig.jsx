@@ -11,6 +11,7 @@ import Select from 'react-select';
 import { NumericFormat } from "react-number-format";
 import { useLoader } from "../../components/LoaderContext";
 import DatePicker from "react-datepicker";
+import { toast } from "react-toastify";
 
 const EmployeeSalaryConfig = () => {
   const [designation, setDesignation] = useState("");
@@ -35,6 +36,7 @@ const EmployeeSalaryConfig = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showNonConfigModal, setShowNonConfigModal] = useState(false);
   const [templatesList, setTemplatesList] = useState([]);
   const [employeesList, setEmployeesList] = useState([]);
   const [employeesListOption, setEmployeesListOption] = useState([]);
@@ -45,10 +47,15 @@ const EmployeeSalaryConfig = () => {
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
   const { showLoader, hideLoader } = useLoader();
   const [validFrom, setValidFrom] = useState('')
+  const [status, setStatus] = useState(0);
+  const [withoutConfigList, setWithoutConfigList] = useState([]);
+
+  useEffect(() => {
+    getEmployeeSalaryConfigs();
+  }, [status]);
 
   useEffect(() => {
     getSalaryHeadData();
-    getEmployeeSalaryConfigs();
     getEmployeesData();
     getSalaryTemplates();
     addRow();
@@ -127,8 +134,28 @@ const EmployeeSalaryConfig = () => {
   };
 
   const getEmployeeSalaryConfigs = () => {
-    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText).then(res => {
+    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText, status == 0 ? false : true).then(res => {
       setEmployeeSalaryConfigList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
+  const viewWithoutConfigDetails = () => {
+    if (employeeSalaryConfigList[0].notApprovedCount > 0) {
+      getEmployeeWithoutConfig();
+    } else {
+      toast.warning("No items to show", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  }
+
+  const getEmployeeWithoutConfig = () => {
+    EmployeeSalaryConfigService.getAllEmployeeWithoutConfig().then(res => {
+      setWithoutConfigList(res.data.data);
+      setShowNonConfigModal(true);
     }).catch(err => {
       console.error("Failed to fetch salary templates:", err);
     });
@@ -774,6 +801,24 @@ const EmployeeSalaryConfig = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Salary Configuration</h5>
               <div className="list_menu">
+                <div class="row m-0" style={{ width: '250px' }}>
+                  <div class="col-md-6 p-2">
+                    <div class="form-check form-check-inline ">
+                      <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
+                        value={1} checked={status === 1 ? "checked" : ""}
+                        onChange={(e) => setStatus(1)} />
+                      <label class="form-check-label" for="inlineRadio1">Show latest</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6 p-2">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
+                        value={0} checked={status === 0 ? "checked" : ""}
+                        onChange={(e) => setStatus(0)} />
+                      <label class="form-check-label" for="inlineRadio2">Show all</label>
+                    </div>
+                  </div>
+                </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
@@ -807,7 +852,6 @@ const EmployeeSalaryConfig = () => {
                       <th className="text-end">Total Deductions</th>
                       <th className="text-end">Net Salary</th>
                       <th >Status</th>
-
                       <th></th>
                     </tr>
                   </thead>
@@ -844,7 +888,7 @@ const EmployeeSalaryConfig = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="8" className="text-center">
+                        <td colSpan="10" className="text-center">
                           <div className="Nodatafound_box">
                             <h6><i className="bx bx-search"></i> No data available!</h6>
                           </div>
@@ -861,6 +905,19 @@ const EmployeeSalaryConfig = () => {
                   onPageChange={handlePageChange}
                 />
               </div>
+              {
+                employeeSalaryConfigList.length > 0 &&
+                <div className='row'>
+                  <div className='col-lg-12 m-0 mx-3'>
+                    <label>No. of employees with approved configs: <strong>{employeeSalaryConfigList[0].approvedCount}</strong></label>
+                  </div>
+                  <div className='col-lg-12 m-0 mx-3'>
+                    <div className='col-lg-12'>
+                      <label className="cursor" onClick={() => viewWithoutConfigDetails()}>No. of employees without approved configs: <strong>{employeeSalaryConfigList[0].notApprovedCount}</strong></label>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
           </div>
 
@@ -1190,6 +1247,61 @@ const EmployeeSalaryConfig = () => {
                     </li>
                   </ul>
                 </div>
+              </div>
+
+            </Modal.Body>
+          </Modal>
+
+          <Modal
+            show={showNonConfigModal} onHide={() => { setShowNonConfigModal(false); }} size='xl'
+            aria-labelledby="contained-modal-title-vcenter"
+            centered backdrop="static"
+            keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <h5>List of Employees without approved salary configuration</h5>
+              </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+
+              <div className="table-responsive ">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Emp. Code</th>
+                      <th>Employee Name</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Joining Date</th>
+                      <th >Salary Configuration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-border-bottom-0">
+                    {withoutConfigList?.length > 0 ? (
+                      withoutConfigList?.map((item, index) => (
+                        <tr key={item.idEmployeeSalaryConfig}>
+                          <td>{index + 1}</td>
+                          <td>{item?.employeeCode}</td>
+                          <td>{item?.employeeName}</td>
+                          <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
+                          <td>{item?.departmentName.length < 25 ? item?.departmentName : (`${item?.departmentName.substring(0, 25)}...`)}</td>
+                          <td>{item?.joiningDate ? moment(item?.joiningDate).format("MM/DD/YYYY") : ''}</td>
+                          <td>{item?.status}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
 
             </Modal.Body>
