@@ -144,19 +144,17 @@ const EmployeeSalaryConfig = () => {
   const viewWithoutConfigDetails = () => {
     if (employeeSalaryConfigList[0].notApprovedCount > 0) {
       getEmployeeWithoutConfig();
-    } else {
-      toast.warning("No items to show", {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   }
 
   const getEmployeeWithoutConfig = () => {
+    showLoader();
     EmployeeSalaryConfigService.getAllEmployeeWithoutConfig().then(res => {
+      hideLoader();
       setWithoutConfigList(res.data.data);
       setShowNonConfigModal(true);
     }).catch(err => {
+      hideLoader();
       console.error("Failed to fetch salary templates:", err);
     });
   };
@@ -913,7 +911,7 @@ const EmployeeSalaryConfig = () => {
                   </div>
                   <div className='col-lg-12 m-0 mx-3'>
                     <div className='col-lg-12'>
-                      <label className="cursor" onClick={() => viewWithoutConfigDetails()}>No. of employees without approved configs: <strong>{employeeSalaryConfigList[0].notApprovedCount}</strong></label>
+                      <label className={employeeSalaryConfigList[0].notApprovedCount > 0 ? 'cursor' : ''} onClick={() => viewWithoutConfigDetails()}>No. of employees without approved configs: <strong>{employeeSalaryConfigList[0].notApprovedCount}</strong></label>
                     </div>
                   </div>
                 </div>
