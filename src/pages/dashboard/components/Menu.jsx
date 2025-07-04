@@ -138,6 +138,29 @@ function Menu({ viewType }) {
             </ul>
           </li>
         ))}
+         <li className={`menu-item ${menu === 'unAuthorizedAbsence' ? 'open active' : ''} cursor-pointer`}>
+          <a
+            className="menu-link"
+            onClick={() => {
+              setMenu('unAuthorizedAbsence');
+              setSubMenu('');
+              const html = document.documentElement;
+              html.classList.remove(
+                "light-style",
+                "layout-menu-fixed",
+                "layout-menu-100vh",
+                "layout-menu-expanded"
+              );
+              dispatch(setIdPayrollScreen(null));
+              dispatch(setComponent('unAuthorizedAbsence'));
+
+              navigate('/dashboard/unAuthorizedAbsence');
+            }}
+          >
+            <i className="menu-icon tf-icons bx bx-calendar-event"></i>
+            <div data-i18n="unAuthorizedAbsence">UnAuthorized Absence</div>
+          </a>
+        </li>
       </ul>
     </aside>
   );
