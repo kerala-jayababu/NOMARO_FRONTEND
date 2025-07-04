@@ -45,6 +45,8 @@ import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
 import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
 import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
+import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
+import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 
 function App() {
   return (
@@ -90,6 +92,8 @@ function App() {
               <Route path="attendance" element={<AttendanceDetails/>} />
               <Route path="shift-config" element={<ShiftManagement/>} />
               <Route path="shift-assignment" element={<ShiftAssignment/>} />
+              <Route path="leave-details-report" element={<LeaveDetailReport/>} />
+              <Route path="unAuthorizedAbsence" element={<UnAuthorizedAbsence/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
