@@ -273,7 +273,7 @@ const LeavePassage = () => {
                 resetValues();
                 setShowModal(true);
               }}>
-              + Add New
+              Request
             </button>
           </div>
           <div className="card-body">
