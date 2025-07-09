@@ -91,14 +91,14 @@ function UnAuthorizedAbsence() {
                   <div><label>Date From</label></div>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"From Date"}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                    showYearDropdown dropdownMode="select" maxDate={today}
+                    showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
                   />
                 </div>
                 <div className="list_searchbox">
                   <div><label>Date To</label></div>
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"To Date"}
                     selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                    maxDate={today} showYearDropdown dropdownMode="select"
+                    maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
                   />
                 </div>
                   {(currentAuth === 'PAYROLL') ? (
