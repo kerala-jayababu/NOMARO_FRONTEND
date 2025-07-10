@@ -5,6 +5,7 @@ import DatePicker from "react-datepicker";
 import UnAuthorizedAbsenceService from "../../core/services/UnAuthorizedAbsenceService";
 import secureLocalStorage from 'react-secure-storage';
 import CommonService from "../../core/services/CommonService";
+import Select from 'react-select';
 
 function UnAuthorizedAbsence() {
 
@@ -35,12 +36,31 @@ function UnAuthorizedAbsence() {
   }, []);
 
   useEffect(() => {
+    if (currentAuth === 'PAYROLL' && (!selectedEmployee || selectedEmployee === "")) {
+      setAbsences([]);
+      setTotalAbsence(0);
+      return;
+    }
     getEmployeeLeaveReport();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, selectedEmployee]);
+
 
   const getEmployeeLeaveReport = () => {
     setLoading(true);
-    UnAuthorizedAbsenceService.getEmployeeUnauthorizedAbsences(userData.idEmployee ?? 0, moment(startDate).format("YYYY-MM-DD"), moment(endDate).format("YYYY-MM-DD"))
+    if (currentAuth === 'PAYROLL') {
+      if (!selectedEmployee || selectedEmployee === "") {
+        setAbsences([]);
+        setTotalAbsence(0);
+        setLoading(false);
+        return;
+      }
+    }
+
+    const employeeId = (currentAuth === 'PAYROLL')
+      ? selectedEmployee
+      : userData.idEmployee ?? 0;
+
+    UnAuthorizedAbsenceService.getEmployeeUnauthorizedAbsences(employeeId, moment(startDate).format("YYYY-MM-DD"), moment(endDate).format("YYYY-MM-DD"))
     .then((res) => {
       const data = res.data.data || [];
       setAbsences(data);
@@ -56,18 +76,13 @@ function UnAuthorizedAbsence() {
     });
   };
   
-      const handleDepartmentChange = (e) => {
-          setSelectedDepartment(e.target.value);
-          setSelectedEmployee('');
-      };
-  
-      const getEmployeesData = () => {
-          CommonService.getEmployeeList().then(res => {
-              res.data.data.sort((a, b) => a.fullName - b.fullName);
-              setEmployeesList(res.data.data);
-          }).catch(() => {
-          });
-      };
+  const getEmployeesData = () => {
+    CommonService.getEmployeeList().then(res => {
+      res.data.data.sort((a, b) => a.fullName - b.fullName);
+      setEmployeesList(res.data.data);
+    }).catch(() => {
+    });
+  };
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -104,28 +119,57 @@ function UnAuthorizedAbsence() {
                   {(currentAuth === 'PAYROLL') ? (
                     <>
                       <div className="list_searchbox">
-                        <select className="form-select" value={selectedDepartment} onChange={handleDepartmentChange}>
-                          <option value="">All Departments</option>
-                          {departments.map(dept => (
-                            <option key={dept.idDepartment} value={dept.idDepartment}> 
-                              {dept.departmentName}
-                            </option>
-                          ))}
-                        </select>
+                        <Select
+                          options={[{ value: '', label: 'All Departments' }, ...departments.map(dept => ({
+                            value: dept.idDepartment,
+                            label: dept.departmentName
+                          }))]}
+                          value={departments.find(d => d.idDepartment === parseInt(selectedDepartment)) 
+                                ? { value: selectedDepartment, label: departments.find(d => d.idDepartment === parseInt(selectedDepartment)).departmentName } 
+                                : { value: '', label: 'All Departments' }}
+                          onChange={(selectedOption) => {
+                            setSelectedDepartment(selectedOption.value);
+                            setSelectedEmployee('');
+                          }}
+                          isClearable
+                          placeholder="Select Department"
+                          styles={{
+                            control: (provided) => ({
+                              ...provided,
+                              width: 200  // fixed width
+                            }),
+                            menu: (provided) => ({
+                              ...provided,
+                              width: 200  // match the width of the control
+                            })
+                          }}
+                        />
+
                       </div>
                       <div className="list_searchbox" style={{ width: '200px' }}>
-                        <select className="form-select" value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)}>
-                          <option value="">All Employees</option>
-                          {filteredEmployees.length > 0 ? (
-                            filteredEmployees.map(emp => (
-                              <option key={emp.idEmployee} value={emp.idEmployee}>
-                                {emp.fullName}
-                              </option>
-                            ))
-                          ) : (
-                            <option>No employees found</option>
-                          )}
-                        </select>
+                        <Select
+                          options={[{ value: '', label: 'All Employees' }, ...filteredEmployees.map(emp => ({
+                            value: emp.idEmployee,
+                            label: emp.fullName
+                          }))]}
+                          value={filteredEmployees.find(e => e.idEmployee === parseInt(selectedEmployee)) 
+                                ? { value: selectedEmployee, label: filteredEmployees.find(e => e.idEmployee === parseInt(selectedEmployee)).fullName }
+                                : { value: '', label: 'All Employees' }}
+                          onChange={(selectedOption) => setSelectedEmployee(selectedOption ? selectedOption.value : '')}
+                          isClearable
+                          placeholder="Select Employee"
+                          styles={{
+                            control: (provided) => ({
+                              ...provided,
+                              width: 200  // fixed width
+                            }),
+                            menu: (provided) => ({
+                              ...provided,
+                              width: 200  // match the width of the control
+                            })
+                          }}
+                        />
+
                       </div>
                     </>
                   ): (<></>)}
@@ -154,17 +198,36 @@ function UnAuthorizedAbsence() {
                     </tr>
                   </thead>
                   <tbody className="table-border-bottom-0">
-                    {currentAuth !== 'PAYROLL' && absences.length > 0 ? (
+                    {absences.length > 0 ? (
                       <>
-                        {absences.map((absence) => (
-                          <tr key={absence.idEmployeeLeave+'_'+absence.absentDate}>
-                            <td>{moment(absence.absentDate).format("MM/DD/YYYY")}</td>
-                            <td>{moment(absence.absentDate).format("dddd")}</td>
+                        {currentAuth !== 'PAYROLL' ? (
+                          <>
+                            {absences.map((absence) => (
+                              <tr key={absence.idEmployeeLeave+'_'+absence.absentDate}>
+                                <td>{moment(absence.absentDate).format("MM/DD/YYYY")}</td>
+                                <td>{moment(absence.absentDate).format("dddd")}</td>
+                              </tr>
+                            ))}
+                            <tr className="table-info text-center">
+                              <td colSpan={4} className="fw-bold"  >{totalAbsence} Unauthorized Absence</td>
+                            </tr>
+                          </>
+                        ) : (
+                          <>
+                            {absences.map((absence) => (
+                              <tr key={absence.idEmployeeLeave+'_'+absence.absentDate}>
+                                <td>{absence.idEmployee}</td>
+                                <td>{absence.employeeName}</td>
+                                <td></td>
+                                <td>{moment(absence.absentDate).format("MM/DD/YYYY")}</td>
+                                <td>{moment().diff(moment(absence.absentDate), 'days')}</td>
+                              </tr>
+                            ))}
+                          <tr className="table-info text-center">
+                            <td colSpan={4} className="fw-bold"  >{totalAbsence} Unauthorized Absence</td>
                           </tr>
-                        ))}
-                        <tr className="table-info text-center">
-                          <td colSpan={4} className="fw-bold"  >{totalAbsence} Unauthorized Absence</td>
-                        </tr>
+                        </>
+                        )}
                       </>
                       ) : (
                         <tr>
