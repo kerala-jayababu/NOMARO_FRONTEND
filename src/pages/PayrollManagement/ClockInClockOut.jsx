@@ -28,9 +28,13 @@ function ClockInClockOut() {
   const today = moment(new Date()).format('MM-DD-YYYY');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const filteredEmployees = selectedDepartment === ''
-    ? employeesList
-    : employeesList.filter(emp => emp.idDepartment === parseInt(selectedDepartment));
+  const filteredEmployees = [
+    { label: "All employees", value: "" },
+    ...(selectedDepartment === ''
+      ? employeesList.map(emp => ({ label: emp.fullName, value: emp.idEmployee }))
+      : employeesList.filter(emp => emp.idDepartment === parseInt(selectedDepartment))
+        .map(emp => ({ label: emp.fullName, value: emp.idEmployee })))
+  ];
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const { showLoader, hideLoader } = useLoader();
@@ -65,8 +69,8 @@ function ClockInClockOut() {
     const eDate = moment(endDate);
     const daysDifference = eDate.diff(sDate, 'days');
 
-    if (daysDifference > 31) {
-      toast.warning("Date range cannot be more than 31 days", {
+    if (daysDifference > 60) {
+      toast.warning("Date range cannot be more than 60 days", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -77,7 +81,7 @@ function ClockInClockOut() {
     showLoader();
     const formattedStartDate = sDate.format("YYYY-MM-DD");
     const formattedEndDate = eDate.format("YYYY-MM-DD");
-    ClockInOutService.getClockInOutData(selectedEmployee ?? '', selectedDepartment ?? '', formattedStartDate, formattedEndDate).then(res => {
+    ClockInOutService.getClockInOutData(selectedEmployee.value ?? '', selectedDepartment ?? '', formattedStartDate, formattedEndDate).then(res => {
       // ClockInOutService.getClockInOutData(1020, sDate, eDate).then(res => {
       setClockInDetails(res.data.data);
       hideLoader();
@@ -215,8 +219,8 @@ function ClockInClockOut() {
                     ))}
                   </select>
                 </div>
-                <div className="list_searchbox" style={{ width: '200px' }}>
-                  <select className="form-select"
+                <div className="list_searchbox" style={{ width: '200px', zIndex: '100' }}>
+                  {/* <select className="form-select"
                     value={selectedEmployee}
                     onChange={(e) => setSelectedEmployee(e.target.value)}>
                     <option value="">ALL Employees</option>
@@ -229,14 +233,23 @@ function ClockInClockOut() {
                     ) : (
                       <option>No employees found</option>
                     )}
-                  </select>
+                  </select> */}
+                  <Select
+                    options={filteredEmployees}
+                    isSearchable
+                    onChange={(e) => { setSelectedEmployee(e) }}
+                    value={selectedEmployee}
+                    placeholder={'All Employees'}
+                    className="textSize"
+                    noOptionsMessage={() => "No employee available"}
+                  />
                 </div>
               </div>
             </div>
 
             <div className="card-body">
               <div className="table-responsive text-nowrap" style={{ maxHeight: '430px', overflow: 'auto' }}>
-                <table className="table table-sm">
+                <table className="CommonTableList table table-sm">
                   <thead>
                     <tr>
                       <th>Emp Code</th>

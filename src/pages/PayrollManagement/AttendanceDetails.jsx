@@ -29,9 +29,13 @@ function AttendanceDetails() {
     const today = moment(new Date()).format('MM-DD-YYYY')
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedEmployee, setSelectedEmployee] = useState('');
-    const filteredEmployees = selectedDepartment === ''
-        ? employeesList
-        : employeesList.filter(emp => emp.idDepartment === parseInt(selectedDepartment));
+    const filteredEmployees = [
+        { label: "All employees", value: "" },
+        ...(selectedDepartment === ''
+            ? employeesList.map(emp => ({ label: emp.fullName, value: emp.idEmployee }))
+            : employeesList.filter(emp => emp.idDepartment === parseInt(selectedDepartment))
+                .map(emp => ({ label: emp.fullName, value: emp.idEmployee })))
+    ];
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
@@ -69,8 +73,8 @@ function AttendanceDetails() {
         const eDate = moment(endDate);
         const daysDifference = eDate.diff(sDate, 'days');
 
-        if (daysDifference > 31) {
-            toast.warning("Date range cannot be more than 31 days", {
+        if (daysDifference > 60) {
+            toast.warning("Date range cannot be more than 60 days", {
                 position: "top-right",
                 autoClose: 2000,
             });
@@ -82,7 +86,7 @@ function AttendanceDetails() {
         const formattedEndDate = eDate.format("YYYY-MM-DD");
 
         AttendanceService.getAttendanceData(
-            selectedEmployee ?? '',
+            selectedEmployee.value ?? '',
             selectedDepartment ?? '',
             formattedStartDate,
             formattedEndDate
@@ -193,11 +197,13 @@ function AttendanceDetails() {
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            const allSelectedItems = attendanceDetails.map(att => ({
-                idDayAttendance: att.idDayAttendance,
-                idEmployee: att.idEmployee,
-                approvalStatus: 'APPROVED'
-            }));
+            const allSelectedItems = attendanceDetails
+                .filter(att => att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED')
+                .map(att => ({
+                    idDayAttendance: att.idDayAttendance,
+                    idEmployee: att.idEmployee,
+                    approvalStatus: 'APPROVED'
+                }));
             setSelectedRows(allSelectedItems);
         } else {
             setSelectedRows([]);
@@ -205,7 +211,8 @@ function AttendanceDetails() {
     };
 
     const isAllSelected = attendanceDetails.length > 0 &&
-        selectedRows.length === attendanceDetails.length;
+        selectedRows.length === attendanceDetails.filter(att =>
+            att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED').length;
 
     const gotoOTTransactions = (item) => {
         const dataToSend = {
@@ -274,7 +281,7 @@ function AttendanceDetails() {
                                     </select>
                                 </div>
                                 <div className="list_searchbox" style={{ width: '200px' }}>
-                                    <select className="form-select"
+                                    {/* <select className="form-select"
                                         value={selectedEmployee}
                                         onChange={(e) => setSelectedEmployee(e.target.value)}>
                                         <option value="">ALL Employees</option>
@@ -287,7 +294,16 @@ function AttendanceDetails() {
                                         ) : (
                                             <option>No employees found</option>
                                         )}
-                                    </select>
+                                    </select> */}
+                                    <Select
+                                        options={filteredEmployees}
+                                        isSearchable
+                                        onChange={(e) => { setSelectedEmployee(e) }}
+                                        value={selectedEmployee}
+                                        placeholder={'All Employees'}
+                                        className="textSize"
+                                        noOptionsMessage={() => "No employee available"}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -311,7 +327,7 @@ function AttendanceDetails() {
                                 </div>
                             </div> */}
                             <div className="table-responsive text-nowrap" style={{ maxHeight: '440px', overflow: 'auto' }}>
-                                <table className="table table-sm">
+                                <table className="CommonTableList table table-sm">
                                     <thead>
                                         <tr>
                                             <th>
@@ -319,7 +335,9 @@ function AttendanceDetails() {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={attendanceDetails.length === 0}
+                                                    disabled={attendanceDetails.filter(att =>
+                                                        att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED'
+                                                    ).length === 0}
                                                 />
                                             </th>
                                             <th>Emp Code</th>
@@ -328,7 +346,7 @@ function AttendanceDetails() {
                                             <th>First In</th>
                                             <th>Last Out</th>
                                             <th>Total duration</th>
-                                            <th>Actual time in Hrs</th>
+                                            <th>Actual IN Hrs</th>
                                             <th>Status Details</th>
                                         </tr>
                                     </thead>
@@ -337,13 +355,15 @@ function AttendanceDetails() {
                                             paginatedData?.map((item, index) => (
                                                 <tr key={index}>
                                                     <td>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedRows.some(row =>
-                                                                row.idDayAttendance === item.idDayAttendance
-                                                            )}
-                                                            onChange={() => handleRowSelect(item)}
-                                                        />
+                                                        {item.statusType !== 'INOUTMISS' && item.statusType !== 'UNAUTH' && item.timeSheetApprovalStatus !== 'APPROVED' && (
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedRows.some(row =>
+                                                                    row.idDayAttendance === item.idDayAttendance
+                                                                )}
+                                                                onChange={() => handleRowSelect(item)}
+                                                            />
+                                                        )}
                                                     </td>
                                                     <td>{item.employeeCode}</td>
                                                     <td>{item.employeeName}</td>
@@ -368,13 +388,15 @@ function AttendanceDetails() {
                                                             <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
                                                             <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
                                                             <td>{item.totalDurationHoursText}</td>
-                                                            <td>{item.totalDurationInHours}</td>
+                                                            <td>{item.actualHoursText}</td>
                                                         </>
                                                     }
-                                                    <td>{item.statusType == 'SHORTTIME' ? <span>{item.reasonForShortTime ?? item.statusDetails}</span> :
-                                                        item.statusType == 'EXTRAHOURS' ? <span>{item.statusDetails}</span> :
-                                                            item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
-                                                                item.statusDetails}</td>
+                                                    <td>{
+                                                        item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                            item.statusType == 'SHORTTIME' ? <span>{item.reasonForShortTime ?? item.statusDetails}</span> :
+                                                                item.statusType == 'EXTRAHOURS' ? <span>{item.statusDetails}</span> :
+                                                                    item.statusDetails}
+                                                    </td>
                                                 </tr>
                                             ))
                                         ) : (
@@ -391,7 +413,13 @@ function AttendanceDetails() {
                             </div>
                             <div className='row'>
                                 <div className='col-lg-4'>
-                                    <label style={{ marginTop: '15px' }}>Total records selected {selectedRows.length} out of {paginatedData.length}</label>
+                                    <label style={{ marginTop: '15px' }}>
+                                        Total records selected: {selectedRows.length} out of {
+                                            attendanceDetails.filter(att =>
+                                                att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED'
+                                            ).length
+                                        }
+                                    </label>
                                 </div>
                                 <div className='col-lg-4'>
                                     <div className="text-center py-2">
@@ -482,19 +510,19 @@ function AttendanceDetails() {
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>
-                                    <td colSpan={2}>{moment(selectedData?.expectedInDateTime).format('HH:mm A')}</td>
+                                    <td colSpan={2}>{selectedData?.expectedInDateTime ? moment(selectedData?.expectedInDateTime).format('HH:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-out</b></td>
-                                    <td colSpan={2}>{moment(selectedData?.expectedOutDateTime).format('HH:mm A')}</td>
+                                    <td colSpan={2}>{selectedData?.expectedOutDateTime ? moment(selectedData?.expectedOutDateTime).format('HH:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Actual Clock-in</b></td>
-                                    <td colSpan={2}>{moment(selectedData?.firstInDateTime).format('HH:mm A')}</td>
+                                    <td colSpan={2}>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('HH:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Actual Clock-out</b></td>
-                                    <td colSpan={2}>{moment(selectedData?.lastOutDateTime).format('HH:mm A')}</td>
+                                    <td colSpan={2}>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('HH:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Total Duration</b></td>
@@ -514,8 +542,8 @@ function AttendanceDetails() {
                                     <td><b>Duration</b></td>
                                 </tr>
                                 <tr>
-                                    <td>{moment(selectedData?.firstInDateTime).format('HH:mm A')}</td>
-                                    <td>{moment(selectedData?.lastOutDateTime).format('HH:mm A')}</td>
+                                    <td>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('HH:mm A') : 'NA'}</td>
                                     <td>{selectedData?.totalDurationHoursText}</td>
                                 </tr>
                             </tbody>
@@ -524,7 +552,11 @@ function AttendanceDetails() {
                             <tbody>
                                 <tr>
                                     <td><b>Status Details</b></td>
-                                    <td colSpan={2}>{selectedData?.statusDetails}</td>
+                                    <td colSpan={2}>{
+                                                        selectedData.timeSheetApprovalStatus == 'APPROVED' ? selectedData.timeSheetApprovalStatus :
+                                                            selectedData.statusType == 'SHORTTIME' ? <span>{selectedData.reasonForShortTime ?? selectedData.statusDetails}</span> :
+                                                                selectedData.statusType == 'EXTRAHOURS' ? <span>{selectedData.statusDetails}</span> :
+                                                                    selectedData.statusDetails}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -539,7 +571,7 @@ function AttendanceDetails() {
                 showConfirmation &&
                 <ConfirmationModal
                     modalShow={true}
-                    messageText={"Are you sure to approved selected items?"}
+                    messageText={"Are you sure to approve selected items?"}
                     callbackModal={confirmApprove}
                     confirmBtn={"Confirm"}
                     CancelBtn={"Cancel"}
