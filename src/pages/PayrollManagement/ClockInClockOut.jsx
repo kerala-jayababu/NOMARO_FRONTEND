@@ -78,7 +78,7 @@ function ClockInClockOut() {
       return;
     }
 
-    showLoader();
+    // showLoader();
     const formattedStartDate = sDate.format("YYYY-MM-DD");
     const formattedEndDate = eDate.format("YYYY-MM-DD");
     ClockInOutService.getClockInOutData(selectedEmployee.value ?? '', selectedDepartment ?? '', formattedStartDate, formattedEndDate).then(res => {
@@ -197,13 +197,13 @@ function ClockInClockOut() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                    showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect/>
+                    selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
+                    showYearDropdown dropdownMode="select" maxDate={today} />
                 </div>
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
-                    selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                    maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect/>
+                    selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
+                    maxDate={today} showYearDropdown dropdownMode="select" />
                 </div>
                 <div className="list_searchbox">
                   <select
