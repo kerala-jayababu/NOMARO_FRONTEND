@@ -234,7 +234,7 @@ function UnAuthorizedAbsence() {
                           <td colSpan={currentAuth !== 'PAYROLL'? 5 : 3} className="text-center">
                             <div className="Nodatafound_box p-2">
                               <h6 className='m-0'>
-                                There is no unauthorized absence for the given period
+                                You have no unauthorised absence during the selected period
                               </h6>
                             </div>
                           </td>
