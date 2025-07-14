@@ -46,7 +46,11 @@ const EmployeeSalaryConfig = () => {
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
   const { showLoader, hideLoader } = useLoader();
-  const [validFrom, setValidFrom] = useState('')
+  const [validFrom, setValidFrom] = useState(() => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    return moment(firstDay).format("MM-DD-YYYY");
+  });
   const [status, setStatus] = useState(1);
   const [withoutConfigList, setWithoutConfigList] = useState([]);
 
@@ -615,7 +619,10 @@ const EmployeeSalaryConfig = () => {
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
 
-      // Recalculate values after rows are set
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+
       calculateValues(mappedRows);
     }
     setShowModal(true);
@@ -650,7 +657,10 @@ const EmployeeSalaryConfig = () => {
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
 
-      // Recalculate values after rows are set
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+
       calculateValues(mappedRows);
     }
     setShowModal(true);
@@ -687,7 +697,10 @@ const EmployeeSalaryConfig = () => {
     setEmpDescDept("");
     setSelectedEmpConfigId('');
     setCopyFromData(false);
-    setValidFrom('');
+
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
   };
 
   const handleSave = (e) => {
@@ -705,7 +718,7 @@ const EmployeeSalaryConfig = () => {
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
-      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
@@ -746,7 +759,7 @@ const EmployeeSalaryConfig = () => {
       netSalary: netSalary,
       approvalStatus: "SUBMITTED",
       activeStatus: true,
-      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
         idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail,
