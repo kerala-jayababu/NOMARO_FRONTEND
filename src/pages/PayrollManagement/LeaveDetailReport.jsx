@@ -3,6 +3,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import DatePicker from "react-datepicker";
 import LeaveReportService from "../../core/services/LeaveReportService";
+import secureLocalStorage from 'react-secure-storage';
 
 function LeaveDetailReport() {
 
