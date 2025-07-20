@@ -19,9 +19,9 @@ function EmployeeClockInOut() {
     const [rowsPerPage, setRowsPerPage] = useState(50);
     const [filteredData, setFilteredData] = useState(clockInDetails);
     const totalPages = Math.ceil(clockInDetails.length / rowsPerPage);
-    const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
-    const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
-    const today = moment(new Date()).format('MM-DD-YYYY');
+    const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
+    const [endDate, setEndDate] = useState(moment().endOf('month').format('YYYY-MM-DD'));
+    const today = moment().format('MM-DD-YYYY');
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
