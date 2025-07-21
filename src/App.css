@@ -339,6 +339,11 @@ body::-webkit-scrollbar {
 
 .ShowMobile {
   display: none;
+
+  .form-control {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
 }
 
 .ShowBigDevice {
@@ -838,8 +843,85 @@ body::-webkit-scrollbar {
       }
     }
   }
+
+  .EmployeeClockInOutSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+          margin-bottom: 6px;
+        }
+
+
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .EmployeeClockInOutListRow {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+          margin-bottom: 5px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+
+  }
+  .EmployeeAttendanceSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+          margin-bottom: 6px;
+        }
+
+
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .EmployeeAttendanceListRow {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+          margin-bottom: 5px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+
+  }
 }
-}
+
 
 .AttendanceTable {
   width: 100%;
@@ -848,10 +930,11 @@ body::-webkit-scrollbar {
   margin-bottom: 5px;
 }
 
-.AttendanceTable tr td{
+.AttendanceTable tr td {
   padding: 5px;
   border: 1px solid black
 }
+
 @media (max-width: 345px) {
 
   .TotalEarningsBox_innerDt,
