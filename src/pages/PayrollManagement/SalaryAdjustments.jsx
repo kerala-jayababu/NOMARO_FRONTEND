@@ -125,7 +125,7 @@ function SalaryAdjustments() {
   const getSalaryMonths = () => {
     CommonService.getAllSalaryMonths().then(res => {
       const salMonths = res.data;
-      const filterred = salMonths.slice(0, 12);
+      const filterred = salMonths;
       setSalaryMonthsList(filterred);
     }).catch(err => {
     });
