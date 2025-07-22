@@ -882,6 +882,7 @@ body::-webkit-scrollbar {
     }
 
   }
+
   .EmployeeAttendanceSection {
     padding: 10px;
 
@@ -920,6 +921,85 @@ body::-webkit-scrollbar {
     }
 
   }
+
+  .UnauthorizedAbsenceSection {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+          margin-bottom: 6px;
+        }
+
+
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .EmployeeAttendanceListRow {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+          margin-bottom: 5px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+
+  }
+
+  .LeaveDetailReport {
+    padding: 10px;
+
+    .card {
+      .card-header {
+        padding: 10px;
+
+        h5 {
+          font-size: 14px;
+          font-weight: 800;
+          margin-bottom: 6px;
+        }
+
+
+      }
+
+      .card-body {
+        padding: 10px;
+
+        .LeaveDetailsList {
+          border: 1px solid #ddd;
+          padding: 8px;
+          border-radius: 6px;
+          margin-bottom: 5px;
+
+          p {
+            margin: 0px;
+            font-weight: 600;
+          }
+
+          label {
+            color: #aab1b6;
+          }
+        }
+      }
+    }
+
+  }
+
 }
 
 .AttendanceTable {

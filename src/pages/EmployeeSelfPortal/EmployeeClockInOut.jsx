@@ -243,7 +243,7 @@ function EmployeeClockInOut() {
             <div className="EmployeeClockInOutSection ShowMobile">
                 <div className="card">
                     <div className="card-header pb-3">
-                        <h5>List of Clock In-Clock Out details </h5>
+                        <h5 className='pt-2 pb-1'>List of Clock In-Clock Out details </h5>
                         <div className="list_menu">
                             <div className="list_searchbox">
                                 <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
