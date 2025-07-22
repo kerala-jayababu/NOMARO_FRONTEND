@@ -152,92 +152,176 @@ function EmployeeAttendance() {
     }
 
     return (
-        <div className="container-xxl flex-grow-1 container-p-y">
-            <div className="row">
-                <div className="col-lg-12">
-                    <div className="card">
-                        <div className="card-header d-flex align-items-center justify-content-between pb-3">
-                            <h5 className="m-0">List of Attendance details</h5>
-                            <div className="list_menu">
-                                <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
-                                        selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" maxDate={today} />
-                                </div>
-                                <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
-                                        selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                                        maxDate={today} showYearDropdown dropdownMode="select" />
+        <>
+            <div className="container-xxl flex-grow-1 container-p-y EmployeeAttendanceSection ShowBigDevice">
+                <div className="row">
+                    <div className="col-lg-12">
+                        <div className="card">
+                            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+                                <h5 className="m-0">List of Attendance details</h5>
+                                <div className="list_menu">
+                                    <div className="list_searchbox">
+                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                            selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                                            showYearDropdown dropdownMode="select" maxDate={today} />
+                                    </div>
+                                    <div className="list_searchbox">
+                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                            selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
+                                            maxDate={today} showYearDropdown dropdownMode="select" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="card-body">
-                            <div className="table-responsive text-nowrap" style={{ maxHeight: '500px', overflow: 'auto' }}>
-                                <table className="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Day</th>
-                                            <th>Date</th>
-                                            <th className='text-center'>First In</th>
-                                            <th className='text-center'>Last Out</th>
-                                            <th>Status Details</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="table-border-bottom-0">
-                                        {paginatedData?.length > 0 ? (
-                                            paginatedData?.map((item, index) => (
-                                                <tr key={index}>
-                                                    <td>{moment(item.clockDate).format('dddd')}</td>
-                                                    <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
-                                                    {
-                                                        item.statusType == 'INOUTMISS' &&
-                                                        <>
-                                                            <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
-                                                        </>
-                                                    }
-                                                    {
-                                                        (item.statusType == 'UNAUTH' || item.statusType == 'LEAVE') &&
-                                                        <>
-                                                            <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
-                                                        </>
-                                                    }
-                                                    {
-                                                        (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
-                                                        <>
-                                                            <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
-                                                            <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
-                                                        </>
-                                                    }
-                                                    <td>{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
-                                                        item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
-                                                            item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
-                                                                item.statusDetails}</td>
-                                                </tr>
-                                            ))
-                                        ) : (
+                            <div className="card-body">
+                                <div className="table-responsive text-nowrap" style={{ maxHeight: '500px', overflow: 'auto' }}>
+                                    <table className="table table-sm">
+                                        <thead>
                                             <tr>
-                                                <td colSpan="5" className="text-center">
-                                                    <div className="Nodatafound_box">
-                                                        <h6><i className="bx bx-search"></i> No data available!</h6>
-                                                    </div>
-                                                </td>
+                                                <th>Day</th>
+                                                <th>Date</th>
+                                                <th className='text-center'>First In</th>
+                                                <th className='text-center'>Last Out</th>
+                                                <th>Status Details</th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {/* <div className="text-end pt-2">
+                                        </thead>
+                                        <tbody className="table-border-bottom-0">
+                                            {paginatedData?.length > 0 ? (
+                                                paginatedData?.map((item, index) => (
+                                                    <tr key={index}>
+                                                        <td>{moment(item.clockDate).format('dddd')}</td>
+                                                        <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
+                                                        {
+                                                            item.statusType == 'INOUTMISS' &&
+                                                            <>
+                                                                <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
+                                                            </>
+                                                        }
+                                                        {
+                                                            (item.statusType == 'UNAUTH' || item.statusType == 'LEAVE') &&
+                                                            <>
+                                                                <td colSpan={2} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
+                                                            </>
+                                                        }
+                                                        {
+                                                            (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
+                                                            <>
+                                                                <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
+                                                                <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
+                                                            </>
+                                                        }
+                                                        <td>{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
+                                                            item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
+                                                                item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                                    item.statusDetails}</td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="5" className="text-center">
+                                                        <div className="Nodatafound_box">
+                                                            <h6><i className="bx bx-search"></i> No data available!</h6>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* <div className="text-end pt-2">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
               </div> */}
+                            </div>
+                        </div>
+                    </div>
+                </div >
+            </div >
+
+            <div className="EmployeeAttendanceSection ShowMobile">
+                <div className="card">
+                    <div className="card-header">
+                        <h5>List of Attendance details</h5>
+                        <div className="list_menu">
+                            <div className="list_searchbox">
+                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                                    showYearDropdown dropdownMode="select" maxDate={today} />
+                            </div>
+                            <div className="list_searchbox">
+                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                    selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
+                                    maxDate={today} showYearDropdown dropdownMode="select" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card-body">
+                        <div className='EmployeeAttendanceList'>
+                            {paginatedData?.length > 0 ? (
+                                paginatedData?.map((item, index) => (
+                                    <div className='EmployeeAttendanceListRow' key={index}>
+                                        <div className='row m-0'>
+                                            <div className='col-4 px-0 py-1'>
+                                                <label>Day</label>
+                                                <p>{moment(item.clockDate).format('dddd')}</p>
+                                            </div>
+                                            <div className='col-8 px-0 py-1'>
+                                                <label>Date</label>
+                                                <p>{moment(item.clockDate).format('MM-DD-YYYY')}</p>
+                                            </div>
+
+                                            {
+                                                item.statusType == 'INOUTMISS' &&
+                                                <div className='col-12 px-0 py-1'>
+                                                    <label>Status Details</label>
+                                                    <p className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</p>
+                                                </div>
+                                            }
+                                            {
+                                                (item.statusType == 'UNAUTH' || item.statusType == 'LEAVE') &&
+                                                <div className='col-12 px-0 py-1'>
+                                                    <p className='text-center p-2' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</p>
+                                                </div>
+                                            }
+                                            {
+                                                (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
+                                                <>
+                                                    <div className='col-4 px-0 py-1'>
+                                                        <label>First In</label>
+                                                        <p>{moment(item.firstInDateTime).format('HH:mm A')}</p>
+                                                    </div>
+                                                    <div className='col-4 px-0 py-1'>
+                                                        <label>Last Out</label>
+                                                        <p>{moment(item.lastOutDateTime).format('HH:mm A')}</p>
+                                                    </div>
+                                                </>
+                                            }
+                                            <div className='col-12 px-0 py-1'>
+                                                <label>Status Details</label>
+                                                <p >{item.statusType == 'SHORTTIME' ? <a href='javascript:void(0)' style={{ color: 'orange' }} onClick={() => { setSelectedData(item); setShowModal(true) }}>{item.statusDetails}</a> :
+                                                    item.statusType == 'EXTRAHOURS' ? <a href='javascript:void(0)' style={{ color: 'blue' }} onClick={() => { gotoOTTransactions(item) }}>{item.statusDetails}</a> :
+                                                        item.timeSheetApprovalStatus == 'APPROVED' ? item.timeSheetApprovalStatus :
+                                                            item.statusDetails}</p>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                ))
+                            ) : (
+                                <div className='EmployeeAttendanceListRow'>
+                                    <div className="Nodatafound_box text-center py-4">
+                                        <h6 className='m-0'><i className="bx bx-search"></i> No data available!</h6>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div >
+            </div>
 
             <Modal
                 show={showModal} onHide={() => { setShowModal(false) }} size='sm'
@@ -277,8 +361,7 @@ function EmployeeAttendance() {
                     </div>
                 </Modal.Body>
             </Modal >
-
-        </div >
+        </>
 
     )
 }
