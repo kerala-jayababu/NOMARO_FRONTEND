@@ -30,75 +30,77 @@ function LeaveDetailReport() {
   const getEmployeeLeaveReport = () => {
     setLoading(true);
     LeaveReportService.getEmployeeLeaveReport(userData.idEmployee ?? 0, moment(startDate).format("YYYY-MM-DD"), moment(endDate).format("YYYY-MM-DD"))
-    .then((res) => {
-      const data = res.data.data || [];
-      setLeaveReports(data);
-      const total = data.reduce((sum, report) => sum + report.noDays, 0);
-      setTotalLeaves(total);
-    }).finally(()=> setLoading(false));
+      .then((res) => {
+        const data = res.data.data || [];
+        setLeaveReports(data);
+        const total = data.reduce((sum, report) => sum + report.noDays, 0);
+        setTotalLeaves(total);
+      }).finally(() => setLoading(false));
   }
 
   return (
-    <div className="container-xxl flex-grow-1 container-p-y">
-      {loading && (
-        <div style={{position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+    <>
+      <div className="container-xxl flex-grow-1 container-p-y LeaveDetailReport ShowBigDevice">
+        {loading && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
             backgroundColor: "rgba(255, 255, 255, 0.7)", zIndex: 9999, display: "flex", alignItems: "center",
             justifyContent: "center",
-            }}>
+          }}>
             <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Loading...</span>
             </div>
-        </div>
-      )}
-      <div className="row">
-        <div className="col-lg-12">
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">Leave Report</h5>
-              <div className="list_menu">
-                <div><label>From</label></div>
-                <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"From Date"}
-                    selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown 
-                    showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
-                  />
-                </div>
-                <div><label>To</label></div>
-                <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"To Date"}
-                    selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                    maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
-                  />
+          </div>
+        )}
+        <div className="row">
+          <div className="col-lg-12">
+            <div className="card">
+              <div className="card-header d-flex align-items-center justify-content-between pb-3">
+                <h5 className="m-0">Leave Report</h5>
+                <div className="list_menu">
+                  <div><label>From</label></div>
+                  <div className="list_searchbox">
+                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"From Date"}
+                      selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                      showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
+                    />
+                  </div>
+                  <div><label>To</label></div>
+                  <div className="list_searchbox">
+                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"To Date"}
+                      selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
+                      maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="card-body">
-              <div className="table-responsive text-nowrap" style={{ maxHeight: "440px", overflow: "auto" }}>
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Leave From</th>
-                      <th>Leave To</th>
-                      <th>Leave Type</th>
-                      <th>No: of Days</th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {leaveReports.length > 0 ? (
-                      <>
-                        {leaveReports.map((report) => (
-                          <tr key={report.idEmployeeLeave}>
-                            <td>{moment(report.leaveFromDate).format("MM/DD/YYYY")}</td>
-                            <td>{moment(report.leaveToDate).format("MM/DD/YYYY")}</td>
-                            <td>{report.leaveTypeName}</td>
-                            <td>{report.noDays}</td>
+              <div className="card-body">
+                <div className="table-responsive text-nowrap" style={{ maxHeight: "440px", overflow: "auto" }}>
+                  <table className="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Leave From</th>
+                        <th>Leave To</th>
+                        <th>Leave Type</th>
+                        <th>No: of Days</th>
+                      </tr>
+                    </thead>
+                    <tbody className="table-border-bottom-0">
+                      {leaveReports.length > 0 ? (
+                        <>
+                          {leaveReports.map((report) => (
+                            <tr key={report.idEmployeeLeave}>
+                              <td>{moment(report.leaveFromDate).format("MM/DD/YYYY")}</td>
+                              <td>{moment(report.leaveToDate).format("MM/DD/YYYY")}</td>
+                              <td>{report.leaveTypeName}</td>
+                              <td>{report.noDays}</td>
+                            </tr>
+                          ))}
+                          <tr className="table-info text-center">
+                            <td colSpan={4} className="fw-bold"  >Total {totalLeaves} Days</td>
                           </tr>
-                        ))}
-                        <tr className="table-info text-center">
-                          <td colSpan={4} className="fw-bold"  >Total {totalLeaves} Days</td>
-                        </tr>
-                      </>
+                        </>
                       ) : (
                         <tr>
                           <td colSpan={4} className="text-center">
@@ -110,15 +112,92 @@ function LeaveDetailReport() {
                           </td>
                         </tr>
                       )
-                    }
-                  </tbody>
-                </table>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <div className="LeaveDetailReport ShowMobile">
+        {loading && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.7)", zIndex: 9999, display: "flex", alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
+        <div className="card">
+          <div className="card-header">
+            <h5 className="pt-2 pb-1">Leave Report</h5>
+            <div className="list_menu">
+              {/* <div><label>From</label></div> */}
+              <div className="list_searchbox">
+                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"From Date"}
+                  selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
+                  showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
+                />
+              </div>
+              {/* <div><label>To</label></div> */}
+              <div className="list_searchbox">
+                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={"To Date"}
+                  selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
+                  maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="card-body">
+            {leaveReports.length > 0 ? (
+              <>
+                {leaveReports.map((report) => (
+                  <div className="LeaveDetailsList" key={report.idEmployeeLeave}>
+                    <div className="row m-0">
+
+                      <div className="col-12 px-0 py-1">
+                        <label>Leave Type</label>
+                        <p>{report.leaveTypeName}</p>
+                      </div>
+                      <div className="col-4 px-0 py-1">
+                        <label>From</label>
+                        <p>{moment(report.leaveFromDate).format("MM/DD/YYYY")}</p>
+                      </div>
+                      <div className="col-4 px-0 py-1">
+                        <label>To</label>
+                        <p>{moment(report.leaveToDate).format("MM/DD/YYYY")}</p>
+                      </div>
+                      <div className="col-4 px-0 py-1">
+                        <label>No: of Days</label>
+                        <p>{report.noDays}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="table-info text-center fw-bold p-2">
+                  Total {totalLeaves} Days
+                </div>
+              </>
+            ) : (
+              <div className="LeaveDetailsList">
+                <div className="Nodatafound_box text-center py-4">
+                  <h6 className='m-0'>
+                    No data available!
+                  </h6>
+                </div>
+              </div>
+            )
+            }
+          </div>
+        </div>
+      </div>
+    </>
   )
 
 }

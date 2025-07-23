@@ -11,7 +11,7 @@ import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import ViewPaySlipService from '../../core/services/ViewPaySlipService';
 import ConfirmationModal from '../../components/ConfirmationModal';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import 'bootstrap-icons/font/bootstrap-icons.min.css';
 
 function ViewPaySlips() {
   const [salarySlips, setSalarySlips] = useState([]);
