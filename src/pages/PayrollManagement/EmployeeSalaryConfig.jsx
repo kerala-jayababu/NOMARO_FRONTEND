@@ -46,8 +46,12 @@ const EmployeeSalaryConfig = () => {
   const [showCopyConfirmation, setShowCopyConfirmation] = useState(false);
   const [selectedEmpConfigId, setSelectedEmpConfigId] = useState('');
   const { showLoader, hideLoader } = useLoader();
-  const [validFrom, setValidFrom] = useState('')
-  const [status, setStatus] = useState(1);
+  const [validFrom, setValidFrom] = useState(() => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    return moment(firstDay).format("MM-DD-YYYY");
+  });
+  const [status, setStatus] = useState('');
   const [withoutConfigList, setWithoutConfigList] = useState([]);
 
   useEffect(() => {
@@ -134,9 +138,11 @@ const EmployeeSalaryConfig = () => {
   };
 
   const getEmployeeSalaryConfigs = () => {
-    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText, status == 0 ? false : true).then(res => {
+    setEmployeeSalaryConfigList([]);
+    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText, status ?? null).then(res => {
       setEmployeeSalaryConfigList(res.data.data);
     }).catch(err => {
+      setEmployeeSalaryConfigList([]);
       console.error("Failed to fetch salary templates:", err);
     });
   };
@@ -615,7 +621,10 @@ const EmployeeSalaryConfig = () => {
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
 
-      // Recalculate values after rows are set
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+
       calculateValues(mappedRows);
     }
     setShowModal(true);
@@ -650,7 +659,10 @@ const EmployeeSalaryConfig = () => {
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
 
-      // Recalculate values after rows are set
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+
       calculateValues(mappedRows);
     }
     setShowModal(true);
@@ -687,7 +699,10 @@ const EmployeeSalaryConfig = () => {
     setEmpDescDept("");
     setSelectedEmpConfigId('');
     setCopyFromData(false);
-    setValidFrom('');
+
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
   };
 
   const handleSave = (e) => {
@@ -705,7 +720,7 @@ const EmployeeSalaryConfig = () => {
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
-      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
@@ -746,7 +761,7 @@ const EmployeeSalaryConfig = () => {
       netSalary: netSalary,
       approvalStatus: "SUBMITTED",
       activeStatus: true,
-      validFrom: validFrom != '' ? moment(validFrom).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
         idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail,
@@ -799,7 +814,7 @@ const EmployeeSalaryConfig = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Salary Configuration</h5>
               <div className="list_menu">
-                <div class="row m-0" style={{ width: '250px' }}>
+                {/* <div class="row m-0" style={{ width: '250px' }}>
                   <div class="col-md-6 p-2">
                     <div class="form-check form-check-inline ">
                       <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
@@ -816,6 +831,17 @@ const EmployeeSalaryConfig = () => {
                       <label class="form-check-label" for="inlineRadio2">Show all</label>
                     </div>
                   </div>
+                </div> */}
+                <div className="list_searchbox">
+                  <select className="form-select" value={status}
+                    onChange={(e) => setStatus(e.target.value)} style={{ width: '150px' }}>
+                    <option value={''}>Latest</option>
+                    <option value={'SHOW ALL'} key={'SHOW ALL'}>Show All</option>
+                    <option value={'NOT CONFIGURED'} key={'NOT CONFIGURED'}>Not Configured</option>
+                    <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
+                    <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
+                    <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
+                  </select>
                 </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
@@ -860,8 +886,8 @@ const EmployeeSalaryConfig = () => {
                           <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
-                          <td>{moment(item?.joiningDate).format("MM/DD/YYYY")}</td>
-                          <td>{moment(item?.validFrom).format("MM/DD/YYYY")}</td>
+                          <td>{item?.joiningDate!=null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
+                          <td>{item?.validFrom !=null ? moment(item?.validFrom).format("MM/DD/YYYY") : 'NA'}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
@@ -906,13 +932,29 @@ const EmployeeSalaryConfig = () => {
               {
                 employeeSalaryConfigList.length > 0 &&
                 <div className='row'>
-                  <div className='col-lg-12 m-0 mx-3'>
-                    <label>No. of employees with approved configs: <strong>{employeeSalaryConfigList[0].approvedCount}</strong></label>
+                  <div className='col-lg-3 m-0 mx-3'>
                   </div>
-                  <div className='col-lg-12 m-0 mx-3'>
-                    <div className='col-lg-12'>
-                      <label className={employeeSalaryConfigList[0].notApprovedCount > 0 ? 'cursor' : ''} onClick={() => viewWithoutConfigDetails()}>No. of employees without approved configs: <strong>{employeeSalaryConfigList[0].notApprovedCount}</strong></label>
-                    </div>
+                  <div className='col-lg-6 m-0 mx-3'>
+                    <table className="table table-sm">
+                      <thead>
+                        <th className="text-center">Approved</th>
+                        <th className="text-center">Submitted</th>
+                        <th className="text-center">Rejected</th>
+                        <th className="text-center">Not Configured</th>
+                        {/* <th className="text-center">Not Approved</th> */}
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="text-center"><strong>{employeeSalaryConfigList[0].approvedCount}</strong></td>
+                          <td className="text-center"><strong>{employeeSalaryConfigList[0].submittedCount}</strong></td>
+                          <td className="text-center"><strong>{employeeSalaryConfigList[0].rejectedCount}</strong></td>
+                          <td className="text-center"><strong>{employeeSalaryConfigList[0].notConfiguredCount}</strong></td>
+                          {/* <td className="text-center"><label className={employeeSalaryConfigList[0].notApprovedCount > 0 ? 'cursor' : ''} onClick={() => viewWithoutConfigDetails()}>{employeeSalaryConfigList[0].notApprovedCount}</label></td> */}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className='col-lg-3 m-0 mx-3'>
                   </div>
                 </div>
               }

@@ -130,7 +130,7 @@ function SalaryReport() {
             <div className="SalaryReportSection ShowMobile ">
                 <div className="card">
                     <div className="card-header pb-3">
-                        <h5 className="m-0">Salary Report</h5>
+                        <h5 className="m-0 py-2">Salary Report</h5>
                         <div className="list_menu">
                             <div className="list_searchbox">
                                 {/* <label>Salary Month From</label> */}

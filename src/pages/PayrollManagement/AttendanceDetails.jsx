@@ -81,7 +81,7 @@ function AttendanceDetails() {
             return;
         }
 
-        showLoader();
+        // showLoader();
         const formattedStartDate = sDate.format("YYYY-MM-DD");
         const formattedEndDate = eDate.format("YYYY-MM-DD");
 
@@ -258,13 +258,13 @@ function AttendanceDetails() {
                             <div className="list_menu">
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
-                                        selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
-                                        showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect/>
+                                        selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
+                                        showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
-                                        selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
-                                        maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect/>
+                                        selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
+                                        maxDate={today} showYearDropdown dropdownMode="select" />
                                 </div>
                                 <div className="list_searchbox">
                                     <select
@@ -345,7 +345,7 @@ function AttendanceDetails() {
                                             <th>Date</th>
                                             <th>First In</th>
                                             <th>Last Out</th>
-                                            <th>Total duration</th>
+                                            <th>Total Duration</th>
                                             <th>Actual IN Hrs</th>
                                             <th>Status Details</th>
                                         </tr>
@@ -385,8 +385,8 @@ function AttendanceDetails() {
                                                     {
                                                         (item.statusType != 'UNAUTH' && item.statusType != 'LEAVE' && item.statusType != 'INOUTMISS') &&
                                                         <>
-                                                            <td>{moment(item.firstInDateTime).format('HH:mm A')}</td>
-                                                            <td>{moment(item.lastOutDateTime).format('HH:mm A')}</td>
+                                                            <td>{moment(item.firstInDateTime).format('hh:mm A')}</td>
+                                                            <td>{moment(item.lastOutDateTime).format('hh:mm A')}</td>
                                                             <td>{item.totalDurationHoursText}</td>
                                                             <td>{item.actualHoursText}</td>
                                                         </>
@@ -413,12 +413,15 @@ function AttendanceDetails() {
                             </div>
                             <div className='row'>
                                 <div className='col-lg-4'>
-                                    <label style={{ marginTop: '15px' }}>
+                                    {/* <label style={{ marginTop: '15px' }}>
                                         Total records selected: {selectedRows.length} out of {
                                             attendanceDetails.filter(att =>
                                                 att.statusType !== 'INOUTMISS' && att.statusType !== 'UNAUTH' && att.timeSheetApprovalStatus !== 'APPROVED'
                                             ).length
                                         }
+                                    </label> */}
+                                    <label style={{ marginTop: '15px' }}>
+                                        Total records selected: {selectedRows.length} out of {attendanceDetails.length}
                                     </label>
                                 </div>
                                 <div className='col-lg-4'>
@@ -510,19 +513,19 @@ function AttendanceDetails() {
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>
-                                    <td colSpan={2}>{selectedData?.expectedInDateTime ? moment(selectedData?.expectedInDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.expectedInDateTime ? moment(selectedData?.expectedInDateTime).format('hh:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-out</b></td>
-                                    <td colSpan={2}>{selectedData?.expectedOutDateTime ? moment(selectedData?.expectedOutDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.expectedOutDateTime ? moment(selectedData?.expectedOutDateTime).format('hh:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Actual Clock-in</b></td>
-                                    <td colSpan={2}>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('hh:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Actual Clock-out</b></td>
-                                    <td colSpan={2}>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('hh:mm A') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Total Duration</b></td>
@@ -542,8 +545,8 @@ function AttendanceDetails() {
                                     <td><b>Duration</b></td>
                                 </tr>
                                 <tr>
-                                    <td>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('HH:mm A') : 'NA'}</td>
-                                    <td>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('HH:mm A') : 'NA'}</td>
+                                    <td>{selectedData?.firstInDateTime ? moment(selectedData?.firstInDateTime).format('hh:mm A') : 'NA'}</td>
+                                    <td>{selectedData?.lastOutDateTime ? moment(selectedData?.lastOutDateTime).format('hh:mm A') : 'NA'}</td>
                                     <td>{selectedData?.totalDurationHoursText}</td>
                                 </tr>
                             </tbody>
