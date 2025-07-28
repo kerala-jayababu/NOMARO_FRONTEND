@@ -4,7 +4,7 @@ import { handleApiSuccessOrError } from "../constants/commons";
 export default class EmployeeSalaryConfigService {
   static getAllEmployeeSalaryConfigs = async (searchText, status) => {
     try {
-      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetAllEmployeeSalaryConfig?searchText=" + searchText + "&showLatestRecord=" + status);
+      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetAllEmployeeSalaryConfig?searchText=" + searchText + "&dropdownFilter=" + status);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
