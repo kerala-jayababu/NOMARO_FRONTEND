@@ -24,6 +24,7 @@ import Input from "../../components/input";
 import secureLocalStorage from "react-secure-storage";
 export const BASE_URL = import.meta.env.VITE_API_URL;
 import { toast } from "react-toastify";
+import moment from "moment";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
@@ -1338,7 +1339,7 @@ const EmployeeProfile = () => {
                         Date of Birth, Gender
                       </label>
                       <p className="m-0">
-                        {profileData?.dob ? profileData.dob : "N/A"} -{" "}
+                        {profileData?.dateOfBirth ? moment(profileData.dateOfBirth).format("MM/DD/YYYY") : "N/A"} -{" "}
                         {profileData?.gender ? profileData?.gender : "N/A"}
                       </p>
                     </div>
