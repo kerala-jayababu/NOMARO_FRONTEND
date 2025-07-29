@@ -834,7 +834,7 @@ const EmployeeSalaryConfig = () => {
                 </div> */}
                 <div className="list_searchbox">
                   <select className="form-select" value={status}
-                    onChange={(e) => setStatus(e.target.value)} style={{ width: '150px' }}>
+                    onChange={(e) => setStatus(e.target.value)} style={{ width: '200px' }}>
                     <option value={''}>Latest</option>
                     <option value={'SHOW ALL'} key={'SHOW ALL'}>Show All</option>
                     <option value={'NOT CONFIGURED'} key={'NOT CONFIGURED'}>Not Configured</option>
@@ -886,8 +886,8 @@ const EmployeeSalaryConfig = () => {
                           <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
-                          <td>{item?.joiningDate!=null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
-                          <td>{item?.validFrom !=null ? moment(item?.validFrom).format("MM/DD/YYYY") : 'NA'}</td>
+                          <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
+                          <td>{item?.validFrom != null ? moment(item?.validFrom).format("MM/DD/YYYY") : 'NA'}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
@@ -922,19 +922,19 @@ const EmployeeSalaryConfig = () => {
                   </tbody>
                 </table>
               </div>
-              <div className="text-end pt-2">
+              {/* <div className="text-end pt-2">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
-              </div>
+              </div> */}
               {
                 employeeSalaryConfigList.length > 0 &&
-                <div className='row'>
-                  <div className='col-lg-3 m-0 mx-3'>
-                  </div>
-                  <div className='col-lg-6 m-0 mx-3'>
+                <div className='row pt-3'>
+                  {/* <div className='col-lg-3 m-0 mx-3'>
+                  </div> */}
+                  <div className='col-lg-5'>
                     <table className="table table-sm">
                       <thead>
                         <th className="text-center">Approved</th>
@@ -954,7 +954,12 @@ const EmployeeSalaryConfig = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className='col-lg-3 m-0 mx-3'>
+                  <div className='col-lg-7 text-end'>
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
                   </div>
                 </div>
               }
