@@ -55,6 +55,7 @@ const EmployeeSalaryConfig = () => {
   const [withoutConfigList, setWithoutConfigList] = useState([]);
 
   useEffect(() => {
+    setCurrentPage(1);
     getEmployeeSalaryConfigs();
   }, [status]);
 
