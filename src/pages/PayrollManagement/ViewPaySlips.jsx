@@ -258,7 +258,7 @@ function ViewPaySlips() {
                   >
                     <option value="ALL">All</option>
                     <option value="SENT">Sent</option>
-                    <option value="INPROGRESS">In Progress</option>
+                    <option value="InProcess">In Process</option>
                     <option value="FAILED">Failed</option>
                     <option value="NOT INITIATED">Not Initiated</option>
                   </select>
