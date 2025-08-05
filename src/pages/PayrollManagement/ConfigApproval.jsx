@@ -24,6 +24,10 @@ const statusColor = [
         status: "interim approved",
         class: "bg-secondary"
     },
+     {
+        status: "hr approved",
+        class: "bg-secondary"
+    },
     {
         status: "rejected",
         class: "bg-danger"
