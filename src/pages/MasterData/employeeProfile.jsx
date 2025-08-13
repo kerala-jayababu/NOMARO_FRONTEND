@@ -1020,7 +1020,7 @@ const EmployeeProfile = () => {
     }
 
     const bankAccountsValid = validateBankAccounts();
-    const overtimeValid = validateOvertimeDetails();
+    // const overtimeValid = validateOvertimeDetails();
 
     // Validate salary percentage distribution
     const salaryPercentageValidation = validateSalaryPercentage();
@@ -1032,7 +1032,7 @@ const EmployeeProfile = () => {
       return; // Stop submission if validation fails
     }
 
-    if (!bankAccountsValid || !overtimeValid) {
+    if (!bankAccountsValid) {
       return; // Don't proceed with submission if validation fails
     }
 
@@ -1058,39 +1058,45 @@ const EmployeeProfile = () => {
       formData.append("File", attachmentFile);
     }
 
-    const overtimeConfigsPayload = overtimeDetails.map((detail) => {
-      let dayType = detail.type;
-      if (dayType == "Workday") {
-        dayType = "WORKINGDAY";
-      }
-      if (dayType == "Holiday") {
-        dayType = "HOLIDAY";
-      }
-      return {
-        idEmployeeOvertimeConfig: detail.idEmployeeOvertimeConfig || 0,
-        idEmployee: selectedEmployee.idEmployee,
-        dayType: dayType,
-        standardRate: parseFloat(detail.hourlyRate),
-        dayRate: parseFloat(detail.appliedRate),
-      };
-    });
-    // return
+    // Only include overtime configs if they exist
+    const overtimeConfigsPayload = overtimeDetails
+      .filter(detail => detail.type)
+      .map((detail) => {
+        let dayType = detail.type;
+        if (dayType == "Workday") {
+          dayType = "WORKINGDAY";
+        }
+        if (dayType == "Holiday") {
+          dayType = "HOLIDAY";
+        }
+        return {
+          idEmployeeOvertimeConfig: detail.idEmployeeOvertimeConfig || 0,
+          idEmployee: selectedEmployee.idEmployee,
+          dayType: dayType,
+          standardRate: parseFloat(detail.hourlyRate),
+          dayRate: parseFloat(detail.appliedRate),
+        };
+      });
+
     setIsSubmitting(true);
     if (disbursementType == 'PERCENTAGE') {
       try {
-        const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
-          await Promise.all([
-            dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-            dispatch(updateEmployeeDetails(formData)),
-            dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
-          ]);
+        // Only dispatch overtime configs if there are any
+        const actions = [
+          dispatch(manageEmployeeBankAccount(bankAccountPayload)),
+          dispatch(updateEmployeeDetails(formData))
+        ];
+
+        if (overtimeConfigsPayload.length > 0) {
+          actions.push(dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)));
+        }
+
+        const results = await Promise.all(actions);
 
         const errors = [];
-        if (bankAccountAction.error) errors.push("Bank Account update failed");
-        if (employeeDetailsAction.error)
-          errors.push("Employee Details update failed");
-        if (overtimeConfigsAction.error)
-          errors.push("Overtime Configs update failed");
+        if (results[0].error) errors.push("Bank Account update failed");
+        if (results[1].error) errors.push("Employee Details update failed");
+        if (results[2] && results[2].error) errors.push("Overtime Configs update failed");
 
         if (errors.length > 0) {
           console.error("API Errors:", errors);
@@ -1116,19 +1122,22 @@ const EmployeeProfile = () => {
         setIsSubmitting(false)
       } else {
         try {
-          const [bankAccountAction, employeeDetailsAction, overtimeConfigsAction] =
-            await Promise.all([
-              dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-              dispatch(updateEmployeeDetails(formData)),
-              dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
-            ]);
+          // Only dispatch overtime configs if there are any
+          const actions = [
+            dispatch(manageEmployeeBankAccount(bankAccountPayload)),
+            dispatch(updateEmployeeDetails(formData))
+          ];
+
+          if (overtimeConfigsPayload.length > 0) {
+            actions.push(dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)));
+          }
+
+          const results = await Promise.all(actions);
 
           const errors = [];
-          if (bankAccountAction.error) errors.push("Bank Account update failed");
-          if (employeeDetailsAction.error)
-            errors.push("Employee Details update failed");
-          if (overtimeConfigsAction.error)
-            errors.push("Overtime Configs update failed");
+          if (results[0].error) errors.push("Bank Account update failed");
+          if (results[1].error) errors.push("Employee Details update failed");
+          if (results[2] && results[2].error) errors.push("Overtime Configs update failed");
 
           if (errors.length > 0) {
             console.error("API Errors:", errors);
@@ -1146,7 +1155,6 @@ const EmployeeProfile = () => {
         dispatch(getAllEmployeeDetails());
       }
     }
-
   };
 
   const handleReset = () => {
