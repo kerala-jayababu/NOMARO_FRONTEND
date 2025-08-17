@@ -3,6 +3,7 @@ import { getSalaryTemplateById } from "../../../redux/reducers/ConfigApprovals";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
+import secureLocalStorage from "react-secure-storage";
 
 function SalaryTemplateApproval({
   entityId,
@@ -15,6 +16,10 @@ function SalaryTemplateApproval({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const dispatch = useDispatch();
+  
+  // Get logged-in employee ID
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const loggedInEmployeeId = userData?.idEmployee;
 
   useEffect(() => {
     dispatch(getSalaryTemplateById(entityId));
@@ -193,7 +198,11 @@ function SalaryTemplateApproval({
             </table>
           </div>
 
-          {selectedRow.currentStatus?.toLowerCase() === "submitted" && (
+          { 
+            loggedInEmployeeId && 
+            selectedRow.targetIdEmployee && 
+            selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
+            selectedRow.actionStatus === null && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"

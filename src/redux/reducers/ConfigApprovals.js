@@ -16,7 +16,6 @@ export const getConfigApprovals = createAsyncThunk(
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      console.log("Retrieved Token:", token); // Debugging
 
       if (!token) {
         console.error("Authorization token missing");
@@ -31,6 +30,7 @@ export const getConfigApprovals = createAsyncThunk(
           },
         }
       );
+      console.log('configdata',response.data)
       return response.data;
     } catch (error) {
       return error;

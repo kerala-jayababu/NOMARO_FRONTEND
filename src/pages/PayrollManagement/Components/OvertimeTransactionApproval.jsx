@@ -3,6 +3,7 @@ import { getOvertimeTransactionById } from "../../../redux/reducers/ConfigApprov
 import { useEffect, useState } from "react";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
 import toast from "react-hot-toast";
+import secureLocalStorage from "react-secure-storage";
 
 function OvertimeTransactionApproval({
   entityId,
@@ -15,6 +16,10 @@ function OvertimeTransactionApproval({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const dispatch = useDispatch();
+  
+  // Get logged-in employee ID
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const loggedInEmployeeId = userData?.idEmployee;
 
   useEffect(() => {
     dispatch(getOvertimeTransactionById(entityId));
@@ -248,7 +253,11 @@ function OvertimeTransactionApproval({
             )}
           </div>
 
-          {selectedRow.currentStatus?.toLowerCase() === "submitted" && (
+          {
+  loggedInEmployeeId && 
+  selectedRow.targetIdEmployee && 
+  selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
+  selectedRow.actionStatus === null && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"

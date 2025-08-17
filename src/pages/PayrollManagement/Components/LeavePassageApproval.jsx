@@ -2,18 +2,25 @@ import SalaryGenerationService from "../../../core/services/SalaryGenerationServ
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import secureLocalStorage from "react-secure-storage";
 function LeavePassageApproval({
   entityId,
   setEntityType,
   setRefresh,
   selectedRow,
 }) {
+ 
   const [payslipData, setPayslipData] = useState(null);
   const [leavePassageAmount, setLeavePassageAmount] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const { idPayrollScreen } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
+  
+  // Get logged-in employee ID
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const loggedInEmployeeId = userData?.idEmployee;
+  console.log(selectedRow,loggedInEmployeeId)
   useEffect(() => {
     async function fetchPayslip() {
       try {
@@ -298,7 +305,11 @@ function LeavePassageApproval({
             )}
           </div>
 
-          {selectedRow.currentStatus?.toLowerCase() === "submitted" && (
+          { 
+            loggedInEmployeeId && 
+            selectedRow.targetIdEmployee && 
+            selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
+            selectedRow.actionStatus === null && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"

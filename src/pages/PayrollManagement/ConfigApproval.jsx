@@ -9,6 +9,7 @@ import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
 import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
 import DatePicker from "react-datepicker";
 import { API } from "../../redux/api/utils";
+import secureLocalStorage from "react-secure-storage";
 
 
 const statusColor = [
@@ -59,6 +60,11 @@ const [dateFrom, setDateFrom] = React.useState(() => {
   const [refresh, setRefresh] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [entityTypes, setEntityTypes] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
+  
+  // Get logged-in employee ID
+  const userData = JSON.parse(secureLocalStorage.getItem("user"));
+  const loggedInEmployeeId = userData?.idEmployee;
 
   useEffect(() => {
     const params = {
@@ -77,9 +83,45 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     setEntityTypes(res.data.data);
   }
 
+  async function getStatusOptions(entityTypeId) {
+    try {      
+      const res = await API.get(`/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=${entityTypeId}`);
+      console.log('fetched data',res)
+      setStatusOptions(res.data.data || []);
+    } catch (error) {
+      console.error("Error fetching status options:", error);
+      setStatusOptions([]);
+    }
+  }
+
+  const handleEntityTypeChange = (e) => {
+    const selectedValue = e.target.value;
+    setEntityType(selectedValue);
+    setStatus(""); // Reset status when entity type changes
+    
+    if (selectedValue) {
+      // Find the selected entity type to get its ID
+      const selectedEntity = entityTypes.find(item => item.entityCode === selectedValue);      
+      if (selectedEntity) {
+        getStatusOptions(selectedEntity.idWorkFlowConfig);
+      }
+    } else {
+      setStatusOptions([]);
+    }
+  };
+
   const handleSelectAll = (e) => {
     if (e.target.checked && configApprovalList) {
-      setSelectedItems(configApprovalList.filter(x => x.currentStatus.toLowerCase() !== "approved").map((item) => item.idApprovalWorkFlow));
+      const selectableItems = configApprovalList.filter(item => {
+        return item.currentStatus?.toLowerCase() !== "approved" &&
+               item.currentStatus?.toLowerCase() !== "rejected" &&
+               item.entityName.toLowerCase() !== "leave passage" &&
+               loggedInEmployeeId &&
+               item.targetIdEmployee &&
+               item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
+               item.actionStatus === null;
+      });
+      setSelectedItems(selectableItems.map((item) => item.idApprovalWorkFlow));
     } else {
       setSelectedItems([]);
     }
@@ -87,7 +129,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
   };
 
   const handelCheckboxCheck = (checked) => {
-    Array.from(document.querySelectorAll(".data-checkbox")).map((item) => {
+    Array.from(document.querySelectorAll(".data-checkbox")).forEach((item) => {
       if (!item.disabled) {
         item.checked = checked;
       }
@@ -218,7 +260,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                   <select
                     class="form-select form-select-sm"
                     value={entityType}
-                    onChange={(e) => setEntityType(e.target.value)}
+                    onChange={handleEntityTypeChange}
                   >
                     <option value={""}>Select</option>
                     {entityTypes?.map(item => <option value={item.entityCode}>{item.entityName}</option>)}
@@ -230,11 +272,14 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     class="form-select form-select-sm"
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
+                    disabled={!entityType}
                   >
                     <option value={""}>Select Status</option>
-                    <option>Submitted</option>
-                    <option>Approved</option>
-                    <option>Rejected</option>
+                    {statusOptions.map((statusOption, index) => (
+                      <option key={index} value={statusOption.approvalStatusName}>
+                        {statusOption.approvalStatusName}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div class="col-md-3 p-2">
@@ -264,14 +309,23 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                   <thead>
                     <tr>
                       <th>
-                        {status.toLowerCase() === 'submitted' && <input
-                          type="checkbox"
-                          class="form-check-input"
-                          checked={
-                            selectedItems.length === configApprovalList?.length
-                          }
-                          onChange={handleSelectAll}
-                        />}
+                        {<input
+                            type="checkbox"
+                            class="form-check-input"
+                            checked={
+                              selectedItems.length > 0 && 
+                              selectedItems.length === configApprovalList?.filter(item => {
+                                return item.currentStatus?.toLowerCase() !== "approved" &&
+                                       item.currentStatus?.toLowerCase() !== "rejected" &&
+                                       item.entityName.toLowerCase() !== "leave passage" &&
+                                       loggedInEmployeeId &&
+                                       item.targetIdEmployee &&
+                                       item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
+                                       item.actionStatus === null;
+                              }).length
+                            }
+                            onChange={handleSelectAll}
+                          />}
                       </th>
                       <th>Entity Type</th>
                       <th>Details</th>
@@ -284,12 +338,16 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     {configApprovalList?.map((item) => (
                       <tr key={item.idApprovalWorkFlow}>
                         <td>
-                          <input
-                            disabled={
-                              item?.currentStatus?.toLowerCase() === "approved" ||
-                              item?.currentStatus?.toLowerCase() === "rejected" ||
-                               item.entityName.toLowerCase() === "leave passage"
-                            }
+                                                     <input
+                             disabled={
+                               item.currentStatus?.toLowerCase() === "approved" ||
+                               item.currentStatus?.toLowerCase() === "rejected" ||
+                               item.entityName.toLowerCase() === "leave passage" ||
+                               !loggedInEmployeeId ||
+                               !item.targetIdEmployee ||
+                               !item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) ||
+                               item.actionStatus !== null
+                             }
                             type="checkbox"
                             class="form-check-input data-checkbox"
                             onChange={(e) => {
