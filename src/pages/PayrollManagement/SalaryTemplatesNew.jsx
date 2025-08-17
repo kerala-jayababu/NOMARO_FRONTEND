@@ -32,12 +32,18 @@ const SalaryTemplateNew = () => {
   const [validated, setValidated] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsToShow, setDetailsToShow] = useState({});
+  const [statusList, setStatusList] = useState([]);
+  const [statusType, setStatusType] = useState('');
 
   useEffect(() => {
     getSalaryHeadData();
-    getSalaryTemplates();
+    getStatusList();
     addRow();
   }, []);
+
+  useEffect(() => {
+    getSalaryTemplates();
+  }, [statusType]);
 
   useEffect(() => {
     if (isInitialLoad && rows.length > 0 && salaryHeadList.length > 0) {
@@ -61,7 +67,7 @@ const SalaryTemplateNew = () => {
   };
 
   const getSalaryTemplates = () => {
-    SalaryTemplateService.getAllSalaryTemplates(searchText).then(res => {
+    SalaryTemplateService.getAllSalaryTemplates(searchText, statusType).then(res => {
       setTemplatesList(res.data.data);
     }).catch(err => {
       console.error("Failed to fetch salary templates:", err);
@@ -482,6 +488,14 @@ const SalaryTemplateNew = () => {
     }
   };
 
+  const getStatusList = () => {
+    SalaryTemplateService.getStatusById(1).then(res => {
+      setStatusList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -490,6 +504,17 @@ const SalaryTemplateNew = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Salary Templates</h5>
               <div className="list_menu">
+                <div className="list_searchbox">
+                  <select className="form-select" value={statusType}
+                    onChange={(e) => setStatusType(e.target.value)} style={{ width: '180px' }}>
+                    <option value={''}>Select</option>
+                    {statusList.map(stat => (
+                      <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                        {Utils.toTitleCase(stat.approvalStatusName)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="list_searchbox">
                   <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
                     onChange={(e) => {
@@ -649,7 +674,7 @@ const SalaryTemplateNew = () => {
                               <option value="">Select Salary Head</option>
                               {getAvailableSalaryHeads(row.id).map(head => (
                                 <option key={head.idSalaryHead} value={head.idSalaryHead}>
-                                  [{head.headType == 'EARNING' ? 'E' : 'D'}] {head.salaryHeadName} ({head.salaryHeadCode}) 
+                                  [{head.headType == 'EARNING' ? 'E' : 'D'}] {head.salaryHeadName} ({head.salaryHeadCode})
                                 </option>
                               ))}
                             </select>

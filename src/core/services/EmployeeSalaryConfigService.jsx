@@ -67,4 +67,13 @@ export default class EmployeeSalaryConfigService {
     }
   }
 
+  static getStatusById = async (id) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=" + id);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
+
 }
