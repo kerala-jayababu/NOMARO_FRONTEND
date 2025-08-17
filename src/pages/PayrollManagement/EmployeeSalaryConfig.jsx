@@ -53,6 +53,7 @@ const EmployeeSalaryConfig = () => {
   });
   const [status, setStatus] = useState('');
   const [withoutConfigList, setWithoutConfigList] = useState([]);
+  const [statusList, setStatusList] = useState([]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -64,6 +65,7 @@ const EmployeeSalaryConfig = () => {
     getEmployeesData();
     getSalaryTemplates();
     addRow();
+    getStatusList();
   }, []);
 
   useEffect(() => {
@@ -807,6 +809,14 @@ const EmployeeSalaryConfig = () => {
     }
   };
 
+  const getStatusList = () => {
+    EmployeeSalaryConfigService.getStatusById(2).then(res => {
+      setStatusList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -834,7 +844,7 @@ const EmployeeSalaryConfig = () => {
                   </div>
                 </div> */}
                 <div className="list_searchbox">
-                  <select className="form-select" value={status}
+                  {/* <select className="form-select" value={status}
                     onChange={(e) => setStatus(e.target.value)} style={{ width: '200px' }}>
                     <option value={''}>Latest</option>
                     <option value={'SHOW ALL'} key={'SHOW ALL'}>Show All</option>
@@ -842,6 +852,15 @@ const EmployeeSalaryConfig = () => {
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
                     <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
+                  </select> */}
+                  <select className="form-select" value={status}
+                    onChange={(e) => setStatus(e.target.value)} style={{ width: '200px' }}>
+                    <option value={''}>Select</option>
+                    {statusList.map(stat => (
+                        <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                          {Utils.toTitleCase(stat.approvalStatusName)}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div className="list_searchbox">

@@ -24,7 +24,7 @@ export default class LeavePassageService {
     static addLeavePassage = async (leavePassageData) => {
         try {
             const res = await API.post("/api/v1/LeavePassages/AddLeavePassage", leavePassageData);
-            handleApiSuccessOrError(res.data,false);
+            handleApiSuccessOrError(res.data, false);
             return { error: null, data: res.data };
         } catch (error) {
             return handleApiSuccessOrError(error, true);
@@ -34,16 +34,25 @@ export default class LeavePassageService {
     static updateLeavePassage = async (leavePassageData) => {
         try {
             const res = await API.post("/api/v1/LeavePassages/UpdateLeavePassage", leavePassageData);
-            handleApiSuccessOrError(res.data,false);
+            handleApiSuccessOrError(res.data, false);
             return { error: null, data: res.data };
         } catch (error) {
             return handleApiSuccessOrError(error, true);
         }
     }
 
-    static getLeavePassagesByEmployeeId = async (empId) => {
+    static getLeavePassagesByEmployeeId = async (empId, status) => {
         try {
-            const res = await API.get("/api/v1/LeavePassages/GetLeavePassagesByemployeeId?EmployeeId=" + empId);
+            const res = await API.get("/api/v1/LeavePassages/GetLeavePassagesByemployeeId?EmployeeId=" + empId + '&dropdownFilter=' + status);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
+    static getStatusById = async (id) => {
+        try {
+            const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=" + id);
             return { error: null, data: res.data };
         } catch (error) {
             return handleApiSuccessOrError(error, true);

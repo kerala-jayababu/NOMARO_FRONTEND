@@ -9,6 +9,7 @@ import Select from 'react-select';
 import { useDispatch } from "react-redux";
 import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 import { showToast } from '../../components/ToastNotifications/toastUtils';
+import Utils from '../../utils/Utils';
 
 const LeavePassage = () => {
   const dispatch = useDispatch();
@@ -44,18 +45,21 @@ const LeavePassage = () => {
 
   const rowsPerPage = 10;
   const totalPages = Math.ceil((leavePassages?.length || 0) / rowsPerPage);
+  const [statusList, setStatusList] = useState([]);
+  const [statusType, setStatusType] = useState('');
 
   useEffect(() => {
     (async () => {
       await getAllSalaryMonths();
       await getFinancialYears();
       await getEmployeeDetails();
+      getStatusList();
     })();
   }, []);
 
   useEffect(() => {
     getLeavePassagesByEmployeeId();
-  }, [refreshCounter]);
+  }, [refreshCounter, statusType]);
 
   const handleFormSalaryMonthChange = (option) => {
     setFormSalaryMonth(option);
@@ -101,7 +105,7 @@ const LeavePassage = () => {
   const getLeavePassagesByEmployeeId = async () => {
     setLoading(true);
     try {
-      const res = await LeavePassageService.getLeavePassagesByEmployeeId(userData.idEmployee ?? 0);
+      const res = await LeavePassageService.getLeavePassagesByEmployeeId(userData.idEmployee ?? 0, statusType);
       setLeavePassages(res.data.data || []);
       setCurrentPage(1);
     } catch {
@@ -260,21 +264,44 @@ const LeavePassage = () => {
     return date.year();
   };
 
+  const getStatusList = () => {
+    LeavePassageService.getStatusById(5).then(res => {
+      setStatusList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
   return (
     <>
       <div className="LeavePassageSection ShowMobile ">
         <div className="card">
           <div className="card-header">
             <h5>Leave Passage</h5>
-            <button
-              className="btn btn-primary btn-sm"
-              style={{ marginLeft: 'auto' }}
-              onClick={() => {
-                resetValues();
-                setShowModal(true);
-              }}>
-              Request
-            </button>
+            <div className="list_menu">
+              <div className="list_searchbox">
+                <select className="form-select" value={statusType}
+                  onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
+                  <option value={''}>Select</option>
+                  {statusList.map(stat => (
+                    <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                      {Utils.toTitleCase(stat.approvalStatusName)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="list_searchbox">
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{ marginLeft: 'auto' }}
+                  onClick={() => {
+                    resetValues();
+                    setShowModal(true);
+                  }}>
+                  Request
+                </button>
+              </div>
+            </div>
           </div>
           <div className="card-body">
             {loading ? (
@@ -358,15 +385,30 @@ const LeavePassage = () => {
             <div className="card w-100 mx-0">
               <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Leave Passage</h5>
-              <button
-                className="btn btn-primary btn-sm"
-                style={{ marginLeft: 'auto' }}
-                onClick={() => {
-                  resetValues();
-                  setShowModal(true);
-                }}>
-                  Request
-                </button>
+                <div className="list_menu">
+                  <div className="list_searchbox">
+                    <select className="form-select" value={statusType}
+                      onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
+                      <option value={''}>Select</option>
+                      {statusList.map(stat => (
+                        <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                          {Utils.toTitleCase(stat.approvalStatusName)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="list_searchbox">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ marginLeft: 'auto' }}
+                      onClick={() => {
+                        resetValues();
+                        setShowModal(true);
+                      }}>
+                      Request
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="card-body">
                 {loading ? (
@@ -397,12 +439,12 @@ const LeavePassage = () => {
                                 <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                   <span
                                     className={`badge ${item.approvalStatus === 'APPROVED'
-                                        ? 'bg-label-success'
-                                        : item.approvalStatus === 'SUBMITTED'
-                                          ? 'bg-label-warning'
-                                          : item.approvalStatus === 'REJECTED'
-                                            ? 'bg-label-danger'
-                                            : 'bg-label-primary'
+                                      ? 'bg-label-success'
+                                      : item.approvalStatus === 'SUBMITTED'
+                                        ? 'bg-label-warning'
+                                        : item.approvalStatus === 'REJECTED'
+                                          ? 'bg-label-danger'
+                                          : 'bg-label-primary'
                                       }`}
                                   >
                                     {item.approvalStatus}

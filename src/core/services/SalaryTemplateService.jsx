@@ -11,9 +11,9 @@ export default class SalaryTemplateService {
     }
   }
 
-  static getAllSalaryTemplates = async (searchText) => {
+  static getAllSalaryTemplates = async (searchText, status) => {
     try {
-      const res = await API.get("/api/v1/SalaryTemplate/GetAllSalaryTemplates" + '?searchText=' + searchText);
+      const res = await API.get("/api/v1/SalaryTemplate/GetAllSalaryTemplates" + '?searchText=' + searchText + '&dropdownFilter=' + status);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
@@ -44,6 +44,15 @@ export default class SalaryTemplateService {
       const res = await API.post("/api/v1/SalaryTemplate/UpdateSalaryTemplate", payload);
       handleApiSuccessOrError(res.data, false);
       return { error: null, data: res };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
+
+  static getStatusById = async (id) => {
+    try {
+      const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=" + id);
+      return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
     }

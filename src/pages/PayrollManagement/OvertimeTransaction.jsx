@@ -10,6 +10,7 @@ import Select from 'react-select';
 import Pagination from "../../components/pagination";
 import { NumericFormat } from "react-number-format";
 import { useLocation } from "react-router-dom";
+import Utils from "../../utils/Utils";
 
 function OvertimeTransaction() {
 
@@ -48,9 +49,10 @@ function OvertimeTransaction() {
   const fileInputRef = useRef(null);
   const location = useLocation();
   const receivedData = location.state || null;
+  const [statusList, setStatusList] = useState([]);
 
   useEffect(() => {
-    if(receivedData) {
+    if (receivedData) {
       setupEditForAttendance(receivedData);
     }
   }, []);
@@ -58,6 +60,7 @@ function OvertimeTransaction() {
   useEffect(() => {
     getEmployeesHeirarchy();
     getOvertimeTypesData();
+    getStatusList();
   }, []);
 
   useEffect(() => {
@@ -205,7 +208,7 @@ function OvertimeTransaction() {
     setShowModal(true);
   }
 
-  const  saveOvertimeTransactions = (e) => {
+  const saveOvertimeTransactions = (e) => {
     e.preventDefault();
     if (!newData.idEmployee || !newData.startDate || !newData.endDate || !newData.startTime || !newData.endTime || !newData.reasonForOvertime) {
       setValidated(true);
@@ -369,6 +372,14 @@ function OvertimeTransaction() {
     }
   };
 
+  const getStatusList = () => {
+    OvertimeService.getStatusById(4).then(res => {
+      setStatusList(res.data.data);
+    }).catch(err => {
+      console.error("Failed to fetch salary templates:", err);
+    });
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -378,12 +389,21 @@ function OvertimeTransaction() {
               <h5 className="m-0">List of Overtime Transaction</h5>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <select className="form-select" value={statusType}
+                  {/* <select className="form-select" value={statusType}
                     onChange={(e) => setStatusType(e.target.value)} style={{ width: '150px' }}>
                     <option value={''}>All Status</option>
                     <option value={'SUBMITTED'} key={'SUBMITTED'}>Submitted</option>
                     <option value={'APPROVED'} key={'APPROVED'}>Approved</option>
                     <option value={'REJECTED'} key={'REJECTED'}>Rejected</option>
+                  </select> */}
+                  <select className="form-select" value={statusType}
+                    onChange={(e) => setStatusType(e.target.value)} style={{ width: '180px' }}>
+                    <option value={''}>Select</option>
+                    {statusList.map(stat => (
+                      <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                        {Utils.toTitleCase(stat.approvalStatusName)}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="list_searchbox">
