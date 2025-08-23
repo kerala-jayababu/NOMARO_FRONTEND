@@ -248,17 +248,18 @@ useEffect(() => {
     }
   };
 
-  const handleRejectWorkflow = async () => {
+  const handleRejectWorkflow = async () => {   
     if (!rejectReason.trim()) {
       toast.error("Please enter a rejection reason");
       return;
     }
+    
 
     const content = salaryDraft.map((item) => ({
       entityTablePrimaryKeyID: item.idEmployeeSalary,
       entityCode: "EMPSALGEN",
       status: "REJECTED",
-      remarks: rejectReason,
+      rejectReason: rejectReason,
       idPayrollScreen,
     }));
 
