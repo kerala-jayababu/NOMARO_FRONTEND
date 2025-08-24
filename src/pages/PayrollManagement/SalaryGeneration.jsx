@@ -274,7 +274,21 @@ function SalaryGeneration() {
       idSalaryMonth: currentMonth?.value,
       status: "All",
     };
-    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+
+    let filteredRecords = salaryDraft;
+     if (filter && option) {
+      filteredRecords = filteredRecords.filter((x) => {
+        if (option === "department") {
+          return x?.departmentName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "designation") {
+          return x?.designationName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "budget") {
+          return x?.budgetCode?.toLowerCase() === filter.toLowerCase();
+        }
+        return true;
+      });
+    }
+    const employeeIds = filteredRecords.map((item) => item.idEmployee).join(",");
     setShowOverlay(true);
     const response = await SalaryGenerationService.generateDraftSalary(
       employeeIds,
@@ -415,7 +429,21 @@ function SalaryGeneration() {
       idSalaryMonth: currentMonth?.value,
       status: "All",
     };
-    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+
+    let filteredRecords = salaryDraft;
+     if (filter && option) {
+      filteredRecords = filteredRecords.filter((x) => {
+        if (option === "department") {
+          return x?.departmentName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "designation") {
+          return x?.designationName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "budget") {
+          return x?.budgetCode?.toLowerCase() === filter.toLowerCase();
+        }
+        return true;
+      });
+    }
+    const employeeIds = filteredRecords.map((item) => item.idEmployee).join(",");
     setShowOverlay(true);
     const response = await SalaryGenerationService.submitSalaryDetails(
       employeeIds,
@@ -471,17 +499,17 @@ function SalaryGeneration() {
 
     switch (type) {
       case "generate":
-        title = "Generate Draft Salary";
+        title = `Generate Draft Salary - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to generate draft salary for selected employees?";
         break;
       case "undo":
-        title = "Undo Draft Salary";
+        title = `Undo Draft Salary - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to undo draft salary for selected employees?";
         break;
       case "submit":
-        title = "Submit for Approval";
+        title = `Submit for Approval - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to submit selected records for approval?";
         break;
