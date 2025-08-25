@@ -155,6 +155,7 @@ function SalaryGeneration() {
     title: "",
     message: "",
   });
+  const [selectedStatus, setSelectedStatus] = useState(""); // Add this line
 
   const handleSelectAll = (e) => {
     if (e.target.checked && salaryGenerationList) {
@@ -324,10 +325,13 @@ function SalaryGeneration() {
     
     try {
       setShowOverlay(true);
+      debugger
       const response = await dispatch(getSalarySlipDetails(item.idEmployeeSalary));
       console.log("response", response);
       if (response.payload && response.payload.success) {
         setSalarySlipData(response.payload.data);
+        debugger
+        setSelectedStatus(item.approvalStatus);
         setShowSalarySlipModal(true);
       } else {
         toast.error("Failed to fetch salary slip details");
@@ -1228,7 +1232,7 @@ function SalaryGeneration() {
                      <div className="col-md-6">
                        <div className="row g-2">
                          <div className="col-12 text-end">
-                           <strong >Draft {salarySlipData.period}</strong>
+                          <strong> {selectedStatus ? selectedStatus : "Draft"} - {salarySlipData.period}</strong> 
                          </div>
                        </div>
                      </div>
@@ -1313,6 +1317,8 @@ function SalaryGeneration() {
                   <div className="section-title  mb-2" style={salarySlipStyles.sectionTitle}>
                     <strong>Deductions</strong>
                   </div>
+
+
                   <div className="table-responsive">
                     <table className="table table-bordered table-sm">
                                              <thead>
@@ -1374,6 +1380,61 @@ function SalaryGeneration() {
                        </tbody>
                     </table>
                   </div>
+
+{/* Bank Remittance Section */}
+{salarySlipData.bankRemittance && salarySlipData.bankRemittance.length > 0 && (
+  <div className="mt-3">
+    <div className="section-title" style={salarySlipStyles.sectionTitle}>
+      <strong>Bank Remittance</strong>
+    </div>
+    <div className="table-responsive">
+      <table className="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th>Bank Name</th>
+            <th className="text-end">Account Number</th>
+            <th className="text-end">ABA Routing Number</th>
+            <th className="text-end">Amount (G$)</th>
+            <th className="text-end">Amount (US$)</th>
+          </tr>
+        </thead> 
+        <tbody>
+          {salarySlipData.bankRemittance.map((bank, idx) => (
+            <tr key={idx}>
+              <td>{bank.bankName}</td>
+              <td className="text-end">{bank.accountNumber}</td>
+              <td className="text-end">{bank.abaRoutingNumber}</td>
+              <td className="text-end" >
+                {bank.amountGTD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
+              </td>
+              <td className="text-end" >
+                {bank.amountUSD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountUSD) : ""}
+              </td>
+            </tr>
+          ))}
+          {/* Total Row */}
+          <tr style={salarySlipStyles.totalRow}>
+            <td colSpan={3}><strong>TOTAL</strong></td>
+            <td className="text-end" style={{ width: "80px" }}>
+              <strong>
+                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountGTD || 0), 0)
+                )}
+              </strong>
+            </td>
+            <td className="text-end" style={{ width: "80px" }}>
+              <strong>
+                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountUSD || 0), 0)
+                )}
+              </strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
                   {/* Net Pay */}
                   <div className="text-center " style={salarySlipStyles.netPay}>
