@@ -38,19 +38,26 @@ const salarySlipStyles = {
     border: '1px solid #dee2e6'
   },
   headerInfo: {
-    backgroundColor: '#f8f9fa',
+    fontSize: '16px',
     padding: '10px',
     borderRadius: '5px',
-    marginBottom: '15px'
+    marginBottom: '5px'
   },
   tableHeader: {
     backgroundColor: '#f8f9fa',
     fontWeight: 'bold'
   },
+  
   modalContent: {
-    maxHeight: '80vh',
-    overflowY: 'auto'
+    fontFamily: 'Poppins, sans-serif',
+    padding: '0px 15px 15px 15px',
+    fontSize: '13px',
+    minHeight: '90vh'
   }
+  
+  
+
+
 };
 
 const statusColor = [
@@ -1200,12 +1207,32 @@ function SalaryGeneration() {
       {showSalarySlipModal && salarySlipData && (
         <div
           className="modal d-block"
+           id="salarySlipModal"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog modal-xl">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Salary Slip - {salarySlipData.employeeName}</h5>
+               
+                <div className="row col-md-12" style={salarySlipStyles.headerInfo} >
+                     <div className="col-md-6">
+                       <div className="row g-2">
+                         <div className="col-12">
+                           <strong>{salarySlipData.employeeCode}, {salarySlipData.employeeName}</strong>
+                         </div>
+                         <div className="col-12">
+                          {salarySlipData.position}, {salarySlipData.department}
+                         </div>
+                       </div>
+                     </div>
+                     <div className="col-md-6">
+                       <div className="row g-2">
+                         <div className="col-12 text-end">
+                           <strong >Draft {salarySlipData.period}</strong>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
                 <button
                   type="button"
                   className="btn-close"
@@ -1214,34 +1241,10 @@ function SalaryGeneration() {
               </div>
               <div className="modal-body" style={salarySlipStyles.modalContent}>
                 <div className="salary-slip-container">
-                  {/* Header Information */}
-                  <div className="row mb-3" style={salarySlipStyles.headerInfo}>
-                    <div className="col-md-6">
-                      <strong>Emp Code:</strong> {salarySlipData.employeeCode}
-                    </div>
-                    <div className="col-md-6">
-                      <strong>Emp Name:</strong> {salarySlipData.employeeName}
-                    </div>
-                  </div>
-                  <div className="row mb-3" style={salarySlipStyles.headerInfo}>
-                    <div className="col-md-6">
-                      <strong>Designation:</strong> {salarySlipData.position}
-                    </div>
-                    <div className="col-md-6">
-                      <strong>Department:</strong> {salarySlipData.department}
-                    </div>
-                  </div>
-                  <div className="row mb-3" style={salarySlipStyles.headerInfo}>
-                    <div className="col-md-6">
-                      <strong>Period:</strong> {salarySlipData.period}
-                    </div>
-                    <div className="col-md-6">
-                      <strong>Payslip Generated Date:</strong> {salarySlipData.payslipGeneratedDate}
-                    </div>
-                  </div>
+                           
 
                   {/* Earnings Section */}
-                  <div className="section-title mt-4 mb-2" style={salarySlipStyles.sectionTitle}>
+                  <div className="section-title mt-1" style={salarySlipStyles.sectionTitle}>
                     <strong>Earnings</strong>
                   </div>
                   <div className="table-responsive">
@@ -1307,7 +1310,7 @@ function SalaryGeneration() {
                   </div>
 
                   {/* Deductions Section */}
-                  <div className="section-title mt-4 mb-2" style={salarySlipStyles.sectionTitle}>
+                  <div className="section-title  mb-2" style={salarySlipStyles.sectionTitle}>
                     <strong>Deductions</strong>
                   </div>
                   <div className="table-responsive">
@@ -1373,7 +1376,7 @@ function SalaryGeneration() {
                   </div>
 
                   {/* Net Pay */}
-                  <div className="text-center mt-4" style={salarySlipStyles.netPay}>
+                  <div className="text-center " style={salarySlipStyles.netPay}>
                     <h5 className="mb-0">
                       Net Pay: G$ {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                         (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
@@ -1384,13 +1387,13 @@ function SalaryGeneration() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button
+                {/* <button
                   type="button"
                   className="btn btn-outline-secondary"
                   onClick={() => setShowSalarySlipModal(false)}
                 >
                   Close
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

@@ -1031,3 +1031,12 @@ body::-webkit-scrollbar {
   top: 0;
   background-color: #fff;
 }
+
+#salarySlipModal .modal-dialog.modal-xl {
+  max-width: 95%;
+  margin: auto;
+}
+
+#salarySlipModal .modal-content {
+  min-height: 90vh; /* makes modal tall enough, no scroll needed */
+}
