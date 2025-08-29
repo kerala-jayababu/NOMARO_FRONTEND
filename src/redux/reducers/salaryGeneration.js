@@ -38,6 +38,34 @@ export const getSalaryGenerations = createAsyncThunk(
   }
 );
 
+// Get Salary Slip Details
+export const getSalarySlipDetails = createAsyncThunk(
+  "salaryGeneration/getSalarySlipDetails",
+  async (idEmployeeSalary) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetPayslipObject?idEmployeeSalary=${idEmployeeSalary}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return error;
+    }
+  }
+);
+
 const salaryGenerationSlice = createSlice({
   name: "salaryGeneration",
   initialState: {
@@ -67,6 +95,18 @@ const salaryGenerationSlice = createSlice({
     });
     builder.addCase(getSalaryGenerations.rejected, (state, action) => {
       state.status = "failed";
+      state.loading = false;
+      state.error = action.payload;
+    });
+    builder.addCase(getSalarySlipDetails.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(getSalarySlipDetails.fulfilled, (state, action) => {
+      state.currentSalaryGeneration = action.payload.data;
+      state.loading = false;
+    });
+    builder.addCase(getSalarySlipDetails.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload;
     });

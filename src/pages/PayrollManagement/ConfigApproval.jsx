@@ -274,14 +274,12 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     onChange={(e) => setStatus(e.target.value)}
                     disabled={!entityType}
                   >
-                    <option value={""}>Select Status</option>
-                    <option value="submitted">SUBMITTED</option>
+                    <option value={""}>Select Status</option>                   
                     {statusOptions.map((statusOption, index) => (
                       <option key={index} value={statusOption.approvalStatusName}>
                         {statusOption.approvalStatusName}
                       </option>
-                    ))}
-                    <option value="rejected">REJECTED</option>
+                    ))}                   
                   </select>
                 </div>
                 <div class="col-md-3 p-2">

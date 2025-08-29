@@ -14,6 +14,51 @@ import LoadingOverlay from "../../components/LoadingOverlay";
 import { API } from "../../redux/api/utils";
 import { fetchBudgetCode } from "../../redux/reducers/budgetCode";
 import { compare } from "mathjs";
+import { getSalarySlipDetails } from "../../redux/reducers/salaryGeneration";
+
+// CSS styles for salary slip modal
+const salarySlipStyles = {
+  sectionTitle: {
+    fontWeight: 'bold',
+    margin: '10px 0 5px 0',
+    fontSize: '16px',
+    color: '#333'
+  },
+  totalRow: {
+    backgroundColor: '#fff3cd',
+    fontWeight: 'bold'
+  },
+  netPay: {
+    backgroundColor: '#e9ecef',
+    fontWeight: 'bold',
+    fontSize: '18px',
+    textAlign: 'center',
+    padding: '15px',
+    borderRadius: '5px',
+    border: '1px solid #dee2e6'
+  },
+  headerInfo: {
+    fontSize: '16px',
+    padding: '10px',
+    borderRadius: '5px',
+    marginBottom: '5px'
+  },
+  tableHeader: {
+    backgroundColor: '#f8f9fa',
+    fontWeight: 'bold'
+  },
+  
+  modalContent: {
+    fontFamily: 'Poppins, sans-serif',
+    padding: '0px 15px 15px 15px',
+    fontSize: '13px',
+    minHeight: '90vh'
+  }
+  
+  
+
+
+};
 
 const statusColor = [
   {
@@ -103,11 +148,14 @@ function SalaryGeneration() {
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showSalarySlipModal, setShowSalarySlipModal] = useState(false);
+  const [salarySlipData, setSalarySlipData] = useState(null);
   const [confirmAction, setConfirmAction] = useState({
     type: "",
     title: "",
     message: "",
   });
+  const [selectedStatus, setSelectedStatus] = useState(""); // Add this line
 
   const handleSelectAll = (e) => {
     if (e.target.checked && salaryGenerationList) {
@@ -269,12 +317,53 @@ function SalaryGeneration() {
     );
   }
 
+  const handleEmployeeCodeClick = async (item) => {
+    // Only allow clicks for statuses other than "not generated"
+    if (item.approvalStatus.toLowerCase() === "not generated") {
+      return;
+    }
+    
+    try {
+      setShowOverlay(true);
+      debugger
+      const response = await dispatch(getSalarySlipDetails(item.idEmployeeSalary));
+      console.log("response", response);
+      if (response.payload && response.payload.success) {
+        setSalarySlipData(response.payload.data);
+        debugger
+        setSelectedStatus(item.approvalStatus);
+        setShowSalarySlipModal(true);
+      } else {
+        toast.error("Failed to fetch salary slip details");
+      }
+    } catch (error) {
+      toast.error("Error fetching salary slip details");
+      console.error("Error:", error);
+    } finally {
+      setShowOverlay(false);
+    }
+  };
+
   const generateSalaryDraft = async () => {
     const params = {
       idSalaryMonth: currentMonth?.value,
       status: "All",
     };
-    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+
+    let filteredRecords = salaryDraft;
+     if (filter && option) {
+      filteredRecords = filteredRecords.filter((x) => {
+        if (option === "department") {
+          return x?.departmentName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "designation") {
+          return x?.designationName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "budget") {
+          return x?.budgetCode?.toLowerCase() === filter.toLowerCase();
+        }
+        return true;
+      });
+    }
+    const employeeIds = filteredRecords.map((item) => item.idEmployee).join(",");
     setShowOverlay(true);
     const response = await SalaryGenerationService.generateDraftSalary(
       employeeIds,
@@ -415,7 +504,21 @@ function SalaryGeneration() {
       idSalaryMonth: currentMonth?.value,
       status: "All",
     };
-    const employeeIds = salaryDraft.map((item) => item.idEmployee).join(",");
+
+    let filteredRecords = salaryDraft;
+     if (filter && option) {
+      filteredRecords = filteredRecords.filter((x) => {
+        if (option === "department") {
+          return x?.departmentName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "designation") {
+          return x?.designationName?.toLowerCase() === filter.toLowerCase();
+        } else if (option === "budget") {
+          return x?.budgetCode?.toLowerCase() === filter.toLowerCase();
+        }
+        return true;
+      });
+    }
+    const employeeIds = filteredRecords.map((item) => item.idEmployee).join(",");
     setShowOverlay(true);
     const response = await SalaryGenerationService.submitSalaryDetails(
       employeeIds,
@@ -471,17 +574,17 @@ function SalaryGeneration() {
 
     switch (type) {
       case "generate":
-        title = "Generate Draft Salary";
+        title = `Generate Draft Salary - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to generate draft salary for selected employees?";
         break;
       case "undo":
-        title = "Undo Draft Salary";
+        title = `Undo Draft Salary - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to undo draft salary for selected employees?";
         break;
       case "submit":
-        title = "Submit for Approval";
+        title = `Submit for Approval - ${currentMonth?.label || ''}`;
         message =
           "Are you sure you want to submit selected records for approval?";
         break;
@@ -910,7 +1013,21 @@ function SalaryGeneration() {
                               disabled={disableCheckBox(item)}
                             />
                           </td>
-                          <td>{item.employeeCode}</td>
+                          <td>
+                            {item.approvalStatus.toLowerCase() === "not generated" ? (
+                              <span style={{ color: "#6c757d", cursor: "not-allowed" }}>
+                                {item.employeeCode}
+                              </span>
+                            ) : (
+                              <span
+                                style={{ color: "#1893cf", cursor: "pointer", textDecoration: "underline" }}
+                                onClick={() => handleEmployeeCodeClick(item)}
+                                title="Click to view salary slip details"
+                              >
+                                {item.employeeCode}
+                              </span>
+                            )}
+                          </td>
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
@@ -1089,6 +1206,261 @@ function SalaryGeneration() {
           </div>
         </div>
       )}
+
+      {/* Salary Slip Modal */}
+      {showSalarySlipModal && salarySlipData && (
+        <div
+          className="modal d-block"
+           id="salarySlipModal"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-xl">
+            <div className="modal-content">
+              <div className="modal-header">
+               
+                <div className="row col-md-12" style={salarySlipStyles.headerInfo} >
+                     <div className="col-md-6">
+                       <div className="row g-2">
+                         <div className="col-12">
+                           <strong>{salarySlipData.employeeCode}, {salarySlipData.employeeName}</strong>
+                         </div>
+                         <div className="col-12">
+                          {salarySlipData.position}, {salarySlipData.department}
+                         </div>
+                       </div>
+                     </div>
+                     <div className="col-md-6">
+                       <div className="row g-2">
+                         <div className="col-12 text-end">
+                          <strong> {selectedStatus ? selectedStatus : "Draft"} - {salarySlipData.period}</strong> 
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowSalarySlipModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body" style={salarySlipStyles.modalContent}>
+                <div className="salary-slip-container">
+                           
+
+                  {/* Earnings Section */}
+                  <div className="section-title mt-1" style={salarySlipStyles.sectionTitle}>
+                    <strong>Earnings</strong>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-bordered table-sm">
+                                             <thead>
+                         <tr>
+                           <th style={salarySlipStyles.tableHeader}>Salary Head</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {salarySlipData.earnings && salarySlipData.earnings.length > 0 ? (
+                           salarySlipData.earnings.map((earning, index) => (
+                             <tr key={index}>
+                               <td>{earning.description}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountUS)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountUSD)}</td>
+                             </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan="5" className="text-center">No earnings data available</td>
+                           </tr>
+                         )}
+                         <tr style={salarySlipStyles.totalRow}>
+                           <td><strong>Total</strong></td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountUS || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountG || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountUSD || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                         </tr>
+                       </tbody>
+                    </table>
+                  </div>
+
+                  {/* Deductions Section */}
+                  <div className="section-title  mb-2" style={salarySlipStyles.sectionTitle}>
+                    <strong>Deductions</strong>
+                  </div>
+
+
+                  <div className="table-responsive">
+                    <table className="table table-bordered table-sm">
+                                             <thead>
+                         <tr>
+                           <th style={salarySlipStyles.tableHeader}>Salary Head</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {salarySlipData.deductions && salarySlipData.deductions.length > 0 ? (
+                           salarySlipData.deductions.map((deduction, index) => (
+                             <tr key={index}>
+                               <td>{deduction.description}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountUS)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountUSD)}</td>
+                           </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan="5" className="text-center">No deductions data available</td>
+                           </tr>
+                         )}
+                         <tr style={salarySlipStyles.totalRow}>
+                           <td><strong>Total</strong></td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountUS || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountG || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                           <td className="text-end">
+                             <strong>
+                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountUSD || 0), 0) : 0
+                               )}
+                             </strong>
+                           </td>
+                         </tr>
+                       </tbody>
+                    </table>
+                  </div>
+
+{/* Bank Remittance Section */}
+{salarySlipData.bankRemittance && salarySlipData.bankRemittance.length > 0 && (
+  <div className="mt-3">
+    <div className="section-title" style={salarySlipStyles.sectionTitle}>
+      <strong>Bank Remittance</strong>
+    </div>
+    <div className="table-responsive">
+      <table className="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th>Bank Name</th>
+            <th className="text-end">Account Number</th>
+            <th className="text-end">ABA Routing Number</th>
+            <th className="text-end">Amount (G$)</th>
+            <th className="text-end">Amount (US$)</th>
+          </tr>
+        </thead> 
+        <tbody>
+          {salarySlipData.bankRemittance.map((bank, idx) => (
+            <tr key={idx}>
+              <td>{bank.bankName}</td>
+              <td className="text-end">{bank.accountNumber}</td>
+              <td className="text-end">{bank.abaRoutingNumber}</td>
+              <td className="text-end" >
+                {bank.amountGTD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
+              </td>
+              <td className="text-end" >
+                {bank.amountUSD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountUSD) : ""}
+              </td>
+            </tr>
+          ))}
+          {/* Total Row */}
+          <tr style={salarySlipStyles.totalRow}>
+            <td colSpan={3}><strong>TOTAL</strong></td>
+            <td className="text-end" style={{ width: "80px" }}>
+              <strong>
+                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountGTD || 0), 0)
+                )}
+              </strong>
+            </td>
+            <td className="text-end" style={{ width: "80px" }}>
+              <strong>
+                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountUSD || 0), 0)
+                )}
+              </strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+                  {/* Net Pay */}
+                  <div className="text-center " style={salarySlipStyles.netPay}>
+                    <h5 className="mb-0">
+                      Net Pay: G$ {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                        (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
+                        (salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0)
+                      )}
+                    </h5>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                {/* <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowSalarySlipModal(false)}
+                >
+                  Close
+                </button> */}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ShowDraft show={show} setShow={setShow} />
       <ShowImport
         showImportData={showImportData}
