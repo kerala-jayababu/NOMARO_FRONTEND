@@ -2,9 +2,9 @@ import { API, handleApiError } from "../../redux/api/utils";
 import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class EmployeeSalaryConfigService {
-  static getAllEmployeeSalaryConfigs = async (searchText, status) => {
+  static getAllEmployeeSalaryConfigs = async (searchText, status, val) => {
     try {
-      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetAllEmployeeSalaryConfig?searchText=" + searchText + "&dropdownFilter=" + status);
+      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetAllEmployeeSalaryConfigSp?searchText=" + searchText + "&dropdownFilter=" + status + "&isLatest=" + val);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
