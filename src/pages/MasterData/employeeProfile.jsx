@@ -1444,7 +1444,7 @@ const EmployeeProfile = () => {
                       "Bank Name",
                       "Branch Name",
                       "Account Number",
-                      "% Salary",
+                      Array.isArray(bankData) ? bankData[0].disbursementType == "PERCENTAGE" ? "% Salary" : "Amount(G$)" : "Salary",
                       "Currency",
                     ]}
                     rows={(Array.isArray(bankData) ? bankData : []).map(
@@ -1453,7 +1453,7 @@ const EmployeeProfile = () => {
                           <td>{account.bankName}</td>
                           <td>{account.branchName}</td>
                           <td>{account.accountNumber}</td>
-                          <td>{account.salaryPercentageDistributed}%</td>
+                          <td>{account.salaryPercentageDistributed} {account.disbursementType == 'PERCENTAGE' ? '%' : ''}</td>
                           <td>{account.currencyCode}</td>
                         </tr>
                       )
@@ -1567,7 +1567,7 @@ const EmployeeProfile = () => {
               </th>{" "}
               {/* Increase width */}
               <th className="salary-percentage">
-                {disbursementType === "PERCENTAGE" ? "% Salary" : "Fixed Amount"}
+                {disbursementType === "PERCENTAGE" ? "% Salary" : "Amount(G$)"}
               </th>
               <th className="currency">Currency</th>
               <th style={{ width: "10%" }}></th> {/* Reduce width */}

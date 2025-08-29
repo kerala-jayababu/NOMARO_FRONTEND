@@ -54,11 +54,12 @@ const EmployeeSalaryConfig = () => {
   const [status, setStatus] = useState('');
   const [withoutConfigList, setWithoutConfigList] = useState([]);
   const [statusList, setStatusList] = useState([]);
+  const [type, setType] = useState(1);
 
   useEffect(() => {
     setCurrentPage(1);
     getEmployeeSalaryConfigs();
-  }, [status]);
+  }, [status, type]);
 
   useEffect(() => {
     getSalaryHeadData();
@@ -142,7 +143,7 @@ const EmployeeSalaryConfig = () => {
 
   const getEmployeeSalaryConfigs = () => {
     setEmployeeSalaryConfigList([]);
-    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText, status ?? null).then(res => {
+    EmployeeSalaryConfigService.getAllEmployeeSalaryConfigs(searchText, status ?? null, type == 1 ? true : false).then(res => {
       setEmployeeSalaryConfigList(res.data.data);
     }).catch(err => {
       setEmployeeSalaryConfigList([]);
@@ -825,24 +826,24 @@ const EmployeeSalaryConfig = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Salary Configuration</h5>
               <div className="list_menu">
-                {/* <div class="row m-0" style={{ width: '250px' }}>
-                  <div class="col-md-6 p-2">
+                <div class="row m-0" style={{ width: '260px' }}>
+                  <div class="col-md-4 p-2">
                     <div class="form-check form-check-inline ">
                       <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
-                        value={1} checked={status === 1 ? "checked" : ""}
-                        onChange={(e) => setStatus(1)} />
-                      <label class="form-check-label" for="inlineRadio1">Show latest</label>
+                        value={1} checked={type === 1 ? "checked" : ""}
+                        onChange={(e) => setType(1)} />
+                      <label class="form-check-label" for="inlineRadio1">Latest</label>
                     </div>
                   </div>
                   <div class="col-md-6 p-2">
                     <div class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
-                        value={0} checked={status === 0 ? "checked" : ""}
-                        onChange={(e) => setStatus(0)} />
-                      <label class="form-check-label" for="inlineRadio2">Show all</label>
+                        value={0} checked={type === 0 ? "checked" : ""}
+                        onChange={(e) => setType(0)} />
+                      <label class="form-check-label" for="inlineRadio2">With History</label>
                     </div>
                   </div>
-                </div> */}
+                </div>
                 <div className="list_searchbox">
                   {/* <select className="form-select" value={status}
                     onChange={(e) => setStatus(e.target.value)} style={{ width: '200px' }}>
@@ -857,10 +858,10 @@ const EmployeeSalaryConfig = () => {
                     onChange={(e) => setStatus(e.target.value)} style={{ width: '200px' }}>
                     <option value={''}>Select</option>
                     {statusList.map(stat => (
-                        <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
-                          {Utils.toTitleCase(stat.approvalStatusName)}
-                        </option>
-                      ))}
+                      <option key={stat.approvalStatusName} value={stat.approvalStatusName}>
+                        {Utils.toTitleCase(stat.approvalStatusName)}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="list_searchbox">
@@ -905,7 +906,7 @@ const EmployeeSalaryConfig = () => {
                         <tr key={item.idEmployeeSalaryConfig}>
                           <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
-                          <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
+                          <td>{item?.designationName != null ? (item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)) : 'NA'}</td>
                           <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
                           <td>{item?.validFrom != null ? moment(item?.validFrom).format("MM/DD/YYYY") : 'NA'}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
@@ -952,28 +953,33 @@ const EmployeeSalaryConfig = () => {
               {
                 employeeSalaryConfigList.length > 0 &&
                 <div className='row pt-3'>
-                  {/* <div className='col-lg-3 m-0 mx-3'>
-                  </div> */}
-                  <div className='col-lg-5'>
-                    <table className="table table-sm">
-                      <thead>
-                        <th className="text-center">Approved</th>
-                        <th className="text-center">Submitted</th>
-                        <th className="text-center">Rejected</th>
-                        <th className="text-center">Not Configured</th>
-                        {/* <th className="text-center">Not Approved</th> */}
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="text-center"><strong>{employeeSalaryConfigList[0].approvedCount}</strong></td>
-                          <td className="text-center"><strong>{employeeSalaryConfigList[0].submittedCount}</strong></td>
-                          <td className="text-center"><strong>{employeeSalaryConfigList[0].rejectedCount}</strong></td>
-                          <td className="text-center"><strong>{employeeSalaryConfigList[0].notConfiguredCount}</strong></td>
-                          {/* <td className="text-center"><label className={employeeSalaryConfigList[0].notApprovedCount > 0 ? 'cursor' : ''} onClick={() => viewWithoutConfigDetails()}>{employeeSalaryConfigList[0].notApprovedCount}</label></td> */}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  {
+                    type == 1 &&
+                    <div className='col-lg-5'>
+                      <table className="table table-sm">
+                        <thead>
+                          <th className="text-center">Approved</th>
+                          <th className="text-center">Submitted</th>
+                          <th className="text-center">Rejected</th>
+                          <th className="text-center">Not Configured</th>
+                          {/* <th className="text-center">Not Approved</th> */}
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="text-center"><strong>{employeeSalaryConfigList[0].approvedCount}</strong></td>
+                            <td className="text-center"><strong>{employeeSalaryConfigList[0].submittedCount}</strong></td>
+                            <td className="text-center"><strong>{employeeSalaryConfigList[0].rejectedCount}</strong></td>
+                            {/* <td className="text-center"><strong>{employeeSalaryConfigList[0].notConfiguredCount}</strong></td> */}
+                            <td className="text-center"><label className={employeeSalaryConfigList[0].notConfiguredCount > 0 ? 'cursor' : ''} onClick={() => viewWithoutConfigDetails()}><strong>{employeeSalaryConfigList[0].notConfiguredCount}</strong></label></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                  {
+                    type == 0 &&
+                    <div className='col-lg-5'></div>
+                  }
                   <div className='col-lg-7 text-end'>
                     <Pagination
                       currentPage={currentPage}
@@ -1244,7 +1250,7 @@ const EmployeeSalaryConfig = () => {
                       <th>Salary Head Name</th>
                       <th>Type</th>
                       <th>Calculation Details</th>
-                      <th>Amount</th>
+                      <th>Amount(G$)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1324,7 +1330,7 @@ const EmployeeSalaryConfig = () => {
             keyboard={false}>
             <Modal.Header closeButton>
               <Modal.Title>
-                <h5>List of Employees without approved salary configuration</h5>
+                <h5>List of Employees without configuration</h5>
               </Modal.Title>
             </Modal.Header>
 
