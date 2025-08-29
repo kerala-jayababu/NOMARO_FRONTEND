@@ -55,6 +55,7 @@ function Reports() {
   };
 
   async function downloadFile(format, filter) {
+    
     const isGuyanaTaxReport = report?.reportName === "Guyana Tax Report";
     const isGuyanaNISReport = report?.reportName === "Guyana NIS Report";
 
@@ -227,7 +228,7 @@ function Reports() {
 
   const paginationModel = {
     page: 0,
-    pageSize: Math.min(reportData?.length || 0, 20),
+    pageSize: Math.min(reportData?.length || 0, 100),
   };
 
   return (
