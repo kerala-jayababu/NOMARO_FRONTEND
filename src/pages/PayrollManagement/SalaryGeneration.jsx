@@ -1214,7 +1214,7 @@ function SalaryGeneration() {
            id="salarySlipModal"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <div className="modal-dialog modal-xl">
+          <div className="modal-dialog modal-xl" style={{ maxWidth: '75%' }}>
             <div className="modal-content">
               <div className="modal-header">
                
@@ -1381,6 +1381,16 @@ function SalaryGeneration() {
                     </table>
                   </div>
 
+                      {/* Net Pay */}
+                      <div className="text-center " style={salarySlipStyles.netPay}>
+                    <h5 className="mb-0">
+                      Net Pay: G$ {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                        (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
+                        (salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0)
+                      )}
+                    </h5>
+                  </div>
+
 {/* Bank Remittance Section */}
 {salarySlipData.bankRemittance && salarySlipData.bankRemittance.length > 0 && (
   <div className="mt-3">
@@ -1391,11 +1401,11 @@ function SalaryGeneration() {
       <table className="table table-bordered table-sm">
         <thead>
           <tr>
-            <th>Bank Name</th>
-            <th className="text-end">Account Number</th>
-            <th className="text-end">ABA Routing Number</th>
-            <th className="text-end">Amount (G$)</th>
-            <th className="text-end">Amount (US$)</th>
+            <th style={{ width: "25%" }}>Bank Name</th>
+            <th className="text-end" style={{ width: "20%" }}>Account Number</th>
+            <th className="text-end" style={{ width: "20%" }}>ABA Routing Number</th>
+            <th className="text-end" style={{ width: "17.5%" }}>Amount (G$)</th>
+            <th className="text-end" style={{ width: "17.5%" }}>Amount (US$)</th>
           </tr>
         </thead> 
         <tbody>
@@ -1436,15 +1446,7 @@ function SalaryGeneration() {
   </div>
 )}
 
-                  {/* Net Pay */}
-                  <div className="text-center " style={salarySlipStyles.netPay}>
-                    <h5 className="mb-0">
-                      Net Pay: G$ {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                        (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
-                        (salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0)
-                      )}
-                    </h5>
-                  </div>
+              
                 </div>
               </div>
               <div className="modal-footer">
