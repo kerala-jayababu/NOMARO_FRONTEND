@@ -1403,8 +1403,8 @@ function SalaryGeneration() {
           <tr>
             <th style={{ width: "25%" }}>Bank Name</th>
             <th className="text-end" style={{ width: "20%" }}>Account Number</th>
-            <th className="text-end" style={{ width: "20%" }}>ABA Routing Number</th>
-            <th className="text-end" style={{ width: "17.5%" }}>Amount (G$)</th>
+            <th  style={{ width: "20%" }}>ABA Routing Number</th>
+            <th  style={{ width: "17.5%" }}>Amount (G$)</th>
             <th className="text-end" style={{ width: "17.5%" }}>Amount (US$)</th>
           </tr>
         </thead> 
@@ -1412,8 +1412,8 @@ function SalaryGeneration() {
           {salarySlipData.bankRemittance.map((bank, idx) => (
             <tr key={idx}>
               <td>{bank.bankName}</td>
-              <td className="text-end">{bank.accountNumber}</td>
-              <td className="text-end">{bank.abaRoutingNumber}</td>
+              <td>{bank.accountNumber}</td>
+              <td >{bank.abaRoutingNumber}</td>
               <td className="text-end" >
                 {bank.amountGTD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
               </td>
