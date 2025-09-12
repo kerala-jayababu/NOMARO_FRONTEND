@@ -47,6 +47,7 @@ import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
 import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
+import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 
 function App() {
   return (
@@ -94,6 +95,7 @@ function App() {
               <Route path="shift-assignment" element={<ShiftAssignment/>} />
               <Route path="leave-report" element={<LeaveDetailReport/>} />
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
+              <Route path="leave-passage-amounts" element={<LeavePassageAmount/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>
