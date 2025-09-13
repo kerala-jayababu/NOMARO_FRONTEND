@@ -95,7 +95,7 @@ function App() {
               <Route path="shift-assignment" element={<ShiftAssignment/>} />
               <Route path="leave-report" element={<LeaveDetailReport/>} />
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
-              <Route path="leave-passage-amounts" element={<LeavePassageAmount/>} />
+              <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>

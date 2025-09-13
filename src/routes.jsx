@@ -138,7 +138,7 @@ export const privateRoutes = [
     element: <AttendanceDetails />,
   },
   {
-    path: "/dashboard/leave-passage-amounts",
+    path: "/dashboard/leave-passage-amount",
     element: <AttendanceDetails />,
   },
 ];
