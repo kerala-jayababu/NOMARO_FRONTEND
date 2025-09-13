@@ -7,16 +7,19 @@ import Utils from '../../utils/Utils';
 import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import LeavePassageService from '../../core/services/LeavePassageService';
+import { useLoader } from '../../components/LoaderContext';
 
 function LeavePassageAmount() {
-
     const [leavePassages, setLeavePassages] = useState([]);
+    const [originalLeavePassages, setOriginalLeavePassages] = useState([]);
     const [financialYearsList, setFinancialYearsList] = useState([]);
     const [selFinancialYear, setSelFinancialYear] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isDataChanged, setIsDataChanged] = useState(false);
     const rowsPerPage = 10;
     const totalPages = Math.ceil(leavePassages.length / rowsPerPage);
+    const { showLoader, hideLoader } = useLoader();
 
     useEffect(() => {
         getFinancialYears();
@@ -24,6 +27,7 @@ function LeavePassageAmount() {
 
     useEffect(() => {
         if (selFinancialYear != null) {
+            setLeavePassages([]);
             getLeavePassages();
         }
     }, [selFinancialYear]);
@@ -32,16 +36,22 @@ function LeavePassageAmount() {
         CommonService.getAllFinancialYears().then(res => {
             setFinancialYearsList(res.data);
         }).catch(err => {
-            setFinancialYearsList([])
+            setFinancialYearsList([]);
         });
     }
 
     const getLeavePassages = () => {
         setCurrentPage(1);
+        showLoader();
         LeavePassageService.getLeavePassagesAmountsList(searchText, selFinancialYear).then(res => {
+            hideLoader();
             setLeavePassages(res.data.data);
+            setOriginalLeavePassages(JSON.parse(JSON.stringify(res.data.data)));
+            setIsDataChanged(false);
         }).catch(err => {
+            hideLoader();
             setLeavePassages([]);
+            setOriginalLeavePassages([]);
         });
     }
 
@@ -53,14 +63,47 @@ function LeavePassageAmount() {
         return leavePassages.slice(startIndex, endIndex);
     }, [leavePassages, currentPage, rowsPerPage]);
 
-    const saveLeavePassageAmounts = (e) => {
-        let passData = leavePassages;
-        LeavePassageService.saveLeavePassagesAmounts(passData).then(res => {
-            if (res.data.status === 200) {
+    const handleAmountChange = (index, value) => {
+        const updatedLeavePassages = [...leavePassages];
+        updatedLeavePassages[index].leavePassageAmount = value;
+        setLeavePassages(updatedLeavePassages);
+
+        const hasChanges = updatedLeavePassages.some((item, i) =>
+            item.leavePassageAmount !== originalLeavePassages[i]?.leavePassageAmount
+        );
+        setIsDataChanged(hasChanges);
+    }
+
+    const saveLeavePassageAmounts = () => {
+        const payload = leavePassages
+            .filter((item, index) => {
+                const originalItem = originalLeavePassages.find(orig => orig.idEmployee === item.idEmployee);
+                return originalItem && item.leavePassageAmount != originalItem.leavePassageAmount;
+            })
+            .map(item => ({
+                idLeavePassageAmount: item.idLeavePassageAmount || 0,
+                idEmployee: item.idEmployee,
+                amount: parseFloat(item.leavePassageAmount) || 0,
+                idFinancialYear: parseInt(selFinancialYear)
+            }));
+
+        if (payload.length === 0) {
+            toast.info("No changes to save");
+            return;
+        }
+
+        LeavePassageService.saveLeavePassagesAmounts(payload).then(res => {
+            console.log(res)
+            if (res.data.success) {
                 getLeavePassages();
             }
         }).catch(err => {
         });
+    }
+
+    const resetChanges = () => {
+        setLeavePassages(JSON.parse(JSON.stringify(originalLeavePassages)));
+        setIsDataChanged(false);
     }
 
     return (
@@ -73,30 +116,49 @@ function LeavePassageAmount() {
 
                             <div className="list_menu">
                                 <div className="list_searchbox">
-                                    <select className="form-select" value={selFinancialYear}
-                                        onChange={(e) => setSelFinancialYear(e.target.value)} style={{ width: '250px' }}>
+                                    <select
+                                        className="form-select"
+                                        value={selFinancialYear || ''}
+                                        onChange={(e) => setSelFinancialYear(e.target.value || null)}
+                                        style={{ width: '250px' }}
+                                    >
                                         <option value={''}>Select financial year</option>
                                         {financialYearsList.map(stat => (
                                             <option key={stat.idFinancialYear} value={stat.idFinancialYear}>
-                                                {moment(stat.financialYearFrom).format("MM-DD-YYYY")} to {moment(stat.financialYearTo).format("MM-DD-YYYY")}
+                                                {moment(stat.financialYearFrom).format("MMM YYYY")} to {moment(stat.financialYearTo).format("MMM YYYY")}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
                                 <div className="list_searchbox">
-                                    <input type="text" className="form-control" placeholder="Search" value={searchText} maxLength={30}
-                                        onChange={(e) => {
-                                            setSearchText(e.target.value);
-                                            if (e.target.value === "") {
-                                                getLeavePassages();
-                                            }
-                                        }}
-                                        onKeyDown={e => e.key === 'Enter' ? getLeavePassages() : ''} />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Search"
+                                        value={searchText}
+                                        maxLength={30}
+                                        onChange={(e) => setSearchText(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' ? getLeavePassages() : ''}
+                                    />
                                     <i className="bx bx-search cursor" onClick={() => getLeavePassages()}></i>
                                 </div>
-                                <button className="btn btn-primary btn-sm px-4" onClick={() => saveLeavePassageAmounts()}>Submit</button>
+                                <div className="d-flex gap-2">
+                                    <button
+                                        className="btn btn-outline-secondary btn-sm px-3"
+                                        onClick={resetChanges}
+                                        disabled={!isDataChanged}
+                                    >
+                                        Reset
+                                    </button>
+                                    <button
+                                        className="btn btn-primary btn-sm px-4"
+                                        onClick={saveLeavePassageAmounts}
+                                        disabled={!isDataChanged}
+                                    >
+                                        Submit
+                                    </button>
+                                </div>
                             </div>
-
                         </div>
                         <div className="card-body">
                             <div className="table-responsive text-nowrap">
@@ -114,35 +176,42 @@ function LeavePassageAmount() {
                                     <tbody className="table-border-bottom-0">
                                         {paginatedData?.length > 0 ? (
                                             paginatedData?.map((item, index) => (
-                                                <tr>
-                                                    <td>{item?.employeeCode}</td>
-                                                    <td>{item?.employeeName}</td>
-                                                    <td>{item?.departmentName}</td>
-                                                    <td>{item?.designationName}</td>
-                                                    <td>{moment(item?.joiningDate).format("MM/DD/YYYY")}</td>
-                                                    <td className="text-end">
-                                                        <NumericFormat
-                                                            className="form-control-sm"
-                                                            value={item?.leavePassageAmount}
-                                                            onValueChange={(values) => {
-                                                                const { value } = values;
-                                                            }}
-                                                            decimalScale={2} // Allow up to 2 decimal places
-                                                            allowNegative={true} // Disallow negative numbers
-                                                            thousandSeparator={true} // Disable thousand separators
-                                                            allowLeadingZeros={false}
-                                                            placeholder="Add amount"
-                                                            maxLength={12}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
+                                                    <tr key={index}>
+                                                        <td>{item?.employeeCode}</td>
+                                                        <td>{item?.employeeName}</td>
+                                                        <td>{item?.departmentName}</td>
+                                                        <td>{item?.designationName}</td>
+                                                        <td>{item?.joiningDate ? moment(item.joiningDate).format("MM/DD/YYYY") : 'N/A'}</td>
+                                                        <td className="text-end">
+                                                            <NumericFormat
+                                                                key={`${item.idEmployee}-${index}`}
+                                                                className="form-control-sm text-end"
+                                                                value={item?.leavePassageAmount || ''}
+                                                                onValueChange={(values) => {
+                                                                    const { value } = values;
+                                                                    handleAmountChange(index, value);
+                                                                }}
+                                                                decimalScale={2}
+                                                                allowNegative={false}
+                                                                thousandSeparator={true}
+                                                                allowLeadingZeros={false}
+                                                                placeholder="Add amount"
+                                                                maxLength={12}
+                                                                style={{ width: '120px' }}
+                                                            />
+                                                        </td>
+                                                    </tr>
                                             ))
                                         ) : (
                                             <tr>
                                                 <td colSpan="6" className="text-center">
                                                     <div className="Nodatafound_box">
                                                         <h6><i className="bx bx-search"></i> No data available!</h6>
+                                                        {/* {selFinancialYear && (
+                                                            <p className="text-muted small mt-1">
+                                                                Try a different search term or financial year
+                                                            </p>
+                                                        )} */}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -150,19 +219,21 @@ function LeavePassageAmount() {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="text-end pt-2">
-                                <Pagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    onPageChange={handlePageChange}
-                                />
-                            </div>
+                            {leavePassages.length > 0 && (
+                                <div className="text-end pt-2">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={handlePageChange}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     )
 }
 
-export default LeavePassageAmount
+export default LeavePassageAmount;
