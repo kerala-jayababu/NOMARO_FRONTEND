@@ -137,6 +137,10 @@ export const privateRoutes = [
     path: "/dashboard/attendance",
     element: <AttendanceDetails />,
   },
+  {
+    path: "/dashboard/leave-passage-amount",
+    element: <AttendanceDetails />,
+  },
 ];
 
 export default privateRoutes

@@ -37,7 +37,7 @@ function Menu({ viewType }) {
     if (toggleBtn) {
       toggleBtn.addEventListener("click", removeHtmlClasses);
     }
-    
+
     // Cleanup event listener
     return () => {
       if (toggleBtn) {
@@ -85,56 +85,58 @@ function Menu({ viewType }) {
               <div data-i18n="Account Settings">{screen.screenName}</div>
             </a>
             <ul className="menu-sub">
-              {screen.subMenus.map((menuItem) => (
-                <li
-                  key={menuItem.screenName}
-                  className={`menu-item ${subMenu === menuItem.screenName ? "active" : ""
-                    }`}
-                >
-                  <a className="menu-link">
-                    <div
-                      data-i18n="Account"
-                      onClick={() => {
-                        // Remove html classes on submenu click
-                        const html = document.documentElement;
-                        html.classList.remove(
-                          "light-style",
-                          "layout-menu-fixed",
-                          "layout-menu-100vh",
-                          "layout-menu-expanded"
-                        );
-
-                        setSubMenu(
-                          subMenu === menuItem.screenName
-                            ? ""
-                            : menuItem.screenName
-                        );
-
-                        dispatch(setIdPayrollScreen(menuItem.idPayrollScreen));
-                        dispatch(setComponent(menuItem.screenName));
-
-                        if (
-                          screen.screenName.trim().toLowerCase() === "reports"
-                        ) {
-                          const url =
-                            window.location.origin +
-                            window.location.pathname +
-                            "#/reports";
-                          window.open(url, "_blank");
-                        } else {
-                          navigate(
-                            `/dashboard/${menuItem.screenName
-                              .replace(/\s+/g, "-")
-                              .toLowerCase()}`
+              {screen.subMenus
+                .slice()
+                .sort((a, b) => a.screenName.localeCompare(b.screenName))
+                .map((menuItem) => (
+                  <li
+                    key={menuItem.screenName}
+                    className={`menu-item ${subMenu === menuItem.screenName ? "active" : ""}`}
+                  >
+                    <a className="menu-link">
+                      <div
+                        data-i18n="Account"
+                        onClick={() => {
+                          // Remove html classes on submenu click
+                          const html = document.documentElement;
+                          html.classList.remove(
+                            "light-style",
+                            "layout-menu-fixed",
+                            "layout-menu-100vh",
+                            "layout-menu-expanded"
                           );
-                        }
-                      }}
-                    >
-                      {menuItem.screenName}
-                    </div>
-                  </a>
-                </li>
-              ))}
+
+                          setSubMenu(
+                            subMenu === menuItem.screenName
+                              ? ""
+                              : menuItem.screenName
+                          );
+
+                          dispatch(setIdPayrollScreen(menuItem.idPayrollScreen));
+                          dispatch(setComponent(menuItem.screenName));
+
+                          if (
+                            screen.screenName.trim().toLowerCase() === "reports"
+                          ) {
+                            const url =
+                              window.location.origin +
+                              window.location.pathname +
+                              "#/reports";
+                            window.open(url, "_blank");
+                          } else {
+                            navigate(
+                              `/dashboard/${menuItem.screenName
+                                .replace(/\s+/g, "-")
+                                .toLowerCase()}`
+                            );
+                          }
+                        }}
+                      >
+                        {menuItem.screenName}
+                      </div>
+                    </a>
+                  </li>
+                ))}
             </ul>
           </li>
         ))}
