@@ -41,9 +41,9 @@ function LeavePassageApproval({
           setPayslipData(null);
           setLoading(false);
           return;
-        }
-        if (selectedRow.currentStatus?.toLowerCase() === "approved" && leavePassageDetails.data.leavePassageAmount) {
-  setLeavePassageAmount(leavePassageDetails.data.leavePassageAmount);
+        }       
+        if (leavePassageDetails.data) {
+  setLeavePassageAmount(leavePassageDetails.data.leavePassageAmountFromLeavePassageAmount || 0);
 }
 
         const idEmployee = leavePassageDetails.data.idEmployee;
@@ -282,6 +282,15 @@ function LeavePassageApproval({
                 </div>
 
                 <div className="row mt-2">
+                <div className="col-md-6">
+                    <label>Leave Passage Amount:</label>
+                    <input
+                      type="text"
+                      className="form-control text-end"
+                      readOnly
+                      value={formatNumber(leavePassageAmount)}
+                    />
+                  </div>
                   <div className="col-md-6">
                     <label>Income Tax (PAYE) Amount (G$):</label>
                     <input
@@ -291,15 +300,7 @@ function LeavePassageApproval({
                       readOnly
                     />
                   </div>
-                  <div className="col-md-6">
-                    <label>Leave Passage Amount:</label>
-                    <input
-                      type="number"
-                      className="form-control text-end"
-                       value={leavePassageAmount}
-   onChange={(e) => setLeavePassageAmount(e.target.value)}
-                    />
-                  </div>
+                
                 </div>
               </div>
             )}

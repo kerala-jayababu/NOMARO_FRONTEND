@@ -295,7 +295,7 @@ useEffect(() => {
   const handleApprovalWorkflow = async () => {
     const content = salaryDraft.map((item) => ({
       entityTablePrimaryKeyID: item.idEmployeeSalary,
-      entityCode: "EMPSALGEN",
+      entityCode: "SALARYGEN",
       status: "APPROVED",
       idPayrollScreen,
     }));
@@ -325,7 +325,7 @@ useEffect(() => {
 
     const content = salaryDraft.map((item) => ({
       entityTablePrimaryKeyID: item.idEmployeeSalary,
-      entityCode: "EMPSALGEN",
+      entityCode: "SALARYGEN",
       status: "REJECTED",
       rejectReason: rejectReason,
       idPayrollScreen,

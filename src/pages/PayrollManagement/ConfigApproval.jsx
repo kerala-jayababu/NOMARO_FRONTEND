@@ -114,8 +114,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     if (e.target.checked && configApprovalList) {
       const selectableItems = configApprovalList.filter(item => {
         return item.currentStatus?.toLowerCase() !== "approved" &&
-               item.currentStatus?.toLowerCase() !== "rejected" &&
-               item.entityName.toLowerCase() !== "leave passage" &&
+               item.currentStatus?.toLowerCase() !== "rejected" &&           
                loggedInEmployeeId &&
                item.targetIdEmployee &&
                item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
@@ -315,7 +314,6 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                               selectedItems.length === configApprovalList?.filter(item => {
                                 return item.currentStatus?.toLowerCase() !== "approved" &&
                                        item.currentStatus?.toLowerCase() !== "rejected" &&
-                                       item.entityName.toLowerCase() !== "leave passage" &&
                                        loggedInEmployeeId &&
                                        item.targetIdEmployee &&
                                        item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
@@ -340,7 +338,6 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                              disabled={
                                item.currentStatus?.toLowerCase() === "approved" ||
                                item.currentStatus?.toLowerCase() === "rejected" ||
-                               item.entityName.toLowerCase() === "leave passage" ||
                                !loggedInEmployeeId ||
                                !item.targetIdEmployee ||
                                !item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) ||
