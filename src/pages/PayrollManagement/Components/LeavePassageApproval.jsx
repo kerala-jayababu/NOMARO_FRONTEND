@@ -310,12 +310,12 @@ function LeavePassageApproval({
             loggedInEmployeeId && 
             selectedRow.targetIdEmployee && 
             selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
-            selectedRow.actionStatus === null && (
+            selectedRow.actionStatus === null && 
+            selectedRow.currentStatus?.toLowerCase() !== "approved" && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"
-                onClick={handleApproveWorkflow}
-                disabled={!leavePassageAmount}
+                onClick={handleApproveWorkflow}              
               >
                 Approve
               </button>
