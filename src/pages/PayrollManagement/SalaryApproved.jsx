@@ -371,7 +371,7 @@ useEffect(() => {
   };
 
   const handleSelectAll = (e) => {
-    debugger
+    
     const checked = e.target.checked;
       const filtered = salaryGenerationList.filter((x) => x.approvalEnabled);
         setSalaryDraft(checked ? filtered : []);

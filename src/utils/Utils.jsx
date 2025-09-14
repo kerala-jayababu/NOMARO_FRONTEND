@@ -550,8 +550,7 @@ export default class Utils {
   }
 
   static exportToPdf(rows, reportName, orientation, filter, reportColumns) {
-    debugger;
-    try {
+        try {
       const doc = new jsPDF({
         orientation: orientation,
       });

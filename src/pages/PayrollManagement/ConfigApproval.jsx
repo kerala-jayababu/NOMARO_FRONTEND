@@ -136,8 +136,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     });
   };
 
-  const handleApproveWorkflow = async () => {
-    debugger
+  const handleApproveWorkflow = async () => {    
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
         (item) => item.idApprovalWorkFlow === id
@@ -236,8 +235,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     setShowConfirmModal(true);
   };
 
-  const handleSelectEmployee = (item) => {
-    debugger
+  const handleSelectEmployee = (item) => {    
     setEntityName(item.entityName);
     setEntityId(item.entityTablePrimaryKeyID);
     setSelectedRow(item);

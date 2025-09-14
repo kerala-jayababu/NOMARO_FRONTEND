@@ -11,6 +11,7 @@ function EmployeeSalaryConfigApproval({
   setRefresh,
   selectedRow,
 }) {
+  console.log("selectedRow", selectedRow);
   const { employeeSalaryConfig } = useSelector((state) => state.configApproval);
   const { idPayrollScreen } = useSelector((state) => state.auth);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -35,8 +36,7 @@ function EmployeeSalaryConfigApproval({
       },
     ];
 
-    try {
-      debugger
+    try {      
       const res = await SalaryGenerationService.handleApprovalWorkflow(content);
       if (res.error) {
         toast.error(res.error);
@@ -229,7 +229,8 @@ function EmployeeSalaryConfigApproval({
             loggedInEmployeeId && 
             selectedRow.targetIdEmployee && 
             selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
-            selectedRow.actionStatus === null && (
+            selectedRow.actionStatus === null && 
+            selectedRow.currentStatus?.toLowerCase() !== "approved" && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"

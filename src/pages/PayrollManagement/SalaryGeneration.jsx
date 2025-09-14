@@ -325,12 +325,12 @@ function SalaryGeneration() {
     
     try {
       setShowOverlay(true);
-      debugger
+      
       const response = await dispatch(getSalarySlipDetails(item.idEmployeeSalary));
       console.log("response", response);
       if (response.payload && response.payload.success) {
         setSalarySlipData(response.payload.data);
-        debugger
+        
         setSelectedStatus(item.approvalStatus);
         setShowSalarySlipModal(true);
       } else {
