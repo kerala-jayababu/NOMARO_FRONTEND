@@ -1402,9 +1402,9 @@ function SalaryGeneration() {
         <thead>
           <tr>
             <th style={{ width: "25%" }}>Bank Name</th>
-            <th className="text-end" style={{ width: "20%" }}>Account Number</th>
+            <th  style={{ width: "20%" }}>Account Number</th>
             <th  style={{ width: "20%" }}>ABA Routing Number</th>
-            <th  style={{ width: "17.5%" }}>Amount (G$)</th>
+            <th  className="text-end" style={{ width: "17.5%" }}>Amount (G$)</th>
             <th className="text-end" style={{ width: "17.5%" }}>Amount (US$)</th>
           </tr>
         </thead> 

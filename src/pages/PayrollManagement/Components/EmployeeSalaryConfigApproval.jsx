@@ -29,13 +29,14 @@ function EmployeeSalaryConfigApproval({
     const content = [
       {
         entityTablePrimaryKeyID: entityId,
-        entityCode: "EMPSALCONFIG",
+        entityCode: "EMPLSALCONFIG",
         status: "APPROVED",
         idPayrollScreen,
       },
     ];
 
     try {
+      debugger
       const res = await SalaryGenerationService.handleApprovalWorkflow(content);
       if (res.error) {
         toast.error(res.error);
@@ -58,7 +59,7 @@ function EmployeeSalaryConfigApproval({
     const content = [
       {
         entityTablePrimaryKeyID: entityId,
-        entityCode: "EMPSALCONFIG",
+        entityCode: "EMPLSALCONFIG",
         status: "REJECTED",
         idPayrollScreen,
         rejectReason: rejectReason,
@@ -101,7 +102,7 @@ function EmployeeSalaryConfigApproval({
       className="modal d-block"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
     >
-      <div className="modal-dialog modal-lg">
+      <div className="modal-dialog modal-xl">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
@@ -193,7 +194,7 @@ function EmployeeSalaryConfigApproval({
                     <tr key={index}>
                       <td>{item.salaryHeadCode}</td>
                       <td>{item.salaryHeadName}</td>
-                      <td>{item.salaryHeadType}</td>
+                      <td>{item.headType}</td>
                       <td>{getDetails(item)}</td>
                       <td className="text-end">{Number(item.salaryAmount).toFixed(2)}</td>
                     </tr>
