@@ -267,40 +267,31 @@ function LeavePassageApproval({
                   </table>
                 </div>
 
-                <div className="mt-2">
-                  <strong>Net Pay G$:</strong>{" "}
-                  {formatNumber(
-                    payslipData.earnings?.reduce(
-                      (acc, e) => acc + (e.amountG ?? 0),
-                      0
-                    ) -
-                      payslipData.deductions?.reduce(
-                        (acc, d) => acc + (d.amountG ?? 0),
+                <div className="d-flex align-items-center justify-content-between mt-3">
+                  <div className="fw-bold" style={{ fontSize: "1.1rem" }}>
+                    Net Pay G$:
+                    <span className="ms-2">{formatNumber(
+                      payslipData.earnings?.reduce(
+                        (acc, e) => acc + (e.amountG ?? 0),
                         0
-                      )
-                  )}
-                </div>
-
-                <div className="row mt-2">
-                <div className="col-md-6">
-                    <label>Leave Passage Amount:</label>
-                    <input
-                      type="text"
-                      className="form-control text-end"
-                      readOnly
-                      value={formatNumber(leavePassageAmount)}
-                    />
+                      ) -
+                        payslipData.deductions?.reduce(
+                          (acc, d) => acc + (d.amountG ?? 0),
+                          0
+                        )
+                    )}</span>
                   </div>
-                  <div className="col-md-6">
-                    <label>Income Tax (PAYE) Amount (G$):</label>
-                    <input
-                      type="text"
-                      className="form-control text-end"
-                      value={formatNumber(incomeTaxAmount)}
-                      readOnly
-                    />
+                  <div className="d-flex align-items-center">
+                    <label className="mb-0 me-2">Leave Passage Amount G$:</label>
+                    <div className="input-group" style={{ minWidth: "260px" }}>
+                      <input
+                        type="text"
+                        className="form-control text-end"
+                        readOnly
+                        value={formatNumber(leavePassageAmount)}
+                      />
+                    </div>
                   </div>
-                
                 </div>
               </div>
             )}
