@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setComponent } from "../../../redux/reducers/component";
@@ -11,6 +11,19 @@ function Menu({ viewType }) {
   const navigate = useNavigate();
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
+
+  const canView = useMemo(() => {
+    const permMap = new Map();
+    payrollScreen.forEach((screen) => {
+      const parentPerm = screen.validPermissions || screen.permission || "";
+      permMap.set(screen.screenName, parentPerm.includes("V"));
+      (screen.subMenus || []).forEach((s) => {
+        const p = s.validPermissions || s.permission || "";
+        permMap.set(s.screenName, p.includes("V"));
+      });
+    });
+    return (name) => !!permMap.get(name);
+  }, [payrollScreen]);
 
   useEffect(() => {
     dispatch(getAllPayrollScreensAction(viewType));
@@ -97,6 +110,9 @@ function Menu({ viewType }) {
                       <div
                         data-i18n="Account"
                         onClick={() => {
+                          if (!canView(menuItem.screenName)) {
+                            return; // block if no view permission
+                          }
                           // Remove html classes on submenu click
                           const html = document.documentElement;
                           html.classList.remove(
