@@ -48,6 +48,7 @@ import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
 import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
+import Banks from "./pages/MasterData/banks";
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
               <Route path="leave-report" element={<LeaveDetailReport/>} />
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
+              <Route path="banks" element={<Banks/>} />
             </Route>
             <Route path="/reports" element={<Reports />} />
           </Route>

@@ -27,6 +27,7 @@ import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
 import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
 import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
+import Banks from "./pages/MasterData/banks";
 
 export const privateRoutes = [
   {
@@ -140,6 +141,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/leave-passage-amount",
     element: <AttendanceDetails />,
+  },
+  {
+    path: "/dashboard/banks",
+    element: <Banks />,
   },
 ];
 
