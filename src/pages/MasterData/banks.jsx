@@ -67,6 +67,7 @@ function Banks() {
         }
         setBanks(prevBanks => prevBanks.filter(bank => bank.id !== id));
         setShowConfirmModal(false);
+        setSelectedRowId(null);
     };
 
     const handleSubmit = (e) => {
