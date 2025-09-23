@@ -35,6 +35,7 @@ import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
 import LoginWithOtp from "./pages/LoginWithOTP";
 import Reports from "./pages/PayrollManagement/Reports/Reports";
+import PermissionGate from "./components/PermissionGate";
 import { LoaderProvider } from "./components/LoaderContext";
 import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
@@ -99,7 +100,9 @@ function App() {
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
               <Route path="banks" element={<Banks/>} />
             </Route>
-            <Route path="/reports" element={<Reports />} />
+            <Route element={<PermissionGate />}>
+              <Route path="/reports" element={<Reports />} />
+            </Route>
           </Route>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<LoginWithOtp />} />

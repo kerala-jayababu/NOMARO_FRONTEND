@@ -85,7 +85,7 @@ function Reports() {
         }
 
         if (isGuyanaNISReport) {
-          debugger;
+          
           const payrollId = filterParams["@SalaryMonth"];
           let ageGroup = filterParams["@AgeGroup"];
 

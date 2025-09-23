@@ -114,8 +114,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     if (e.target.checked && configApprovalList) {
       const selectableItems = configApprovalList.filter(item => {
         return item.currentStatus?.toLowerCase() !== "approved" &&
-               item.currentStatus?.toLowerCase() !== "rejected" &&
-               item.entityName.toLowerCase() !== "leave passage" &&
+               item.currentStatus?.toLowerCase() !== "rejected" &&           
                loggedInEmployeeId &&
                item.targetIdEmployee &&
                item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
@@ -136,8 +135,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     });
   };
 
-  const handleApproveWorkflow = async () => {
-    debugger
+  const handleApproveWorkflow = async () => {    
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
         (item) => item.idApprovalWorkFlow === id
@@ -236,8 +234,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     setShowConfirmModal(true);
   };
 
-  const handleSelectEmployee = (item) => {
-    debugger
+  const handleSelectEmployee = (item) => {    
     setEntityName(item.entityName);
     setEntityId(item.entityTablePrimaryKeyID);
     setSelectedRow(item);
@@ -317,7 +314,6 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                               selectedItems.length === configApprovalList?.filter(item => {
                                 return item.currentStatus?.toLowerCase() !== "approved" &&
                                        item.currentStatus?.toLowerCase() !== "rejected" &&
-                                       item.entityName.toLowerCase() !== "leave passage" &&
                                        loggedInEmployeeId &&
                                        item.targetIdEmployee &&
                                        item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
@@ -342,7 +338,6 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                              disabled={
                                item.currentStatus?.toLowerCase() === "approved" ||
                                item.currentStatus?.toLowerCase() === "rejected" ||
-                               item.entityName.toLowerCase() === "leave passage" ||
                                !loggedInEmployeeId ||
                                !item.targetIdEmployee ||
                                !item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) ||

@@ -176,6 +176,33 @@ function OvertimeTransactionApproval({
               </tbody>
             </table>
 
+            {Array.isArray(overtimeTransaction?.overtimeConfigs) &&
+              overtimeTransaction.overtimeConfigs.length > 0 && (
+                <table className="table table-bordered mt-3">
+                  <thead className="bg-primary">
+                    <tr>
+                      <th className="text-white">Overtime Configuration</th>
+                      <th className="text-white"></th>
+                      <th className="text-white"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ width: "40%" }}>Row</td>
+                      <td style={{ width: "30%" }}>Standard Hr Rate</td>
+                      <td style={{ width: "30%" }}>Rate Multiplier</td>
+                    </tr>
+                    {overtimeTransaction.overtimeConfigs.map((cfg) => (
+                      <tr key={cfg.idEmployeeOvertimeConfig || `${cfg.dayType}-${cfg.idEmployee || Math.random()}`}>
+                        <td>{cfg.dayType}</td>
+                        <td>{cfg.standardRate}</td>
+                        <td>{cfg.dayRate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
             <table className="table table-bordered mt-3">
               <thead>
                 <tr>

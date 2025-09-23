@@ -41,9 +41,9 @@ function LeavePassageApproval({
           setPayslipData(null);
           setLoading(false);
           return;
-        }
-        if (selectedRow.currentStatus?.toLowerCase() === "approved" && leavePassageDetails.data.leavePassageAmount) {
-  setLeavePassageAmount(leavePassageDetails.data.leavePassageAmount);
+        }       
+        if (leavePassageDetails.data) {
+  setLeavePassageAmount(leavePassageDetails.data.leavePassageAmountFromLeavePassageAmount || 0);
 }
 
         const idEmployee = leavePassageDetails.data.idEmployee;
@@ -267,38 +267,30 @@ function LeavePassageApproval({
                   </table>
                 </div>
 
-                <div className="mt-2">
-                  <strong>Net Pay G$:</strong>{" "}
-                  {formatNumber(
-                    payslipData.earnings?.reduce(
-                      (acc, e) => acc + (e.amountG ?? 0),
-                      0
-                    ) -
-                      payslipData.deductions?.reduce(
-                        (acc, d) => acc + (d.amountG ?? 0),
+                <div className="d-flex align-items-center justify-content-between mt-3">
+                  <div className="fw-bold" style={{ fontSize: "1.1rem" }}>
+                    Net Pay G$:
+                    <span className="ms-2">{formatNumber(
+                      payslipData.earnings?.reduce(
+                        (acc, e) => acc + (e.amountG ?? 0),
                         0
-                      )
-                  )}
-                </div>
-
-                <div className="row mt-2">
-                  <div className="col-md-6">
-                    <label>Income Tax (PAYE) Amount (G$):</label>
-                    <input
-                      type="text"
-                      className="form-control text-end"
-                      value={formatNumber(incomeTaxAmount)}
-                      readOnly
-                    />
+                      ) -
+                        payslipData.deductions?.reduce(
+                          (acc, d) => acc + (d.amountG ?? 0),
+                          0
+                        )
+                    )}</span>
                   </div>
-                  <div className="col-md-6">
-                    <label>Leave Passage Amount:</label>
-                    <input
-                      type="number"
-                      className="form-control text-end"
-                       value={leavePassageAmount}
-   onChange={(e) => setLeavePassageAmount(e.target.value)}
-                    />
+                  <div className="d-flex align-items-center">
+                    <label className="mb-0 me-2">Leave Passage Amount G$:</label>
+                    <div className="input-group" style={{ minWidth: "260px" }}>
+                      <input
+                        type="text"
+                        className="form-control text-end"
+                        readOnly
+                        value={formatNumber(leavePassageAmount)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -309,12 +301,12 @@ function LeavePassageApproval({
             loggedInEmployeeId && 
             selectedRow.targetIdEmployee && 
             selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
-            selectedRow.actionStatus === null && (
+            selectedRow.actionStatus === null && 
+            selectedRow.currentStatus?.toLowerCase() !== "approved" && (
             <div className="modal-footer">
               <button
                 className="btn btn-primary"
-                onClick={handleApproveWorkflow}
-                disabled={!leavePassageAmount}
+                onClick={handleApproveWorkflow}              
               >
                 Approve
               </button>
