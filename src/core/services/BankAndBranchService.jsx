@@ -30,5 +30,15 @@ export default class BankAndBranchService {
             return handleApiSuccessOrError(error,true);   
         }
     }
+
+    static saveAllBanks = async (data) => {
+        try {
+            const response = await API.post("/api/v1/Bank/AddOrUpdateBanks", data);
+            handleApiSuccessOrError(response.data,false);
+            return { error: null, data: response.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error,true);   
+        }
+    }
     
 }
