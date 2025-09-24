@@ -166,7 +166,7 @@ function Banks() {
                                                                     <i className="bx bx-plus"></i>
                                                                 </button>
                                                             )}
-                                                            {(banks.length > 1) && (
+                                                            {/* {(banks.length > 1) && (
                                                                 <button
                                                                     type="button"
                                                                     className="btn btn-outline-danger btn-sm border-0"
@@ -175,7 +175,7 @@ function Banks() {
                                                                 >
                                                                     <i className="bx bx-trash"></i>
                                                                 </button>
-                                                            )}
+                                                            )} */}
                                                         </div>
                                                     </td>
                                                 </tr>
