@@ -28,6 +28,7 @@ import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
 import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import Banks from "./pages/MasterData/banks";
+import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 
 export const privateRoutes = [
   {
@@ -104,7 +105,7 @@ export const privateRoutes = [
   },
   {
     path: "/dashboard/rent-free-quarters",
-    element: <RentFreeQuarters />,
+    element: <RentFreeAllowances />,
   },
   {
     path: "/dashboard/salary-slips",
