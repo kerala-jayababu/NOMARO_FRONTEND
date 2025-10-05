@@ -194,7 +194,7 @@ function RentFreeAllowances() {
     if (isEdit) {
       setLoading(true);
       RentFreeQuarterService.updateRentFreeQuarterAllowance(payload).then(res => {
-        if (res.data.status === 200) {
+        if (res.data.success) {
           setShowModal(false);
           getRentFreeQuarterList();
           resetValues();
@@ -206,7 +206,7 @@ function RentFreeAllowances() {
     } else {
       setLoading(true);
       RentFreeQuarterService.addRentFreeQuarterAllowance(payload).then(res => {
-        if (res.data.status === 200) {
+        if (res.data.success) {
           setShowModal(false);
           getRentFreeQuarterList();
           resetValues();
