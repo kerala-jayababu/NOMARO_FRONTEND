@@ -43,6 +43,7 @@ function LeavePassageAmount() {
     const getLeavePassages = () => {
         setCurrentPage(1);
         showLoader();
+        setOriginalLeavePassages([]);
         LeavePassageService.getLeavePassagesAmountsList(searchText, selFinancialYear).then(res => {
             hideLoader();
             setLeavePassages(res.data.data);
@@ -64,26 +65,36 @@ function LeavePassageAmount() {
     }, [leavePassages, currentPage, rowsPerPage]);
 
     const handleAmountChange = (index, value) => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const actualIndex = startIndex + index;
         const updatedLeavePassages = [...leavePassages];
-        updatedLeavePassages[index].leavePassageAmount = value;
+        updatedLeavePassages[actualIndex].leavePassageAmount = value;
         setLeavePassages(updatedLeavePassages);
 
-        const hasChanges = updatedLeavePassages.some((item, i) =>
-            item.leavePassageAmount !== originalLeavePassages[i]?.leavePassageAmount
-        );
+        const hasChanges = updatedLeavePassages.some((item, i) => {
+            const originalItem = originalLeavePassages[i];
+            const currentVal = String(item.leavePassageAmount || '');
+            const originalVal = String(originalItem?.leavePassageAmount || '');
+            return currentVal !== originalVal;
+        });
         setIsDataChanged(hasChanges);
     }
 
     const saveLeavePassageAmounts = () => {
         const payload = leavePassages
-            .filter((item, index) => {
+            .filter((item) => {
                 const originalItem = originalLeavePassages.find(orig => orig.idEmployee === item.idEmployee);
-                return originalItem && item.leavePassageAmount != originalItem.leavePassageAmount;
+                if (!originalItem) return false;
+
+                const currentVal = String(item.leavePassageAmount || '');
+                const originalVal = String(originalItem.leavePassageAmount || '');
+
+                return currentVal !== originalVal;
             })
             .map(item => ({
                 idLeavePassageAmount: item.idLeavePassageAmount || 0,
                 idEmployee: item.idEmployee,
-                amount: parseFloat(item.leavePassageAmount) || 0,
+                amount: item.leavePassageAmount === '' ? null : (item.leavePassageAmount ? parseFloat(item.leavePassageAmount) : 0),
                 idFinancialYear: parseInt(selFinancialYear)
             }));
 
@@ -176,31 +187,31 @@ function LeavePassageAmount() {
                                     <tbody className="table-border-bottom-0">
                                         {paginatedData?.length > 0 ? (
                                             paginatedData?.map((item, index) => (
-                                                    <tr key={index}>
-                                                        <td>{item?.employeeCode}</td>
-                                                        <td>{item?.employeeName}</td>
-                                                        <td>{item?.departmentName}</td>
-                                                        <td>{item?.designationName}</td>
-                                                        <td>{item?.joiningDate ? moment(item.joiningDate).format("MM/DD/YYYY") : 'N/A'}</td>
-                                                        <td className="text-end">
-                                                            <NumericFormat
-                                                                key={`${item.idEmployee}-${index}`}
-                                                                className="form-control-sm text-end"
-                                                                value={item?.leavePassageAmount || ''}
-                                                                onValueChange={(values) => {
-                                                                    const { value } = values;
-                                                                    handleAmountChange(index, value);
-                                                                }}
-                                                                decimalScale={2}
-                                                                allowNegative={false}
-                                                                thousandSeparator={true}
-                                                                allowLeadingZeros={false}
-                                                                placeholder="Add amount"
-                                                                maxLength={12}
-                                                                style={{ width: '120px' }}
-                                                            />
-                                                        </td>
-                                                    </tr>
+                                                <tr key={index}>
+                                                    <td>{item?.employeeCode}</td>
+                                                    <td>{item?.employeeName}</td>
+                                                    <td>{item?.departmentName}</td>
+                                                    <td>{item?.designationName}</td>
+                                                    <td>{item?.joiningDate ? moment(item.joiningDate).format("MM/DD/YYYY") : 'N/A'}</td>
+                                                    <td className="text-end">
+                                                        <NumericFormat
+                                                            key={`${item.idEmployee}-${index}`}
+                                                            className="form-control-sm text-end"
+                                                            value={item?.leavePassageAmount || ''}
+                                                            onValueChange={(values) => {
+                                                                const { value } = values;
+                                                                handleAmountChange(index, value);
+                                                            }}
+                                                            decimalScale={2}
+                                                            allowNegative={false}
+                                                            thousandSeparator={true}
+                                                            allowLeadingZeros={false}
+                                                            placeholder="Add amount"
+                                                            maxLength={12}
+                                                            style={{ width: '120px' }}
+                                                        />
+                                                    </td>
+                                                </tr>
                                             ))
                                         ) : (
                                             <tr>

@@ -5,6 +5,7 @@ import { Form, Modal } from "react-bootstrap";
 import moment from "moment";
 import RentFreeQuarterService from "../../core/services/RentFreeQuarterService";
 import { NumericFormat } from "react-number-format";
+import { useLoader } from '../../components/LoaderContext';
 
 function RentFreeAllowances() {
   const [employeesListOption, setEmployeesListOption] = useState([]);
@@ -36,6 +37,7 @@ function RentFreeAllowances() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [financialYear, setFinancialYear] = useState('');
+  const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
     getEmployeesList();
@@ -52,11 +54,14 @@ function RentFreeAllowances() {
 
   const getRentFreeQuarterList = () => {
     setLoading(true);
+    showLoader();
     RentFreeQuarterService.getAllRentFreeAllowances(searchText, selFinancialYear).then(res => {
       setRentFreeQuarterList(res.data.data);
       setLoading(false);
+      hideLoader();
     }).catch(err => {
       setLoading(false);
+      hideLoader();
     });
   };
 
@@ -193,38 +198,44 @@ function RentFreeAllowances() {
 
     if (isEdit) {
       setLoading(true);
+      showLoader();
       RentFreeQuarterService.updateRentFreeQuarterAllowance(payload).then(res => {
         if (res.data.success) {
           setShowModal(false);
+          hideLoader();
           getRentFreeQuarterList();
           resetValues();
         }
         setLoading(false);
       }).catch(err => {
         setLoading(false);
+        hideLoader();
       });
     } else {
       setLoading(true);
+      showLoader();
       RentFreeQuarterService.addRentFreeQuarterAllowance(payload).then(res => {
         if (res.data.success) {
           setShowModal(false);
+          hideLoader();
           getRentFreeQuarterList();
           resetValues();
         }
         setLoading(false);
       }).catch(err => {
         setLoading(false);
+        hideLoader();
       });
     }
   };
 
   const getRentFreeQuarterById = (id) => {
-    setLoading(true);
+    showLoader();
     RentFreeQuarterService.getAllRentFreeAllowanceById(id).then(res => {
-      setLoading(false);
+      hideLoader();
       handleEdit(res.data.data);
     }).catch(err => {
-      setLoading(false);
+      hideLoader();
     });
   };
 
@@ -323,7 +334,7 @@ function RentFreeAllowances() {
                       <th></th>
                     </tr>
                   </thead>
-                  {!loading && rentFreeQuarterList.length > 0 &&
+                  {rentFreeQuarterList.length > 0 &&
                     <tbody>
                       {rentFreeQuarterList.map(item => (
                         <tr key={item.idRentFreeQuarterAllowance}>
@@ -374,18 +385,8 @@ function RentFreeAllowances() {
                       ))}
                     </tbody>
                   }
-                  {loading &&
-                    <tbody>
-                      <tr>
-                        <td colSpan="10" className="text-center">
-                          <div className="Nodatafound_box">
-                            <h6> Loading...</h6>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  }
-                  {!loading && rentFreeQuarterList.length === 0 && (
+                  
+                  {rentFreeQuarterList.length === 0 && (
                     <tbody>
                       <tr>
                         <td colSpan="10" className="text-center">
@@ -518,7 +519,7 @@ function RentFreeAllowances() {
 
                       <div className="row mb-3">
                         <div className="col-md-6">
-                          <label className="form-label mb-1">Annual RFQ Allowance*</label>
+                          <label className="form-label mb-1">Annual RFQ Allowance</label>
                           <NumericFormat
                             className="form-control"
                             value={formSubmitData.annualRFQAllowance}
@@ -530,7 +531,7 @@ function RentFreeAllowances() {
                           />
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label mb-1">Tax Free Allowance</label>
+                          <label className="form-label mb-1">Tax Free Allowance (1/3)</label>
                           <NumericFormat
                             className="form-control"
                             value={formSubmitData.taxFreeAllowance}
@@ -555,7 +556,7 @@ function RentFreeAllowances() {
                           />
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label mb-1">Tax Amount</label>
+                          <label className="form-label mb-1">Tax Amount ({isEdit ? formSubmitData.taxRate : rentFreeQuarterTaxPercentage?.parameterValue})%</label>
                           <NumericFormat
                             className="form-control"
                             value={formSubmitData.taxAmount}
@@ -566,9 +567,10 @@ function RentFreeAllowances() {
                           />
                         </div>
                       </div>
-
+                      
                       <div className="row mb-3">
-                        <div className="col-12">
+                        <div className="col-3"></div>
+                        <div className="col-6 text-center">
                           <label className="form-label mb-1">Net RFQ Allowance</label>
                           <NumericFormat
                             className="form-control text-center fw-bold"
@@ -579,6 +581,7 @@ function RentFreeAllowances() {
                             disabled
                           />
                         </div>
+                        <div className="col-3"></div>
                       </div>
                     </div>
 
