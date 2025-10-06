@@ -49,7 +49,6 @@ const SalaryHeads = lazy(() => import("../../MasterData/salaryHeads"));
 
 function Content() {
   const { componentName } = useSelector((state) => state.component);
-  console.log(componentName, "componentName");
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {(() => {
