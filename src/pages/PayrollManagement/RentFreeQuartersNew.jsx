@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Select from "react-select";
 import CommonService from "../../core/services/CommonService";
 import { Form, Modal } from "react-bootstrap";
@@ -6,6 +6,7 @@ import moment from "moment";
 import RentFreeQuarterService from "../../core/services/RentFreeQuarterService";
 import { NumericFormat } from "react-number-format";
 import { useLoader } from '../../components/LoaderContext';
+import Pagination from "../../components/pagination";
 
 function RentFreeAllowances() {
   const [employeesListOption, setEmployeesListOption] = useState([]);
@@ -38,6 +39,9 @@ function RentFreeAllowances() {
   const [showModal, setShowModal] = useState(false);
   const [financialYear, setFinancialYear] = useState('');
   const { showLoader, hideLoader } = useLoader();
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(rentFreeQuarterList.length / rowsPerPage);
 
   useEffect(() => {
     getEmployeesList();
@@ -278,6 +282,14 @@ function RentFreeAllowances() {
     getRentFreeQuarterList();
   };
 
+  const handlePageChange = (page) => setCurrentPage(page);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return rentFreeQuarterList.slice(startIndex, endIndex);
+  }, [rentFreeQuarterList, currentPage, rowsPerPage]);
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -334,9 +346,10 @@ function RentFreeAllowances() {
                       <th></th>
                     </tr>
                   </thead>
-                  {rentFreeQuarterList.length > 0 &&
-                    <tbody>
-                      {rentFreeQuarterList.map(item => (
+
+                  <tbody className="table-border-bottom-0">
+                    {paginatedData?.length > 0 ? (
+                      paginatedData.map(item => (
                         <tr key={item.idRentFreeQuarterAllowance}>
                           <td>{item.employeeCode}</td>
                           <td>{item.employeeName}</td>
@@ -382,12 +395,8 @@ function RentFreeAllowances() {
                             </button>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  }
-                  
-                  {rentFreeQuarterList.length === 0 && (
-                    <tbody>
+                      ))
+                    ) : (
                       <tr>
                         <td colSpan="10" className="text-center">
                           <div className="Nodatafound_box">
@@ -395,10 +404,19 @@ function RentFreeAllowances() {
                           </div>
                         </td>
                       </tr>
-                    </tbody>
-                  )}
+                    )}
+                  </tbody>
                 </table>
               </div>
+              {rentFreeQuarterList.length > 0 && (
+                <div className="text-end pt-2">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
             </div>
 
             <Modal
@@ -567,7 +585,7 @@ function RentFreeAllowances() {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="row mb-3">
                         <div className="col-3"></div>
                         <div className="col-6 text-center">
