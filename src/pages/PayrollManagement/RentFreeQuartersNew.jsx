@@ -330,7 +330,7 @@ function RentFreeAllowances() {
               </div>
             </div>
             <div className="card-body">
-              <div className="custom-table-wrapper">
+              <div className="table-responsive">
                 <table className="table table-sm">
                   <thead>
                     <tr>
@@ -354,7 +354,7 @@ function RentFreeAllowances() {
                           <td>{item.employeeCode}</td>
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
-                          <td>{item.designationName}</td>
+                          <td>{item?.designationName != null ? (item?.designationName.length < 20 ? item?.designationName : (`${item?.designationName.substring(0, 20)}...`)) : 'NA'}</td>
                           <td className="text-end">
                             {new Intl.NumberFormat("en-US", {
                               minimumFractionDigits: 2,
