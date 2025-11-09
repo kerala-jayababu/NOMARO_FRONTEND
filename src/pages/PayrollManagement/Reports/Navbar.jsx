@@ -1,15 +1,31 @@
 import { useEffect, useState } from "react";
-import logo from "../../../../public/assets/logo.png";
+import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
+import CommonService from "../../../core/services/CommonService";
 
 function Navbar() {
+  const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
+  const [logo, setLogo] = useState("/assets/logo.png");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
 
   useEffect(() => {
     if (userData?.attachmentBlob) {
       setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
     }
+
+    // Fetch logo from system parameters
+    CommonService.getSystemParameters().then(res => {
+      if (res.data && res.data.data) {
+        const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
+        if (productLogo && productLogo.parameterbinaryvalue) {
+          setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
+        }
+      }
+    }).catch(err => {
+      // Keep default logo if API fails
+      console.error("Failed to fetch logo:", err);
+    });
   }, []);
   
   const logout = () => {
@@ -28,6 +44,7 @@ function Navbar() {
           width={200}
           height={62}
           className="float-start-custom"
+          alt="Logo"
         />
       </div>
 
@@ -37,10 +54,16 @@ function Navbar() {
       >
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">Payroll Management</h5>
+            <h5 className="m-0 fw-bold">{productName}</h5>
           </div>
         </div>
         <ul className="navbar-nav flex-row align-items-center ms-auto">
+          {/* Company Name */}
+          {companyName && (
+            <li className="nav-item me-3 me-xl-2">
+              <span className="nav-link text-white">{companyName}</span>
+            </li>
+          )}
           <li className="nav-item navbar-dropdown dropdown-user dropdown">
             <a
               className="nav-link dropdown-toggle hide-arrow"

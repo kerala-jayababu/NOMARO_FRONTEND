@@ -1,10 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signIn } from "../redux/api/authAPI";
 import secureLocalStorage from "react-secure-storage";
+import CommonService from "../core/services/CommonService";
  
 function Login() {
   const navigate = useNavigate();
+  const [logo, setLogo] = useState("/assets/logo.png");
 
    
   const handleSignIn = async () => {
@@ -37,6 +39,19 @@ function Login() {
     if(secureLocalStorage.getItem("user")) {
       navigate("/dashboard");
     }
+
+    // Fetch logo from system parameters
+    CommonService.getSystemParameters().then(res => {
+      if (res.data && res.data.data) {
+        const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
+        if (productLogo && productLogo.parameterBinaryValue) {
+          setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
+        }
+      }
+    }).catch(err => {
+      // Keep default logo if API fails
+      console.error("Failed to fetch logo:", err);
+    });
   },[])
  
   return (
@@ -48,7 +63,7 @@ function Login() {
               <div className="app-brand justify-content-center">
                 <a href="index.html" className="app-brand-link gap-2">
                   <span className="app-brand-logo demo">
-                    <img src="assets/logo.png" alt="Logo" />
+                    <img src={logo} alt="Logo" />
                   </span>
                 </a>
               </div>

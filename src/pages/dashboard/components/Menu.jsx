@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
+import CommonService from "../../../core/services/CommonService";
 
 function Menu({ viewType }) {
   const dispatch = useDispatch();
@@ -11,6 +12,7 @@ function Menu({ viewType }) {
   const navigate = useNavigate();
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
+  const [logo, setLogo] = useState("/assets/logo.png");
 
   const canView = useMemo(() => {
     const permMap = new Map();
@@ -51,6 +53,20 @@ function Menu({ viewType }) {
       toggleBtn.addEventListener("click", removeHtmlClasses);
     }
 
+    // Fetch logo from system parameters
+    CommonService.getSystemParameters().then(res => {
+      if (res.data && res.data.data) {
+        debugger;
+        const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
+        if (productLogo && productLogo.parameterBinaryValue) {
+          setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
+        }
+      }
+    }).catch(err => {
+      // Keep default logo if API fails
+      console.error("Failed to fetch logo:", err);
+    });
+
     // Cleanup event listener
     return () => {
       if (toggleBtn) {
@@ -67,7 +83,7 @@ function Menu({ viewType }) {
       <div className="app-brand demo">
         <a href="#" className="app-brand-link">
           <span className="app-brand-logo demo">
-            <img src="/assets/logo.png" />
+            <img src={logo} alt="Logo" />
           </span>
         </a>
         <a
