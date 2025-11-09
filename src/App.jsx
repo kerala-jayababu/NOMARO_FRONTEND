@@ -49,6 +49,8 @@ import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
 import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
+import Banks from "./pages/MasterData/banks";
+import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 
 function App() {
   return (
@@ -79,7 +81,7 @@ function App() {
               <Route path="currency-conversion" element={<CurrencyConversion />} />
               <Route path="notification-types" element={<NotificationConfig />} />
               <Route path='bank-branches' element={<BankAndBranches />} />
-              <Route path='rent-free-quarters' element={<RentFreeQuarters />} />
+              <Route path='rent-free-quarters' element={<RentFreeAllowances />} />
               <Route path='salary-slips' element={<ViewPaySlips />} />
               <Route path='pay-slips' element={<SalarySlipsView />} />
               <Route path='salary-report' element={<SalaryReport />} />
@@ -97,6 +99,7 @@ function App() {
               <Route path="leave-report" element={<LeaveDetailReport/>} />
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
+              <Route path="banks" element={<Banks/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

@@ -659,4 +659,8 @@ export default class Utils {
     const lastday = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     return lastday.getDate();
   }
+
+  static generateRandomId = () => {
+    return Math.floor(Math.random() * 1000000) * 1; 
+  };
 }
