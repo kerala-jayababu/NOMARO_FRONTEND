@@ -55,8 +55,7 @@ function Menu({ viewType }) {
 
     // Fetch logo from system parameters
     CommonService.getSystemParameters().then(res => {
-      if (res.data && res.data.data) {
-        debugger;
+      if (res.data && res.data.data) {        
         const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
         if (productLogo && productLogo.parameterBinaryValue) {
           setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
