@@ -16,6 +16,8 @@ function Navbar({ view }) {
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const { theme, changeTheme } = useTheme();
+  const [productName, setProductName] = useState(currentAuth == 'PAYROLL' ? '' : 'Employee Self Portal');
+  const [companyName, setCompanyName] = useState("");
 
   useEffect(() => {
     const fetchNotifications = () => {
@@ -31,6 +33,26 @@ function Navbar({ view }) {
     }, 60000);
   
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Fetch ProductName and CompanyName from system parameters
+    CommonService.getSystemParameters().then(res => {
+      if (res.data && res.data.data) {
+        const productNameParam = res.data.data.find(item => item.parameterName === "ProductName");
+        if (productNameParam && productNameParam.parameterValue) {
+          setProductName(productNameParam.parameterValue);
+        }
+
+        const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
+        if (companyNameParam && companyNameParam.parameterValue) {
+          setCompanyName(companyNameParam.parameterValue);
+        }
+      }
+    }).catch(err => {
+      // Keep default values if API fails
+      console.error("Failed to fetch system parameters:", err);
+    });
   }, []);
   
   useEffect(() => {
@@ -111,7 +133,7 @@ function Navbar({ view }) {
       <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">{currentAuth == 'PAYROLL' ? 'Payroll Management' : 'Employee Self Portal'}</h5>
+            <h5 className="m-0 fw-bold">{productName}</h5>
           </div>
         </div>
 
@@ -156,6 +178,12 @@ function Navbar({ view }) {
             </ul>
           </li>
 
+          {/* Company Name */}
+          {companyName && (
+            <li className="nav-item me-3 me-xl-2">
+              <span className="nav-link text-white">{companyName}</span>
+            </li>
+          )}
           {/* Notification Bell */}
           <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
             <a
