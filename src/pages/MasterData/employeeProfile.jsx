@@ -5,11 +5,10 @@ import Grid from "../../components/grid";
 import Pagination from "../../components/pagination";
 import StatusBadge from "../../components/statusBadge";
 import Modal from "../../components/modal";
-import { Modal as BootstrapModal, Form } from "react-bootstrap";
+import { Modal as BootstrapModal } from "react-bootstrap";
 import Table from "../../components/table";
 import Label from "../../components/Label";
 import { DeleteIcon, AddIcon } from "../../components/icons";
-import Dropdown from "../../components/Dropdown";
 import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
 import { getBudgetCodeById } from "../../redux/reducers/budgetCode";
 import { getEmployeeBankAccountsByID } from "../../redux/reducers/employeeProfiles";
@@ -20,11 +19,13 @@ import { updateEmployeeDetails } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeOvertimeConfigsByID } from "../../redux/reducers/employeeProfiles";
 import { manageEmployeeOvertimeConfigs } from "../../redux/reducers/employeeProfiles";
 import { getEmployeeProfileByID } from "../../redux/reducers/getAllEmployeeProfiles";
-import Input from "../../components/input";
 import secureLocalStorage from "react-secure-storage";
 export const BASE_URL = import.meta.env.VITE_API_URL;
 import { toast } from "react-toastify";
 import moment from "moment";
+import CommonService from "../../core/services/CommonService";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
@@ -65,6 +66,44 @@ const EmployeeProfile = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [branchesPerBank, setBranchesPerBank] = useState({});
   const [attachmentFile, setAttachmentFile] = useState(null);
+  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
+  const [isSubmittingEmployee, setIsSubmittingEmployee] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [employeeFormData, setEmployeeFormData] = useState({
+    employeeCode: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    gender: "",
+    idNumber: "",
+    taxIdNumber: "",
+    idDepartment: "",
+    idDesignation: "",
+    emailID: "",
+    phoneNumber1: "",
+    phoneNumber2: "",
+    whatsAppNumber: "",
+    address1: "",
+    address2: "",
+    address3: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    dateOfBirth: null,
+    joiningDate: null,
+    reportingTo: "",
+    currentStatus: "Working",
+    idBudgetCode: "",
+    childrenCount: 0,
+    overTimeAllowedStatus: false,
+    employeePhoto: null,
+    lastWorkingDay: null,
+  });
+  const [employeeFormErrors, setEmployeeFormErrors] = useState({});
+  const [departments, setDepartments] = useState([]);
+  const [designations, setDesignations] = useState([]);
+  const [reportingToOptions, setReportingToOptions] = useState([]);
+  const [employeePhotoPreview, setEmployeePhotoPreview] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
       type: "",
@@ -104,7 +143,19 @@ const EmployeeProfile = () => {
 
   useEffect(() => {
     dispatch(getAllEmployeeDetails());
+    loadDepartmentsAndDesignations();
+    loadReportingToOptions();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (showAddEmployeeModal) {
+      const modal = document.getElementById("addEmployeeModal");
+      if (modal) {
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+      }
+    }
+  }, [showAddEmployeeModal]);
 
   useEffect(() => {
     const fetchOvertimeTypes = async () => {
@@ -114,6 +165,67 @@ const EmployeeProfile = () => {
 
     fetchOvertimeTypes();
   }, []);
+
+  const loadDepartmentsAndDesignations = async () => {
+    try {
+      const [deptRes, desigRes] = await Promise.all([
+        CommonService.getDepartmentsList(),
+        CommonService.getDesignationsList(),
+      ]);
+      if (deptRes.data?.data) {
+        setDepartments(deptRes.data.data);
+      }
+      if (desigRes.data?.data) {
+        setDesignations(desigRes.data.data);
+      }
+    } catch (error) {
+      console.error("Error loading departments/designations:", error);
+    }
+  };
+
+  const loadReportingToOptions = async () => {
+    try {
+      const res = await CommonService.getEmployeeList();
+      if (res.data?.data) {
+        const options = res.data.data.map((emp) => ({
+          value: emp.idEmployee.toString(),
+          label: emp.fullName,
+        }));
+        setReportingToOptions(options);
+      }
+    } catch (error) {
+      console.error("Error loading reporting to options:", error);
+    }
+  };
+
+  const departmentOptions = useMemo(
+    () =>
+      departments.map((dept) => ({
+        value: dept.idDepartment.toString(),
+        label: dept.departmentName,
+      })),
+    [departments]
+  );
+
+  const designationOptions = useMemo(
+    () =>
+      designations.map((desig) => ({
+        value: desig.idDesignation.toString(),
+        label: desig.designationName,
+      })),
+    [designations]
+  );
+
+  const genderOptions = [
+    { value: "Male", label: "Male" },
+    { value: "Female", label: "Female" },
+    { value: "Other", label: "Other" },
+  ];
+
+  const statusOptions = [
+    { value: "Working", label: "Working" },
+    { value: "Not Working", label: "Not Working" },
+  ];
 
   const [editFileName, setEditFileName] = useState(null);
   const handlePageChange = (page) => setCurrentPage(page);
@@ -1239,6 +1351,170 @@ const EmployeeProfile = () => {
     window.URL.revokeObjectURL(url);
   }
 
+  const handleEmployeeInputChange = (field, value) => {
+    setEmployeeFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    // Clear error for this field
+    if (employeeFormErrors[field]) {
+      setEmployeeFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleEmployeePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEmployeePhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Convert to base64 for API
+      const base64Reader = new FileReader();
+      base64Reader.onloadend = () => {
+        // Remove data:image/...;base64, prefix
+        const base64String = base64Reader.result.split(',')[1];
+        handleEmployeeInputChange("employeePhoto", base64String);
+      };
+      base64Reader.readAsDataURL(file);
+    }
+  };
+
+  const validateEmployeeForm = () => {
+    const errors = {};
+    if (!employeeFormData.employeeCode) errors.employeeCode = "Employee Code is required";
+    if (!employeeFormData.firstName) errors.firstName = "First Name is required";
+    if (!employeeFormData.lastName) errors.lastName = "Last Name is required";
+    if (!employeeFormData.gender) errors.gender = "Gender is required";
+    if (!employeeFormData.idDepartment) errors.idDepartment = "Department is required";
+    if (!employeeFormData.idDesignation) errors.idDesignation = "Designation is required";
+    if (!employeeFormData.joiningDate) errors.joiningDate = "Joining Date is required";
+    if (!employeeFormData.currentStatus) errors.currentStatus = "Current Status is required";
+
+    if (employeeFormData.emailID && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)) {
+      errors.emailID = "Invalid email format";
+    }
+
+    setEmployeeFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const resetEmployeeForm = () => {
+    setEmployeeFormData({
+      employeeCode: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      gender: "",
+      idNumber: "",
+      taxIdNumber: "",
+      idDepartment: "",
+      idDesignation: "",
+      emailID: "",
+      phoneNumber1: "",
+      phoneNumber2: "",
+      whatsAppNumber: "",
+      address1: "",
+      address2: "",
+      address3: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      dateOfBirth: null,
+      joiningDate: null,
+      reportingTo: "",
+      currentStatus: "Working",
+      idBudgetCode: "",
+      childrenCount: 0,
+      overTimeAllowedStatus: false,
+      employeePhoto: null,
+      lastWorkingDay: null,
+    });
+    setEmployeeFormErrors({});
+    setEditingEmployeeId(null);
+    setEmployeePhotoPreview(null);
+  };
+
+  const handleEmployeeFormSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateEmployeeForm()) {
+      return false;
+    }
+
+    try {
+      setIsSubmittingEmployee(true);
+
+      const payload = {
+        ...employeeFormData,
+        idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
+        idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
+        reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : null,
+        idBudgetCode: employeeFormData.idBudgetCode ? parseInt(employeeFormData.idBudgetCode) : null,
+        childrenCount: parseInt(employeeFormData.childrenCount) || 0,
+        dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format('YYYY-MM-DD') : null,
+        joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format('YYYY-MM-DD') : null,
+        lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format('YYYY-MM-DD') : null,
+      };
+
+      if (editingEmployeeId) {
+        payload.idEmployee = editingEmployeeId;
+      }
+
+      const result = await CommonService.saveEmployee(payload);
+
+      if (result.error) {
+        toast.error(result.error.message || "Failed to save employee");
+        return false;
+      }
+
+      if (result.data?.success) {
+        toast.success(editingEmployeeId ? "Employee updated successfully" : "Employee added successfully");
+        resetEmployeeForm();
+        dispatch(getAllEmployeeDetails());
+        const modal = document.getElementById("addEmployeeModal");
+        if (modal) {
+          const bsModal = bootstrap.Modal.getInstance(modal);
+          if (bsModal) bsModal.hide();
+        }
+        return true;
+      } else {
+        toast.error(result.data?.message || "Failed to save employee");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error saving employee:", error);
+      toast.error("An error occurred while saving employee");
+      return false;
+    } finally {
+      setIsSubmittingEmployee(false);
+    }
+  };
+
+  const handleEmployeeModalClose = () => {
+    resetEmployeeForm();
+    setShowAddEmployeeModal(false);
+  };
+
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="row">
@@ -1247,6 +1523,16 @@ const EmployeeProfile = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Profile View</h5>
               <div className="list_menu">
+                <button
+                  className="btn btn-primary btn-sm px-4 me-2"
+                  onClick={() => {
+                    setEditingEmployeeId(null);
+                    resetEmployeeForm();
+                    setShowAddEmployeeModal(true);
+                  }}
+                >
+                  Add New
+                </button>
                 <div className="list_searchbox">
                   <input
                     type="search"
@@ -1579,14 +1865,19 @@ const EmployeeProfile = () => {
                 <React.Fragment key={index}>
                   <tr className="custom-row">
                     <td className="bank-name">
-                      <Dropdown
-                        options={[...bankOptions]}
+                      <select
+                        className="form-select"
                         name="bankName"
                         value={bank.selectedBank}
-                        onChange={(e) =>
-                          handleBankChange(e.target.value, index)
-                        }
-                      />
+                        onChange={(e) => handleBankChange(e.target.value, index)}
+                      >
+                        <option value="">Select</option>
+                        {bankOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
 
                     <td className="routing-number">
@@ -1594,14 +1885,22 @@ const EmployeeProfile = () => {
                         `Bank index: ${index}, Selected Bank: ${bank.selectedBranch}, Branches:`,
                         branchesPerBank[bank.selectedBranch]
                       )} */}
-                      <Dropdown
-                        options={bank.selectedBank ? (branchesPerBank[bank.selectedBank] || []) : []}
+                      <select
+                        className="form-select"
                         name="branchName"
                         value={bank.selectedBranch}
-                        onChange={(e) =>
-                          handleBranchChange(e.target.value, index)
-                        }
-                      />
+                        onChange={(e) => handleBranchChange(e.target.value, index)}
+                      >
+                        <option value="">Select</option>
+                        {(bank.selectedBank
+                          ? branchesPerBank[bank.selectedBank] || []
+                          : []
+                        ).map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
 
                     <td className="account-number">
@@ -1642,17 +1941,16 @@ const EmployeeProfile = () => {
                     </td>
 
                     <td className="currency">
-                      <Dropdown
-                        options={[
-                          { value: "GYD", label: "GYD" },
-                          { value: "USD", label: "USD" },
-                        ]}
-                        name="currency"
+                      <select
+                        className="form-select"
+                        name="currencyCode"
                         value={bank.currencyCode}
-                        onChange={(e) =>
-                          handleInputChange(e, index, "currencyCode")
-                        }
-                      />
+                        onChange={(e) => handleInputChange(e, index, "currencyCode")}
+                      >
+                        <option value="">Select</option>
+                        <option value="GYD">GYD</option>
+                        <option value="USD">USD</option>
+                      </select>
                     </td>
 
                     <td>
@@ -1753,14 +2051,21 @@ const EmployeeProfile = () => {
                   <React.Fragment key={index}>
                     <tr>
                       <td className="col-md-3" style={{ padding: "2px 2px" }} >
-                        <Dropdown
-                          options={overtimeOptions}
+                        <select
+                          className="form-select"
                           name="overtimeDays"
                           value={detail.type}
                           onChange={(e) =>
                             handleOvertimeChange(index, "type", e.target.value)
                           }
-                        />
+                        >
+                          <option value="">Select</option>
+                          {overtimeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="col-md-3" style={{ padding: "2px 2px" }} >
                         <input
@@ -1849,9 +2154,12 @@ const EmployeeProfile = () => {
               <strong>Add Budget Code</strong>
             </h6>
 
-            <Dropdown
-              label="Budget Code"
-              options={[...budgetCodeOptions]}
+            <label className="form-label mb-1" htmlFor="budgetCodeSelect">
+              Budget Code
+            </label>
+            <select
+              id="budgetCodeSelect"
+              className="form-select"
               name="budgetCode"
               value={selectedBudgetCode}
               onChange={(e) => {
@@ -1864,16 +2172,27 @@ const EmployeeProfile = () => {
                   setBudgetCodeLabel(selectedOption.label);
                 }
               }}
-            />
+            >
+              <option value="">Select Budget Code</option>
+              {budgetCodeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
 
             <div className="row d-flex align-items-end">
               {/* Child Count Input */}
               <div className="col-md-4">
-                <Input
+                <label className="form-label mb-1" htmlFor="childCount">
+                  Child Count
+                </label>
+                <input
                   type="text"
+                  id="childCount"
                   name="childCount"
-                  label="Child Count"
+                  className="form-control"
                   value={childCount}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -1964,6 +2283,491 @@ const EmployeeProfile = () => {
           </div>
         </BootstrapModal.Body>
       </BootstrapModal>
+
+      {/* Add/Update Employee Modal */}
+      <Modal
+        id="addEmployeeModal"
+        title={editingEmployeeId ? "Update Employee Profile" : "Add Employee Profile"}
+        isOpen={showAddEmployeeModal}
+        onClose={handleEmployeeModalClose}
+        onSubmit={handleEmployeeFormSubmit}
+        isSubmitting={isSubmittingEmployee}
+        onReset={resetEmployeeForm}
+      >
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1" htmlFor="employeeCode">
+              Employee Code *
+            </label>
+            <input
+              id="employeeCode"
+              name="employeeCode"
+              type="text"
+              className={`form-control${employeeFormErrors.employeeCode ? " is-invalid" : ""}`}
+              value={employeeFormData.employeeCode}
+              onChange={(e) => handleEmployeeInputChange("employeeCode", e.target.value)}
+            />
+            {employeeFormErrors.employeeCode && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.employeeCode}
+              </div>
+            )}
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1">Department *</label>
+            <select
+              className={`form-select${employeeFormErrors.idDepartment ? " is-invalid" : ""}`}
+              name="idDepartment"
+              value={employeeFormData.idDepartment}
+              onChange={(e) => handleEmployeeInputChange("idDepartment", e.target.value)}
+            >
+              <option value="">Select Department</option>
+              {departmentOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {employeeFormErrors.idDepartment && (
+              <div className="text-danger">{employeeFormErrors.idDepartment}</div>
+            )}
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1">Designation *</label>
+            <select
+              className={`form-select${employeeFormErrors.idDesignation ? " is-invalid" : ""}`}
+              name="idDesignation"
+              value={employeeFormData.idDesignation}
+              onChange={(e) => handleEmployeeInputChange("idDesignation", e.target.value)}
+            >
+              <option value="">Select Designation</option>
+              {designationOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {employeeFormErrors.idDesignation && (
+              <div className="text-danger">{employeeFormErrors.idDesignation}</div>
+            )}
+          </div>
+
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="firstName">
+              First Name *
+            </label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              className={`form-control${employeeFormErrors.firstName ? " is-invalid" : ""}`}
+              value={employeeFormData.firstName}
+              onChange={(e) => handleEmployeeInputChange("firstName", e.target.value)}
+            />
+            {employeeFormErrors.firstName && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.firstName}
+              </div>
+            )}
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="middleName">
+              Middle Name
+            </label>
+            <input
+              id="middleName"
+              name="middleName"
+              type="text"
+              className="form-control"
+              value={employeeFormData.middleName}
+              onChange={(e) => handleEmployeeInputChange("middleName", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="lastName">
+              Last Name *
+            </label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              className={`form-control${employeeFormErrors.lastName ? " is-invalid" : ""}`}
+              value={employeeFormData.lastName}
+              onChange={(e) => handleEmployeeInputChange("lastName", e.target.value)}
+            />
+            {employeeFormErrors.lastName && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.lastName}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2">Gender *</label>
+            <div>
+              {genderOptions.map((option) => (
+                <div className="form-check form-check-inline" key={option.value}>
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="gender"
+                    id={`gender-${option.value}`}
+                    value={option.value}
+                    checked={employeeFormData.gender === option.value}
+                    onChange={(e) => handleEmployeeInputChange("gender", e.target.value)}
+                  />
+            <label className="form-check-label" htmlFor={`gender-${option.value}`}>
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            {employeeFormErrors.gender && (
+              <div className="text-danger">{employeeFormErrors.gender}</div>
+            )}
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2">Date of Birth</label>
+            <DatePicker
+              selected={
+                employeeFormData.dateOfBirth
+                  ? moment(employeeFormData.dateOfBirth, "YYYY-MM-DD").toDate()
+                  : null
+              }
+              onChange={(date) => handleEmployeeInputChange("dateOfBirth", date)}
+              dateFormat="MM/dd/yyyy"
+              className="form-control"
+              maxDate={new Date()}
+              showYearDropdown
+              showMonthDropdown
+              dropdownMode="select"
+              wrapperClassName="d-block"
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2">Joining Date *</label>
+            <DatePicker
+              selected={
+                employeeFormData.joiningDate
+                  ? moment(employeeFormData.joiningDate, "YYYY-MM-DD").toDate()
+                  : null
+              }
+              onChange={(date) => handleEmployeeInputChange("joiningDate", date)}
+              dateFormat="MM/dd/yyyy"
+              className="form-control"
+              showYearDropdown
+              showMonthDropdown
+              dropdownMode="select"
+              wrapperClassName="d-block"
+            />
+            {employeeFormErrors.joiningDate && (
+              <div className="text-danger">{employeeFormErrors.joiningDate}</div>
+            )}
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="emailID">
+              Email ID
+            </label>
+            <input
+              id="emailID"
+              name="emailID"
+              type="email"
+              className={`form-control${employeeFormErrors.emailID ? " is-invalid" : ""}`}
+              value={employeeFormData.emailID}
+              onChange={(e) => handleEmployeeInputChange("emailID", e.target.value)}
+            />
+            {employeeFormErrors.emailID && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.emailID}
+              </div>
+            )}
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="phoneNumber1">
+              Phone Number 1
+            </label>
+            <input
+              id="phoneNumber1"
+              name="phoneNumber1"
+              type="text"
+              className="form-control"
+              value={employeeFormData.phoneNumber1}
+              onChange={(e) => handleEmployeeInputChange("phoneNumber1", e.target.value)}
+            />
+          </div>
+          {/* <div className="col-md-4">
+            <Input
+              label="Phone Number 2"
+              name="phoneNumber2"
+              value={employeeFormData.phoneNumber2}
+              onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
+            />
+          </div> */}
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="whatsAppNumber">
+              WhatsApp Number
+            </label>
+            <input
+              id="whatsAppNumber"
+              name="whatsAppNumber"
+              type="text"
+              className="form-control"
+              value={employeeFormData.whatsAppNumber}
+              onChange={(e) => handleEmployeeInputChange("whatsAppNumber", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="row">
+
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="address1">
+              Address 1
+            </label>
+            <input
+              id="address1"
+              name="address1"
+              type="text"
+              className="form-control"
+              value={employeeFormData.address1}
+              onChange={(e) => handleEmployeeInputChange("address1", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="address2">
+              Address 2
+            </label>
+            <input
+              id="address2"
+              name="address2"
+              type="text"
+              className="form-control"
+              value={employeeFormData.address2}
+              onChange={(e) => handleEmployeeInputChange("address2", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="address3">
+              Address 3
+            </label>
+            <input
+              id="address3"
+              name="address3"
+              type="text"
+              className="form-control"
+              value={employeeFormData.address3}
+              onChange={(e) => handleEmployeeInputChange("address3", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="city">
+              City
+            </label>
+            <input
+              id="city"
+              name="city"
+              type="text"
+              className="form-control"
+              value={employeeFormData.city}
+              onChange={(e) => handleEmployeeInputChange("city", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="state">
+              State
+            </label>
+            <input
+              id="state"
+              name="state"
+              type="text"
+              className="form-control"
+              value={employeeFormData.state}
+              onChange={(e) => handleEmployeeInputChange("state", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="zipCode">
+              Zip Code
+            </label>
+            <input
+              id="zipCode"
+              name="zipCode"
+              type="text"
+              className="form-control"
+              value={employeeFormData.zipCode}
+              onChange={(e) => handleEmployeeInputChange("zipCode", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="reportingTo">
+              Reporting To
+            </label>
+            <select
+              id="reportingTo"
+              className="form-select"
+              name="reportingTo"
+              value={employeeFormData.reportingTo}
+              onChange={(e) => handleEmployeeInputChange("reportingTo", e.target.value)}
+            >
+              <option value="">Select Reporting Manager</option>
+              {reportingToOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="currentStatus">
+              Current Status *
+            </label>
+            <select
+              id="currentStatus"
+              className={`form-select${employeeFormErrors.currentStatus ? " is-invalid" : ""}`}
+              name="currentStatus"
+              value={employeeFormData.currentStatus}
+              onChange={(e) => handleEmployeeInputChange("currentStatus", e.target.value)}
+            >
+              <option value="">Select Status</option>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {employeeFormErrors.currentStatus && (
+              <div className="text-danger">{employeeFormErrors.currentStatus}</div>
+            )}
+          </div>
+          {employeeFormData.currentStatus === "Not Working" && (
+            <div className="col-md-4">
+              <label className="form-label mb-1 mt-2">Last Working Day</label>
+              <DatePicker
+                selected={
+                  employeeFormData.lastWorkingDay
+                    ? moment(employeeFormData.lastWorkingDay, "YYYY-MM-DD").toDate()
+                    : null
+                }
+                onChange={(date) => handleEmployeeInputChange("lastWorkingDay", date)}
+                dateFormat="MM/dd/yyyy"
+                className="form-control"
+                maxDate={new Date()}
+                showYearDropdown
+                showMonthDropdown
+                dropdownMode="select"
+                wrapperClassName="d-block"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="idBudgetCode">
+              Budget Code
+            </label>
+            <select
+              id="idBudgetCode"
+              className="form-select"
+              name="idBudgetCode"
+              value={employeeFormData.idBudgetCode}
+              onChange={(e) => handleEmployeeInputChange("idBudgetCode", e.target.value)}
+            >
+              <option value="">Select Budget Code</option>
+              {budgetCodeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="taxIdNumber">
+              Tax ID Number
+            </label>
+            <input
+              id="taxIdNumber"
+              name="taxIdNumber"
+              type="text"
+              className="form-control"
+              value={employeeFormData.taxIdNumber}
+              onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2">Overtime Allowed Status</label>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                checked={employeeFormData.overTimeAllowedStatus}
+                onChange={(e) => handleEmployeeInputChange("overTimeAllowedStatus", e.target.checked)}
+              />
+              <label className="form-check-label">
+                {employeeFormData.overTimeAllowedStatus ? "Yes" : "No"}
+              </label>
+            </div>
+          </div>
+          
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
+            <label className="form-label mb-1 mt-2">Employee Photo</label>
+            <input
+              type="file"
+              id="employeePhotoInput"
+              className="form-control"
+              accept="image/*"
+              onChange={handleEmployeePhotoChange}
+            />
+            {employeePhotoPreview && (
+              <div className="mt-2">
+                <img
+                  src={employeePhotoPreview}
+                  alt="Employee Photo Preview"
+                  style={{
+                    maxWidth: "120px",
+                    maxHeight: "120px",
+                    borderRadius: "8px",
+                    border: "1px solid #ddd",
+                    padding: "5px",
+                    marginTop: "5px",
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger mt-2 d-block"
+                  onClick={() => {
+                    setEmployeePhotoPreview(null);
+                    handleEmployeeInputChange("employeePhoto", null);
+                    const fileInput = document.getElementById('employeePhotoInput');
+                    if (fileInput) fileInput.value = '';
+                  }}
+                >
+                  Remove Photo
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+
+      </Modal>
     </div>
   );
 };

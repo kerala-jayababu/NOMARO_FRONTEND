@@ -37,6 +37,7 @@ import LoginWithOtp from "./pages/LoginWithOTP";
 import Reports from "./pages/PayrollManagement/Reports/Reports";
 import PermissionGate from "./components/PermissionGate";
 import { LoaderProvider } from "./components/LoaderContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
 import ShiftManagement from "./pages/AdminTools/ShiftManagement"
@@ -54,8 +55,9 @@ import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 
 function App() {
   return (
-    <LoaderProvider>
-      <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
+    <ThemeProvider>
+      <LoaderProvider>
+        <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
         <Toaster position="top-center"></Toaster>
         <Routes>
           <Route element={<PrivateRoute />}>
@@ -111,7 +113,8 @@ function App() {
           <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
         </Routes>
       </HashRouter>
-    </LoaderProvider>
+      </LoaderProvider>
+    </ThemeProvider>
   );
 }
 

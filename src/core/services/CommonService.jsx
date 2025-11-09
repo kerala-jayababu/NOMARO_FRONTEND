@@ -155,4 +155,22 @@ export default class CommonService {
       return handleApiError(error);
     }
   }
+
+  static saveEmployee = async (payload) => {
+    try {
+      const response = await API.post("/api/v1/Employee/AddEmployee", payload);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static updateEmployee = async (payload) => {
+    try {
+      const response = await API.post("/api/v1/Employee/UpdateEmployee", payload);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }
