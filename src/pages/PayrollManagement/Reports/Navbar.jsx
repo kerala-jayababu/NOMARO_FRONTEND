@@ -7,6 +7,8 @@ function Navbar() {
   const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
   const [logo, setLogo] = useState("/assets/logo.png");
+  const [productName, setProductName] = useState("Payroll Management");
+  const [companyName, setCompanyName] = useState("");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
 
   useEffect(() => {
@@ -14,17 +16,27 @@ function Navbar() {
       setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
     }
 
-    // Fetch logo from system parameters
+    // Fetch logo, ProductName, and CompanyName from system parameters
     CommonService.getSystemParameters().then(res => {
       if (res.data && res.data.data) {
         const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
-        if (productLogo && productLogo.parameterbinaryvalue) {
+        if (productLogo && productLogo.parameterBinaryValue) {
           setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
+        }
+
+        const productNameParam = res.data.data.find(item => item.parameterName === "ProductName");
+        if (productNameParam && productNameParam.parameterValue) {
+          setProductName(productNameParam.parameterValue);
+        }
+
+        const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
+        if (companyNameParam && companyNameParam.parameterValue) {
+          setCompanyName(companyNameParam.parameterValue);
         }
       }
     }).catch(err => {
-      // Keep default logo if API fails
-      console.error("Failed to fetch logo:", err);
+      // Keep default values if API fails
+      console.error("Failed to fetch system parameters:", err);
     });
   }, []);
   
