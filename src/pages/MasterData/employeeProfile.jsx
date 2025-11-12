@@ -26,9 +26,11 @@ import moment from "moment";
 import CommonService from "../../core/services/CommonService";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useLoader } from "../../components/LoaderContext";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
+  const { showLoader, hideLoader } = useLoader();
   const {
     options: employees,
     loading,
@@ -69,6 +71,7 @@ const EmployeeProfile = () => {
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [isSubmittingEmployee, setIsSubmittingEmployee] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [addEmployeeAllowed, setAddEmployeeAllowed] = useState("YES");
   const [employeeFormData, setEmployeeFormData] = useState({
     employeeCode: "",
     firstName: "",
@@ -104,6 +107,7 @@ const EmployeeProfile = () => {
   const [designations, setDesignations] = useState([]);
   const [reportingToOptions, setReportingToOptions] = useState([]);
   const [employeePhotoPreview, setEmployeePhotoPreview] = useState(null);
+  const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [overtimeDetails, setOvertimeDetails] = useState([
     {
       type: "",
@@ -142,9 +146,18 @@ const EmployeeProfile = () => {
   );
 
   useEffect(() => {
-    dispatch(getAllEmployeeDetails());
+    showLoader();
+    dispatch(getAllEmployeeDetails()).finally(() => {
+      hideLoader();
+    });
     loadDepartmentsAndDesignations();
     loadReportingToOptions();
+    // Load AddEmployeeAllowed from local storage
+    const addEmployeeAllowedValue = secureLocalStorage.getItem("AddEmployeeAllowed");
+    if (addEmployeeAllowedValue) {
+      setAddEmployeeAllowed(addEmployeeAllowedValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
   useEffect(() => {
@@ -224,7 +237,7 @@ const EmployeeProfile = () => {
 
   const statusOptions = [
     { value: "Working", label: "Working" },
-    { value: "Not Working", label: "Not Working" },
+    { value: "NotWorking", label: "Not Working" },
   ];
 
   const [editFileName, setEditFileName] = useState(null);
@@ -1319,7 +1332,7 @@ const EmployeeProfile = () => {
       label: "Current Status",
       render: (status) => <StatusBadge status={status} />,
     },
-    { key: "actions" },
+    ...(addEmployeeAllowed === "YES" ? [{ key: "actions" }] : []),
   ];
 
   const downloadFile = (id) => {
@@ -1351,10 +1364,27 @@ const EmployeeProfile = () => {
     window.URL.revokeObjectURL(url);
   }
 
+  const phoneFields = ["phoneNumber1", "phoneNumber2", "whatsAppNumber"];
+  const numericFields = ["zipCode", "taxIdNumber", "idNumber"];
+
   const handleEmployeeInputChange = (field, value) => {
+    let sanitizedValue = value;
+
+    if (typeof sanitizedValue === "string") {
+      sanitizedValue = sanitizedValue.trimStart();
+    }
+
+    if (phoneFields.includes(field)) {
+      sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 15);
+    }
+
+    if (numericFields.includes(field)) {
+      sanitizedValue = sanitizedValue.replace(/\D/g, "");
+    }
+
     setEmployeeFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: sanitizedValue,
     }));
     // Clear error for this field
     if (employeeFormErrors[field]) {
@@ -1368,35 +1398,27 @@ const EmployeeProfile = () => {
 
   const handleEmployeePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("Please select an image file");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEmployeePhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Convert to base64 for API
-      const base64Reader = new FileReader();
-      base64Reader.onloadend = () => {
-        // Remove data:image/...;base64, prefix
-        const base64String = base64Reader.result.split(',')[1];
-        handleEmployeeInputChange("employeePhoto", base64String);
-      };
-      base64Reader.readAsDataURL(file);
+    if (!file) {
+      return;
     }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    setEmployeePhotoFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEmployeePhotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const validateEmployeeForm = () => {
@@ -1413,6 +1435,27 @@ const EmployeeProfile = () => {
     if (employeeFormData.emailID && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)) {
       errors.emailID = "Invalid email format";
     }
+
+    const phoneRegex = /^\d{7,15}$/;
+    phoneFields.forEach((field) => {
+      const value = employeeFormData[field];
+      if (value && !phoneRegex.test(value)) {
+        errors[field] = "Must be 7-15 digits";
+      }
+    });
+
+    const numericFieldRules = [
+      { field: "zipCode", regex: /^\d{3,10}$/, message: "Zip Code must be 3-10 digits" },
+      { field: "taxIdNumber", regex: /^\d{3,20}$/, message: "Tax ID Number must be digits only" },
+      { field: "idNumber", regex: /^\d{3,20}$/, message: "ID Number must be digits only" },
+    ];
+
+    numericFieldRules.forEach(({ field, regex, message }) => {
+      const value = employeeFormData[field];
+      if (value && !regex.test(value)) {
+        errors[field] = message;
+      }
+    });
 
     setEmployeeFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -1452,6 +1495,7 @@ const EmployeeProfile = () => {
     setEmployeeFormErrors({});
     setEditingEmployeeId(null);
     setEmployeePhotoPreview(null);
+    setEmployeePhotoFile(null);
   };
 
   const handleEmployeeFormSubmit = async (e) => {
@@ -1463,26 +1507,53 @@ const EmployeeProfile = () => {
 
     try {
       setIsSubmittingEmployee(true);
+      showLoader();
 
-      const payload = {
+      const {
+        employeePhoto,
+        ...payloadWithoutPhoto
+      } = {
         ...employeeFormData,
         idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
         idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
         reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : null,
         idBudgetCode: employeeFormData.idBudgetCode ? parseInt(employeeFormData.idBudgetCode) : null,
         childrenCount: parseInt(employeeFormData.childrenCount) || 0,
-        dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format('YYYY-MM-DD') : null,
-        joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format('YYYY-MM-DD') : null,
-        lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format('YYYY-MM-DD') : null,
+        dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD") : null,
+        joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD") : null,
+        lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format("YYYY-MM-DD") : null,
       };
 
       if (editingEmployeeId) {
-        payload.idEmployee = editingEmployeeId;
+        payloadWithoutPhoto.idEmployee = editingEmployeeId;
       }
 
-      const result = await CommonService.saveEmployee(payload);
+      const formDataPayload = new FormData();
+
+      Object.entries(payloadWithoutPhoto).forEach(([key, value]) => {
+        if (value === null || value === undefined) {
+          formDataPayload.append(key, "");
+        } else if (typeof value === "boolean") {
+          formDataPayload.append(key, value ? "true" : "false");
+        } else {
+          formDataPayload.append(key, value);
+        }
+      });
+
+      if (employeePhotoFile) {
+        formDataPayload.append("employeePhoto", employeePhotoFile);
+      } else if (employeePhoto) {
+        formDataPayload.append("employeePhoto", employeePhoto);
+      } else {
+        formDataPayload.append("employeePhoto", "");
+      }
+
+      const result = editingEmployeeId
+        ? await CommonService.updateEmployee(formDataPayload, editingEmployeeId)
+        : await CommonService.saveEmployee(formDataPayload);
 
       if (result.error) {
+        hideLoader();
         toast.error(result.error.message || "Failed to save employee");
         return false;
       }
@@ -1490,7 +1561,10 @@ const EmployeeProfile = () => {
       if (result.data?.success) {
         toast.success(editingEmployeeId ? "Employee updated successfully" : "Employee added successfully");
         resetEmployeeForm();
-        dispatch(getAllEmployeeDetails());
+        showLoader();
+        dispatch(getAllEmployeeDetails()).finally(() => {
+          hideLoader();
+        });
         const modal = document.getElementById("addEmployeeModal");
         if (modal) {
           const bsModal = bootstrap.Modal.getInstance(modal);
@@ -1498,16 +1572,125 @@ const EmployeeProfile = () => {
         }
         return true;
       } else {
+        hideLoader();
         toast.error(result.data?.message || "Failed to save employee");
         return false;
       }
     } catch (error) {
+      hideLoader();
       console.error("Error saving employee:", error);
       toast.error("An error occurred while saving employee");
       return false;
     } finally {
       setIsSubmittingEmployee(false);
     }
+  };
+
+  const handleOpenEditEmployeeProfile = async () => {
+    if (!profileData?.idEmployee) {
+      toast.error("Employee details not found");
+      return;
+    }
+
+    const employeeId = profileData.idEmployee;
+    let detailedData = {};
+
+    try {
+      showLoader();
+      const response = await CommonService.getEmployeeById(employeeId);
+      hideLoader();
+      if (response.error) {
+        console.error("Error fetching employee details for edit:", response.error);
+        toast.error("Failed to fetch employee details");
+      } else if (response.data?.data) {
+        detailedData = response.data.data;
+      }
+    } catch (error) {
+      hideLoader();
+      console.error("Error fetching employee details for edit:", error);
+      toast.error("Failed to fetch employee details");
+    }
+
+    const formatDateForForm = (value) =>
+      value ? (moment(value).isValid() ? moment(value).format("YYYY-MM-DD") : null) : null;
+
+    const employeePhotoValue =
+      detailedData.employeePhoto ?? profileData?.attachmentBlob ?? null;
+
+    setEmployeeFormData({
+      employeeCode: detailedData.employeeCode ?? profileData.employeeCode ?? "",
+      firstName: detailedData.firstName ?? profileData.firstName ?? "",
+      middleName: detailedData.middleName ?? profileData.middleName ?? "",
+      lastName: detailedData.lastName ?? profileData.lastName ?? "",
+      gender: detailedData.gender ?? profileData.gender ?? "",
+      idNumber: detailedData.idNumber ?? profileData.idNumber ?? "",
+      taxIdNumber: detailedData.taxIdNumber ?? profileData.taxIdNumber ?? "",
+      idDepartment: detailedData.idDepartment
+        ? detailedData.idDepartment.toString()
+        : profileData.idDepartment
+        ? profileData.idDepartment.toString()
+        : "",
+      idDesignation: detailedData.idDesignation
+        ? detailedData.idDesignation.toString()
+        : profileData.idDesignation
+        ? profileData.idDesignation.toString()
+        : "",
+      emailID: detailedData.emailID ?? detailedData.emailId ?? profileData.emailId ?? "",
+      phoneNumber1: detailedData.phoneNumber1 ?? profileData.phoneNumber1 ?? "",
+      phoneNumber2: detailedData.phoneNumber2 ?? profileData.phoneNumber2 ?? "",
+      whatsAppNumber: detailedData.whatsAppNumber ?? profileData.whatsAppNumber ?? "",
+      address1: detailedData.address1 ?? profileData.address1 ?? "",
+      address2: detailedData.address2 ?? profileData.address2 ?? "",
+      address3: detailedData.address3 ?? profileData.address3 ?? "",
+      city: detailedData.city ?? profileData.city ?? "",
+      state: detailedData.state ?? profileData.state ?? "",
+      zipCode: detailedData.zipCode ?? profileData.zipCode ?? "",
+      dateOfBirth: formatDateForForm(detailedData.dateOfBirth ?? profileData.dateOfBirth),
+      joiningDate: formatDateForForm(detailedData.joiningDate ?? profileData.joiningDate),
+      reportingTo: detailedData.reportingTo
+        ? detailedData.reportingTo.toString()
+        : profileData.reportingToId
+        ? profileData.reportingToId.toString()
+        : "",
+      currentStatus: detailedData.currentStatus ?? profileData.currentStatus ?? "Working",
+      idBudgetCode: detailedData.idBudgetCode
+        ? detailedData.idBudgetCode.toString()
+        : profileData.idBudgetCode
+        ? profileData.idBudgetCode.toString()
+        : "",
+      childrenCount:
+        detailedData.childrenCount ??
+        profileData.childrenCount ??
+        profileData.childCount ??
+        0,
+      overTimeAllowedStatus:
+        typeof detailedData.overTimeAllowedStatus !== "undefined"
+          ? !!detailedData.overTimeAllowedStatus
+          : typeof profileData.overTimeAllowedStatus !== "undefined"
+          ? !!profileData.overTimeAllowedStatus
+          : false,
+      employeePhoto: employeePhotoValue,
+      lastWorkingDay: formatDateForForm(
+        detailedData.lastWorkingDay ?? profileData.lastWorkingDay
+      ),
+    });
+
+    setEmployeeFormErrors({});
+    setEmployeePhotoPreview(
+      employeePhotoValue ? `data:image/jpeg;base64,${employeePhotoValue}` : null
+    );
+    setEmployeePhotoFile(null);
+    setEditingEmployeeId(employeeId);
+
+    const profileModalElement = document.getElementById("EMP_profileView");
+    if (profileModalElement) {
+      const profileModalInstance = bootstrap.Modal.getInstance(profileModalElement);
+      if (profileModalInstance) {
+        profileModalInstance.hide();
+      }
+    }
+
+    setShowAddEmployeeModal(true);
   };
 
   const handleEmployeeModalClose = () => {
@@ -1523,16 +1706,18 @@ const EmployeeProfile = () => {
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Profile View</h5>
               <div className="list_menu">
-                <button
-                  className="btn btn-primary btn-sm px-4 me-2"
-                  onClick={() => {
-                    setEditingEmployeeId(null);
-                    resetEmployeeForm();
-                    setShowAddEmployeeModal(true);
-                  }}
-                >
-                  Add New
-                </button>
+                {addEmployeeAllowed === "YES" && (
+                  <button
+                    className="btn btn-primary btn-sm px-4 me-2"
+                    onClick={() => {
+                      setEditingEmployeeId(null);
+                      resetEmployeeForm();
+                      setShowAddEmployeeModal(true);
+                    }}
+                  >
+                    Add New
+                  </button>
+                )}
                 <div className="list_searchbox">
                   <input
                     type="search"
@@ -1647,8 +1832,8 @@ const EmployeeProfile = () => {
                       <p className="m-0">{profileData?.phoneNumber1}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
-                      <label className="form-label mb-1">Mobile Number</label>
-                      <p className="m-0">{profileData?.phoneNumber2}</p>
+                      <label className="form-label mb-1">WhatsApp Number</label>
+                      <p className="m-0">{profileData?.whatsAppNumber || "N/A"}</p>
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
@@ -1679,9 +1864,7 @@ const EmployeeProfile = () => {
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Current Status</label>
                       <p className="m-0">
-                        <span className="badge bg-label-success">
-                          {profileData?.currentStatus}
-                        </span>
+                        <StatusBadge status={profileData?.currentStatus} />
                       </p>
                     </div>
 
@@ -1730,33 +1913,48 @@ const EmployeeProfile = () => {
                       "Bank Name",
                       "Branch Name",
                       "Account Number",
-                      Array.isArray(bankData) ? bankData[0].disbursementType == "PERCENTAGE" ? "% Salary" : "Amount(G$)" : "Salary",
+                      Array.isArray(bankData) && bankData.length > 0
+                        ? bankData[0]?.disbursementType === "PERCENTAGE"
+                          ? "% Salary"
+                          : "Amount(G$)"
+                        : "Salary",
                       "Currency",
                     ]}
                     rows={(Array.isArray(bankData) ? bankData : []).map(
                       (account, index) => (
                         <tr key={index}>
-                          <td>{account.bankName}</td>
-                          <td>{account.branchName}</td>
-                          <td>{account.accountNumber}</td>
-                          <td>{account.salaryPercentageDistributed} {account.disbursementType == 'PERCENTAGE' ? '%' : ''}</td>
-                          <td>{account.currencyCode}</td>
+                          <td>{account?.bankName ?? "-"}</td>
+                          <td>{account?.branchName ?? "-"}</td>
+                          <td>{account?.accountNumber ?? "-"}</td>
+                          <td>
+                            {account?.salaryPercentageDistributed ?? "-"}
+                            {account?.disbursementType === "PERCENTAGE" ? " %" : ""}
+                          </td>
+                          <td>{account?.currencyCode ?? "-"}</td>
                         </tr>
                       )
                     )}
                   />
-                  <div className="text-end py-2">
+                  <div className="text-end py-2 d-flex justify-content-end gap-2">
                     <button
-                      className="btn btn-sm btn-primary"
+                      className="btn btn-sm btn-outline-primary"
                       onClick={() => {
-                        handleButtonClick(profileData?.idEmployee); // Set the selected employee ID
-                        setIsModalOpen(true); // Open the modal
+                        handleButtonClick(profileData?.idEmployee);
+                        setIsModalOpen(true);
                       }}
                       data-bs-toggle="modal"
-                      data-bs-target="#Add_EMP_Account" // Add # prefix
+                      data-bs-target="#Add_EMP_Account"
                     >
-                      <i className="bx bx-user"></i> Update Profile
+                      <i className="bx bx-bank"></i> Manage Bank Details
                     </button>
+                    {addEmployeeAllowed === "YES" && (
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={handleOpenEditEmployeeProfile}
+                      >
+                        <i className="bx bx-edit"></i> Edit Profile
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2293,6 +2491,7 @@ const EmployeeProfile = () => {
         onSubmit={handleEmployeeFormSubmit}
         isSubmitting={isSubmittingEmployee}
         onReset={resetEmployeeForm}
+        submitLabel={editingEmployeeId ? "Update" : "Submit"}
       >
         <div className="row">
           <div className="col-md-4">
@@ -2498,10 +2697,15 @@ const EmployeeProfile = () => {
               id="phoneNumber1"
               name="phoneNumber1"
               type="text"
-              className="form-control"
+              className={`form-control${employeeFormErrors.phoneNumber1 ? " is-invalid" : ""}`}
               value={employeeFormData.phoneNumber1}
               onChange={(e) => handleEmployeeInputChange("phoneNumber1", e.target.value)}
             />
+            {employeeFormErrors.phoneNumber1 && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.phoneNumber1}
+              </div>
+            )}
           </div>
           {/* <div className="col-md-4">
             <Input
@@ -2519,10 +2723,15 @@ const EmployeeProfile = () => {
               id="whatsAppNumber"
               name="whatsAppNumber"
               type="text"
-              className="form-control"
+              className={`form-control${employeeFormErrors.whatsAppNumber ? " is-invalid" : ""}`}
               value={employeeFormData.whatsAppNumber}
               onChange={(e) => handleEmployeeInputChange("whatsAppNumber", e.target.value)}
             />
+            {employeeFormErrors.whatsAppNumber && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.whatsAppNumber}
+              </div>
+            )}
           </div>
         </div>
 
@@ -2604,10 +2813,15 @@ const EmployeeProfile = () => {
               id="zipCode"
               name="zipCode"
               type="text"
-              className="form-control"
+              className={`form-control${employeeFormErrors.zipCode ? " is-invalid" : ""}`}
               value={employeeFormData.zipCode}
               onChange={(e) => handleEmployeeInputChange("zipCode", e.target.value)}
             />
+            {employeeFormErrors.zipCode && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.zipCode}
+              </div>
+            )}
           </div>
         </div>
 
@@ -2653,7 +2867,7 @@ const EmployeeProfile = () => {
               <div className="text-danger">{employeeFormErrors.currentStatus}</div>
             )}
           </div>
-          {employeeFormData.currentStatus === "Not Working" && (
+          {employeeFormData.currentStatus === "NotWorking" && (
             <div className="col-md-4">
               <label className="form-label mb-1 mt-2">Last Working Day</label>
               <DatePicker
@@ -2703,10 +2917,15 @@ const EmployeeProfile = () => {
               id="taxIdNumber"
               name="taxIdNumber"
               type="text"
-              className="form-control"
+              className={`form-control${employeeFormErrors.taxIdNumber ? " is-invalid" : ""}`}
               value={employeeFormData.taxIdNumber}
               onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
             />
+            {employeeFormErrors.taxIdNumber && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.taxIdNumber}
+              </div>
+            )}
           </div>
           <div className="col-md-4">
             <label className="form-label mb-1 mt-2">Overtime Allowed Status</label>
@@ -2754,6 +2973,7 @@ const EmployeeProfile = () => {
                   className="btn btn-sm btn-outline-danger mt-2 d-block"
                   onClick={() => {
                     setEmployeePhotoPreview(null);
+                      setEmployeePhotoFile(null);
                     handleEmployeeInputChange("employeePhoto", null);
                     const fileInput = document.getElementById('employeePhotoInput');
                     if (fileInput) fileInput.value = '';
