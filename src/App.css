@@ -1,14 +1,63 @@
-/* Theme Colors */
+/* Theme Colors - Default (Blue Theme) */
 :root {
   --primary-color: #0d384d;
   --primary-light: rgba(13, 56, 77, 0.1);
   --secondary-color: #ffffff;
   --text-primary: #566a7f;
   --text-secondary: #697a8d;
+  --text-muted: #8592a3;
+  --link-color: #0d384d;
+  --link-hover-color: #0a2c3d;
+  --heading-color: #435971;
   --border-color: #e9e9e9;
   --success-color: #71dd37;
   --warning-color: #ffab00;
   --danger-color: #ff3e1d;
+  --navbar-bg: #0d384d;
+  --navbar-text: #e0e1ff;
+  --navbar-text-hover: #ffffff;
+  --navbar-title-color: #ffffff;
+  --pagination-active-bg: #0d384d;
+  --pagination-active-border: #0d384d;
+  --pagination-active-shadow: rgba(13, 56, 77, 0.4);
+}
+
+/* Blue Theme (Default) */
+html.theme-blue {
+  --primary-color: #0d384d;
+  --primary-light: rgba(13, 56, 77, 0.1);
+  --text-primary: #566a7f;
+  --text-secondary: #697a8d;
+  --text-muted: #8592a3;
+  --link-color: #0d384d;
+  --link-hover-color: #0a2c3d;
+  --heading-color: #435971;
+  --navbar-bg: #0d384d;
+  --navbar-text: #c0f7c1;
+  --navbar-text-hover: #ffffff;
+  --navbar-title-color: #ffffff;
+  --pagination-active-bg: #0d384d;
+  --pagination-active-border: #0d384d;
+  --pagination-active-shadow: rgba(13, 56, 77, 0.4);
+}
+
+/* Green Theme */
+html.theme-green {
+  --primary-color: #28a745;
+  --primary-light: rgba(40, 167, 69, 0.1);
+  --text-primary: #2d5a3d;
+  --text-secondary: #3d6b4f;
+  --text-muted: #5a7a66;
+  --link-color: #28a745;
+  --link-hover-color: #218838;
+  --heading-color: #1e7e34;
+  --navbar-bg: #28a745;
+  --navbar-text: #e0f5e6;
+  --navbar-text-hover: #ffffff;
+  --navbar-title-color: #ffffff;
+  --pagination-active-bg: #28a745;
+  --pagination-active-border: #28a745;
+  --pagination-active-shadow: rgba(40, 167, 69, 0.4);
 }
 
 /* Global Styles */
@@ -99,8 +148,45 @@ body {
 }
 
 .btn-primary:hover {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  opacity: 0.85;
+  filter: brightness(0.9);
+}
+
+/* Blue theme specific hover */
+html.theme-blue .btn-primary:hover {
   background-color: #0a2c3d !important;
   border-color: #0a2c3d !important;
+  opacity: 1;
+  filter: none;
+}
+
+/* Green theme specific hover */
+html.theme-green .btn-primary:hover {
+  background-color: #218838 !important;
+  border-color: #218838 !important;
+  opacity: 1;
+  filter: none;
+}
+
+/* Green theme table text */
+html.theme-green .table tbody td {
+  color: darkgreen !important;
+}
+
+html.theme-green .table tbody td a {
+  color: darkgreen !important;
+}
+
+/* Green theme action button hover */
+html.theme-green .btn-outline-secondary:hover,
+html.theme-green .btn-outline-secondary:focus,
+html.theme-green .btn-outline-primary:hover,
+html.theme-green .btn-outline-primary:focus {
+  background-color: darkgreen !important;
+  border-color: darkgreen !important;
+  color: #fff !important;
 }
 
 .list_searchbox .form-control {
@@ -116,6 +202,113 @@ body {
   box-shadow: 0 0 0 0.25rem var(--primary-light);
 }
 
+/* Form Control Focus States */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.25rem var(--primary-light) !important;
+}
+
+.input-group:focus-within .form-control,
+.input-group:focus-within .input-group-text {
+  border-color: var(--primary-color) !important;
+}
+
+/* Checkbox Theme Styles */
+.form-check-input:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 2px 4px 0 var(--primary-light) !important;
+}
+
+.form-check-input:checked,
+.form-check-input[type='checkbox']:indeterminate {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 2px 4px 0 var(--primary-light) !important;
+}
+
+.form-check-input:checked[type='checkbox'] {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input:checked[type='radio'] {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='1.5' fill='%23fff'/%3e%3c/svg%3e") !important;
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Toggle Switch Theme Styles */
+.form-switch .form-check-input:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.25rem var(--primary-light) !important;
+}
+
+/* Blue theme toggle switch focus */
+html.theme-blue .form-switch .form-check-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230d384d'/%3e%3c/svg%3e") !important;
+}
+
+/* Green theme toggle switch focus */
+html.theme-green .form-switch .form-check-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2328a745'/%3e%3c/svg%3e") !important;
+}
+
+.form-switch .form-check-input:checked {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+/* Form Label Colors */
+.form-label {
+  color: var(--heading-color) !important;
+}
+
+/* Radio Button Label Text Color */
+.form-check-label,
+.radio-label,
+label.radio-label {
+  color: var(--text-primary) !important;
+}
+
+/* Float Label Theme */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+  color: var(--primary-color) !important;
+}
+
+/* Dropdown/Select Option Selection Colors */
+.form-select option:checked,
+.form-select option:selected,
+select option:checked,
+select option:selected {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+/* Dropdown Item Selection (for Bootstrap dropdowns) */
+.dropdown-item:not(.disabled).active,
+.dropdown-item:not(.disabled):active,
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+}
+
+.dropdown-item:hover:not(.disabled):not(.active),
+.dropdown-item:focus:not(.disabled):not(.active) {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Select dropdown option hover (when dropdown is open) */
+.form-select option:hover,
+select option:hover {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+}
+
 .Salary_revisionCard ul {
   list-style: none;
   padding: 0px;
@@ -126,7 +319,7 @@ body {
 }
 
 .Salary_revisionCard ul li {
-  background-color: #0d384d;
+  background-color: var(--primary-color);
   border-radius: 5px;
   color: #fff;
   padding: 15px;
@@ -144,7 +337,7 @@ body {
 
 .textSize {
   font-size: 14px;
-  color: #4d5975 !important;
+  color: var(--text-primary) !important;
 }
 
 .controlHeight {
@@ -189,7 +382,15 @@ body {
 
 .table th {
   background-color: var(--primary-light);
-  color: var(--primary-color);
+  color: var(--heading-color);
+  font-weight: 600;
+}
+
+/* Table headers - more specific overrides */
+thead th,
+.table thead th,
+.deduct-table-container thead th {
+  color: var(--heading-color) !important;
   font-weight: 600;
 }
 
@@ -201,6 +402,64 @@ body {
 .nav-link:hover,
 .nav-link.active {
   color: var(--primary-color);
+}
+
+/* Link Colors */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover,
+a:focus {
+  color: var(--link-hover-color);
+  text-decoration: underline;
+}
+
+a:visited {
+  color: var(--link-color);
+}
+
+/* Heading Colors */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: var(--heading-color);
+}
+
+/* Text Muted */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Text Primary and Secondary */
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Override vendor CSS text colors */
+.text-body {
+  color: var(--text-primary) !important;
+}
+
+.text-heading {
+  color: var(--heading-color) !important;
+}
+
+/* Ensure all links use theme colors */
+a.text-primary,
+a.text-primary:hover,
+a.text-primary:focus {
+  color: var(--link-color) !important;
+}
+
+a.text-primary:hover,
+a.text-primary:focus {
+  color: var(--link-hover-color) !important;
 }
 
 .badge {
@@ -230,11 +489,11 @@ body {
 
 .cursor {
   cursor: pointer;
-  color: #1893cf;
+  color: var(--link-color);
 }
 
 .cursor:hover {
-  color: #166a93;
+  color: var(--link-hover-color);
 }
 
 .bs-bg-warning {
@@ -291,6 +550,125 @@ body {
   width: 5px !important;
   background-color: var(--primary-color) !important;
   border-radius: 6px;
+}
+
+/* Navbar Theme Styles */
+.bg-navbar-theme {
+  background-color: var(--navbar-bg) !important;
+}
+
+.bg-navbar-theme .navbar-nav > .nav-link,
+.bg-navbar-theme .navbar-nav > .nav-item > .nav-link,
+.bg-navbar-theme .navbar-nav > .nav > .nav-item > .nav-link {
+  color: var(--navbar-text) !important;
+}
+
+.bg-navbar-theme .navbar-nav > .nav-link:hover,
+.bg-navbar-theme .navbar-nav > .nav-link:focus,
+.bg-navbar-theme .navbar-nav > .nav-item > .nav-link:hover,
+.bg-navbar-theme .navbar-nav > .nav-item > .nav-link:focus {
+  color: var(--navbar-text-hover) !important;
+}
+
+/* Navbar Title - Payroll Management text */
+.bg-navbar-theme .navbar-nav .nav-item h5,
+.bg-navbar-theme .navbar-nav .nav-item .fw-bold,
+.bg-navbar-theme h5 {
+  color: var(--navbar-title-color) !important;
+  font-weight: 700 !important;
+}
+
+/* Override vendor CSS navbar.bg-primary styles */
+.navbar.bg-primary {
+  background-color: var(--navbar-bg) !important;
+}
+
+.navbar.bg-primary .navbar-nav > .nav-link,
+.navbar.bg-primary .navbar-nav > .nav-item > .nav-link {
+  color: var(--navbar-text) !important;
+}
+
+.navbar.bg-primary .navbar-nav > .nav-link:hover,
+.navbar.bg-primary .navbar-nav > .nav-link:focus {
+  color: var(--navbar-text-hover) !important;
+}
+
+/* Primary background and label classes */
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.bg-label-primary {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Avatar and badge colors */
+.avatar-online::after {
+  background-color: var(--primary-color) !important;
+}
+
+.badge.bg-label-primary {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Pagination Theme Styles */
+.page-item.active .page-link,
+.page-item.active .page-link:hover,
+.page-item.active .page-link:focus,
+.pagination li.active > a:not(.page-link),
+.pagination li.active > a:not(.page-link):hover,
+.pagination li.active > a:not(.page-link):focus {
+  border-color: var(--pagination-active-border) !important;
+  background-color: var(--pagination-active-bg) !important;
+  color: #fff !important;
+  box-shadow: 0 0.125rem 0.25rem var(--pagination-active-shadow) !important;
+}
+
+/* Sidebar/Menu Theme Styles */
+.bg-menu-theme .menu-link {
+  color: var(--text-primary) !important;
+}
+
+.bg-menu-theme .menu-link:hover,
+.bg-menu-theme .menu-link:focus {
+  color: var(--primary-color) !important;
+}
+
+.bg-menu-theme .menu-item.active > .menu-link {
+  color: var(--primary-color) !important;
+  background-color: var(--primary-light) !important;
+}
+
+.bg-menu-theme .menu-item.active:before {
+  background: var(--primary-color) !important;
+}
+
+.bg-menu-theme .menu-sub > .menu-item > .menu-link:before {
+  background-color: var(--text-muted) !important;
+}
+
+.bg-menu-theme .menu-sub > .menu-item.active > .menu-link:not(.menu-toggle):before {
+  background-color: var(--primary-color) !important;
+  border: 3px solid var(--primary-light) !important;
+}
+
+.bg-menu-theme .menu-header {
+  color: var(--text-muted) !important;
+}
+
+.bg-menu-theme .menu-header:before {
+  background-color: var(--text-muted) !important;
+}
+
+/* Menu item hover states */
+html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.open > .menu-link,
+.layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.open > .menu-link,
+html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover,
+.layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
 }
 
 .scroll-side-menu::-webkit-scrollbar-track {

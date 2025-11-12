@@ -4,6 +4,7 @@ import secureLocalStorage from "react-secure-storage";
 import CommonService from "../../../core/services/CommonService";
 import Utils from "../../../utils/Utils";
 import ConfirmationModal from "../../../components/ConfirmationModal";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 function Navbar({ view }) {
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
@@ -14,6 +15,7 @@ function Navbar({ view }) {
   const currentAuth = secureLocalStorage.getItem("currentAuth");
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const { theme, changeTheme } = useTheme();
   const [productName, setProductName] = useState(currentAuth == 'PAYROLL' ? '' : 'Employee Self Portal');
   const [companyName, setCompanyName] = useState("");
 
@@ -136,6 +138,46 @@ function Navbar({ view }) {
         </div>
 
         <ul className="navbar-nav flex-row align-items-center ms-auto">
+          {/* Theme Switcher */}
+          <li className="nav-item navbar-dropdown dropdown me-3 me-xl-2">
+            <a
+              className="nav-link dropdown-toggle hide-arrow"
+              data-bs-toggle="dropdown"
+              data-bs-auto-close="outside"
+              aria-expanded="false"
+              title="Theme"
+            >
+              <i className="bx bx-palette bx-md"></i>
+            </a>
+            <ul className="dropdown-menu dropdown-menu-end">
+              <li>
+                <h6 className="dropdown-header">Select Theme</h6>
+              </li>
+              <li>
+                <a 
+                  className={`dropdown-item ${theme === 'blue' ? 'active' : ''}`}
+                  onClick={() => changeTheme('blue')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <i className="bx bx-circle me-2" style={{ color: '#0d384d' }}></i>
+                  Blue Theme
+                  {theme === 'blue' && <i className="bx bx-check ms-auto"></i>}
+                </a>
+              </li>
+              <li>
+                <a 
+                  className={`dropdown-item ${theme === 'green' ? 'active' : ''}`}
+                  onClick={() => changeTheme('green')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <i className="bx bx-circle me-2" style={{ color: '#28a745' }}></i>
+                  Green Theme
+                  {theme === 'green' && <i className="bx bx-check ms-auto"></i>}
+                </a>
+              </li>
+            </ul>
+          </li>
+
           {/* Company Name */}
           {companyName && (
             <li className="nav-item me-3 me-xl-2">
