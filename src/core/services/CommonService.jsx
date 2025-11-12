@@ -67,6 +67,17 @@ export default class CommonService {
     }
   };
 
+  static getEmployeeById = async (employeeId) => {
+    try {
+      const res = await API.get(
+        "/api/v1/Employee/GetEmployeeById?id=" + employeeId
+      );
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static getSalaryStructure = async () => {
     try {
       const res = await API.get(
@@ -158,16 +169,27 @@ export default class CommonService {
 
   static saveEmployee = async (payload) => {
     try {
-      const response = await API.post("/api/v1/Employee/AddEmployee", payload);
+      const response = await API.post("/api/v1/Employee/AddEmployee", payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return { error: null, data: response.data };
     } catch (error) {
       return handleApiError(error);
     }
   };
 
-  static updateEmployee = async (payload) => {
+  static updateEmployee = async (payload, employeeId) => {
     try {
-      const response = await API.post("/api/v1/Employee/UpdateEmployee", payload);
+      const url = employeeId 
+        ? `/api/v1/Employee/UpdateEmployee?id=${employeeId}`
+        : "/api/v1/Employee/UpdateEmployee";
+      const response = await API.post(url, payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return { error: null, data: response.data };
     } catch (error) {
       return handleApiError(error);

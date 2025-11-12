@@ -3,7 +3,17 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
-const Modal = ({ id, title, children, onClose, onSubmit, isSubmitting, isOpen, onReset }) => {
+const Modal = ({
+  id,
+  title,
+  children,
+  onClose,
+  onSubmit,
+  isSubmitting,
+  isOpen,
+  onReset,
+  submitLabel = "Submit",
+}) => {
   useEffect(() => {
     const modal = document.getElementById(id);
     if (modal) {
@@ -60,7 +70,7 @@ const Modal = ({ id, title, children, onClose, onSubmit, isSubmitting, isOpen, o
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Submitting..." : submitLabel}
             </button>
             <button
               type="button"
@@ -88,4 +98,5 @@ Modal.propTypes = {
   isSubmitting: PropTypes.bool,
   isOpen: PropTypes.bool,
   onReset: PropTypes.func,
+  submitLabel: PropTypes.string,
 };

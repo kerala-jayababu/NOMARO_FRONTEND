@@ -7,7 +7,15 @@ const StatusBadge = ({ status }) => {
       ? "bg-label-success"
       : "bg-label-warning";
   };
-  return <span className={`badge ${getBadgeClass(status)}`}>{status}</span>;
+  
+  const formatStatus = (status) => {
+    if (status === "NotWorking") {
+      return "Not Working";
+    }
+    return status;
+  };
+  
+  return <span className={`badge ${getBadgeClass(status)}`}>{formatStatus(status)}</span>;
 };
 
 export default StatusBadge;

@@ -172,7 +172,7 @@ const Holiday = () => {
       setConfirmMessage(`Are you sure you want to delete "${event.title}"?`);
       setOnConfirm(() => async () => {
         try {
-          await CommonService.deleteHolidays(event.idHoliday);
+          await CommonService.deleteHolidays(event.id);
           setEvents(prev => prev.filter(ev => ev.id !== event.id));
           showToast("Holiday deleted", "success");
         } catch (err) {

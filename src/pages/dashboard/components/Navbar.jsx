@@ -15,9 +15,17 @@ function Navbar({ view }) {
   const currentAuth = secureLocalStorage.getItem("currentAuth");
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const { theme, changeTheme } = useTheme();
+  const { changeTheme } = useTheme();
   const [productName, setProductName] = useState(currentAuth == 'PAYROLL' ? '' : 'Employee Self Portal');
   const [companyName, setCompanyName] = useState("");
+
+  // Apply theme from local storage on initial mount
+  useEffect(() => {
+    const savedTheme = secureLocalStorage.getItem("ColorTheme");
+    if (savedTheme) {
+      changeTheme(savedTheme === 'green' ? 'green' : 'blue');
+    }
+  }, [changeTheme]);
 
   useEffect(() => {
     const fetchNotifications = () => {
@@ -48,12 +56,26 @@ function Navbar({ view }) {
         if (companyNameParam && companyNameParam.parameterValue) {
           setCompanyName(companyNameParam.parameterValue);
         }
+
+        // Store ColorTheme and AddEmployeeAllowed in local storage
+        const colorThemeParam = res.data.data.find(item => item.parameterName === "ColorTheme");
+        if (colorThemeParam && colorThemeParam.parameterValue) {
+          const themeValue = colorThemeParam.parameterValue.toLowerCase();
+          secureLocalStorage.setItem("ColorTheme", themeValue);
+          // Apply theme based on ColorTheme parameter
+          changeTheme(themeValue === 'green' ? 'green' : 'blue');
+        }
+
+        const addEmployeeAllowedParam = res.data.data.find(item => item.parameterName === "AddEmployeeAllowed");
+        if (addEmployeeAllowedParam && addEmployeeAllowedParam.parameterValue) {
+          secureLocalStorage.setItem("AddEmployeeAllowed", addEmployeeAllowedParam.parameterValue);
+        }
       }
     }).catch(err => {
       // Keep default values if API fails
       console.error("Failed to fetch system parameters:", err);
     });
-  }, []);
+  }, [changeTheme]);
   
   useEffect(() => {
     if (userData?.attachmentBlob) {
@@ -138,52 +160,13 @@ function Navbar({ view }) {
         </div>
 
         <ul className="navbar-nav flex-row align-items-center ms-auto">
-          {/* Theme Switcher */}
-          <li className="nav-item navbar-dropdown dropdown me-3 me-xl-2">
-            <a
-              className="nav-link dropdown-toggle hide-arrow"
-              data-bs-toggle="dropdown"
-              data-bs-auto-close="outside"
-              aria-expanded="false"
-              title="Theme"
-            >
-              <i className="bx bx-palette bx-md"></i>
-            </a>
-            <ul className="dropdown-menu dropdown-menu-end">
-              <li>
-                <h6 className="dropdown-header">Select Theme</h6>
-              </li>
-              <li>
-                <a 
-                  className={`dropdown-item ${theme === 'blue' ? 'active' : ''}`}
-                  onClick={() => changeTheme('blue')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <i className="bx bx-circle me-2" style={{ color: '#0d384d' }}></i>
-                  Blue Theme
-                  {theme === 'blue' && <i className="bx bx-check ms-auto"></i>}
-                </a>
-              </li>
-              <li>
-                <a 
-                  className={`dropdown-item ${theme === 'green' ? 'active' : ''}`}
-                  onClick={() => changeTheme('green')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <i className="bx bx-circle me-2" style={{ color: '#28a745' }}></i>
-                  Green Theme
-                  {theme === 'green' && <i className="bx bx-check ms-auto"></i>}
-                </a>
-              </li>
-            </ul>
-          </li>
-
           {/* Company Name */}
           {companyName && (
             <li className="nav-item me-3 me-xl-2">
               <span className="nav-link text-white">{companyName}</span>
             </li>
           )}
+
           {/* Notification Bell */}
           <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
             <a
