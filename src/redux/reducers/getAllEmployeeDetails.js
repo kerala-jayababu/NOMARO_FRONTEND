@@ -13,8 +13,6 @@ export const getAllEmployeeDetails = createAsyncThunk(
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      console.log("Retrieved Token:", token); // Debugging
-
       if (!token) {
         console.error("Authorization token missing");
         return rejectWithValue("Authorization token missing");

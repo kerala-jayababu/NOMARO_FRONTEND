@@ -43,21 +43,22 @@ html.theme-blue {
 
 /* Green Theme */
 html.theme-green {
-  --primary-color: #28a745;
-  --primary-light: rgba(40, 167, 69, 0.1);
+  --primary-color: #0b5c1e;
+  --primary-light: rgba(11, 92, 30, 0.1);
   --text-primary: #2d5a3d;
   --text-secondary: #3d6b4f;
   --text-muted: #5a7a66;
-  --link-color: #28a745;
-  --link-hover-color: #218838;
-  --heading-color: #1e7e34;
-  --navbar-bg: #28a745;
+  --link-color: #0b5c1e;
+  --link-hover-color: #094a18;
+  --heading-color: #0b5c1e;
+  --navbar-bg: #0b5c1e;
   --navbar-text: #e0f5e6;
   --navbar-text-hover: #ffffff;
   --navbar-title-color: #ffffff;
-  --pagination-active-bg: #28a745;
-  --pagination-active-border: #28a745;
-  --pagination-active-shadow: rgba(40, 167, 69, 0.4);
+  --pagination-active-bg: #0b5c1e;
+  --pagination-active-border: #0b5c1e;
+  --pagination-active-shadow: rgba(11, 92, 30, 0.4);
+  --bs-table-hover-bg: rgba(76, 175, 80, 0.2);
 }
 
 /* Global Styles */
@@ -164,19 +165,55 @@ html.theme-blue .btn-primary:hover {
 
 /* Green theme specific hover */
 html.theme-green .btn-primary:hover {
-  background-color: #218838 !important;
-  border-color: #218838 !important;
+  background-color: #094a18 !important;
+  border-color: #094a18 !important;
   opacity: 1;
   filter: none;
 }
 
 /* Green theme table text */
 html.theme-green .table tbody td {
-  color: darkgreen !important;
+  color: #131313 !important;
 }
 
 html.theme-green .table tbody td a {
-  color: darkgreen !important;
+  color: #0b5c1e !important;
+}
+
+html.theme-green .table tbody td a:hover,
+html.theme-green .table tbody td a:focus {
+  color: #094a18 !important;
+}
+
+/* Green theme table headers */
+html.theme-green .table th,
+html.theme-green thead th,
+html.theme-green .table thead th,
+html.theme-green .deduct-table-container thead th {
+  color: #131313 !important;
+}
+
+/* Green theme all hyperlinks */
+html.theme-green a {
+  color: #0b5c1e !important;
+}
+
+html.theme-green a:hover,
+html.theme-green a:focus {
+  color: #094a18 !important;
+}
+
+html.theme-green a:visited {
+  color: #0b5c1e !important;
+}
+
+html.theme-green a.text-primary {
+  color: #0b5c1e !important;
+}
+
+html.theme-green a.text-primary:hover,
+html.theme-green a.text-primary:focus {
+  color: #094a18 !important;
 }
 
 /* Green theme action button hover */
@@ -184,9 +221,92 @@ html.theme-green .btn-outline-secondary:hover,
 html.theme-green .btn-outline-secondary:focus,
 html.theme-green .btn-outline-primary:hover,
 html.theme-green .btn-outline-primary:focus {
-  background-color: darkgreen !important;
-  border-color: darkgreen !important;
+  background-color: #0b5c1e !important;
+  border-color: #0b5c1e !important;
   color: #fff !important;
+}
+
+/* Green theme table row hover */
+html.theme-green .table-hover > tbody > tr:hover,
+html.theme-green .table-hover > tbody > tr:hover > td,
+html.theme-green .table-hover > tbody > tr:hover > th,
+html.theme-green .table tbody tr:hover,
+html.theme-green .table tbody tr:hover > td,
+html.theme-green .table tbody tr:hover > th,
+html.theme-green .table-hover > tbody > tr:hover > * {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+}
+
+html.theme-green .table > :not(caption) > * > * {
+  box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+}
+
+html.theme-green .table-hover > tbody > tr:hover > * {
+  --bs-table-accent-bg: rgba(76, 175, 80, 0.2) !important;
+  box-shadow: inset 0 0 0 9999px rgba(76, 175, 80, 0.2) !important;
+}
+
+html.theme-green .deduct-table-container tbody tr:hover,
+html.theme-green .deduct-table-container tbody tr:hover > td,
+html.theme-green .deduct-table-container tbody tr:hover > th {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Green theme menu and sub-menu text color */
+html.theme-green .bg-menu-theme .menu-link {
+  color: #131313 !important;
+}
+
+html.theme-green .bg-menu-theme .menu-sub > .menu-item > .menu-link {
+  color: #131313 !important;
+}
+
+html.theme-green .bg-menu-theme .menu-item > .menu-link {
+  color: #131313 !important;
+}
+
+html.theme-green .bg-menu-theme .menu-item.active > .menu-link {
+  color: #0b5c1e !important;
+}
+
+html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link {
+  color: #0b5c1e !important;
+}
+
+html.theme-green .bg-menu-theme .menu-item.active > .menu-link:hover,
+html.theme-green .bg-menu-theme .menu-item.active > .menu-link:focus {
+  color: #0b5c1e !important;
+}
+
+html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:hover,
+html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:focus {
+  color: #0b5c1e !important;
+}
+
+/* Green theme menu hover */
+html.theme-green .bg-menu-theme .menu-link:hover,
+html.theme-green .bg-menu-theme .menu-link:focus,
+html.theme-green .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  color: #131313 !important;
+}
+
+html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.open > .menu-link,
+html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.open > .menu-link {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  color: #0b5c1e !important;
+}
+
+html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover,
+html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  color: #131313 !important;
+}
+
+html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link,
+html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  color: #0b5c1e !important;
 }
 
 .list_searchbox .form-control {
@@ -250,7 +370,7 @@ html.theme-blue .form-switch .form-check-input:focus {
 
 /* Green theme toggle switch focus */
 html.theme-green .form-switch .form-check-input:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2328a745'/%3e%3c/svg%3e") !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230b5c1e'/%3e%3c/svg%3e") !important;
 }
 
 .form-switch .form-check-input:checked {
