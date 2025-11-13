@@ -770,11 +770,8 @@ const EmployeeProfile = () => {
       const data = JSON.parse(text);
 
       // Log the full response
-      console.log("Raw API response:", data);
-
       const result =
         data?.map((item) => {
-          console.log("Mapping overtime item:", item); // pauses in browser's dev tools
           return {
             value: item.holidayType.toString(),
             label: item.holidayTypeName,
