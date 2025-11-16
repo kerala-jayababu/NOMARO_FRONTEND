@@ -12,7 +12,7 @@ function Menu({ viewType }) {
   const navigate = useNavigate();
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
-  const [logo, setLogo] = useState("/assets/logo.png");
+  const [logo, setLogo] = useState("");
 
   const canView = useMemo(() => {
     const permMap = new Map();
@@ -62,7 +62,7 @@ function Menu({ viewType }) {
         }
       }
     }).catch(err => {
-      // Keep default logo if API fails
+      // Keep logo blank if API fails
       console.error("Failed to fetch logo:", err);
     });
 
@@ -82,7 +82,7 @@ function Menu({ viewType }) {
       <div className="app-brand demo">
         <a href="#" className="app-brand-link">
           <span className="app-brand-logo demo">
-            <img src={logo} alt="Logo" />
+            {logo && <img src={logo} alt="Logo" />}
           </span>
         </a>
         <a

@@ -6,7 +6,7 @@ import CommonService from "../core/services/CommonService";
  
 function Login() {
   const navigate = useNavigate();
-  const [logo, setLogo] = useState("/assets/logo.png");
+  const [logo, setLogo] = useState("");
 
    
   const handleSignIn = async () => {
@@ -49,7 +49,7 @@ function Login() {
         }
       }
     }).catch(err => {
-      // Keep default logo if API fails
+      // Keep logo blank if API fails
       console.error("Failed to fetch logo:", err);
     });
   },[])
@@ -63,7 +63,7 @@ function Login() {
               <div className="app-brand justify-content-center">
                 <a href="index.html" className="app-brand-link gap-2">
                   <span className="app-brand-logo demo">
-                    <img src={logo} alt="Logo" />
+                    {logo && <img src={logo} alt="Logo" />}
                   </span>
                 </a>
               </div>
