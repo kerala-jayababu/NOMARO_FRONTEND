@@ -230,9 +230,9 @@ const EmployeeProfile = () => {
   );
 
   const genderOptions = [
-    { value: "Male", label: "Male" },
-    { value: "Female", label: "Female" },
-    { value: "Other", label: "Other" },
+    { value: "MALE", label: "Male" },
+    { value: "FEMALE", label: "Female" },
+    { value: "OTHER", label: "Other" },
   ];
 
   const statusOptions = [
@@ -325,7 +325,6 @@ const EmployeeProfile = () => {
 
             loadBranchesForBanks();
 
-            // console.log("Mapped Bank Accounts:", mappedBankAccounts);
             setBankAccountsState(mappedBankAccounts);
           } else {
             setBankAccountsState([
@@ -1362,7 +1361,7 @@ const EmployeeProfile = () => {
   }
 
   const phoneFields = ["phoneNumber1", "phoneNumber2", "whatsAppNumber"];
-  const numericFields = ["zipCode", "taxIdNumber", "idNumber"];
+  const numericFields = ["zipCode", "taxIdNumber"];
 
   const handleEmployeeInputChange = (field, value) => {
     let sanitizedValue = value;
@@ -1372,11 +1371,17 @@ const EmployeeProfile = () => {
     }
 
     if (phoneFields.includes(field)) {
-      sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 15);
+      // Allow digits and hyphens for phone numbers
+      sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "").slice(0, 20);
     }
 
     if (numericFields.includes(field)) {
-      sanitizedValue = sanitizedValue.replace(/\D/g, "");
+      if (field === "taxIdNumber") {
+        // Allow digits and hyphens for tax ID number
+        sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "");
+      } else {
+        sanitizedValue = sanitizedValue.replace(/\D/g, "");
+      }
     }
 
     setEmployeeFormData((prev) => ({
@@ -1433,18 +1438,24 @@ const EmployeeProfile = () => {
       errors.emailID = "Invalid email format";
     }
 
-    const phoneRegex = /^\d{7,15}$/;
     phoneFields.forEach((field) => {
       const value = employeeFormData[field];
-      if (value && !phoneRegex.test(value)) {
-        errors[field] = "Must be 7-15 digits";
+      if (value) {
+        // Check if value contains only digits and hyphens
+        if (!/^[\d-]+$/.test(value)) {
+          errors[field] = "Must contain only digits and hyphens";
+        } else {
+          // Count only digits for length validation
+          const digitCount = value.replace(/-/g, "").length;
+          if (digitCount < 7 || digitCount > 15) {
+            errors[field] = "Must be 7-15 digits (hyphens allowed)";
+          }
+        }
       }
     });
 
     const numericFieldRules = [
       { field: "zipCode", regex: /^\d{3,10}$/, message: "Zip Code must be 3-10 digits" },
-      { field: "taxIdNumber", regex: /^\d{3,20}$/, message: "Tax ID Number must be digits only" },
-      { field: "idNumber", regex: /^\d{3,20}$/, message: "ID Number must be digits only" },
     ];
 
     numericFieldRules.forEach(({ field, regex, message }) => {
@@ -1454,8 +1465,23 @@ const EmployeeProfile = () => {
       }
     });
 
+    // Special validation for taxIdNumber to allow hyphens
+    if (employeeFormData.taxIdNumber) {
+      const taxIdValue = employeeFormData.taxIdNumber;
+      // Check if value contains only digits and hyphens
+      if (!/^[\d-]+$/.test(taxIdValue)) {
+        errors.taxIdNumber = "Tax ID Number must contain only digits and hyphens";
+      } else {
+        // Count only digits for length validation
+        const digitCount = taxIdValue.replace(/-/g, "").length;
+        if (digitCount < 3 || digitCount > 20) {
+          errors.taxIdNumber = "Tax ID Number must be 3-20 digits (hyphens allowed)";
+        }
+      }
+    }
+
     setEmployeeFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    return { isValid: Object.keys(errors).length === 0, errors };
   };
 
   const resetEmployeeForm = () => {
@@ -1498,7 +1524,21 @@ const EmployeeProfile = () => {
   const handleEmployeeFormSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateEmployeeForm()) {
+    const validationResult = validateEmployeeForm();
+    if (!validationResult.isValid) {
+      toast.error("Please fix the validation errors before submitting");
+      // Scroll to first error field
+      const firstErrorField = Object.keys(validationResult.errors)[0];
+      if (firstErrorField) {
+        setTimeout(() => {
+          const errorElement = document.getElementById(firstErrorField) || 
+                              document.querySelector(`[name="${firstErrorField}"]`);
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorElement.focus();
+          }
+        }, 100);
+      }
       return false;
     }
 
@@ -1551,6 +1591,7 @@ const EmployeeProfile = () => {
 
       if (result.error) {
         hideLoader();
+        console.error("API Error:", result.error);
         toast.error(result.error.message || "Failed to save employee");
         return false;
       }
@@ -1570,6 +1611,7 @@ const EmployeeProfile = () => {
         return true;
       } else {
         hideLoader();
+        console.error("API returned success=false:", result.data);
         toast.error(result.data?.message || "Failed to save employee");
         return false;
       }
@@ -1662,9 +1704,9 @@ const EmployeeProfile = () => {
         0,
       overTimeAllowedStatus:
         typeof detailedData.overTimeAllowedStatus !== "undefined"
-          ? !!detailedData.overTimeAllowedStatus
+          ? detailedData.overTimeAllowedStatus === true || detailedData.overTimeAllowedStatus === "true"
           : typeof profileData.overTimeAllowedStatus !== "undefined"
-          ? !!profileData.overTimeAllowedStatus
+          ? profileData.overTimeAllowedStatus === true || profileData.overTimeAllowedStatus === "true"
           : false,
       employeePhoto: employeePhotoValue,
       lastWorkingDay: formatDateForForm(
@@ -1874,6 +1916,10 @@ const EmployeeProfile = () => {
                       <p className="m-0">{profileData?.taxIdNumber || "N/A"}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
+                      <label className="form-label mb-1">ID Number</label>
+                      <p className="m-0">{profileData?.idNumber || "N/A"}</p>
+                    </div>
+                    <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Budget Code </label>
                       <p className="m-0">{profileData?.budgetCode}</p>
                     </div>
@@ -2076,10 +2122,6 @@ const EmployeeProfile = () => {
                     </td>
 
                     <td className="routing-number">
-                      {/* {console.log(
-                        `Bank index: ${index}, Selected Bank: ${bank.selectedBranch}, Branches:`,
-                        branchesPerBank[bank.selectedBranch]
-                      )} */}
                       <select
                         className="form-select"
                         name="branchName"
@@ -2925,16 +2967,37 @@ const EmployeeProfile = () => {
             )}
           </div>
           <div className="col-md-4">
+            <label className="form-label mb-1 mt-2" htmlFor="idNumber">
+              ID Number
+            </label>
+            <input
+              id="idNumber"
+              name="idNumber"
+              type="text"
+              className={`form-control${employeeFormErrors.idNumber ? " is-invalid" : ""}`}
+              value={employeeFormData.idNumber}
+              onChange={(e) => handleEmployeeInputChange("idNumber", e.target.value)}
+            />
+            {employeeFormErrors.idNumber && (
+              <div className="invalid-feedback d-block">
+                {employeeFormErrors.idNumber}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-4">
             <label className="form-label mb-1 mt-2">Overtime Allowed Status</label>
             <div className="form-check form-switch">
               <input
                 className="form-check-input"
                 type="checkbox"
-                checked={employeeFormData.overTimeAllowedStatus}
+                checked={employeeFormData.overTimeAllowedStatus === true || employeeFormData.overTimeAllowedStatus === "true"}
                 onChange={(e) => handleEmployeeInputChange("overTimeAllowedStatus", e.target.checked)}
               />
               <label className="form-check-label">
-                {employeeFormData.overTimeAllowedStatus ? "Yes" : "No"}
+                {employeeFormData.overTimeAllowedStatus === true || employeeFormData.overTimeAllowedStatus === "true" ? "Yes" : "No"}
               </label>
             </div>
           </div>

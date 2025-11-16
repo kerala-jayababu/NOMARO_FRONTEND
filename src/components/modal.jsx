@@ -26,17 +26,16 @@ const Modal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent default form submission
-    if (!isSubmitting) {
-      console.log('Modal submission successful');
-
+    if (!isSubmitting && onSubmit) {
       const success = await onSubmit(e); // Call the provided onSubmit function only if not submitting
-      console.log('success', success);
       // Close the modal only if submission was successful
       if (success) {
         const modal = document.getElementById(id);
         if (modal) {
           const bsModal = bootstrap.Modal.getInstance(modal);
-          bsModal.hide();
+          if (bsModal) {
+            bsModal.hide();
+          }
         }
       }
     }
