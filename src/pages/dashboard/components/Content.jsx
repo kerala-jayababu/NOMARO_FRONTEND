@@ -1,7 +1,8 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import ScheduledDeductions from "../../PayrollManagement/ScheduledDeductions";
 import ConfigApproval from "../../PayrollManagement/ConfigApproval";
+import CommonService from "../../../core/services/CommonService";
 
 const SalaryAdjustments = lazy(() =>
   import("../../PayrollManagement/SalaryAdjustments")
@@ -102,13 +103,33 @@ function Content() {
 export default Content;
 
 export const ComingSoon = () => {
+  const [welcomeImage, setWelcomeImage] = useState("");
+
+  useEffect(() => {
+    // Fetch welcome image from CompanyName parameter binary value
+    CommonService.getSystemParameters().then(res => {
+      if (res.data && res.data.data) {
+        debugger
+        const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
+        if (companyNameParam && companyNameParam.parameterBinaryValue) {
+          setWelcomeImage(`data:image/png;base64,${companyNameParam.parameterBinaryValue}`);
+        }
+      }
+    }).catch(err => {
+      // Keep image blank if API fails
+      console.error("Failed to fetch welcome image:", err);
+    });
+  }, []);
+
   return (
     <div className="flex justify-center">
-      <img
-        src="/assets/Welcome1.jpg"
-        style={{ width: "55%", marginLeft: "25%", marginTop: "3%" }}
-        alt="Coming Soon"
-      />
+      {welcomeImage && (
+        <img
+          src={welcomeImage}
+          style={{ width: "55%", marginLeft: "25%", marginTop: "3%" }}
+          alt="Welcome"
+        />
+      )}
     </div>
   );
 };

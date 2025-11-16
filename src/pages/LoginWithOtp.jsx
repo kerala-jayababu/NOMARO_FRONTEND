@@ -12,7 +12,7 @@ function LoginWithOtp() {
   const [emailId, setEmailId] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
-  const [logo, setLogo] = useState("/assets/logo.png");
+  const [logo, setLogo] = useState("");
 
   const handleSignIn = () => {
     LoginService.validateEmailwithOtp(emailId, otp).then(res => {
@@ -64,7 +64,7 @@ function LoginWithOtp() {
         }
       }
     }).catch(err => {
-      // Keep default logo if API fails
+      // Keep logo blank if API fails
       console.error("Failed to fetch logo:", err);
     });
   }, [])
@@ -78,7 +78,7 @@ function LoginWithOtp() {
               <div className="app-brand justify-content-center">
                 <a href="index.html" className="app-brand-link gap-2">
                   <span className="app-brand-logo demo">
-                    <img src={logo} alt="Logo" />
+                    {logo && <img src={logo} alt="Logo" />}
                   </span>
                 </a>
               </div>

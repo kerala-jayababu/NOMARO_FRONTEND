@@ -6,7 +6,7 @@ import CommonService from "../../../core/services/CommonService";
 function Navbar() {
   const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
-  const [logo, setLogo] = useState("/assets/logo.png");
+  const [logo, setLogo] = useState("");
   const [productName, setProductName] = useState("Payroll Management");
   const [companyName, setCompanyName] = useState("");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
@@ -35,7 +35,7 @@ function Navbar() {
         }
       }
     }).catch(err => {
-      // Keep default values if API fails
+      // Keep logo blank if API fails
       console.error("Failed to fetch system parameters:", err);
     });
   }, []);
@@ -50,15 +50,17 @@ function Navbar() {
       className="layout-navbar navbar navbar-expand-xl navbar-detached  bg-navbar-theme bg-dark "
       id="layout-navbar"
     >
-      <div className="me-5">
-        <img
-          src={logo}
-          width={200}
-          height={62}
-          className="float-start-custom"
-          alt="Logo"
-        />
-      </div>
+      {logo && (
+        <div className="me-5">
+          <img
+            src={logo}
+            width={200}
+            height={62}
+            className="float-start-custom"
+            alt="Logo"
+          />
+        </div>
+      )}
 
       <div
         className="navbar-nav-right d-flex align-items-center"

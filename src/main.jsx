@@ -3,6 +3,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { Provider } from "react-redux";
 import store from "./redux/store.js";
+import { BASE_URL } from "./redux/api/utils";
+
+// Set API base URL globally for browser-config.js
+if (typeof window !== 'undefined') {
+  window.__API_BASE_URL__ = BASE_URL || '';
+}
 import '../public/assets/vendor/css/pages/page-auth.css'
 import '../public/assets/vendor/css/pages/page-icons.css'
 import '../public/assets/vendor/css/pages/page-misc.css'
