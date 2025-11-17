@@ -14,7 +14,9 @@
         attempts++;
       }
       
-      const apiEndpoint = apiUrl ? `${apiUrl}/api/v1/MasterData/GetSystemParameters` : '/api/v1/MasterData/GetSystemParameters';
+      const resolvedBase = apiUrl || window.location.origin;
+      const normalizedBase = resolvedBase.endsWith('/') ? resolvedBase.slice(0, -1) : resolvedBase;
+      const apiEndpoint = `${normalizedBase}/api/v1/MasterData/GetSystemParameters`;
       console.log('Fetching BrowserConfig from:', apiEndpoint);
       
       // Wait for the API response
@@ -25,7 +27,6 @@
       }
       
       const data = await response.json();
-      debugger
       if (data && data.data) {
         const browserConfig = data.data.find(item => item.parameterName === "BrowserConfig");
         
