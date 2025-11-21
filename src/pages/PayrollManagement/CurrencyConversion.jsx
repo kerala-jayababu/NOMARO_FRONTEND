@@ -11,8 +11,8 @@ function CurrencyConversion() {
 
   const initialFormState = {
     idCurrencyConversion: 0,
-    fromCurrency: "GYD",
-    toCurrency: "USD",
+    fromCurrency: "USD",
+    toCurrency: "GYD",
     rateDate: moment().format("YYYY-MM-DD"),
     conversionRate: ''
   };
