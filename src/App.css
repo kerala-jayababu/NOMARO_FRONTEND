@@ -534,7 +534,7 @@ a {
 a:hover,
 a:focus {
   color: var(--link-hover-color);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 a:visited {
