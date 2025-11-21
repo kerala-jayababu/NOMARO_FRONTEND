@@ -8,7 +8,14 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
   <title id="page-title"></title>
-  <script src="/public/browser-config.js"></script>
+  <script>
+    (function () {
+      const envBaseUrl = "%VITE_API_URL%";
+      const hasValidEnv = envBaseUrl && envBaseUrl !== "undefined" && envBaseUrl !== "";
+      window.__API_BASE_URL__ = hasValidEnv ? envBaseUrl : window.location.origin;
+    })();
+  </script>
+  <script src="/browser-config.js"></script>
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
