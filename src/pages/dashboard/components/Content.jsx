@@ -121,11 +121,22 @@ export const ComingSoon = () => {
   }, []);
 
   return (
-    <div className="flex justify-center">
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: 'calc(100vh - 200px)',
+      width: '100%'
+    }}>
       {welcomeImage && (
         <img
           src={welcomeImage}
-          style={{ width: "55%", marginLeft: "25%", marginTop: "3%" }}
+          style={{ 
+            width: "55%", 
+            maxWidth: "800px",
+            height: "auto",
+            display: "block"
+          }}
           alt="Welcome"
         />
       )}
