@@ -6,7 +6,7 @@
   --text-primary: #566a7f;
   --text-secondary: #697a8d;
   --text-muted: #8592a3;
-  --link-color: #0d384d;
+  --link-color: #1893cf;
   --link-hover-color: #0a2c3d;
   --heading-color: #435971;
   --border-color: #e9e9e9;
@@ -29,7 +29,7 @@ html.theme-blue {
   --text-primary: #566a7f;
   --text-secondary: #697a8d;
   --text-muted: #8592a3;
-  --link-color: #0d384d;
+  --link-color: #1893cf;
   --link-hover-color: #0a2c3d;
   --heading-color: #435971;
   --navbar-bg: #0d384d;
@@ -716,6 +716,23 @@ a.text-primary:focus {
 /* Primary background and label classes */
 .bg-primary {
   background-color: var(--primary-color) !important;
+}
+
+/* Green theme - ensure bg-primary uses green */
+html.theme-green .bg-primary,
+html.theme-green thead.bg-primary,
+html.theme-green .table thead.bg-primary,
+html.theme-green .table thead.bg-primary th {
+  background-color: #0b5c1e !important;
+}
+
+/* Green theme - ensure text inside bg-primary headers is white */
+html.theme-green .bg-primary,
+html.theme-green thead.bg-primary,
+html.theme-green .table thead.bg-primary th,
+html.theme-green .bg-primary th,
+html.theme-green .bg-primary td {
+  color: #ffffff !important;
 }
 
 .bg-label-primary {

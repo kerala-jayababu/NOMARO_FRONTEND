@@ -549,7 +549,19 @@ const SalaryTemplateNew = () => {
                     {paginatedData?.length > 0 ? (
                       paginatedData?.map((item, index) => (
                         <tr key={item.idSalaryTemplate}>
-                          <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => { setDetailsToShow(item); setShowDetailsModal(true) }}>{item?.salaryTemplateName}</td>
+                          <td>
+                            <a 
+                              href="#" 
+                              style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }} 
+                              onClick={(e) => { 
+                                e.preventDefault(); 
+                                setDetailsToShow(item); 
+                                setShowDetailsModal(true); 
+                              }}
+                            >
+                              {item?.salaryTemplateName}
+                            </a>
+                          </td>
                           <td>{item?.description}</td>
                           <td>
                             <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : ''}`}>{item.approvalStatus}</span>

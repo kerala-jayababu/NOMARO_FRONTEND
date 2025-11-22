@@ -255,7 +255,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                 <div class="col-md-3 p-2">
                   <label>Entity Type</label>
                   <select
-                    class="form-select form-select-sm"
+                    class="form-select form-select"
                     value={entityType}
                     onChange={handleEntityTypeChange}
                   >
@@ -266,7 +266,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                 <div class="col-md-3 p-2">
                   <label>Status</label>
                   <select
-                    class="form-select form-select-sm"
+                    class="form-select form-select"
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
                     disabled={!entityType}
@@ -361,12 +361,18 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                             }}
                           />
                         </td>
-                        <td
-                          class="cursor"
-                          style={{ color: "#1893cf", cursor: "pointer" }}
-                          onClick={() => handleSelectEmployee(item)}
-                        >
-                          {item.entityName}
+                        <td>
+                          <a
+                            href="#"
+                            class="cursor"
+                            style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSelectEmployee(item);
+                            }}
+                          >
+                            {item.entityName}
+                          </a>
                         </td>
                         <td>{item.details}</td>
                         <td>
