@@ -388,7 +388,7 @@ function Navbar({ view }) {
             </a>
             <ul className="dropdown-menu dropdown-menu-end">
               <li>
-                <a className="dropdown-item" href="#">
+                <div className="dropdown-item" style={{ cursor: 'default', pointerEvents: 'none' }}>
                   <div className="d-flex">
                     <div className="flex-shrink-0 me-3">
                       <div className="avatar avatar-online">
@@ -404,7 +404,7 @@ function Navbar({ view }) {
                       <small className="text-muted">{userData?.role}</small>
                     </div>
                   </div>
-                </a>
+                </div>
               </li>
               <li><div className="dropdown-divider"></div></li>
               {
