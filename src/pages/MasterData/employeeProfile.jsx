@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
-import Grid from "../../components/grid";
+import Grid from "../../components/Grid";
 import Pagination from "../../components/pagination";
 import StatusBadge from "../../components/statusBadge";
 import Modal from "../../components/modal";

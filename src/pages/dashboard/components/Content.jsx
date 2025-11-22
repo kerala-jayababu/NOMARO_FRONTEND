@@ -109,7 +109,6 @@ export const ComingSoon = () => {
     // Fetch welcome image from CompanyName parameter binary value
     CommonService.getSystemParameters().then(res => {
       if (res.data && res.data.data) {
-        debugger
         const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
         if (companyNameParam && companyNameParam.parameterBinaryValue) {
           setWelcomeImage(`data:image/png;base64,${companyNameParam.parameterBinaryValue}`);

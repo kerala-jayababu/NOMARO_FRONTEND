@@ -1019,13 +1019,17 @@ function SalaryGeneration() {
                                 {item.employeeCode}
                               </span>
                             ) : (
-                              <span
-                                style={{ color: "#1893cf", cursor: "pointer", textDecoration: "underline" }}
-                                onClick={() => handleEmployeeCodeClick(item)}
+                              <a
+                                href="#"
+                                style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleEmployeeCodeClick(item);
+                                }}
                                 title="Click to view salary slip details"
                               >
                                 {item.employeeCode}
-                              </span>
+                              </a>
                             )}
                           </td>
                           <td>{item.employeeName}</td>

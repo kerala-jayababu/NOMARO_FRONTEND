@@ -904,7 +904,18 @@ const EmployeeSalaryConfig = () => {
                     {paginatedData?.length > 0 ? (
                       paginatedData?.map((item, index) => (
                         <tr key={item.idEmployeeSalaryConfig}>
-                          <td style={{ color: "#1893cf", cursor: "pointer" }} onClick={() => getEmpSalDetails(item.idEmployeeSalaryConfig)}>{item?.employeeCode}</td>
+                          <td>
+                            <a
+                              href="#"
+                              style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                getEmpSalDetails(item.idEmployeeSalaryConfig);
+                              }}
+                            >
+                              {item?.employeeCode}
+                            </a>
+                          </td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName != null ? (item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)) : 'NA'}</td>
                           <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
