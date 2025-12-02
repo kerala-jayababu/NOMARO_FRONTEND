@@ -52,6 +52,7 @@ import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
+import LiveDashboard from "./pages/dashboard/LiveDashboard";
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
               <Route path="config-approvals" element={<ConfigApproval />} />
               <Route path="income-tax-config" element={<TaxConfiguration />} />
               <Route path="currency-conversion" element={<CurrencyConversion />} />
+              <Route path="live-dashboard" element={<LiveDashboard />} />
               <Route path="notification-types" element={<NotificationConfig />} />
               <Route path='bank-branches' element={<BankAndBranches />} />
               <Route path='rent-free-quarters' element={<RentFreeAllowances />} />

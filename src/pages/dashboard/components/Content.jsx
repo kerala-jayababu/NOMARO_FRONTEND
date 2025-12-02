@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import ScheduledDeductions from "../../PayrollManagement/ScheduledDeductions";
 import ConfigApproval from "../../PayrollManagement/ConfigApproval";
 import CommonService from "../../../core/services/CommonService";
+import LiveDashboard from "../LiveDashboard";
 
 const SalaryAdjustments = lazy(() =>
   import("../../PayrollManagement/SalaryAdjustments")
@@ -92,6 +93,8 @@ function Content() {
             return <SalaryHeads />;  
           case "Config Approvals":
             return <ConfigApproval/>
+          case "Live Dashboard":
+            return <LiveDashboard />;
           default:
             return <ComingSoon />;
         }

@@ -29,11 +29,16 @@ import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
+import LiveDashboard from "./pages/dashboard/LiveDashboard";
 
 export const privateRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
+  },
+  {
+    path: "/dashboard/live-dashboard",
+    element: <LiveDashboard />,
   },
   {
     path: "/dashboard/budget-codes",
