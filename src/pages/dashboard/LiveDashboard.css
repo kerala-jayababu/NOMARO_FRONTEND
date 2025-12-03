@@ -181,5 +181,11 @@
 .live-dashboard .table {
   font-family: "Poppins", sans-serif;
 }
+.live-dashboard table thead th {
+  background-color: #0f3c54 !important; /* Blue background */
+  color: white !important;              /* White text */
+  font-weight: 500 !important;          /* Bold font */
+  font-size: 14px;
+}
 
 

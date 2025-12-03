@@ -407,10 +407,13 @@ function LiveDashboard() {
         </div>
 
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="fw-semibold mb-0">Live Attendance Status</h5>
-          <small className="">
+          <h5 className="fw-bold mb-0">Live Attendance Status</h5>
+          <span
+            className="fw-bold "
+            style={{ fontSize: "14px" }}
+          >
             Showing: {selectedDetailLabel}
-          </small>
+          </span>
         </div>
         <div className="table-responsive">
           <table className="table table-sm table-bordered">
@@ -423,14 +426,14 @@ function LiveDashboard() {
               }}
             >
               <tr> 
-                <th style={{color: "white !important"}}>Emp Code</th>
-                <th style={{color: "white !important"}}>Employee</th>
-                <th style={{color: "white !important"}}>Department</th>
-                <th style={{color: "white !important"}}>Email</th>
-                <th style={{color: "white !important"}}>Phone</th>
-                <th style={{color: "white !important"}}>Status</th>
-                <th style={{color: "white !important"}}>Check-In</th>
-                <th style={{color: "white !important"}}>Check-Out</th>
+                <th >Emp Code</th>
+                <th >Employee</th>
+                <th >Department</th>
+                <th >Email</th>
+                <th >Phone</th>
+                <th >Status</th>
+                <th >Check-In</th>
+                <th >Check-Out</th>
               </tr>
             </thead>
             <tbody>
