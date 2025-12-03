@@ -241,14 +241,14 @@ function LiveDashboard() {
             label: "On Time",
             value: stats.ontimeClockIn,
             valueClass: "text-success",
-            detailType: "CLOCKEDINTOTAL-IN",
+            detailType: "CLOCKEDINTOTAL-ONTIME",
             detailLabel: "Clocked-In - In-Premise",
           },
           {
             label: "Late",
             value: stats.lateClockIn,
             valueClass: "text-danger",
-            detailType: "CLOCKEDINTOTAL-OFF",
+            detailType: "CLOCKEDINTOTAL-LATE",
             detailLabel: "Clocked-In - Off-Premise",
           },
         ],
@@ -262,14 +262,14 @@ function LiveDashboard() {
             label: "On-Site",
             value: stats.presentOnSite,
             valueClass: "text-success",
-            detailType: "CLOCKEDINTOTAL-IN",
+            detailType: "PRESENT-ONSITE",
             detailLabel: "Present - On Site",
           },
           {
             label: "Off-Site",
             value: stats.presentOffSite,
             valueClass: "text-danger",
-            detailType: "CLOCKEDINTOTAL-OFF",
+              detailType: "PRESENT-OFFSITE",
             detailLabel: "Present - Off Site",
           },
         ],
@@ -337,7 +337,7 @@ function LiveDashboard() {
   };
 
   return (
-    <div className="container-fluid p-4 live-dashboard">
+    <div className="container-fluid p-2 live-dashboard">
       <div className="page-header">
         Live Dashboard... {formatTimestamp()}
       </div>
@@ -408,22 +408,29 @@ function LiveDashboard() {
 
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="fw-semibold mb-0">Live Attendance Status</h5>
-          <small className="text-muted">
+          <small className="">
             Showing: {selectedDetailLabel}
           </small>
         </div>
         <div className="table-responsive">
-          <table className="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th>Employee Code</th>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Check-In</th>
-                <th>Check-Out</th>
+          <table className="table table-sm table-bordered">
+            <thead
+              style={{
+                backgroundColor: "#0f3c54",
+                color: "#ffffff",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
+            >
+              <tr> 
+                <th style={{color: "white !important"}}>Emp Code</th>
+                <th style={{color: "white !important"}}>Employee</th>
+                <th style={{color: "white !important"}}>Department</th>
+                <th style={{color: "white !important"}}>Email</th>
+                <th style={{color: "white !important"}}>Phone</th>
+                <th style={{color: "white !important"}}>Status</th>
+                <th style={{color: "white !important"}}>Check-In</th>
+                <th style={{color: "white !important"}}>Check-Out</th>
               </tr>
             </thead>
             <tbody>
