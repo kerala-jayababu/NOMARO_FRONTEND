@@ -181,6 +181,16 @@
 .live-dashboard .table {
   font-family: "Poppins", sans-serif;
 }
+.live-dashboard .table-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+.live-dashboard .table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
 .live-dashboard table thead th {
   background-color: #0f3c54 !important; /* Blue background */
   color: white !important;              /* White text */

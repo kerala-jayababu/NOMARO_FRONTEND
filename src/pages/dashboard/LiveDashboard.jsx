@@ -132,12 +132,13 @@ function LiveDashboard() {
     );
     const normalizedStatus = String(statusLabel).toLowerCase();
     let tone = "secondary";
-    if (normalizedStatus.includes("unauthorized") || normalizedStatus.includes("late")) {
+    if (normalizedStatus.includes("unauthorized") || normalizedStatus.includes("not")||normalizedStatus.includes("off")||normalizedStatus.includes("late")) {
       tone = "danger";
     } else if (normalizedStatus.includes("absent")) {
       tone = "warning";
     } else if (
       normalizedStatus.includes("premise") ||
+      normalizedStatus.includes("ontime") ||
       normalizedStatus.includes("authorized")
     ) {
       tone = "success";
@@ -242,14 +243,14 @@ function LiveDashboard() {
             value: stats.ontimeClockIn,
             valueClass: "text-success",
             detailType: "CLOCKEDINTOTAL-ONTIME",
-            detailLabel: "Clocked-In - In-Premise",
+            detailLabel: "Clocked-In - On Time",
           },
           {
             label: "Late",
             value: stats.lateClockIn,
             valueClass: "text-danger",
             detailType: "CLOCKEDINTOTAL-LATE",
-            detailLabel: "Clocked-In - Off-Premise",
+            detailLabel: "Clocked-In - Late",
           },
         ],
       },
@@ -415,7 +416,7 @@ function LiveDashboard() {
             Showing: {selectedDetailLabel}
           </span>
         </div>
-        <div className="table-responsive">
+        <div className="table-responsive table-scroll">
           <table className="table table-sm table-bordered">
             <thead
               style={{
@@ -432,8 +433,8 @@ function LiveDashboard() {
                 <th >Email</th>
                 <th >Phone</th>
                 <th >Status</th>
-                <th >Check-In</th>
-                <th >Check-Out</th>
+                <th >Clock-In</th>
+                <th >Clock-Out</th>
               </tr>
             </thead>
             <tbody>
