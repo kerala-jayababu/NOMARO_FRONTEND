@@ -4,7 +4,7 @@
 }
 
 .live-dashboard .page-header {
-  background-color: #0f3c54;
+  background-color: #0f578e;
   color: #fff;
   padding: 10px 20px;
   font-size: 14px;
@@ -192,7 +192,7 @@
   z-index: 2;
 }
 .live-dashboard table thead th {
-  background-color: #0f3c54 !important; /* Blue background */
+  background-color: #0f578e !important; /* Blue background */
   color: white !important;              /* White text */
   font-weight: 500 !important;          /* Bold font */
   font-size: 14px;

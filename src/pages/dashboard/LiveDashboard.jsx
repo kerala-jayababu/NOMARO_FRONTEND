@@ -56,6 +56,14 @@ function LiveDashboard() {
     "Total Employees"
   );
 
+  const getSelectedDeptIdForApi = useCallback(() => {
+    if (!selectedDepartmentId || selectedDepartmentId === "all") {
+      return 0;
+    }
+    const parsed = parseInt(selectedDepartmentId, 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [selectedDepartmentId]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -77,10 +85,24 @@ function LiveDashboard() {
       }
     };
 
+    loadDepartments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
     const loadStats = async () => {
       setIsStatsLoading(true);
       try {
-        const res = await LiveDashboardService.getAttendanceSummary(new Date());
+        const deptId = getSelectedDeptIdForApi();
+        const res = await LiveDashboardService.getAttendanceSummary(
+          new Date(),
+          deptId
+        );
         if (isMounted && res?.data?.data) {
           const apiData = res.data.data;
           setStats({
@@ -108,13 +130,12 @@ function LiveDashboard() {
       }
     };
 
-    loadDepartments();
     loadStats();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [getSelectedDeptIdForApi]);
 
   const normalizeDetailRow = useCallback((row) => {
     const getValue = (keys, fallback = "--") => {
@@ -186,9 +207,11 @@ function LiveDashboard() {
       setActiveDetailType(detailType);
       setActiveDetailKey(`${detailType}|${detailLabel || "Details"}`);
       try {
+        const deptId = getSelectedDeptIdForApi();
         const res = await LiveDashboardService.getAttendanceDetails(
           new Date(),
-          detailType
+          detailType,
+          deptId
         );
         if (res?.data?.data) {
           const normalized = res.data.data.map((row) =>
@@ -205,7 +228,7 @@ function LiveDashboard() {
         setIsDetailsLoading(false);
       }
     },
-    [normalizeDetailRow]
+    [normalizeDetailRow, getSelectedDeptIdForApi]
   );
 
   useEffect(() => {
