@@ -1520,13 +1520,28 @@ body::-webkit-scrollbar {
 .AttendanceTable {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid black;
+  border: 1px solid #d3d3d3 !important;
   margin-bottom: 5px;
 }
 
 .AttendanceTable tr td {
   padding: 5px;
-  border: 1px solid black
+  border: 1px solid #d3d3d3 !important;
+}
+
+.AttendanceTable,
+.AttendanceTable tr,
+.AttendanceTable td,
+.AttendanceTable th {
+  border-color: #d3d3d3 !important;
+}
+
+.modal-body .AttendanceTable,
+.modal-body .AttendanceTable tr,
+.modal-body .AttendanceTable td,
+.modal-body .AttendanceTable th {
+  border-color: #d3d3d3 !important;
+  border: 1px solid #d3d3d3 !important;
 }
 
 @media (max-width: 345px) {

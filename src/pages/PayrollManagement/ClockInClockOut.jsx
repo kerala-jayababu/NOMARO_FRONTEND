@@ -277,20 +277,28 @@ function ClockInClockOut() {
                             (item.clockType != 'LEAVE' && item.clockType != 'UNAUTH') &&
                             <>
                               {
-                                item.inTime != null &&
+                                item.inTime === 'Missing' &&
+                                <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                              }
+                              {
+                                item.inTime != null && item.inTime !== 'Missing' &&
                                 <td className='text-center'>{item.inTime}</td>
                               }
                               {
                                 item.inTime == null &&
-                                <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('IN'); setShowModal(true) }}>Missing</a></td>
+                                <td className='text-center'></td>
                               }
                               {
-                                item.outTime != null &&
+                                item.outTime === 'Missing' &&
+                                <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                              }
+                              {
+                                item.outTime != null && item.outTime !== 'Missing' &&
                                 <td className='text-center'>{item.outTime}</td>
                               }
                               {
                                 item.outTime == null &&
-                                <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('OUT'); setShowModal(true) }}>Missing</a></td>
+                                <td className='text-center'></td>
                               }
                               <td>{item.totalHoursText || 'NA'}</td>
                             </>
