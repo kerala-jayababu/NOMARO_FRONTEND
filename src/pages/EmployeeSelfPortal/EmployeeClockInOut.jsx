@@ -193,20 +193,28 @@ function EmployeeClockInOut() {
                                                             (item.clockType != 'LEAVE' && item.clockType != 'UNAUTH') &&
                                                             <>
                                                                 {
-                                                                    item.inTime != null &&
+                                                                    item.inTime === 'Missing' &&
+                                                                    <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                                                                }
+                                                                {
+                                                                    item.inTime != null && item.inTime !== 'Missing' &&
                                                                     <td className='text-center'>{item.inTime}</td>
                                                                 }
                                                                 {
                                                                     item.inTime == null &&
-                                                                    <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('IN'); setShowModal(true) }}>Missing</a></td>
+                                                                    <td className='text-center'></td>
                                                                 }
                                                                 {
-                                                                    item.outTime != null &&
+                                                                    item.outTime === 'Missing' &&
+                                                                    <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                                                                }
+                                                                {
+                                                                    item.outTime != null && item.outTime !== 'Missing' &&
                                                                     <td className='text-center'>{item.outTime}</td>
                                                                 }
                                                                 {
                                                                     item.outTime == null &&
-                                                                    <td className='text-center'><a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('OUT'); setShowModal(true) }}>Missing</a></td>
+                                                                    <td className='text-center'></td>
                                                                 }
                                                                 <td>{item.totalHoursText || 'NA'}</td>
                                                             </>
@@ -285,7 +293,14 @@ function EmployeeClockInOut() {
                                                     (item.clockType != 'LEAVE' && item.clockType != 'UNAUTH') &&
                                                     <>
                                                         {
-                                                            item.inTime != null &&
+                                                            item.inTime === 'Missing' &&
+                                                            <div className='col-4 px-0 py-1' >
+                                                                <label>IN</label>
+                                                                <p className='m-0' style={{ color: 'brown' }}>Missing</p>
+                                                            </div>
+                                                        }
+                                                        {
+                                                            item.inTime != null && item.inTime !== 'Missing' &&
                                                             <div className='col-4 px-0 py-1' >
                                                                 <label>IN</label>
                                                                 <p className='m-0'>{item.inTime}</p>
@@ -295,13 +310,18 @@ function EmployeeClockInOut() {
                                                             item.inTime == null &&
                                                             <div className='col-4 px-0 py-1' >
                                                                 <label>IN</label>
-                                                                <p className='m-0'>
-                                                                    <a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('IN'); setShowModal(true) }}>Missing</a>
-                                                                </p>
+                                                                <p className='m-0'></p>
                                                             </div>
                                                         }
                                                         {
-                                                            item.outTime != null &&
+                                                            item.outTime === 'Missing' &&
+                                                            <div className='col-4 px-0 py-1' >
+                                                                <label>OUT</label>
+                                                                <p className='m-0' style={{ color: 'brown' }}>Missing</p>
+                                                            </div>
+                                                        }
+                                                        {
+                                                            item.outTime != null && item.outTime !== 'Missing' &&
                                                             <div className='col-4 px-0 py-1' >
                                                                 <label>OUT</label>
                                                                 <p className='m-0'>{item.outTime}</p>
@@ -311,9 +331,7 @@ function EmployeeClockInOut() {
                                                             item.outTime == null &&
                                                             <div className='col-4 px-0 py-1' >
                                                                 <label>OUT</label>
-                                                                <p className='m-0'>
-                                                                    <a href='javascript:void(0)' style={{ color: 'red' }} onClick={() => { setSelectedData(item); setSelectedType('OUT'); setShowModal(true) }}>Missing</a>
-                                                                </p>
+                                                                <p className='m-0'></p>
                                                             </div>
                                                         }
                                                         <div className='col-4 px-0 py-1' >
