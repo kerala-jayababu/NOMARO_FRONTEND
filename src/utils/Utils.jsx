@@ -6,6 +6,8 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 export default class Utils {
+
+  
   static encodeBase64(string) {
     return btoa(string);
   }
@@ -251,7 +253,8 @@ export default class Utils {
     reportName,
     headerRequired,
     filter,
-    reportColumns
+    reportColumns,
+    companyName
   ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
@@ -268,11 +271,9 @@ export default class Utils {
     let staticRowsCount = 0;
     if (headerRequired) {
       // Add company name row and make it span across all columns
-      const companyName = worksheet.addRow([
-        "GEORGETOWN INTERNATIONAL ACADEMY",
-      ]);
-      companyName.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
-      companyName.alignment = { horizontal: "left" };
+      const companyRow = worksheet.addRow([companyName || ""]);
+      companyRow.font = { bold: true, size: 14, color: { argb: "FF0D384D" } };
+      companyRow.alignment = { horizontal: "left" };
       staticRowsCount++;
 
       // Add title row
@@ -483,7 +484,7 @@ export default class Utils {
       saveAs(blob, `${reportName}.xlsx`);
     });
   }
-  static exportToTxt(rows, reportName, headerRequired, filter, reportColumns) {
+  static exportToTxt(rows, reportName, headerRequired, filter, reportColumns,companyName) {
     const columns = Object.keys(rows[0]).filter((x) => x !== "id");
 
     // Prepare the filter text row
@@ -520,7 +521,7 @@ export default class Utils {
     let content = "";
 
     if (headerRequired) {
-      content += `GEORGETOWN INTERNATIONAL ACADEMY\n`;
+      content += `${companyName || ""}\n`;
       content += `${reportName}\n`;
       content += `${filterText}\n`;
     }
@@ -549,7 +550,7 @@ export default class Utils {
     URL.revokeObjectURL(url);
   }
 
-  static exportToPdf(rows, reportName, orientation, filter, reportColumns) {
+  static exportToPdf(rows, reportName, orientation, filter, reportColumns,companyName) {
         try {
       const doc = new jsPDF({
         orientation: orientation,
@@ -568,7 +569,7 @@ export default class Utils {
       // Set color for GEORGETOWN INTERNATIONAL ACADEMY to primary color (#0d384d)
       doc.setTextColor(13, 56, 77); // RGB values for #0d384d
       doc.setFontSize(12);
-      doc.text("GEORGETOWN INTERNATIONAL ACADEMY", 14, 20, { align: "left" });
+      doc.text(companyName || "", 14, 20, { align: "left" });
 
       // Reset color to blue for report name
       doc.setTextColor(0, 100, 230);

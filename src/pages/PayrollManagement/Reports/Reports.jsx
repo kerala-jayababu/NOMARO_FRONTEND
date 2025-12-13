@@ -25,7 +25,7 @@ import {
 import Navbar from "./Navbar";
 import Filter from "./Filter";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
-
+import CommonService from "../../../core/services/CommonService";
 function Reports() {
   const targetRef = useRef();
   const dispatch = useDispatch();
@@ -39,7 +39,21 @@ function Reports() {
     reportData,
     reportColumns,
   } = useSelector((state) => state.reports);
-
+  const [companyName, setCompanyName] = useState("");
+  useEffect(() => {
+    CommonService.getSystemParameters()
+      .then((res) => {
+        
+        const company = res.data?.data?.find(
+          (item) => item.parameterName === "CompanyName"
+        );
+        setCompanyName(company?.parameterValue || "");
+      })
+      .catch((err) => {
+        console.error("Failed to fetch company name:", err);
+      });
+  }, []);
+  
   useEffect(() => {
     dispatch(getReportsMasterAction());
     dispatch(setReportData([]));
@@ -58,7 +72,27 @@ function Reports() {
     
     const isGuyanaTaxReport = report?.reportName === "Guyana Tax Report";
     const isGuyanaNISReport = report?.reportName === "Guyana NIS Report";
-
+    let company = companyName;
+    
+    if (!company) {
+      try {
+        const res = await CommonService.getSystemParameters();
+  
+        const companyParam = res.data?.data?.find(
+          (item) => item.parameterName === "CompanyName"
+        );
+  
+        company = companyParam?.parameterValue || "";
+  
+        // cache locally to avoid future calls
+        setCompanyName(company);
+      } catch (err) {
+        console.error("Failed to fetch company name:", err);
+        company = "";
+      }
+    } 
+  
+  
     if (format === "pdf" && (isGuyanaTaxReport || isGuyanaNISReport)) {
       try {
         if (isGuyanaTaxReport) {
@@ -128,7 +162,8 @@ function Reports() {
         report?.reportName,
         report?.headerRequired,
         filter,
-        reportColumns
+        reportColumns,
+        companyName
       );
     } else if (format === "text") {
       Utils.exportToTxt(
@@ -136,7 +171,8 @@ function Reports() {
         report?.reportName,
         report?.headerRequired,
         filter,
-        reportColumns
+        reportColumns,
+        companyName
       );
     } else {
       Utils.exportToPdf(
@@ -144,7 +180,8 @@ function Reports() {
         report?.reportName,
         "landscape",
         filter,
-        reportColumns
+        reportColumns,
+        companyName
       );
     }
   }
