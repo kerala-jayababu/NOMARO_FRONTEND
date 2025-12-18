@@ -194,7 +194,7 @@ function EmployeeClockInOut() {
                                                             <>
                                                                 {
                                                                     item.inTime === 'Missing' &&
-                                                                    <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                                                                    <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => { setSelectedData(item); setSelectedType('IN'); setShowModal(true) }}>Missing</td>
                                                                 }
                                                                 {
                                                                     item.inTime != null && item.inTime !== 'Missing' &&
@@ -206,7 +206,7 @@ function EmployeeClockInOut() {
                                                                 }
                                                                 {
                                                                     item.outTime === 'Missing' &&
-                                                                    <td className='text-center' style={{ color: 'brown' }}>Missing</td>
+                                                                    <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => { setSelectedData(item); setSelectedType('OUT'); setShowModal(true) }}>Missing</td>
                                                                 }
                                                                 {
                                                                     item.outTime != null && item.outTime !== 'Missing' &&
