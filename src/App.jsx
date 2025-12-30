@@ -53,6 +53,7 @@ import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
+import EmployeeManagement from "./pages/MasterData/EmployeeManagement/EmployeeManagement";
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
               <Route path="designations" element={<Designations />} />
               <Route path="salary-heads" element={<SalaryHeads />} />
               <Route path="employee-profile" element={<EmployeeProfile />} />
+              <Route path="employee-management" element={<EmployeeManagement />} />
               <Route path='employee-salary-config' element={<EmployeeSalaryConfig />} />
               <Route path='screen-permissions' element={<ScreenPermission />} />
               <Route path="salary-adjustments" element={<SalaryAdjustments />} />
