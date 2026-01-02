@@ -18,17 +18,17 @@ const EmployeeDocuments = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
   
-  // Refs to track loading state and prevent duplicate calls
   const documentTypesLoadedRef = useRef(false);
   const documentsLoadedRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     idDocumentType: "",
     remarks: "",
     document: null,
   });
+  const [currentDocumentName, setCurrentDocumentName] = useState("");
 
-  // Load document types once on mount (static data)
   useEffect(() => {
     let isMounted = true;
     
@@ -42,7 +42,6 @@ const EmployeeDocuments = () => {
     };
   }, []);
 
-  // Load employee documents when id changes
   useEffect(() => {
     if (!id) return;
     
@@ -52,7 +51,6 @@ const EmployeeDocuments = () => {
     }
     
     return () => {
-      // Reset ref when component unmounts to allow fresh load on next mount
       documentsLoadedRef.current = null;
     };
   }, [id]);
@@ -110,6 +108,7 @@ const EmployeeDocuments = () => {
         ...prev,
         document: file,
       }));
+      setCurrentDocumentName("");
     }
   };
 
@@ -156,13 +155,70 @@ const EmployeeDocuments = () => {
     }
   };
 
-  const handleEdit = (doc) => {
-    setEditingId(doc.idEmployeeDocument);
-    setFormData({
-      idDocumentType: doc.idDocumentType?.toString() || "",
-      remarks: doc.remarks || "",
-      document: null,
-    });
+  const base64ToFile = (base64Data, fileName, mimeType) => {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    return new File([blob], fileName, { type: mimeType });
+  };
+
+  const handleEdit = async (doc) => {
+    try {
+      showLoader();
+      setEditingId(doc.idEmployeeDocument);
+      
+      const result = await EmployeeManagementService.getEmployeeDocuments(parseInt(id), doc.idEmployeeDocument);
+      hideLoader();
+      
+      if (result.error) {
+        toast.error(result.error);
+        setEditingId(null);
+        return;
+      }
+      
+      const documentData = result.data?.data?.[0];
+      const base64Data = documentData?.documentBinary || documentData?.documentContent;
+      const fileName = documentData?.fileName || `document_${doc.idEmployeeDocument}`;
+      
+      let fileObject = null;
+      if (base64Data) {
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        
+        const mimeTypes = {
+          'pdf': 'application/pdf',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'xls': 'application/vnd.ms-excel',
+          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        };
+        const mimeType = mimeTypes[fileExtension] || 'application/octet-stream';
+        
+        fileObject = base64ToFile(base64Data, fileName, mimeType);
+      }
+      
+      setFormData({
+        idDocumentType: doc.idDocumentType?.toString() || "",
+        remarks: doc.remarks || "",
+        document: fileObject,
+      });
+      
+      setCurrentDocumentName(fileName || "");
+      
+      if (fileObject) {
+        toast.success("Document loaded for editing");
+      }
+    } catch (error) {
+      hideLoader();
+      toast.error("Failed to load document for editing");
+      setEditingId(null);
+    }
   };
 
   const handleDelete = async (docId) => {
@@ -173,7 +229,6 @@ const EmployeeDocuments = () => {
   const confirmDelete = async () => {
     if (!selectedDocId) return;
 
-    // Note: Delete API might need to be added to the service
     toast.info("Delete functionality to be implemented");
     setShowConfirmModal(false);
     setSelectedDocId(null);
@@ -188,34 +243,64 @@ const EmployeeDocuments = () => {
       if (result.error) {
         toast.error(result.error);
       } else {
-        // Handle document viewing - might need to open in new window or download
         const documentData = result.data?.data?.[0];
-        if (documentData?.documentContent) {
-          // Create blob and open/download
-          const byteCharacters = atob(documentData.documentContent);
+        const base64Data = documentData?.documentBinary || documentData?.documentContent;
+        const fileName = documentData?.fileName || `document_${doc.idEmployeeDocument}`;
+        
+        if (base64Data) {
+          const fileExtension = fileName.split('.').pop().toLowerCase();
+          
+          const mimeTypes = {
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          };
+          const mimeType = mimeTypes[fileExtension] || 'application/octet-stream';
+          
+          const byteCharacters = atob(base64Data);
           const byteNumbers = new Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: "application/pdf" });
+          const blob = new Blob([byteArray], { type: mimeType });
+          
           const url = window.URL.createObjectURL(blob);
-          window.open(url, "_blank");
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          toast.success("Document downloaded successfully");
+        } else {
+          toast.error("Document data not found");
         }
       }
     } catch (error) {
       hideLoader();
-      toast.error("Failed to view document");
+      toast.error("Failed to download document");
     }
   };
 
   const handleReset = () => {
     setEditingId(null);
+    setCurrentDocumentName("");
     setFormData({
       idDocumentType: "",
       remarks: "",
       document: null,
     });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const formatDate = (dateString) => {
@@ -230,7 +315,7 @@ const EmployeeDocuments = () => {
           <div>
             <h6 className="mb-0">Documents</h6>
           </div>
-          <div className="p-3">
+          <div className="pt-3">
             <div className="table-responsive">
               <table className="table table-bordered">
                 <thead>
@@ -322,16 +407,26 @@ const EmployeeDocuments = () => {
             <div className="mb-3">
               <label className="form-label mb-1">Upload Document</label>
               <input
+                ref={fileInputRef}
                 type="file"
                 className="form-control"
                 onChange={handleFileChange}
                 accept=".pdf,.jpg,.jpeg,.png"
               />
+              {editingId && currentDocumentName && (
+                <div className="mt-2">
+                  <small className="text-muted">
+                    Current document: <strong>{currentDocumentName}</strong>
+                    <br />
+                    <span className="text-info">Select a new file to replace, or leave empty to keep current document.</span>
+                  </small>
+                </div>
+              )}
             </div>
 
             <div className="d-flex gap-2">
               <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
               <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
                 Reset

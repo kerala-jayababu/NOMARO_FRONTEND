@@ -19,7 +19,6 @@ const EmployeeActions = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedActionId, setSelectedActionId] = useState(null);
   
-  // Ref to track loading state and prevent duplicate calls
   const actionsLoadedRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -44,7 +43,6 @@ const EmployeeActions = () => {
     }
     
     return () => {
-      // Reset ref when component unmounts to allow fresh load on next mount
       actionsLoadedRef.current = null;
     };
   }, [id]);
@@ -53,7 +51,10 @@ const EmployeeActions = () => {
     if (!id) return;
     try {
       showLoader();
-      const result = await EmployeeManagementService.getEmployeeActionsForIdEmployee(parseInt(id));
+      const result = await EmployeeManagementService.getEmployeeActions({ 
+        idEmployee: parseInt(id),
+        dateFrom: moment().toDate()
+      });
       hideLoader();
       if (result.error) {
         toast.error(result.error);
@@ -336,7 +337,7 @@ const EmployeeActions = () => {
 
             <div className="d-flex gap-2">
               <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-                {loading ? (id ? "Updating..." : "Submitting...") : (id ? "Update" : "Submit")}
+                {loading ? "Submitting...": "Submit"}
               </button>
               <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
                 Reset

@@ -26,7 +26,7 @@ const EmployeeManagement = () => {
     { id: "experience", label: "Experiences", component: Experience },
     { id: "documents", label: "Documents", component: EmployeeDocuments },
     { id: "assets", label: "Assets", component: Assets },
-    { id: "actions", label: "Employee Actions", component: EmployeeActions },
+    // { id: "actions", label: "Employee Actions", component: EmployeeActions },
   ];
 
   // Check if tab should be disabled (all tabs except basic-details require employeeId)
@@ -38,15 +38,12 @@ const EmployeeManagement = () => {
     const id = searchParams.get("id");
     const tab = searchParams.get("tab");
     
-    // Update employeeId from URL - always update to ensure it's in sync
     setEmployeeId(id);
     
-    // If tab is specified but employeeId is missing and it's not basic-details, redirect to basic-details
     if (tab && tab !== "basic-details" && !id) {
       navigate(`/dashboard/employee-management?tab=basic-details`, { replace: true });
       setActiveTab("basic-details");
     } else if (tab && tab !== activeTab) {
-      // Only set tab if it's not disabled
       if (!isTabDisabled(tab)) {
         setActiveTab(tab);
       } else {
@@ -100,7 +97,7 @@ const EmployeeManagement = () => {
                 padding: '1rem 1.5rem'
               }}
             >
-              <h5 className="m-0" style={{ fontWeight: 600, fontSize: '1.25rem' }}>Employee Management</h5>
+              <h5 className="m-0">Employee Management</h5>
               <button
                 className="btn btn-outline-secondary btn-sm"
                 onClick={() => navigate("/dashboard/employee-profile")}

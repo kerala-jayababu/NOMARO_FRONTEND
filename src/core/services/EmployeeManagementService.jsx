@@ -22,14 +22,14 @@ export default class EmployeeManagementService {
     try {
       const formData = new FormData();
       
-      // Backend expects dtos as an array with index notation: dtos[0].PropertyName
+      
       const dtos = Array.isArray(payload) ? payload : [payload];
       
-      // Append each property with array index notation
+      
       dtos.forEach((item, index) => {
         formData.append(`dtos[${index}].IdEmployeeQualification`, item.idEmployeeQualification || 0);
         formData.append(`dtos[${index}].IdEmployee`, item.idEmployee);
-        formData.append(`dtos[${index}].QualificationType`, item.qualificationType);
+        formData.append(`dtos[${index}].IdQualificationType`, item.idQualificationType);
         formData.append(`dtos[${index}].QualificationName`, item.qualificationName);
         formData.append(`dtos[${index}].Specialization`, item.specialization || "");
         formData.append(`dtos[${index}].InstitutionName`, item.institutionName);
@@ -38,9 +38,9 @@ export default class EmployeeManagementService {
         formData.append(`dtos[${index}].GradeOrPercentage`, item.gradeOrPercentage || "");
         formData.append(`dtos[${index}].IdUser`, item.idUser);
         
-        // Append certificate file if present
+        
         if (item.certificateFile) {
-          formData.append(`dtos[${index}].CertificateDocumentPath`, item.certificateFile);
+          formData.append(`dtos[${index}].CertificateBinary`, item.certificateFile);
         }
       });
 
@@ -88,10 +88,10 @@ export default class EmployeeManagementService {
     try {
       const formData = new FormData();
       
-      // Backend expects dtos as an array with index notation: dtos[0].PropertyName
+      
       const dtos = Array.isArray(payload) ? payload : [payload];
       
-      // Append each property with array index notation
+      
       dtos.forEach((item, index) => {
         formData.append(`dtos[${index}].IdEmployeeExperience`, item.idEmployeeExperience || 0);
         formData.append(`dtos[${index}].IdEmployee`, item.idEmployee);
@@ -107,7 +107,7 @@ export default class EmployeeManagementService {
         formData.append(`dtos[${index}].ReasonForLeaving`, item.reasonForLeaving || "");
         formData.append(`dtos[${index}].IdUserCreated`, item.idUser);
         
-        // Append experience certificate file if present
+        
         if (item.experienceCertificateFile) {
           formData.append(`dtos[${index}].ExperienceCertificatePath`, item.experienceCertificateFile);
         }
@@ -167,10 +167,8 @@ export default class EmployeeManagementService {
     try {
       const formData = new FormData();
       
-      // Backend expects dtos as an array with index notation: dtos[0].PropertyName
       const dtos = Array.isArray(payload) ? payload : [payload];
       
-      // Append each property with array index notation
       dtos.forEach((item, index) => {
         formData.append(`dtos[${index}].IdEmployeeDocument`, item.idEmployeeDocument || 0);
         formData.append(`dtos[${index}].IdEmployee`, item.idEmployee);
@@ -178,9 +176,8 @@ export default class EmployeeManagementService {
         formData.append(`dtos[${index}].Remarks`, item.remarks || "");
         formData.append(`dtos[${index}].IdUser`, item.idUser);
         
-        // Append document content file if present
         if (item.documentContent) {
-          formData.append(`dtos[${index}].DocumentContent`, item.documentContent);
+          formData.append(`dtos[${index}].DocumentFile`, item.documentContent);
         }
       });
 
@@ -255,6 +252,12 @@ export default class EmployeeManagementService {
         Remarks: payload.remarks || "",
         AssignedBy: payload.assignedBy,
       };
+      
+      // Include IdAssetAssignment if provided (for updates)
+      if (payload.idAssetAssignment) {
+        data.IdAssetAssignment = payload.idAssetAssignment;
+      }
+      
       const res = await API.post("/api/v1/Employee/AssignAsset", data);
       return { error: null, data: res.data };
     } catch (error) {
@@ -276,11 +279,12 @@ export default class EmployeeManagementService {
   static returnAssetFromEmployee = async (payload) => {
     try {
       const data = {
-        IdAsset: payload.idAsset,
-        IdEmployee: payload.idEmployee,
-        ReturnDate: moment(payload.returnDate).format("YYYY-MM-DD"),
-        Remarks: payload.remarks || "",
-        IdUser: payload.idUser,
+        idAsset: payload.idAsset,
+        idEmployee: payload.idEmployee,
+        idAssetAssignment: payload.idAssetAssignment,
+        returnDate: moment(payload.returnDate).format("YYYY-MM-DD"),
+        remarks: payload.remarks || "",
+        idUser: payload.idUser,
       };
       const res = await API.post("/api/v1/Employee/UnassignAsset", data);
       return { error: null, data: res.data };
@@ -326,6 +330,7 @@ export default class EmployeeManagementService {
     try {
       let url = `/api/v1/Employee/GetEmployeeActions?`;
       const queryParams = [];
+      if (params.idEmployee) queryParams.push(`idEmployee=${params.idEmployee}`);
       if (params.searchText) queryParams.push(`searchText=${encodeURIComponent(params.searchText)}`);
       if (params.actionType) queryParams.push(`actionType=${params.actionType}`);
       if (params.dateFrom) queryParams.push(`dateFrom=${moment(params.dateFrom).format("YYYY-MM-DD")}`);
@@ -341,19 +346,19 @@ export default class EmployeeManagementService {
 
   static postEmployeeAction = async (payload) => {
     try {
-      const data = {
-        IdEmployeeAction: payload.idEmployeeAction || 0,
-        IdEmployee: payload.idEmployee,
-        ActionType: payload.actionType,
-        ActionDescription: payload.actionDescription,
-        ActionSeverity: payload.actionSeverity,
-        Remarks: payload.remarks || "",
-        EffectiveFromDate: moment(payload.effectiveFromDate).format("YYYY-MM-DD"),
-        EffectiveToDate: payload.effectiveToDate ? moment(payload.effectiveToDate).format("YYYY-MM-DD") : null,
-        Status: payload.status || "ACTIVE",
-        CreatedBy: payload.createdBy,
-      };
-      const res = await API.post("/api/v1/Employee/PostEmployeeAction", data);
+      let data = [];
+      data.push({
+        idEmployeeAction: payload.idEmployeeAction || 0,
+        idEmployee: payload.idEmployee,
+        actionType: payload.actionType,
+        actionDescription: payload.actionDescription,
+        actionSeverity: payload.actionSeverity,
+        remarks: payload.remarks || "",
+        effectiveFromDate: moment(payload.effectiveFromDate).format("YYYY-MM-DD"),
+        effectiveToDate: payload.effectiveToDate ? moment(payload.effectiveToDate).format("YYYY-MM-DD") : null,
+        status: payload.status || "ACTIVE",
+      });
+      const res = await API.post("/api/v1/Employee/PostEmployeeActions", data);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);

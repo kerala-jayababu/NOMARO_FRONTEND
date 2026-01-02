@@ -18,10 +18,11 @@ const Qualifications = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedQualId, setSelectedQualId] = useState(null);
   
-  // Refs to track loading state and prevent duplicate calls
   const qualificationTypesLoadedRef = useRef(false);
   const countriesLoadedRef = useRef(false);
   const qualificationsLoadedRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const topRef = useRef(null);
 
   const [formData, setFormData] = useState({
     qualificationType: "",
@@ -34,7 +35,6 @@ const Qualifications = () => {
     certificate: null,
   });
 
-  // Load static data once on mount
   useEffect(() => {
     let isMounted = true;
     
@@ -52,7 +52,6 @@ const Qualifications = () => {
     };
   }, []);
 
-  // Load employee qualifications when id changes
   useEffect(() => {
     if (!id) return;
     
@@ -62,7 +61,6 @@ const Qualifications = () => {
     }
     
     return () => {
-      // Reset ref when component unmounts to allow fresh load on next mount
       qualificationsLoadedRef.current = null;
     };
   }, [id]);
@@ -90,11 +88,9 @@ const Qualifications = () => {
       if (result.error) {
         toast.error(result.error);
       } else {
-        // Handle both response structures: result.data?.data (nested) or result.data (direct array)
         const types = result.data?.data || result.data || [];
         console.log("Qualification types loaded:", types);
         setQualificationTypes(types);
-        // Set default value if available (use idQualificationType)
         if (types.length > 0 && !formData.qualificationType) {
           setFormData(prev => ({ ...prev, qualificationType: types[0].idQualificationType?.toString() || "" }));
         }
@@ -159,10 +155,8 @@ const Qualifications = () => {
       const selectedCountry = countries.find((c) => c.idCountry === parseInt(formData.idCountry) || c.countryName === formData.idCountry);
       const countryId = selectedCountry ? selectedCountry.idCountry : formData.idCountry;
 
-      // Find the qualification type ID if a name was provided (for backward compatibility)
       let qualificationTypeId = formData.qualificationType;
       if (isNaN(parseInt(qualificationTypeId))) {
-        // If it's not a number, try to find the ID by name
         const foundType = qualificationTypes.find(
           type => type.qualificationTypeName === qualificationTypeId || 
                   type.qualificationType === qualificationTypeId
@@ -173,7 +167,7 @@ const Qualifications = () => {
       const payload = {
         idEmployeeQualification: editingId || 0,
         idEmployee: parseInt(id),
-        qualificationType: qualificationTypeId,
+        idQualificationType: qualificationTypeId,
         qualificationName: formData.qualificationName,
         specialization: formData.specialization,
         institutionName: formData.institutionName,
@@ -193,6 +187,10 @@ const Qualifications = () => {
         toast.success(editingId ? "Qualification updated successfully" : "Qualification added successfully");
         handleReset();
         loadQualifications();
+        // Scroll to top
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     } catch (error) {
       setLoading(false);
@@ -203,12 +201,10 @@ const Qualifications = () => {
   const handleEdit = (qual) => {
     setEditingId(qual.idEmployeeQualification);
     
-    // Handle qualificationType - could be ID or name from API
     let qualificationTypeValue = "";
     if (qual.idQualificationType) {
       qualificationTypeValue = qual.idQualificationType.toString();
     } else if (qual.qualificationType) {
-      // If it's a name, try to find the matching ID
       const foundType = qualificationTypes.find(
         type => type.qualificationTypeName === qual.qualificationType || 
                 type.qualificationType === qual.qualificationType ||
@@ -273,16 +269,19 @@ const Qualifications = () => {
       gradeOrPercentage: "",
       certificate: null,
     });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
-    <div className="row">
+    <div className="row" ref={topRef}>
       <div className="col-lg-8">
         <div>
           <div>
             <h6 className="mb-0">Qualifications</h6>
           </div>
-          <div className="p-3">
+          <div className="pt-3">
             <div className="table-responsive">
               <table className="table table-bordered">
                 <thead>
@@ -436,6 +435,7 @@ const Qualifications = () => {
             <div className="mb-3">
               <label className="form-label mb-1">Certificate</label>
               <input
+                ref={fileInputRef}
                 type="file"
                 className="form-control"
                 onChange={handleFileChange}
@@ -445,7 +445,7 @@ const Qualifications = () => {
 
             <div className="d-flex gap-2">
               <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
-                {loading ? "Saving..." : "Save"}
+                {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
               <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
                 Reset

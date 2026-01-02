@@ -20,9 +20,10 @@ const Experience = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedExpId, setSelectedExpId] = useState(null);
   
-  // Refs to track loading state and prevent duplicate calls
   const countriesLoadedRef = useRef(false);
   const experiencesLoadedRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const topRef = useRef(null);
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -40,7 +41,6 @@ const Experience = () => {
 
   const employmentTypes = ["FullTime", "Contract", "Consultant"];
 
-  // Load countries once on mount (static data)
   useEffect(() => {
     let isMounted = true;
     
@@ -54,7 +54,6 @@ const Experience = () => {
     };
   }, []);
 
-  // Load employee experiences when id changes
   useEffect(() => {
     if (!id) return;
     
@@ -64,7 +63,6 @@ const Experience = () => {
     }
     
     return () => {
-      // Reset ref when component unmounts to allow fresh load on next mount
       experiencesLoadedRef.current = null;
     };
   }, [id]);
@@ -167,6 +165,10 @@ const Experience = () => {
         toast.success(editingId ? "Experience updated successfully" : "Experience added successfully");
         handleReset();
         loadExperiences();
+        // Scroll to top
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     } catch (error) {
       setLoading(false);
@@ -235,6 +237,9 @@ const Experience = () => {
       reasonForLeaving: "",
       experienceCertificate: null,
     });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const formatPeriod = (fromDate, toDate) => {
@@ -245,13 +250,13 @@ const Experience = () => {
   };
 
   return (
-    <div className="row">
+    <div className="row" ref={topRef}>
       <div className="col-lg-8">
         <div>
           <div>
             <h6 className="mb-0">Experiences</h6>
           </div>
-          <div className="p-3">
+          <div className="pt-3">
             <div className="table-responsive">
               <table className="table table-bordered">
                 <thead>
@@ -259,7 +264,7 @@ const Experience = () => {
                     <th>Company</th>
                     <th>Designation</th>
                     <th>Period</th>
-                    <th>Last Salary</th>
+                    <th>Last Salary (G$)</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -406,7 +411,7 @@ const Experience = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label mb-1">Last Drawn Salary</label>
+              <label className="form-label mb-1">Last Drawn Salary (G$)</label>
               <input
                 type="text"
                 className="form-control"
@@ -428,6 +433,7 @@ const Experience = () => {
             <div className="mb-3">
               <label className="form-label mb-1">Experience Certificate</label>
               <input
+                ref={fileInputRef}
                 type="file"
                 className="form-control"
                 onChange={handleFileChange}
@@ -437,7 +443,7 @@ const Experience = () => {
 
             <div className="d-flex gap-2">
               <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
               <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
                 Reset

@@ -18,13 +18,18 @@ const Assets = () => {
   const [availableAssets, setAvailableAssets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingAssignmentId, setEditingAssignmentId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState(null);
+  const [selectedAssetAssignmentId, setSelectedAssetAssignmentId] = useState(null);
+  const [showAssetModal, setShowAssetModal] = useState(false);
+  const [hoveredAssetId, setHoveredAssetId] = useState(null);
+  const [returnReason, setReturnReason] = useState("");
   
-  // Refs to track loading state and prevent duplicate calls
   const assetTypesLoadedRef = useRef(false);
   const availableAssetsLoadedRef = useRef(false);
   const employeeAssetsLoadedRef = useRef(null);
+  const topRef = useRef(null);
 
   const [formData, setFormData] = useState({
     idAsset: "",
@@ -39,7 +44,6 @@ const Assets = () => {
 
   const assetStatuses = ["Working", "Faulty", "UnderRepair", "Retired"];
 
-  // Load static data once on mount
   useEffect(() => {
     let isMounted = true;
     
@@ -57,7 +61,6 @@ const Assets = () => {
     };
   }, []);
 
-  // Load employee assets when id changes
   useEffect(() => {
     if (!id) return;
     
@@ -67,7 +70,6 @@ const Assets = () => {
     }
     
     return () => {
-      // Reset ref when component unmounts to allow fresh load on next mount
       employeeAssetsLoadedRef.current = null;
     };
   }, [id]);
@@ -135,12 +137,10 @@ const Assets = () => {
 
   const handleAssetSelect = (assetId) => {
     if (!assetId) {
-      // Reset form if no asset selected
       handleReset();
       return;
     }
 
-    // Find the selected asset from availableAssets
     const selectedAsset = availableAssets.find((asset) => asset.idAsset === parseInt(assetId));
     
     if (selectedAsset) {
@@ -153,6 +153,7 @@ const Assets = () => {
         averageCost: selectedAsset.averageCost?.toString() || "",
         assetWorkingStatus: selectedAsset.assetWorkingStatus || "Working",
       }));
+      setShowAssetModal(false);
     }
   };
 
@@ -178,6 +179,10 @@ const Assets = () => {
         assignedBy: getCurrentUserId(),
       };
 
+      if (editingId && editingAssignmentId) {
+        payload.idAssetAssignment = editingAssignmentId;
+      }
+
       const result = await EmployeeManagementService.assignAssetToEmployee(payload);
       setLoading(false);
 
@@ -188,6 +193,10 @@ const Assets = () => {
         handleReset();
         loadEmployeeAssets();
         loadAvailableAssets();
+        // Scroll to top
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     } catch (error) {
       setLoading(false);
@@ -197,33 +206,44 @@ const Assets = () => {
 
   const handleEdit = (asset) => {
     setEditingId(asset.idAsset);
+    setEditingAssignmentId(asset.idAssetAssignment);
+    
+    const fullAssetDetails = availableAssets.find(a => a.idAsset === asset.idAsset);
+    
     setFormData({
       idAsset: asset.idAsset?.toString() || "",
-      idAssetType: asset.idAssetType?.toString() || "",
-      assetSerialNumber: asset.assetSerialNumber || "",
-      assetDetails: asset.assetDetails || "",
-      averageCost: asset.averageCost?.toString() || "",
-      assetWorkingStatus: asset.assetWorkingStatus || "Working",
+      idAssetType: asset.idAssetType?.toString() || fullAssetDetails?.idAssetType?.toString() || "",
+      assetSerialNumber: asset.assetSerialNumber || fullAssetDetails?.assetSerialNumber || "",
+      assetDetails: asset.assetDetails || fullAssetDetails?.assetDetails || "",
+      averageCost: asset.averageCost?.toString() || fullAssetDetails?.averageCost?.toString() || "",
+      assetWorkingStatus: asset.assetWorkingStatus || fullAssetDetails?.assetWorkingStatus || "Working",
       assignedTill: asset.assignedTillDate ? moment(asset.assignedTillDate).toDate() : null,
       remarks: asset.remarks || "",
     });
   };
 
-  const handleDelete = async (assetId) => {
-    setSelectedAssetId(assetId);
+  const handleDelete = async (asset) => {
+    setSelectedAssetId(asset.idAsset);
+    setSelectedAssetAssignmentId(asset.idAssetAssignment);
     setShowConfirmModal(true);
   };
 
   const confirmDelete = async () => {
     if (!selectedAssetId) return;
 
+    if (!returnReason.trim()) {
+      toast.error("Please provide a reason for returning the asset");
+      return;
+    }
+
     try {
       showLoader();
       const payload = {
         idAsset: selectedAssetId,
+        idAssetAssignment: selectedAssetAssignmentId,
         idEmployee: parseInt(id),
         returnDate: new Date(),
-        remarks: "Returned by employee",
+        remarks: returnReason.trim(),
         idUser: getCurrentUserId(),
       };
       const result = await EmployeeManagementService.returnAssetFromEmployee(payload);
@@ -235,19 +255,28 @@ const Assets = () => {
         toast.success("Asset returned successfully");
         loadEmployeeAssets();
         loadAvailableAssets();
+        // Scroll to top
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
       setShowConfirmModal(false);
       setSelectedAssetId(null);
+      setSelectedAssetAssignmentId(null);
+      setReturnReason("");
     } catch (error) {
       hideLoader();
       toast.error("Failed to return asset");
       setShowConfirmModal(false);
       setSelectedAssetId(null);
+      setSelectedAssetAssignmentId(null);
+      setReturnReason("");
     }
   };
 
   const handleReset = () => {
     setEditingId(null);
+    setEditingAssignmentId(null);
     setFormData({
       idAsset: "",
       idAssetType: "",
@@ -266,13 +295,13 @@ const Assets = () => {
   };
 
   return (
-    <div className="row">
+    <div className="row" ref={topRef}>
       <div className="col-lg-8">
         <div>
           <div>
             <h6 className="mb-0">Assets</h6>
           </div>
-          <div className="p-3">
+          <div className="pt-3">
             <div className="table-responsive">
               <table className="table table-bordered">
                 <thead>
@@ -302,7 +331,7 @@ const Assets = () => {
                           </button>
                           <button
                             className="btn btn-outline-danger btn-sm border-0"
-                            onClick={() => handleDelete(asset.idAsset)}
+                            onClick={() => handleDelete(asset)}
                             title="Return Asset"
                           >
                             <i className="bx bx-trash"></i>
@@ -332,18 +361,24 @@ const Assets = () => {
           <div className="card-body">
             <div className="mb-3">
               <label className="form-label mb-1">Asset *</label>
-              <select
-                className="form-select"
-                value={formData.idAsset}
-                onChange={(e) => handleAssetSelect(e.target.value)}
+              <button
+                type="button"
+                className="btn btn-outline-primary w-100"
+                onClick={() => setShowAssetModal(true)}
               >
-                <option value="">Select Asset</option>
-                {availableAssets.map((asset) => (
-                  <option key={asset.idAsset} value={asset.idAsset}>
-                    {asset.assetDetails}
-                  </option>
-                ))}
-              </select>
+                {formData.idAsset ? "Change Asset" : "Select Asset"}
+              </button>
+              {formData.idAsset && (
+                <div className="mt-2">
+                  <small className="text-muted">
+                    Selected: {formData.assetDetails || 
+                      assets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetDetails || 
+                      assets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetTypeName ||
+                      availableAssets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetDetails || 
+                      "Asset"}
+                  </small>
+                </div>
+              )}
             </div>
 
             <div className="mb-3">
@@ -440,7 +475,7 @@ const Assets = () => {
 
             <div className="d-flex gap-2">
               <button className="btn btn-primary" onClick={handleAssign} disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
               <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
                 Reset
@@ -450,11 +485,93 @@ const Assets = () => {
         </div>
       </div>
 
+      {/* Asset Selection Modal */}
+      <Modal
+        show={showAssetModal}
+        onHide={() => setShowAssetModal(false)}
+        size="xl"
+        aria-labelledby="asset-selection-modal"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title id="asset-selection-modal">Select Asset</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {availableAssets.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Asset Type</th>
+                    <th>Serial Number</th>
+                    <th>Details</th>
+                    <th>Cost (G$)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {availableAssets.map((asset) => {
+                    const assetType = assetTypes.find(
+                      (type) => type.idAssetType === asset.idAssetType
+                    );
+                    return (
+                      <tr
+                        key={asset.idAsset}
+                        onMouseEnter={() => setHoveredAssetId(asset.idAsset)}
+                        onMouseLeave={() => setHoveredAssetId(null)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td>{assetType?.assetTypeName || asset.idAssetType || "-"}</td>
+                        <td>{asset.assetSerialNumber || "-"}</td>
+                        <td>{asset.assetDetails || "-"}</td>
+                        <td>
+                          {asset.averageCost
+                            ? `${parseInt(asset.averageCost).toLocaleString("en-US")}`
+                            : "-"}
+                        </td>
+                        <td>{asset.assetWorkingStatus || "-"}</td>
+                        <td>
+                          {hoveredAssetId === asset.idAsset && (
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleAssetSelect(asset.idAsset.toString())}
+                            >
+                              Add
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-5">
+              <p className="text-muted">No items available</p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowAssetModal(false)}
+          >
+            Close
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
       <Modal
         show={showConfirmModal}
         onHide={() => {
           setShowConfirmModal(false);
           setSelectedAssetId(null);
+          setSelectedAssetAssignmentId(null);
+          setReturnReason("");
         }}
         size="sm"
         aria-labelledby="contained-modal-title-vcenter"
@@ -465,8 +582,17 @@ const Assets = () => {
         <Modal.Header className="border-0" closeButton>
         </Modal.Header>
         <Modal.Body>
-          <div className="d-flex align-items-center justify-content-center shortDataHeight">
-            Are you sure you want to return this asset?
+          <div className="mb-3">
+            <p className="mb-2">Are you sure you want to return this asset?</p>
+            <label className="form-label mb-1">Reason *</label>
+            <textarea
+              className="form-control"
+              rows="3"
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="Enter reason for returning the asset"
+              autoFocus
+            />
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -476,8 +602,9 @@ const Assets = () => {
             onClick={() => {
               setShowConfirmModal(false);
               setSelectedAssetId(null);
+              setSelectedAssetAssignmentId(null);
+              setReturnReason("");
             }}
-            autoFocus
           >
             Cancel
           </button>

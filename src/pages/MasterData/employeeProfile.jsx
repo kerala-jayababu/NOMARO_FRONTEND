@@ -1475,7 +1475,7 @@ const EmployeeProfile = () => {
         <div className="col-lg-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Employee Profile View</h5>
+              <h5 className="m-0">List of Employees</h5>
               <div className="list_menu">
                 {addEmployeeAllowed === "YES" && (
                   <button
@@ -1708,7 +1708,7 @@ const EmployeeProfile = () => {
                       )
                     )}
                   />
-                  <div className="text-end py-2 d-flex justify-content-end gap-2">
+                  {/* <div className="text-end py-2 d-flex justify-content-end gap-2">
                     <button
                       className="btn btn-sm btn-outline-primary"
                       onClick={() => {
@@ -1725,7 +1725,7 @@ const EmployeeProfile = () => {
                         <i className="bx bx-edit"></i> Edit Profile
                       </button>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
