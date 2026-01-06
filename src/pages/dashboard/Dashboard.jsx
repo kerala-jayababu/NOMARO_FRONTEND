@@ -1,10 +1,27 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { Outlet } from "react-router-dom";
 import Menu from "./components/Menu";
 import Navbar from "./components/Navbar";
-
+import CommonService from "../../core/services/CommonService";
 function Dashboard() {
   const [viewType, setViewType] = useState(null);
+  const [companyName, setCompanyName] = useState("");
+  useEffect(() => {
+    CommonService.getSystemParameters()
+      .then(res => {
+        if (res?.data?.data) {
+          const params = res.data.data;
+debugger
+          const getValue = (name) =>
+            params.find(p => p.parameterName === name)?.parameterValue;
+
+          const company = getValue("CompanyName")?.toLowerCase()|| "";;
+          setCompanyName(company);
+        }
+      })
+      .catch(err => console.error("System parameter load failed", err));
+  }, []);
+
   return (
     <div className="layout-wrapper layout-content-navbar">
       <div className="layout-container">
@@ -30,8 +47,14 @@ function Dashboard() {
             {/* <!-- Footer --> */}
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+               
                 <div className="mb-2 mb-md-0">
-                  ©{new Date().getFullYear()} Georgetown International Academy
+                {companyName?.toLowerCase().includes("georgetown") && (
+  <div>
+    © {new Date().getFullYear()} Georgetown International Academy
+  </div>
+)}
+                 
                 </div>
               </div>
             </footer>
