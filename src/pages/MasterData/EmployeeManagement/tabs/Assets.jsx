@@ -38,6 +38,7 @@ const Assets = () => {
     assetDetails: "",
     averageCost: "",
     assetWorkingStatus: "Working",
+    assignedFrom: null,
     assignedTill: null,
     remarks: "",
   });
@@ -163,25 +164,22 @@ const Assets = () => {
       return;
     }
 
-    if (!formData.idAsset || !formData.assignedTill) {
-      toast.error("Please select asset and assigned till date");
+    if (!formData.idAsset || !formData.assignedFrom || !formData.assignedTill) {
+      toast.error("Please select asset, assigned from date, and assigned till date");
       return;
     }
 
     try {
       setLoading(true);
       const payload = {
+        idAssetAssignment: editingAssignmentId || 0,
         idAsset: parseInt(formData.idAsset),
         idEmployee: parseInt(id),
-        assignedDate: new Date(),
-        assignedTillDate: formData.assignedTill,
+        assignedDate: formData.assignedFrom ? moment(formData.assignedFrom).format("YYYY-MM-DD") : new Date(),
+        assignedTillDate: formData.assignedTill ? moment(formData.assignedTill).format("YYYY-MM-DD") : null,
         remarks: formData.remarks || "",
         assignedBy: getCurrentUserId(),
       };
-
-      if (editingId && editingAssignmentId) {
-        payload.idAssetAssignment = editingAssignmentId;
-      }
 
       const result = await EmployeeManagementService.assignAssetToEmployee(payload);
       setLoading(false);
@@ -208,15 +206,14 @@ const Assets = () => {
     setEditingId(asset.idAsset);
     setEditingAssignmentId(asset.idAssetAssignment);
     
-    const fullAssetDetails = availableAssets.find(a => a.idAsset === asset.idAsset);
-    
     setFormData({
       idAsset: asset.idAsset?.toString() || "",
-      idAssetType: asset.idAssetType?.toString() || fullAssetDetails?.idAssetType?.toString() || "",
-      assetSerialNumber: asset.assetSerialNumber || fullAssetDetails?.assetSerialNumber || "",
-      assetDetails: asset.assetDetails || fullAssetDetails?.assetDetails || "",
-      averageCost: asset.averageCost?.toString() || fullAssetDetails?.averageCost?.toString() || "",
-      assetWorkingStatus: asset.assetWorkingStatus || fullAssetDetails?.assetWorkingStatus || "Working",
+      idAssetType: asset.idAssetType?.toString() || "",
+      assetSerialNumber: asset.assetSerialNumber || "",
+      assetDetails: asset.assetDetails || "",
+      averageCost: asset.averageCost?.toString() || "",
+      assetWorkingStatus: asset.assetWorkingStatus || "Working",
+      assignedFrom: asset.assignedDate ? moment(asset.assignedDate).toDate() : null,
       assignedTill: asset.assignedTillDate ? moment(asset.assignedTillDate).toDate() : null,
       remarks: asset.remarks || "",
     });
@@ -229,7 +226,10 @@ const Assets = () => {
   };
 
   const confirmDelete = async () => {
-    if (!selectedAssetId) return;
+    if (!selectedAssetId || !selectedAssetAssignmentId) {
+      toast.error("Asset assignment information is missing");
+      return;
+    }
 
     if (!returnReason.trim()) {
       toast.error("Please provide a reason for returning the asset");
@@ -250,7 +250,13 @@ const Assets = () => {
       hideLoader();
 
       if (result.error) {
-        toast.error(result.error);
+        // Check if error message contains "Asset Assignment Not Found"
+        if (result.error.toLowerCase().includes("asset assignment not found") || 
+            result.error.toLowerCase().includes("not found")) {
+          toast.error("Asset assignment not found. The asset may have already been returned.");
+        } else {
+          toast.error(result.error);
+        }
       } else {
         toast.success("Asset returned successfully");
         loadEmployeeAssets();
@@ -266,7 +272,7 @@ const Assets = () => {
       setReturnReason("");
     } catch (error) {
       hideLoader();
-      toast.error("Failed to return asset");
+      toast.error("Failed to return asset. Please try again.");
       setShowConfirmModal(false);
       setSelectedAssetId(null);
       setSelectedAssetAssignmentId(null);
@@ -284,6 +290,7 @@ const Assets = () => {
       assetDetails: "",
       averageCost: "",
       assetWorkingStatus: "Working",
+      assignedFrom: null,
       assignedTill: null,
       remarks: "",
     });
@@ -306,9 +313,10 @@ const Assets = () => {
               <table className="table table-bordered">
                 <thead>
                   <tr>
-                    <th>Asset</th>
-                    <th>Serial</th>
+                    <th>Asset Type</th>
+                    <th>Serial Number</th>
                     <th>Status</th>
+                    <th>Assigned From</th>
                     <th>Assigned Till</th>
                     <th>Actions</th>
                   </tr>
@@ -320,6 +328,7 @@ const Assets = () => {
                         <td>{asset.assetTypeName || asset.idAssetType}</td>
                         <td>{asset.assetSerialNumber || "-"}</td>
                         <td>{asset.assetWorkingStatus || "-"}</td>
+                        <td>{formatDate(asset.assignedDate)}</td>
                         <td>{formatDate(asset.assignedTillDate)}</td>
                         <td>
                           <button
@@ -341,7 +350,7 @@ const Assets = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center">
+                      <td colSpan="6" className="text-center">
                         No assets assigned yet
                       </td>
                     </tr>
@@ -448,6 +457,22 @@ const Assets = () => {
             </div>
 
             <div className="mb-3">
+              <label className="form-label mb-1">Assigned From *</label>
+              <DatePicker
+                selected={formData.assignedFrom}
+                onChange={(date) => handleInputChange("assignedFrom", date)}
+                dateFormat="dd-MM-yyyy"
+                className="form-control"
+                placeholderText="dd-mm-yyyy"
+                showYearDropdown
+                showMonthDropdown
+                dropdownMode="select"
+                wrapperClassName="d-block"
+                maxDate={formData.assignedTill || new Date()}
+              />
+            </div>
+
+            <div className="mb-3">
               <label className="form-label mb-1">Assigned Till *</label>
               <DatePicker
                 selected={formData.assignedTill}
@@ -459,7 +484,7 @@ const Assets = () => {
                 showMonthDropdown
                 dropdownMode="select"
                 wrapperClassName="d-block"
-                minDate={new Date()}
+                minDate={formData.assignedFrom || new Date()}
               />
             </div>
 

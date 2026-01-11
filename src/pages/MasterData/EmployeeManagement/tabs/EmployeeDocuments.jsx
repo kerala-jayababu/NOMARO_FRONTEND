@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Modal } from "react-bootstrap";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { EmployeeContext } from "../EmployeeManagement";
 import EmployeeManagementService from "../../../../core/services/EmployeeManagementService";
 import secureLocalStorage from "react-secure-storage";
@@ -26,6 +28,7 @@ const EmployeeDocuments = () => {
     idDocumentType: "",
     remarks: "",
     document: null,
+    dateValidTill: null,
   });
   const [currentDocumentName, setCurrentDocumentName] = useState("");
 
@@ -136,6 +139,7 @@ const EmployeeDocuments = () => {
         idDocumentType: parseInt(formData.idDocumentType),
         remarks: formData.remarks || "",
         documentContent: formData.document,
+        dateValidTill: formData.dateValidTill ? moment(formData.dateValidTill).format("YYYY-MM-DD") : null,
         idUser: getCurrentUserId(),
       };
 
@@ -207,6 +211,7 @@ const EmployeeDocuments = () => {
         idDocumentType: doc.idDocumentType?.toString() || "",
         remarks: doc.remarks || "",
         document: fileObject,
+        dateValidTill: doc.dateValidTill ? moment(doc.dateValidTill).toDate() : null,
       });
       
       setCurrentDocumentName(fileName || "");
@@ -229,9 +234,25 @@ const EmployeeDocuments = () => {
   const confirmDelete = async () => {
     if (!selectedDocId) return;
 
-    toast.info("Delete functionality to be implemented");
-    setShowConfirmModal(false);
-    setSelectedDocId(null);
+    try {
+      showLoader();
+      const result = await EmployeeManagementService.deleteEmployeeDocument(selectedDocId, getCurrentUserId());
+      hideLoader();
+
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Document deleted successfully");
+        loadDocuments();
+      }
+      setShowConfirmModal(false);
+      setSelectedDocId(null);
+    } catch (error) {
+      hideLoader();
+      toast.error("Failed to delete document");
+      setShowConfirmModal(false);
+      setSelectedDocId(null);
+    }
   };
 
   const handleView = async (doc) => {
@@ -297,6 +318,7 @@ const EmployeeDocuments = () => {
       idDocumentType: "",
       remarks: "",
       document: null,
+      dateValidTill: null,
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -322,6 +344,7 @@ const EmployeeDocuments = () => {
                   <tr>
                     <th>Document Type</th>
                     <th>Remarks</th>
+                    <th>Date Valid Till</th>
                     <th>Uploaded On</th>
                     <th>Actions</th>
                   </tr>
@@ -332,6 +355,7 @@ const EmployeeDocuments = () => {
                       <tr key={doc.idEmployeeDocument}>
                         <td>{doc.documentTypeName || doc.idDocumentType}</td>
                         <td>{doc.remarks || "-"}</td>
+                        <td>{formatDate(doc.dateValidTill)}</td>
                         <td>{formatDate(doc.createdAt)}</td>
                         <td>
                           <button
@@ -360,7 +384,7 @@ const EmployeeDocuments = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="text-center">
+                      <td colSpan="5" className="text-center">
                         No documents uploaded yet
                       </td>
                     </tr>
@@ -401,6 +425,22 @@ const EmployeeDocuments = () => {
                 rows="3"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange("remarks", e.target.value)}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label mb-1">Date Valid Till</label>
+              <DatePicker
+                selected={formData.dateValidTill}
+                onChange={(date) => handleInputChange("dateValidTill", date)}
+                dateFormat="dd-MM-yyyy"
+                className="form-control"
+                showYearDropdown
+                showMonthDropdown
+                dropdownMode="select"
+                wrapperClassName="d-block"
+                minDate={new Date()}
+                placeholderText="Select expiry date"
               />
             </div>
 

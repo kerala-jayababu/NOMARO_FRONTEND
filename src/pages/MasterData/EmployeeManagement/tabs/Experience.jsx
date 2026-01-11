@@ -129,8 +129,8 @@ const Experience = () => {
       return;
     }
 
-    if (!formData.companyName || !formData.designation || !formData.fromDate) {
-      toast.error("Please fill all required fields");
+    if (!formData.companyName || !formData.designation || !formData.fromDate || !formData.toDate) {
+      toast.error("Please fill all required fields including To Date");
       return;
     }
 
@@ -395,12 +395,12 @@ const Experience = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label mb-1">To Date</label>
+              <label className="form-label mb-1">To Date *</label>
               <DatePicker
                 selected={formData.toDate}
                 onChange={(date) => handleInputChange("toDate", date)}
                 dateFormat="dd-MM-yyyy"
-                className="form-control"
+                className={`form-control${!formData.toDate && formData.fromDate ? " is-invalid" : ""}`}
                 showYearDropdown
                 showMonthDropdown
                 dropdownMode="select"
@@ -408,6 +408,9 @@ const Experience = () => {
                 minDate={formData.fromDate}
                 maxDate={new Date()}
               />
+              {!formData.toDate && formData.fromDate && (
+                <div className="invalid-feedback d-block">To Date is required</div>
+              )}
             </div>
 
             <div className="mb-3">

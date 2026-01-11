@@ -91,9 +91,6 @@ const Qualifications = () => {
         const types = result.data?.data || result.data || [];
         console.log("Qualification types loaded:", types);
         setQualificationTypes(types);
-        if (types.length > 0 && !formData.qualificationType) {
-          setFormData(prev => ({ ...prev, qualificationType: types[0].idQualificationType?.toString() || "" }));
-        }
       }
     } catch (error) {
       console.error("Failed to load qualification types:", error);
@@ -142,6 +139,11 @@ const Qualifications = () => {
   const handleSave = async () => {
     if (!id) {
       toast.warning("Please save employee basic details first");
+      return;
+    }
+
+    if (!formData.qualificationType) {
+      toast.error("Qualification Type is required");
       return;
     }
 
@@ -256,11 +258,8 @@ const Qualifications = () => {
 
   const handleReset = () => {
     setEditingId(null);
-    const defaultType = qualificationTypes.length > 0 
-      ? (qualificationTypes[0].idQualificationType?.toString() || "")
-      : "";
     setFormData({
-      qualificationType: defaultType,
+      qualificationType: "",
       qualificationName: "",
       specialization: "",
       institutionName: "",
@@ -288,7 +287,7 @@ const Qualifications = () => {
                   <tr>
                     <th>Qualification</th>
                     <th>Institution</th>
-                    <th>Country</th>
+                    <th>Country Name</th>
                     <th>Year</th>
                     <th>Actions</th>
                   </tr>
@@ -340,9 +339,9 @@ const Qualifications = () => {
           </div>
           <div className="card-body">
             <div className="mb-3">
-              <label className="form-label mb-1">Qualification Type</label>
+              <label className="form-label mb-1">Qualification Type *</label>
               <select
-                className="form-select"
+                className={`form-select${!formData.qualificationType && formData.qualificationName ? " is-invalid" : ""}`}
                 value={formData.qualificationType}
                 onChange={(e) => handleInputChange("qualificationType", e.target.value)}
               >

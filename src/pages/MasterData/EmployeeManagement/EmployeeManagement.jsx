@@ -1,13 +1,16 @@
-import React, { useState, createContext, useMemo } from "react";
+import React, { useState, createContext, useMemo, Suspense, lazy } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import BasicDetails from "./tabs/BasicDetails";
+import { Modal } from "react-bootstrap";
 import Qualifications from "./tabs/Qualifications";
 import Experience from "./tabs/Experience";
 import EmployeeDocuments from "./tabs/EmployeeDocuments";
 import Assets from "./tabs/Assets";
 import EmployeeActions from "./tabs/EmployeeActions";
-import BankDetails from "./tabs/BankDetails";
+
+// Lazy load heavy components for better performance
+const BasicDetails = lazy(() => import("./tabs/BasicDetails"));
+const BankDetails = lazy(() => import("./tabs/BankDetails"));
 
 export const EmployeeContext = createContext(null);
 
@@ -18,9 +21,12 @@ const EmployeeManagement = () => {
   const tabFromUrl = searchParams.get("tab");
   const [employeeId, setEmployeeId] = useState(employeeIdFromUrl);
   const [activeTab, setActiveTab] = useState(tabFromUrl || "basic-details");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   const tabs = [
-    { id: "basic-details", label: "Basic Details", component: BasicDetails },
+    { id: "basic-details", label: "Basic Info", component: BasicDetails },
     { id: "bank-details", label: "Bank Details", component: BankDetails },
     { id: "qualifications", label: "Qualifications", component: Qualifications },
     { id: "experience", label: "Experiences", component: Experience },
@@ -80,6 +86,32 @@ const EmployeeManagement = () => {
     }
   }, [employeeId, activeTab, navigate, searchParams]);
 
+  // Handle navigation with unsaved changes check
+  const handleNavigation = (path) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(path);
+      setShowConfirmModal(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  // Confirm navigation - discard changes
+  const handleConfirmNavigation = () => {
+    setHasUnsavedChanges(false);
+    setShowConfirmModal(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  };
+
+  // Cancel navigation
+  const handleCancelNavigation = () => {
+    setShowConfirmModal(false);
+    setPendingNavigation(null);
+  };
+
   return (
     <div className="container-xxl flex-grow-1" style={{ paddingTop: 0, paddingBottom: '1.625rem', paddingLeft: '1.625rem', paddingRight: '1.625rem' }}>
       <div className="row" style={{ marginTop: 0 }}>
@@ -92,18 +124,22 @@ const EmployeeManagement = () => {
                 position: 'sticky',
                 top: 0,
                 backgroundColor: '#fff',
-                borderBottom: '1px solid rgba(67, 89, 113, 0.12)',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 padding: '1rem 1.5rem'
               }}
             >
               <h5 className="m-0">Employee Management</h5>
               <button
-                className="btn btn-outline-secondary btn-sm"
-                onClick={() => navigate("/dashboard/employee-profile")}
-                style={{ whiteSpace: 'nowrap' }}
+                className="btn btn-secondary"
+                onClick={() => handleNavigation("/dashboard/employee-profile")}
+                style={{ 
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500,
+                  padding: '0.5rem 1rem',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
               >
-                <i className="bx bx-arrow-back"></i> Back to Employee List
+                <i className="bx bx-arrow-back me-1"></i> Back to Employee List
               </button>
             </div>
             
@@ -119,11 +155,11 @@ const EmployeeManagement = () => {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
                 }}
               >
-                <ul className="nav nav-tabs" role="tablist" style={{ marginBottom: 0, borderBottom: 'none' }}>
+                <ul className="nav nav-tabs" role="tablist" style={{ marginBottom: 0, borderBottom: 'none', gap: '0.5rem' }}>
                   {tabs.map((tab) => {
                     const disabled = isTabDisabled(tab.id);
                     return (
-                      <li key={tab.id} className="nav-item" role="presentation">
+                      <li key={tab.id} className="nav-item" role="presentation" style={{ marginRight: 0 }}>
                         <button
                           type="button"
                           className={`nav-link ${activeTab === tab.id ? "active" : ""} ${disabled ? "disabled" : ""}`}
@@ -132,21 +168,30 @@ const EmployeeManagement = () => {
                           aria-selected={activeTab === tab.id}
                           disabled={disabled}
                           style={{
-                            border: 'none',
-                            borderBottom: activeTab === tab.id ? '2px solid #696cff' : '2px solid transparent',
-                            borderRadius: 0,
-                            padding: '0.75rem 1rem',
+                            border: activeTab === tab.id 
+                              ? '2px solid #696cff' 
+                              : '2px solid rgba(67, 89, 113, 0.12)',
+                            borderRadius: '8px 8px 0 0',
+                            padding: '0.75rem 1.25rem',
                             marginRight: '0.5rem',
+                            backgroundColor: activeTab === tab.id 
+                              ? '#fff' 
+                              : 'rgba(67, 89, 113, 0.04)',
                             color: disabled 
                               ? '#c0c4c8' 
                               : activeTab === tab.id 
                                 ? '#696cff' 
                                 : '#697a8d',
-                            fontWeight: activeTab === tab.id ? 500 : 400,
+                            fontWeight: activeTab === tab.id ? 600 : 400,
                             transition: 'all 0.2s ease',
                             cursor: disabled ? 'not-allowed' : 'pointer',
                             opacity: disabled ? 0.6 : 1,
-                            pointerEvents: disabled ? 'none' : 'auto'
+                            pointerEvents: disabled ? 'none' : 'auto',
+                            boxShadow: activeTab === tab.id 
+                              ? '0 -2px 4px rgba(105, 108, 255, 0.1)' 
+                              : 'none',
+                            position: 'relative',
+                            zIndex: activeTab === tab.id ? 1 : 0
                           }}
                           title={disabled ? "Please save employee basic details first" : ""}
                         >
@@ -174,7 +219,12 @@ const EmployeeManagement = () => {
                   if (!activeTabData) return null;
                   
                   const TabComponent = activeTabData.component;
-                  const contextValue = useMemo(() => ({ employeeId, setEmployeeId }), [employeeId]);
+                  const contextValue = useMemo(() => ({ 
+                    employeeId, 
+                    setEmployeeId,
+                    setHasUnsavedChanges,
+                    hasUnsavedChanges
+                  }), [employeeId, hasUnsavedChanges]);
                   
                   return (
                     <div
@@ -183,7 +233,15 @@ const EmployeeManagement = () => {
                       role="tabpanel"
                     >
                       <EmployeeContext.Provider value={contextValue}>
-                        <TabComponent />
+                        <Suspense fallback={
+                          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+                            <div className="spinner-border text-primary" role="status">
+                              <span className="visually-hidden">Loading...</span>
+                            </div>
+                          </div>
+                        }>
+                          <TabComponent />
+                        </Suspense>
                       </EmployeeContext.Provider>
                     </div>
                   );
@@ -193,6 +251,43 @@ const EmployeeManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal for Unsaved Changes */}
+      <Modal
+        show={showConfirmModal}
+        onHide={handleCancelNavigation}
+        size="sm"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header className="border-0" closeButton>
+          <Modal.Title>Unsaved Changes</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex align-items-center justify-content-center shortDataHeight">
+            You have unsaved data. Are you sure you want to leave without saving?
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            type="button"
+            className="btn btn-secondary px-3"
+            onClick={handleCancelNavigation}
+            autoFocus
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary px-3"
+            onClick={handleConfirmNavigation}
+          >
+            Leave Without Saving
+          </button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
