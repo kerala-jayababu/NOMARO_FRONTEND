@@ -10,10 +10,11 @@ import { useDispatch } from "react-redux";
 import { getEmployeeProfileByID } from "../../../../redux/reducers/getAllEmployeeProfiles";
 
 const BasicDetails = () => {
-  const { employeeId, setEmployeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setEmployeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const { showLoader, hideLoader } = useLoader();
   const dispatch = useDispatch();
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [initialFormData, setInitialFormData] = useState(null);
   const [employeeFormData, setEmployeeFormData] = useState({
     employeeCode: "",
     firstName: "",
@@ -22,6 +23,7 @@ const BasicDetails = () => {
     gender: "",
     idNumber: "",
     taxIdNumber: "",
+    socialSecurityNumber: "",
     idDepartment: "",
     idDesignation: "",
     emailID: "",
@@ -183,10 +185,10 @@ const BasicDetails = () => {
       };
 
       // Try multiple sources for the photo - check all possible fields
-      const employeePhotoValue = 
-        detailedData.employeePhoto ?? 
-        detailedData.attachmentBlob ?? 
-        profileData?.attachmentBlob ?? 
+      const employeePhotoValue =
+        detailedData.employeePhoto ??
+        detailedData.attachmentBlob ??
+        profileData?.attachmentBlob ??
         profileData?.employeePhoto ??
         null;
 
@@ -198,6 +200,7 @@ const BasicDetails = () => {
         gender: detailedData.gender ?? "",
         idNumber: detailedData.idNumber ?? "",
         taxIdNumber: detailedData.taxIdNumber ?? "",
+        socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
         idDepartment: detailedData.idDepartment
           ? detailedData.idDepartment.toString()
           : "",
@@ -227,7 +230,7 @@ const BasicDetails = () => {
         overTimeAllowedStatus:
           typeof detailedData.overTimeAllowedStatus !== "undefined"
             ? detailedData.overTimeAllowedStatus === true ||
-              detailedData.overTimeAllowedStatus === "true"
+            detailedData.overTimeAllowedStatus === "true"
             : false,
         employeePhoto: employeePhotoValue,
         lastWorkingDay: formatDateForForm(detailedData.lastWorkingDay),
@@ -259,6 +262,42 @@ const BasicDetails = () => {
       if (setEmployeeId) {
         setEmployeeId(id);
       }
+
+      // Store initial form data for comparison
+      const initialData = {
+        employeeCode: detailedData.employeeCode ?? "",
+        firstName: detailedData.firstName ?? "",
+        middleName: detailedData.middleName ?? "",
+        lastName: detailedData.lastName ?? "",
+        gender: detailedData.gender ?? "",
+        idNumber: detailedData.idNumber ?? "",
+        taxIdNumber: detailedData.taxIdNumber ?? "",
+        socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
+        idDepartment: detailedData.idDepartment ? detailedData.idDepartment.toString() : "",
+        idDesignation: detailedData.idDesignation ? detailedData.idDesignation.toString() : "",
+        emailID: detailedData.emailID ?? detailedData.emailId ?? "",
+        phoneNumber1: detailedData.phoneNumber1 ?? "",
+        phoneNumber2: detailedData.phoneNumber2 ?? "",
+        whatsAppNumber: detailedData.whatsAppNumber ?? "",
+        address1: detailedData.address1 ?? "",
+        address2: detailedData.address2 ?? "",
+        address3: detailedData.address3 ?? "",
+        city: detailedData.city ?? "",
+        state: detailedData.state ?? "",
+        zipCode: detailedData.zipCode ?? "",
+        dateOfBirth: detailedData.dateOfBirth ? moment(detailedData.dateOfBirth).format("YYYY-MM-DD") : null,
+        joiningDate: detailedData.joiningDate ? moment(detailedData.joiningDate).format("YYYY-MM-DD") : null,
+        reportingTo: detailedData.reportingTo ? detailedData.reportingTo.toString() : "",
+        currentStatus: detailedData.currentStatus ?? "Working",
+        idBudgetCode: detailedData.idBudgetCode ? detailedData.idBudgetCode.toString() : "",
+        childrenCount: detailedData.childrenCount ?? 0,
+        overTimeAllowedStatus: typeof detailedData.overTimeAllowedStatus !== "undefined" ? (detailedData.overTimeAllowedStatus === true || detailedData.overTimeAllowedStatus === "true") : false,
+        lastWorkingDay: detailedData.lastWorkingDay ? moment(detailedData.lastWorkingDay).format("YYYY-MM-DD") : null,
+      };
+      setInitialFormData(initialData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     } catch (error) {
       hideLoader();
       console.error("Error loading employee data:", error);
@@ -266,8 +305,8 @@ const BasicDetails = () => {
     }
   };
 
-  const phoneFields = ["phoneNumber1", "phoneNumber2", "whatsAppNumber"];
-  const numericFields = ["zipCode", "taxIdNumber"];
+  const phoneFields = ["phoneNumber1", "phoneNumber2"];
+  const numericFields = ["taxIdNumber"];
 
   const handleEmployeeInputChange = (field, value) => {
     let sanitizedValue = value;
@@ -276,22 +315,47 @@ const BasicDetails = () => {
       sanitizedValue = sanitizedValue.trimStart();
     }
 
-    if (phoneFields.includes(field)) {
+    // WhatsApp number allows country codes with '+' prefix
+    if (field === "whatsAppNumber") {
+      sanitizedValue = sanitizedValue.replace(/[^\d+\s-]/g, "").slice(0, 20);
+    } else if (phoneFields.includes(field)) {
       sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "").slice(0, 20);
     }
 
-    if (numericFields.includes(field)) {
+    // ZIP Code limited to 6 digits
+    if (field === "zipCode") {
+      sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 6);
+    } else if (numericFields.includes(field)) {
       if (field === "taxIdNumber") {
         sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "");
-      } else {
-        sanitizedValue = sanitizedValue.replace(/\D/g, "");
       }
     }
 
-    setEmployeeFormData((prev) => ({
-      ...prev,
-      [field]: sanitizedValue,
-    }));
+    setEmployeeFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: sanitizedValue,
+      };
+
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialFormData) {
+        const currentDataForComparison = {
+          ...newData,
+          dateOfBirth: newData.dateOfBirth ? moment(newData.dateOfBirth).format("YYYY-MM-DD") : null,
+          joiningDate: newData.joiningDate ? moment(newData.joiningDate).format("YYYY-MM-DD") : null,
+          lastWorkingDay: newData.lastWorkingDay ? moment(newData.lastWorkingDay).format("YYYY-MM-DD") : null,
+          employeePhoto: newData.employeePhoto ? (typeof newData.employeePhoto === 'string' ? newData.employeePhoto : 'changed') : null
+        };
+        const initialDataForComparison = {
+          ...initialFormData,
+          employeePhoto: initialFormData.employeePhoto ? (typeof initialFormData.employeePhoto === 'string' ? initialFormData.employeePhoto : 'original') : null
+        };
+        const hasChanges = JSON.stringify(currentDataForComparison) !== JSON.stringify(initialDataForComparison);
+        setHasUnsavedChanges(hasChanges);
+      }
+
+      return newData;
+    });
 
     if (employeeFormErrors[field]) {
       setEmployeeFormErrors((prev) => {
@@ -320,6 +384,9 @@ const BasicDetails = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setEmployeePhotoPreview(reader.result);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(true);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -337,6 +404,33 @@ const BasicDetails = () => {
 
     if (employeeFormData.emailID && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)) {
       errors.emailID = "Invalid email format";
+    }
+
+    // Date of birth validation: 1950 to 2010 (age 16-75)
+    if (employeeFormData.dateOfBirth) {
+      const birthYear = moment(employeeFormData.dateOfBirth).year();
+      if (birthYear < 1950 || birthYear > 2010) {
+        errors.dateOfBirth = "Date of birth must be between 1950 and 2010";
+      }
+    }
+
+    // Date of Joining: max 2-3 months in future
+    if (employeeFormData.joiningDate) {
+      const today = moment();
+      const maxFutureDate = moment().add(3, 'months');
+      if (moment(employeeFormData.joiningDate).isAfter(maxFutureDate)) {
+        errors.joiningDate = "Date of Joining cannot be more than 3 months in the future";
+      }
+
+      // Date of Joining should not be earlier than Date of birth
+      if (employeeFormData.dateOfBirth && moment(employeeFormData.joiningDate).isBefore(moment(employeeFormData.dateOfBirth))) {
+        errors.joiningDate = "Date of Joining cannot be earlier than Date of Birth";
+      }
+    }
+
+    // Last Working Day mandatory when Current Status is "Not Working"
+    if (employeeFormData.currentStatus === "NotWorking" && !employeeFormData.lastWorkingDay) {
+      errors.lastWorkingDay = "Last Working Day is required when Current Status is Not Working";
     }
 
     setEmployeeFormErrors(errors);
@@ -399,14 +493,30 @@ const BasicDetails = () => {
       if (result.error) {
         hideLoader();
         console.error("API Error:", result.error);
-        toast.error(result.error.message || "Failed to save employee");
+        const errorMessage = result.error.message || "Failed to save employee";
+        // Check if it's a duplicate employee code error
+        if (errorMessage.toLowerCase().includes("employee code") ||
+          errorMessage.toLowerCase().includes("duplicate") ||
+          errorMessage.toLowerCase().includes("already exists")) {
+          toast.error("Employee Code Already Exists");
+        } else {
+          toast.error(errorMessage);
+        }
         return;
       }
 
       if (result.data?.success) {
         const message = editingEmployeeId ? "Employee updated successfully" : "Employee added successfully";
         toast.success(message);
-        
+
+        // Reset unsaved changes flag
+        if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(false);
+        }
+
+        // Scroll to top and refresh
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         // If it's a new employee, update the employeeId in context
         if (!editingEmployeeId && result.data?.data?.idEmployee) {
           const newEmployeeId = result.data.data.idEmployee.toString();
@@ -416,11 +526,52 @@ const BasicDetails = () => {
           }
           // Reload the employee data to get all fields
           await loadEmployeeData(newEmployeeId);
+        } else {
+          // Update initial form data after successful save
+          const currentData = {
+            employeeCode: employeeFormData.employeeCode,
+            firstName: employeeFormData.firstName,
+            middleName: employeeFormData.middleName,
+            lastName: employeeFormData.lastName,
+            gender: employeeFormData.gender,
+            idNumber: employeeFormData.idNumber,
+            taxIdNumber: employeeFormData.taxIdNumber,
+            socialSecurityNumber: employeeFormData.socialSecurityNumber,
+            idDepartment: employeeFormData.idDepartment,
+            idDesignation: employeeFormData.idDesignation,
+            emailID: employeeFormData.emailID,
+            phoneNumber1: employeeFormData.phoneNumber1,
+            phoneNumber2: employeeFormData.phoneNumber2,
+            whatsAppNumber: employeeFormData.whatsAppNumber,
+            address1: employeeFormData.address1,
+            address2: employeeFormData.address2,
+            address3: employeeFormData.address3,
+            city: employeeFormData.city,
+            state: employeeFormData.state,
+            zipCode: employeeFormData.zipCode,
+            dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD") : null,
+            joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD") : null,
+            reportingTo: employeeFormData.reportingTo,
+            currentStatus: employeeFormData.currentStatus,
+            idBudgetCode: employeeFormData.idBudgetCode,
+            childrenCount: employeeFormData.childrenCount,
+            overTimeAllowedStatus: employeeFormData.overTimeAllowedStatus,
+            lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format("YYYY-MM-DD") : null,
+          };
+          setInitialFormData(currentData);
         }
       } else {
         hideLoader();
         console.error("API returned success=false:", result.data);
-        toast.error(result.data?.message || "Failed to save employee");
+        const errorMessage = result.data?.message || "Failed to save employee";
+        // Check if it's a duplicate employee code error
+        if (errorMessage.toLowerCase().includes("employee code") ||
+          errorMessage.toLowerCase().includes("duplicate") ||
+          errorMessage.toLowerCase().includes("already exists")) {
+          toast.error("Employee Code Already Exists");
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
       hideLoader();
@@ -441,6 +592,7 @@ const BasicDetails = () => {
       gender: "",
       idNumber: "",
       taxIdNumber: "",
+      socialSecurityNumber: "",
       idDepartment: "",
       idDesignation: "",
       emailID: "",
@@ -466,11 +618,15 @@ const BasicDetails = () => {
     setEmployeeFormErrors({});
     setEmployeePhotoPreview(null);
     setEmployeePhotoFile(null);
+    setInitialFormData(null);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   return (
     <div className="row">
-      <h6 className="mb-3">Basic Details</h6>
+      <h6 className="mb-3">Basic Info</h6>
       <div className="col-12">
         <form onSubmit={handleSubmit}>
           <div className="row">
@@ -609,13 +765,18 @@ const BasicDetails = () => {
                 selected={employeeFormData.dateOfBirth}
                 onChange={(date) => handleEmployeeInputChange("dateOfBirth", date)}
                 dateFormat="MM/dd/yyyy"
-                className="form-control"
-                maxDate={new Date()}
+                className={`form-control${employeeFormErrors.dateOfBirth ? " is-invalid" : ""}`}
+                minDate={new Date(1950, 0, 1)}
+                maxDate={new Date(2010, 11, 31)}
                 showYearDropdown
                 showMonthDropdown
                 dropdownMode="select"
                 wrapperClassName="d-block"
+                yearDropdownItemNumber={100}
               />
+              {employeeFormErrors.dateOfBirth && (
+                <div className="invalid-feedback d-block">{employeeFormErrors.dateOfBirth}</div>
+              )}
             </div>
             <div className="col-md-4">
               <label className="form-label mb-1">Joining Date *</label>
@@ -623,14 +784,16 @@ const BasicDetails = () => {
                 selected={employeeFormData.joiningDate}
                 onChange={(date) => handleEmployeeInputChange("joiningDate", date)}
                 dateFormat="MM/dd/yyyy"
-                className="form-control"
+                className={`form-control${employeeFormErrors.joiningDate ? " is-invalid" : ""}`}
+                minDate={employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).toDate() : undefined}
+                maxDate={moment().add(3, 'months').toDate()}
                 showYearDropdown
                 showMonthDropdown
                 dropdownMode="select"
                 wrapperClassName="d-block"
               />
               {employeeFormErrors.joiningDate && (
-                <div className="text-danger">{employeeFormErrors.joiningDate}</div>
+                <div className="invalid-feedback d-block">{employeeFormErrors.joiningDate}</div>
               )}
             </div>
           </div>
@@ -808,18 +971,18 @@ const BasicDetails = () => {
             </div>
             {employeeFormData.currentStatus === "NotWorking" && (
               <div className="col-md-4">
-                <label className="form-label mb-1">Last Working Day</label>
-                <DatePicker
-                  selected={employeeFormData.lastWorkingDay}
-                  onChange={(date) => handleEmployeeInputChange("lastWorkingDay", date)}
-                  dateFormat="MM/dd/yyyy"
-                  className="form-control"
-                  maxDate={new Date()}
-                  showYearDropdown
-                  showMonthDropdown
-                  dropdownMode="select"
-                  wrapperClassName="d-block"
+                <label className="form-label mb-1">Last Working Day *</label>
+                <input
+                  type="text"
+                  className={`form-control${employeeFormErrors.lastWorkingDay ? " is-invalid" : ""}`}
+                  value={employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format("MM/DD/YYYY") : ""}
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  title="This field is populated from Emp Exit Management module"
                 />
+                {employeeFormErrors.lastWorkingDay && (
+                  <div className="invalid-feedback d-block">{employeeFormErrors.lastWorkingDay}</div>
+                )}
               </div>
             )}
           </div>
@@ -868,6 +1031,23 @@ const BasicDetails = () => {
                 className="form-control"
                 value={employeeFormData.idNumber}
                 onChange={(e) => handleEmployeeInputChange("idNumber", e.target.value)}
+                placeholder="Enter ID Number"
+              />
+            </div>
+          </div>
+          <div className="row mt-3">
+            <div className="col-md-4">
+              <label className="form-label mb-1" htmlFor="socialSecurityNumber">
+                Social Security Number (SSN)
+              </label>
+              <input
+                id="socialSecurityNumber"
+                name="socialSecurityNumber"
+                type="text"
+                className="form-control"
+                value={employeeFormData.socialSecurityNumber}
+                onChange={(e) => handleEmployeeInputChange("socialSecurityNumber", e.target.value)}
+                placeholder="Enter SSN"
               />
             </div>
           </div>

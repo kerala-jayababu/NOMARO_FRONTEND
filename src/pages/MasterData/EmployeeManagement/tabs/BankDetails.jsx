@@ -16,11 +16,12 @@ import secureLocalStorage from "react-secure-storage";
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
 const BankDetails = () => {
-  const { employeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const id = employeeId;
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialData, setInitialData] = useState(null);
 
   const { banks, bankBranches, budgetCode, overTimesTypes } = useSelector(
     (state) => state.getAllOptions
@@ -243,6 +244,19 @@ const BankDetails = () => {
         ]);
       }
 
+      // Store initial data for comparison
+      const initial = {
+        bankAccounts: JSON.parse(JSON.stringify(mappedBankAccounts || [])),
+        overtimeDetails: JSON.parse(JSON.stringify(mappedOvertimeDetails || [])),
+        disbursementType: mappedBankAccounts.length > 0 ? mappedBankAccounts[0].disbursementType : "PERCENTAGE",
+        selectedBudgetCode: detailsResult.payload?.data?.idBudgetCode?.toString() || "",
+        childCount: detailsResult.payload?.data?.childrenCount || 0,
+      };
+      setInitialData(initial);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
+
       hideLoader();
     } catch (error) {
       hideLoader();
@@ -277,6 +291,17 @@ const BankDetails = () => {
       const newState = [...prevState];
       newState[index].selectedBank = value;
       newState[index].selectedBranch = "";
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
       return newState;
     });
   };
@@ -285,6 +310,17 @@ const BankDetails = () => {
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index].selectedBranch = value;
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
       return newState;
     });
   };
@@ -299,6 +335,17 @@ const BankDetails = () => {
     setBankAccountsState((prevState) => {
       const newState = [...prevState];
       newState[index][field] = value;
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
       return newState;
     });
     if (field === "salaryPercentageDistributed") {
@@ -311,17 +358,26 @@ const BankDetails = () => {
   };
 
   const handleAddRow = () => {
-    setBankAccountsState((prevState) => [
-      ...prevState,
-      {
-        idEmployeeBankAccount: null,
-        selectedBank: "",
-        selectedBranch: "",
-        accountNumber: "",
-        salaryPercentageDistributed: "",
-        currencyCode: "GYD",
-      },
-    ]);
+    setBankAccountsState((prevState) => {
+      const newState = [
+        ...prevState,
+        {
+          idEmployeeBankAccount: null,
+          selectedBank: "",
+          selectedBranch: "",
+          accountNumber: "",
+          salaryPercentageDistributed: "",
+          currencyCode: "GYD",
+        },
+      ];
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        setHasUnsavedChanges(true);
+      }
+      
+      return newState;
+    });
     setBankAccountErrors((prevErrors) => ({
       ...prevErrors,
       salaryPercentageTotal: "",
@@ -376,6 +432,11 @@ const BankDetails = () => {
       return;
     }
     setOvertimeDetails(newOvertimeDetails);
+    
+    // Check for unsaved changes
+    if (setHasUnsavedChanges && initialData) {
+      setHasUnsavedChanges(true);
+    }
   };
 
   const handleOvertimeChange = (index, field, value) => {
@@ -395,6 +456,8 @@ const BankDetails = () => {
       newOvertimeDetails[index].type = value;
       if (value === "WORKINGDAY") {
         newOvertimeDetails[index].appliedRate = "1.5";
+      } else if (value === "HOLIDAY" || value === "Holiday") {
+        newOvertimeDetails[index].appliedRate = "1.5";
       } else {
         newOvertimeDetails[index].appliedRate = "2.0";
       }
@@ -402,6 +465,16 @@ const BankDetails = () => {
       newOvertimeDetails[index][field] = value;
     }
     setOvertimeDetails(newOvertimeDetails);
+    
+    // Check for unsaved changes
+    if (setHasUnsavedChanges && initialData) {
+      const hasChanges = JSON.stringify(newOvertimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
+        JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
+        disbursementType !== initialData.disbursementType ||
+        selectedBudgetCode !== initialData.selectedBudgetCode ||
+        childCount !== initialData.childCount;
+      setHasUnsavedChanges(hasChanges);
+    }
   };
 
   const handleDeleteOvertimeRow = (index) => {
@@ -597,6 +670,9 @@ const BankDetails = () => {
           toast.error(errors.join(", "));
         } else {
           toast.success("Bank details saved successfully");
+          if (setHasUnsavedChanges) {
+            setHasUnsavedChanges(false);
+          }
           loadEmployeeData();
         }
       } catch (error) {
@@ -632,6 +708,9 @@ const BankDetails = () => {
             toast.error(errors.join(", "));
           } else {
             toast.success("Bank details saved successfully");
+            if (setHasUnsavedChanges) {
+              setHasUnsavedChanges(false);
+            }
             loadEmployeeData();
           }
         } catch (error) {
@@ -667,6 +746,10 @@ const BankDetails = () => {
     setOvertimeErrors({});
     setAttachmentFile(null);
     setEditFileName(null);
+    setInitialData(null);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   return (
@@ -685,7 +768,12 @@ const BankDetails = () => {
               id="percentageType"
               value="PERCENTAGE"
               checked={disbursementType === "PERCENTAGE"}
-              onChange={() => setDisbursementType("PERCENTAGE")}
+              onChange={() => {
+                setDisbursementType("PERCENTAGE");
+                if (setHasUnsavedChanges && initialData) {
+                  setHasUnsavedChanges(true);
+                }
+              }}
             />
             <label className="form-check-label" htmlFor="percentageType">
               Percentage
@@ -699,7 +787,12 @@ const BankDetails = () => {
               id="fixedAmountType"
               value="FIXEDAMOUNT"
               checked={disbursementType === "FIXEDAMOUNT"}
-              onChange={() => setDisbursementType("FIXEDAMOUNT")}
+              onChange={() => {
+                setDisbursementType("FIXEDAMOUNT");
+                if (setHasUnsavedChanges && initialData) {
+                  setHasUnsavedChanges(true);
+                }
+              }}
             />
             <label className="form-check-label" htmlFor="fixedAmountType">
               Fixed Amount
@@ -1024,6 +1117,14 @@ const BankDetails = () => {
               onChange={(e) => {
                 const value = e.target.value;
                 setSelectedBudgetCode(value);
+                if (setHasUnsavedChanges && initialData) {
+                  const hasChanges = value !== initialData.selectedBudgetCode ||
+                    JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
+                    JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
+                    disbursementType !== initialData.disbursementType ||
+                    childCount !== initialData.childCount;
+                  setHasUnsavedChanges(hasChanges);
+                }
               }}
             >
               <option value="">Select Budget Code</option>
@@ -1049,6 +1150,14 @@ const BankDetails = () => {
                     const value = e.target.value;
                     if (/^\d*$/.test(value)) {
                       setChildCount(value);
+                      if (setHasUnsavedChanges && initialData) {
+                        const hasChanges = value !== initialData.childCount.toString() ||
+                          JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
+                          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
+                          disbursementType !== initialData.disbursementType ||
+                          selectedBudgetCode !== initialData.selectedBudgetCode;
+                        setHasUnsavedChanges(hasChanges);
+                      }
                     }
                   }}
                 />
@@ -1064,6 +1173,9 @@ const BankDetails = () => {
                     if (file) {
                       setAttachmentFile(file);
                       setEditFileName(file.name);
+                      if (setHasUnsavedChanges) {
+                        setHasUnsavedChanges(true);
+                      }
                     }
                   }}
                 />

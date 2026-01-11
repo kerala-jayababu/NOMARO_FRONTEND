@@ -30,6 +30,7 @@ import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
+import ServiceChange from "./pages/MasterData/serviceChange";
 
 export const privateRoutes = [
   {
@@ -151,6 +152,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/banks",
     element: <Banks />,
+  },
+  {
+    path: "/dashboard/service-change",
+    element: <ServiceChange />,
   },
 ];
 

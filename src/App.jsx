@@ -54,6 +54,7 @@ import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import EmployeeManagement from "./pages/MasterData/EmployeeManagement/EmployeeManagement";
+import ServiceChange from "./pages/MasterData/serviceChange";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
               <Route path="salary-heads" element={<SalaryHeads />} />
               <Route path="employee-profile" element={<EmployeeProfile />} />
               <Route path="employee-management" element={<EmployeeManagement />} />
+              <Route path="service-change" element={<ServiceChange />} />
               <Route path='employee-salary-config' element={<EmployeeSalaryConfig />} />
               <Route path='screen-permissions' element={<ScreenPermission />} />
               <Route path="salary-adjustments" element={<SalaryAdjustments />} />

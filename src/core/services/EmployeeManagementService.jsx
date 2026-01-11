@@ -175,6 +175,9 @@ export default class EmployeeManagementService {
         formData.append(`dtos[${index}].IdDocumentType`, item.idDocumentType);
         formData.append(`dtos[${index}].Remarks`, item.remarks || "");
         formData.append(`dtos[${index}].IdUser`, item.idUser);
+        if (item.dateValidTill) {
+          formData.append(`dtos[${index}].DateValidTill`, item.dateValidTill);
+        }
         
         if (item.documentContent) {
           formData.append(`dtos[${index}].DocumentFile`, item.documentContent);
@@ -186,6 +189,17 @@ export default class EmployeeManagementService {
           "Content-Type": "multipart/form-data",
         },
       });
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static deleteEmployeeDocument = async (idEmployeeDocument, idUser) => {
+    try {
+      const res = await API.delete(
+        `/api/v1/Employee/DeleteEmployeeDocument?idEmployeeDocument=${idEmployeeDocument}&idUser=${idUser}`
+      );
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
@@ -278,15 +292,8 @@ export default class EmployeeManagementService {
 
   static returnAssetFromEmployee = async (payload) => {
     try {
-      const data = {
-        idAsset: payload.idAsset,
-        idEmployee: payload.idEmployee,
-        idAssetAssignment: payload.idAssetAssignment,
-        returnDate: moment(payload.returnDate).format("YYYY-MM-DD"),
-        remarks: payload.remarks || "",
-        idUser: payload.idUser,
-      };
-      const res = await API.post("/api/v1/Employee/UnassignAsset", data);
+      const url = `/api/v1/Employee/UnassignAsset?idAsset=${payload.idAsset}&idEmployee=${payload.idEmployee}`;
+      const res = await API.post(url);
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
@@ -411,6 +418,41 @@ export default class EmployeeManagementService {
     try {
       const res = await API.get("/api/v1/Common/GetCountries");
       return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  // ==================== SERVICE CHANGES APIs ====================
+
+  static getEmployeeServiceChanges = async (params) => {
+    try {
+      const { dateFrom, changeType, IdEmployee } = params;
+      let url = "/api/v1/Employee/GetEmployeeServiceChanges?";
+      const queryParams = [];
+      
+      if (IdEmployee) {
+        queryParams.push(`IdEmployee=${IdEmployee}`);
+      }
+      if (dateFrom) {
+        queryParams.push(`dateFrom=${dateFrom}`);
+      }
+      if (changeType) {
+        queryParams.push(`changeType=${changeType}`);
+      }
+      
+      url += queryParams.join("&");
+      const res = await API.get(url);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static addUpdateEmployeeServiceChanges = async (payload) => {
+    try {
+      const response = await API.post("/api/v1/Employee/AddUpdateEmployeeServiceChanges", payload);
+      return { error: null, data: response.data };
     } catch (error) {
       return handleApiError(error);
     }
