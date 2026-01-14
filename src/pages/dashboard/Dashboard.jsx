@@ -11,7 +11,6 @@ function Dashboard() {
       .then(res => {
         if (res?.data?.data) {
           const params = res.data.data;
-debugger
           const getValue = (name) =>
             params.find(p => p.parameterName === name)?.parameterValue;
 

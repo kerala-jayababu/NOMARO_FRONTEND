@@ -457,5 +457,42 @@ export default class EmployeeManagementService {
       return handleApiError(error);
     }
   };
+
+  static getEmployeeServiceChangesForApproval = async (params) => {
+    try {
+      const { Status, ChangeType, DateFrom, SearchText } = params;
+      let url = "/api/v1/Employee/GetEmployeeServiceChangesForApproval?";
+      const queryParams = [];
+      
+      if (Status) {
+        queryParams.push(`Status=${Status}`);
+      }
+      if (ChangeType !== undefined && ChangeType !== null) {
+        queryParams.push(`ChangeType=${ChangeType}`);
+      }
+      if (DateFrom) {
+        queryParams.push(`DateFrom=${DateFrom}`);
+      }
+      if (SearchText) {
+        queryParams.push(`SearchText=${SearchText}`);
+      }
+      
+      url += queryParams.join("&");
+      const res = await API.get(url);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static approveServiceChanges = async (ids, approvalStatus, remarks = "") => {
+    try {
+      const url = `/api/v1/Employee/ApproveServiceChanges?approvalStatus=${approvalStatus}&remarks=${encodeURIComponent(remarks)}`;
+      const res = await API.post(url, ids);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }
 
