@@ -103,78 +103,91 @@ function SalaryApproved() {
    const { options } = useSelector((state) => state.budgetCode);
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
-useEffect(() => {
-  const initialize = async () => {
-    try {
-      setShowOverlay(true);
-
-      // Fetch token
-      const storedUser = secureLocalStorage.getItem("user");
-      const token = storedUser ? JSON.parse(storedUser)?.token : null;
-
-      if (!token) {
-        toast.error("Token not found");
-        return;
-      }
-
-      // 1. Fetch status options
-      const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
-
-      const statusData = statusResponse?.data || [];
-      const formattedStatus = statusData.map((item) => ({
-        value: item.value,
-        label: item.label,
-      }));
-      const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
-      setStatusOptions(fullStatusOptions);
-
-      // 2. Get current approval status
-      const approvalRes = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
-      const approvalStatus = approvalRes?.data?.data?.approvalStatus;
-      setInitialApprovalStatus(approvalStatus);
-
-      const matchedStatus = fullStatusOptions.find(
-        (opt) => opt.value.toLowerCase() === approvalStatus?.toLowerCase()
-      );
-      setStatusFilter(matchedStatus || { value: "All", label: "All Status" });
-
-      // 3. Get salary months list
-      const monthsData = await CommonService.getAllSalaryMonths();
-      const monthList = monthsData?.data || [];
-
-      const currentMonthObject = monthList
-        .filter((m) => m.salaryMonthText.includes(new Date().getFullYear()))
-        .find((m) => m.idSalaryMonth === approvalRes?.data?.data?.maxSalaryMonth);
-
-      const filteredMonths = monthList.filter((month) => {
-        const [monthName, year] = month.salaryMonthText.split(",");
-        const monthIndex = months.indexOf(monthName);
-        const currentMonthIndex = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-
-        return (
-          (year.trim() == currentYear && monthIndex >= currentMonthIndex - 1 && monthIndex <= currentMonthIndex + 1) ||
-          (year.trim() == currentYear - 1 && monthIndex === 11 && currentMonthIndex === 0) ||
-          (year.trim() == currentYear + 1 && monthIndex === 0 && currentMonthIndex === 11)
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        setShowOverlay(true);
+  
+        const storedUser = secureLocalStorage.getItem("user");
+        const token = storedUser ? JSON.parse(storedUser)?.token : null;
+  
+        if (!token) {
+          toast.error("Token not found");
+          return;
+        }
+  
+        // 1. Fetch status options
+        const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
+        const statusData = statusResponse?.data || [];
+        const formattedStatus = statusData.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
+        const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
+        setStatusOptions(fullStatusOptions);
+  
+        // 2. Get current approval status
+        const approvalRes = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
+        const approvalData = approvalRes?.data?.data;
+        const approvalStatus = approvalData?.approvalStatus;
+        setInitialApprovalStatus(approvalStatus);
+  
+        const matchedStatus = fullStatusOptions.find(
+          (opt) => opt.value.toLowerCase() === approvalStatus?.toLowerCase()
         );
-      });
-
-      setCurrentMonth({
-        value: currentMonthObject.idSalaryMonth,
-        label: currentMonthObject.salaryMonthText,
-      });
-
-      setSalaryMonthsList(filteredMonths);
-    } catch (error) {
-      console.error("Initialization error:", error);
-      toast.error("Initialization failed");
-    } finally {
-      setShowOverlay(false);
-    }
-  };
-
-  initialize();
-}, []);
+        setStatusFilter(matchedStatus || { value: "All", label: "All Status" });
+  
+        // 3. Get salary months list
+        const monthsData = await CommonService.getAllSalaryMonths();
+        const monthList = monthsData?.data || [];
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonthIndex = now.getMonth();
+  
+        // Find the specific month or fallback
+        const currentYearMonths = monthList.filter((m) => m.salaryMonthText.includes(currentYear.toString()));
+        let currentMonthObject = currentYearMonths.find(
+          (m) => m.idSalaryMonth === approvalData?.maxSalaryMonth
+        );
+  
+        if (!currentMonthObject) {
+          currentMonthObject = currentYearMonths.length > 0 ? currentYearMonths[0] : monthList[0];
+        }
+  
+        // Safe assignment
+        if (currentMonthObject) {
+          setCurrentMonth({
+            value: currentMonthObject.idSalaryMonth,
+            label: currentMonthObject.salaryMonthText,
+          });
+        }
+  
+        // 4. Filter logic for the dropdown list
+        const filteredMonths = monthList.filter((month) => {
+          const [monthName, yearStr] = month.salaryMonthText.split(",");
+          const year = parseInt(yearStr.trim());
+          const monthIndex = months.indexOf(monthName.trim());
+  
+          return (
+            (year === currentYear && monthIndex >= currentMonthIndex - 1 && monthIndex <= currentMonthIndex + 1) ||
+            (year === currentYear - 1 && monthIndex === 11 && currentMonthIndex === 0) ||
+            (year === currentYear + 1 && monthIndex === 0 && currentMonthIndex === 11)
+          );
+        });
+  
+        setSalaryMonthsList(filteredMonths);
+  
+      } catch (error) {
+        console.error("Initialization error:", error);
+        toast.error("Initialization failed");
+      } finally {
+        setShowOverlay(false);
+      }
+    };
+  
+    initialize();
+  }, []); // Ensure 'months' and 'API' are stable or included here if they change
 
 useEffect(() => {
   if (!currentMonth) return;
