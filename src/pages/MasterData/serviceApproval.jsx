@@ -353,13 +353,13 @@ const ServiceApproval = () => {
                   </th>
                   <th>Employee Code</th>
                   <th>Employee Name</th>
-                  <th>Designation</th>
-                  <th>Department</th>
+                  {/* <th>Designation</th>
+                  <th>Department</th> */}
                   <th>Change Type</th>
                   <th>From</th>
                   <th>To</th>
-                  <th>Effective Date</th>
-                  <th>Created By</th>
+                  <th width="12%">Effective Date</th>
+                  {/* <th>Created By</th> */}
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -391,17 +391,17 @@ const ServiceApproval = () => {
                         </td>
                         <td>{item.employeeCode || "-"}</td>
                         <td>{item.employeeName || "-"}</td>
-                        <td>{item.designation || "-"}</td>
-                        <td>{item.department || "-"}</td>
+                        {/* <td>{item.designation || "-"}</td>
+                        <td>{item.department || "-"}</td> */}
                         <td>{getChangeTypeLabel(item.changeType)}</td>
                         <td>{item.fromValue || "-"}</td>
                         <td>{item.toValue || "-"}</td>
-                        <td>
+                        <td width="12%">
                           {item.changeValidFrom
                             ? moment(item.changeValidFrom).format("DD-MMM-YYYY")
                             : "-"}
                         </td>
-                        <td>{item.createdBy || "-"}</td>
+                        {/* <td>{item.createdBy || "-"}</td> */}
                         <td>
                           <span
                             className={`badge ${getStatusBadgeClass(
