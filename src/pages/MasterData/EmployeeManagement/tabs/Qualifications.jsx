@@ -119,6 +119,12 @@ const Qualifications = () => {
     return 1;
   };
 
+  const getCountryName = (countryId) => {
+    if (!countryId) return "-";
+    const country = countries.find((c) => c.idCountry === parseInt(countryId) || c.idCountry === countryId);
+    return country?.countryName || countryId;
+  };
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -149,6 +155,19 @@ const Qualifications = () => {
 
     if (!formData.qualificationName || !formData.institutionName || !formData.yearOfCompletion) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    // Validate year of completion - must be exactly 4 digits
+    if (!/^\d{4}$/.test(formData.yearOfCompletion)) {
+      toast.error("Year of Completion must be exactly 4 digits");
+      return;
+    }
+
+    const year = parseInt(formData.yearOfCompletion);
+    const currentYear = new Date().getFullYear();
+    if (year < 1900 || year > currentYear) {
+      toast.error(`Year of Completion must be between 1900 and ${currentYear}`);
       return;
     }
 
@@ -298,7 +317,7 @@ const Qualifications = () => {
                       <tr key={qual.idEmployeeQualification}>
                         <td>{qual.qualificationName}</td>
                         <td>{qual.institutionName}</td>
-                        <td>{qual.countryName || qual.idCountry}</td>
+                        <td>{getCountryName(qual.idCountry)}</td>
                         <td>{qual.yearOfCompletion}</td>
                         <td>
                           <button
@@ -412,12 +431,18 @@ const Qualifications = () => {
             <div className="mb-3">
               <label className="form-label mb-1">Year of Completion *</label>
               <input
-                type="number"
+                type="text"
                 className="form-control"
                 value={formData.yearOfCompletion}
-                onChange={(e) => handleInputChange("yearOfCompletion", e.target.value)}
-                min="1900"
-                max={new Date().getFullYear()}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow digits and restrict to 4 digits
+                  if (value === "" || (/^\d{1,4}$/.test(value))) {
+                    handleInputChange("yearOfCompletion", value);
+                  }
+                }}
+                maxLength="4"
+                placeholder="YYYY"
               />
             </div>
 

@@ -359,21 +359,21 @@ const EmployeeDocuments = () => {
                         <td>{formatDate(doc.createdAt)}</td>
                         <td>
                           <button
-                            className="btn btn-sm btn-icon btn-outline-primary px-3 border-0 me-2"
+                            className="btn btn-sm btn-icon btn-outline-primary px-3 border-0"
                             onClick={() => handleView(doc)}
                             title="View"
                           >
                             <i className="bx bx-show"></i>
                           </button>
                           <button
-                            className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0 me-2"
+                            className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
                             onClick={() => handleEdit(doc)}
                             title="Edit"
                           >
                             <i className="bx bx-pencil"></i>
                           </button>
                           <button
-                            className="btn btn-outline-danger btn-sm border-0"
+                            className="btn btn-sm btn-icon btn-outline-danger px-3 border-0"
                             onClick={() => handleDelete(doc.idEmployeeDocument)}
                             title="Delete"
                           >
