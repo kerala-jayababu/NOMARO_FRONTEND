@@ -21,7 +21,7 @@ const Input = ({
         maxLength={maxLength}
         value={value}
         onChange={onChange}
-        style={{ width: "100%" }}
+        style={{ width: "100%", marginTop: "7px" }}
         readOnly={readOnly} // Ensures responsiveness
       />
       {error && <div className="text-danger">{error}</div>}

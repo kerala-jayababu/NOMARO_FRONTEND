@@ -18,6 +18,12 @@ import screenPermission from "./screenPermission";
 import salaryGeneration from "./salaryGeneration"
 import configApproval from "./ConfigApprovals"
 import reports from "./reports";
+import leaveType from "./leaveType";
+import leaveTemplate from "./leaveTemplate";
+import employeeLeaveConfig from "./employeeLeaveConfig";
+import leaveApproval from "./leaveApproval";
+import offboardingSetup from "./offboardingSetup";
+import offboardingCases from "./offboardingCases";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -39,6 +45,12 @@ const rootReducer = combineReducers({
   salaryGeneration: salaryGeneration,
   configApproval: configApproval,
   reports: reports,
+  leaveType: leaveType,
+  leaveTemplate: leaveTemplate,
+  employeeLeaveConfig: employeeLeaveConfig,
+  leaveApproval: leaveApproval,
+  offboardingSetup: offboardingSetup,
+  offboardingCases: offboardingCases,
 });
 
 export default rootReducer;
