@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 
 
 
-const Dropdown = ({ label, options, name, value, onChange, style }) => {
+const Dropdown = ({ label, options, name, value, onChange, style, disabled }) => {
   const handleChange = (event) => {
     onChange(event); // Use the parent component's handler to update formData
   };
@@ -19,6 +19,7 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
           name={name}
           value={value}
           onChange={handleChange}
+          disabled={disabled}
           style={{
             marginTop: "7px",
             appearance: "none",
@@ -30,9 +31,11 @@ const Dropdown = ({ label, options, name, value, onChange, style }) => {
             border: "1px solid #ccc",
             borderRadius: "4px",
             background:
-              "white url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='gray'><path d='M7 10l5 5 5-5z'/></svg>\") no-repeat right 10px center",
+              disabled
+                ? "#e9ecef url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='gray'><path d='M7 10l5 5 5-5z'/></svg>\") no-repeat right 10px center"
+                : "white url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='gray'><path d='M7 10l5 5 5-5z'/></svg>\") no-repeat right 10px center",
             backgroundSize: "16px",
-            cursor: "pointer",
+            cursor: disabled ? "not-allowed" : "pointer",
           }}
         >
           <option value="" disabled>
@@ -62,6 +65,7 @@ Dropdown.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   style: PropTypes.object,
+  disabled: PropTypes.bool,
 };
 
 export default Dropdown;

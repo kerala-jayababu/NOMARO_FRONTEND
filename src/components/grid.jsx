@@ -50,9 +50,9 @@ const Grid = ({
                           {row[column.key]}
                         </span>
                       )
-                    ) : column.key === "actions" ? (
+                    ) : column.key === "actions" && onEditClick ? (
                       <div className="text-end">
-                        { employees?.find((emp) => emp.idEmployee === row[idKey])?.attachmentBlobForchildcount && 
+                        { employees?.find((emp) => emp.idEmployee === row[idKey])?.attachmentBlobForchildcount &&
                         <button class="btn btn-outline-primary border-0 btn-sm" fdprocessedid="wr0ef8" onClick={() => onDownloadClick(row[idKey])}>
                           <i class="bx bx-paperclip cursor"></i>
                         </button>
@@ -71,7 +71,7 @@ const Grid = ({
                         </button>
                       </div>
                     ) : column.render ? (
-                      column.render(row[column.key])
+                      column.render(row[column.key], row)
                     ) : (
                       row[column.key]
                     )}
@@ -100,11 +100,11 @@ Grid.propTypes = {
     })
   ).isRequired,
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onEditClick: PropTypes.func.isRequired,
-  onEmpCodeClick: PropTypes.func.isRequired,
+  onEditClick: PropTypes.func,
+  onEmpCodeClick: PropTypes.func,
   idKey: PropTypes.string.isRequired,
-  modalId: PropTypes.string.isRequired,
-  popUpId: PropTypes.string.isRequired,
+  modalId: PropTypes.string,
+  popUpId: PropTypes.string,
 };
 
 export default Grid;
