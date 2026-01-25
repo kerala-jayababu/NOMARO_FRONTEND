@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 
 const Qualifications = () => {
-  const { employeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [qualifications, setQualifications] = useState([]);
@@ -17,6 +17,7 @@ const Qualifications = () => {
   const [editingId, setEditingId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedQualId, setSelectedQualId] = useState(null);
+  const [initialFormData, setInitialFormData] = useState(null);
   
   const qualificationTypesLoadedRef = useRef(false);
   const countriesLoadedRef = useRef(false);
@@ -58,6 +59,22 @@ const Qualifications = () => {
     if (qualificationsLoadedRef.current !== id) {
       qualificationsLoadedRef.current = id;
       loadQualifications();
+      // Reset form when employee changes
+      const resetData = {
+        qualificationType: "",
+        qualificationName: "",
+        specialization: "",
+        institutionName: "",
+        idCountry: "",
+        yearOfCompletion: "",
+        gradeOrPercentage: "",
+        certificate: null,
+      };
+      setFormData(resetData);
+      setInitialFormData(resetData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     }
     
     return () => {
@@ -126,19 +143,47 @@ const Qualifications = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialFormData) {
+        const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newData;
+    });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        certificate: file,
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          certificate: file,
+        };
+        
+        // Check for unsaved changes
+        if (setHasUnsavedChanges && initialFormData) {
+          const hasChanges = JSON.stringify({
+            ...newData,
+            certificate: file ? 'changed' : null
+          }) !== JSON.stringify({
+            ...initialFormData,
+            certificate: initialFormData.certificate ? 'original' : null
+          });
+          setHasUnsavedChanges(hasChanges);
+        } else if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(true);
+        }
+        
+        return newData;
+      });
     }
   };
 
@@ -206,6 +251,9 @@ const Qualifications = () => {
         toast.error(result.error);
       } else {
         toast.success(editingId ? "Qualification updated successfully" : "Qualification added successfully");
+        if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(false);
+        }
         handleReset();
         loadQualifications();
         // Scroll to top
@@ -234,7 +282,7 @@ const Qualifications = () => {
       qualificationTypeValue = foundType?.idQualificationType?.toString() || qual.qualificationType;
     }
     
-    setFormData({
+    const editData = {
       qualificationType: qualificationTypeValue,
       qualificationName: qual.qualificationName || "",
       specialization: qual.specialization || "",
@@ -243,7 +291,12 @@ const Qualifications = () => {
       yearOfCompletion: qual.yearOfCompletion?.toString() || "",
       gradeOrPercentage: qual.gradeOrPercentage || "",
       certificate: null,
-    });
+    };
+    setFormData(editData);
+    setInitialFormData(editData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   const handleDelete = async (qualId) => {
@@ -277,7 +330,7 @@ const Qualifications = () => {
 
   const handleReset = () => {
     setEditingId(null);
-    setFormData({
+    const resetData = {
       qualificationType: "",
       qualificationName: "",
       specialization: "",
@@ -286,7 +339,12 @@ const Qualifications = () => {
       yearOfCompletion: "",
       gradeOrPercentage: "",
       certificate: null,
-    });
+    };
+    setFormData(resetData);
+    setInitialFormData(resetData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

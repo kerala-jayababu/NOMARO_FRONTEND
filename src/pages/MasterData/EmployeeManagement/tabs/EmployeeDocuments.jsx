@@ -10,7 +10,7 @@ import { useLoader } from "../../../../components/LoaderContext";
 import moment from "moment";
 
 const EmployeeDocuments = () => {
-  const { employeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [documents, setDocuments] = useState([]);
@@ -19,10 +19,12 @@ const EmployeeDocuments = () => {
   const [editingId, setEditingId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
+  const [initialFormData, setInitialFormData] = useState(null);
   
   const documentTypesLoadedRef = useRef(false);
   const documentsLoadedRef = useRef(null);
   const fileInputRef = useRef(null);
+  const topRef = useRef(null);
 
   const [formData, setFormData] = useState({
     idDocumentType: "",
@@ -51,6 +53,18 @@ const EmployeeDocuments = () => {
     if (documentsLoadedRef.current !== id) {
       documentsLoadedRef.current = id;
       loadDocuments();
+      // Reset form when employee changes
+      const resetData = {
+        idDocumentType: "",
+        remarks: "",
+        document: null,
+        dateValidTill: null,
+      };
+      setFormData(resetData);
+      setInitialFormData(resetData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     }
     
     return () => {
@@ -98,19 +112,55 @@ const EmployeeDocuments = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialFormData) {
+        const currentForComparison = {
+          ...newData,
+          dateValidTill: newData.dateValidTill ? moment(newData.dateValidTill).format("YYYY-MM-DD") : null,
+        };
+        const initialForComparison = {
+          ...initialFormData,
+          dateValidTill: initialFormData.dateValidTill ? moment(initialFormData.dateValidTill).format("YYYY-MM-DD") : null,
+        };
+        const hasChanges = JSON.stringify(currentForComparison) !== JSON.stringify(initialForComparison);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newData;
+    });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        document: file,
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          document: file,
+        };
+        
+        // Check for unsaved changes
+        if (setHasUnsavedChanges && initialFormData) {
+          const hasChanges = JSON.stringify({
+            ...newData,
+            document: file ? 'changed' : null
+          }) !== JSON.stringify({
+            ...initialFormData,
+            document: initialFormData.document ? 'original' : null
+          });
+          setHasUnsavedChanges(hasChanges);
+        } else if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(true);
+        }
+        
+        return newData;
+      });
       setCurrentDocumentName("");
     }
   };
@@ -150,8 +200,15 @@ const EmployeeDocuments = () => {
         toast.error(result.error);
       } else {
         toast.success(editingId ? "Document updated successfully" : "Document uploaded successfully");
+        if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(false);
+        }
         handleReset();
         loadDocuments();
+        // Scroll to top
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     } catch (error) {
       setLoading(false);
@@ -207,12 +264,17 @@ const EmployeeDocuments = () => {
         fileObject = base64ToFile(base64Data, fileName, mimeType);
       }
       
-      setFormData({
+      const editData = {
         idDocumentType: doc.idDocumentType?.toString() || "",
         remarks: doc.remarks || "",
         document: fileObject,
         dateValidTill: doc.dateValidTill ? moment(doc.dateValidTill).toDate() : null,
-      });
+      };
+      setFormData(editData);
+      setInitialFormData(editData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
       
       setCurrentDocumentName(fileName || "");
       
@@ -244,6 +306,10 @@ const EmployeeDocuments = () => {
       } else {
         toast.success("Document deleted successfully");
         loadDocuments();
+        // Scroll to top after deletion
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
       setShowConfirmModal(false);
       setSelectedDocId(null);
@@ -314,12 +380,17 @@ const EmployeeDocuments = () => {
   const handleReset = () => {
     setEditingId(null);
     setCurrentDocumentName("");
-    setFormData({
+    const resetData = {
       idDocumentType: "",
       remarks: "",
       document: null,
       dateValidTill: null,
-    });
+    };
+    setFormData(resetData);
+    setInitialFormData(resetData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -331,7 +402,7 @@ const EmployeeDocuments = () => {
   };
 
   return (
-    <div className="row">
+    <div className="row" ref={topRef}>
       <div className="col-lg-8">
         <div>
           <div>

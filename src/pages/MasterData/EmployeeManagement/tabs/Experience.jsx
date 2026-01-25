@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import { Modal } from "react-bootstrap";
+import { NumericFormat } from "react-number-format";
 import { EmployeeContext } from "../EmployeeManagement";
 import EmployeeManagementService from "../../../../core/services/EmployeeManagementService";
 import secureLocalStorage from "react-secure-storage";
@@ -10,7 +11,7 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 
 const Experience = () => {
-  const { employeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [experiences, setExperiences] = useState([]);
@@ -19,6 +20,7 @@ const Experience = () => {
   const [editingId, setEditingId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedExpId, setSelectedExpId] = useState(null);
+  const [initialFormData, setInitialFormData] = useState(null);
   
   const countriesLoadedRef = useRef(false);
   const experiencesLoadedRef = useRef(null);
@@ -60,6 +62,25 @@ const Experience = () => {
     if (experiencesLoadedRef.current !== id) {
       experiencesLoadedRef.current = id;
       loadExperiences();
+      // Reset form when employee changes
+      const resetData = {
+        companyName: "",
+        designation: "",
+        companyAddress: "",
+        idCountry: "",
+        department: "",
+        employmentType: "FullTime",
+        fromDate: null,
+        toDate: null,
+        lastDrawnSalary: "",
+        reasonForLeaving: "",
+        experienceCertificate: null,
+      };
+      setFormData(resetData);
+      setInitialFormData(resetData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     }
     
     return () => {
@@ -107,19 +128,57 @@ const Experience = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialFormData) {
+        const currentForComparison = {
+          ...newData,
+          fromDate: newData.fromDate ? moment(newData.fromDate).format("YYYY-MM-DD") : null,
+          toDate: newData.toDate ? moment(newData.toDate).format("YYYY-MM-DD") : null,
+        };
+        const initialForComparison = {
+          ...initialFormData,
+          fromDate: initialFormData.fromDate ? moment(initialFormData.fromDate).format("YYYY-MM-DD") : null,
+          toDate: initialFormData.toDate ? moment(initialFormData.toDate).format("YYYY-MM-DD") : null,
+        };
+        const hasChanges = JSON.stringify(currentForComparison) !== JSON.stringify(initialForComparison);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newData;
+    });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        experienceCertificate: file,
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          experienceCertificate: file,
+        };
+        
+        // Check for unsaved changes
+        if (setHasUnsavedChanges && initialFormData) {
+          const hasChanges = JSON.stringify({
+            ...newData,
+            experienceCertificate: file ? 'changed' : null
+          }) !== JSON.stringify({
+            ...initialFormData,
+            experienceCertificate: initialFormData.experienceCertificate ? 'original' : null
+          });
+          setHasUnsavedChanges(hasChanges);
+        } else if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(true);
+        }
+        
+        return newData;
+      });
     }
   };
 
@@ -163,6 +222,9 @@ const Experience = () => {
         toast.error(result.error);
       } else {
         toast.success(editingId ? "Experience updated successfully" : "Experience added successfully");
+        if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(false);
+        }
         handleReset();
         loadExperiences();
         // Scroll to top
@@ -178,7 +240,7 @@ const Experience = () => {
 
   const handleEdit = (exp) => {
     setEditingId(exp.idEmployeeExperience);
-    setFormData({
+    const editData = {
       companyName: exp.companyName || "",
       designation: exp.designation || "",
       companyAddress: exp.companyAddress || "",
@@ -190,7 +252,12 @@ const Experience = () => {
       lastDrawnSalary: exp.lastDrawnSalary?.toString() || "",
       reasonForLeaving: exp.reasonForLeaving || "",
       experienceCertificate: null,
-    });
+    };
+    setFormData(editData);
+    setInitialFormData(editData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   const handleDelete = async (expId) => {
@@ -224,7 +291,7 @@ const Experience = () => {
 
   const handleReset = () => {
     setEditingId(null);
-    setFormData({
+    const resetData = {
       companyName: "",
       designation: "",
       companyAddress: "",
@@ -236,7 +303,12 @@ const Experience = () => {
       lastDrawnSalary: "",
       reasonForLeaving: "",
       experienceCertificate: null,
-    });
+    };
+    setFormData(resetData);
+    setInitialFormData(resetData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -415,11 +487,18 @@ const Experience = () => {
 
             <div className="mb-3">
               <label className="form-label mb-1">Last Drawn Salary (G$)</label>
-              <input
-                type="text"
+              <NumericFormat
                 className="form-control"
                 value={formData.lastDrawnSalary}
-                onChange={(e) => handleInputChange("lastDrawnSalary", e.target.value)}
+                onValueChange={(values) => {
+                  const { value } = values;
+                  handleInputChange("lastDrawnSalary", value);
+                }}
+                decimalScale={2}
+                allowNegative={false}
+                thousandSeparator={true}
+                allowLeadingZeros={false}
+                placeholder="0.00"
               />
             </div>
 

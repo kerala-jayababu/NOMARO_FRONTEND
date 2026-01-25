@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 
 const Assets = () => {
-  const { employeeId } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [assets, setAssets] = useState([]);
@@ -25,6 +25,7 @@ const Assets = () => {
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [hoveredAssetId, setHoveredAssetId] = useState(null);
   const [returnReason, setReturnReason] = useState("");
+  const [initialFormData, setInitialFormData] = useState(null);
   
   const assetTypesLoadedRef = useRef(false);
   const availableAssetsLoadedRef = useRef(false);
@@ -68,6 +69,23 @@ const Assets = () => {
     if (employeeAssetsLoadedRef.current !== id) {
       employeeAssetsLoadedRef.current = id;
       loadEmployeeAssets();
+      // Reset form when employee changes
+      const resetData = {
+        idAsset: "",
+        idAssetType: "",
+        assetSerialNumber: "",
+        assetDetails: "",
+        averageCost: "",
+        assetWorkingStatus: "Working",
+        assignedFrom: null,
+        assignedTill: null,
+        remarks: "",
+      };
+      setFormData(resetData);
+      setInitialFormData(resetData);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     }
     
     return () => {
@@ -130,10 +148,30 @@ const Assets = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialFormData) {
+        const currentForComparison = {
+          ...newData,
+          assignedFrom: newData.assignedFrom ? moment(newData.assignedFrom).format("YYYY-MM-DD") : null,
+          assignedTill: newData.assignedTill ? moment(newData.assignedTill).format("YYYY-MM-DD") : null,
+        };
+        const initialForComparison = {
+          ...initialFormData,
+          assignedFrom: initialFormData.assignedFrom ? moment(initialFormData.assignedFrom).format("YYYY-MM-DD") : null,
+          assignedTill: initialFormData.assignedTill ? moment(initialFormData.assignedTill).format("YYYY-MM-DD") : null,
+        };
+        const hasChanges = JSON.stringify(currentForComparison) !== JSON.stringify(initialForComparison);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newData;
+    });
   };
 
   const handleAssetSelect = (assetId) => {
@@ -145,15 +183,27 @@ const Assets = () => {
     const selectedAsset = availableAssets.find((asset) => asset.idAsset === parseInt(assetId));
     
     if (selectedAsset) {
-      setFormData((prev) => ({
-        ...prev,
-        idAsset: assetId,
-        idAssetType: selectedAsset.idAssetType?.toString() || "",
-        assetSerialNumber: selectedAsset.assetSerialNumber || "",
-        assetDetails: selectedAsset.assetDetails || "",
-        averageCost: selectedAsset.averageCost?.toString() || "",
-        assetWorkingStatus: selectedAsset.assetWorkingStatus || "Working",
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          idAsset: assetId,
+          idAssetType: selectedAsset.idAssetType?.toString() || "",
+          assetSerialNumber: selectedAsset.assetSerialNumber || "",
+          assetDetails: selectedAsset.assetDetails || "",
+          averageCost: selectedAsset.averageCost?.toString() || "",
+          assetWorkingStatus: selectedAsset.assetWorkingStatus || "Working",
+        };
+        
+        // Check for unsaved changes
+        if (setHasUnsavedChanges && initialFormData) {
+          const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+          setHasUnsavedChanges(hasChanges);
+        } else if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(true);
+        }
+        
+        return newData;
+      });
       setShowAssetModal(false);
     }
   };
@@ -188,6 +238,9 @@ const Assets = () => {
         toast.error(result.error);
       } else {
         toast.success("Asset assigned successfully");
+        if (setHasUnsavedChanges) {
+          setHasUnsavedChanges(false);
+        }
         handleReset();
         loadEmployeeAssets();
         loadAvailableAssets();
@@ -206,7 +259,7 @@ const Assets = () => {
     setEditingId(asset.idAsset);
     setEditingAssignmentId(asset.idAssetAssignment);
     
-    setFormData({
+    const editData = {
       idAsset: asset.idAsset?.toString() || "",
       idAssetType: asset.idAssetType?.toString() || "",
       assetSerialNumber: asset.assetSerialNumber || "",
@@ -216,7 +269,12 @@ const Assets = () => {
       assignedFrom: asset.assignedDate ? moment(asset.assignedDate).toDate() : null,
       assignedTill: asset.assignedTillDate ? moment(asset.assignedTillDate).toDate() : null,
       remarks: asset.remarks || "",
-    });
+    };
+    setFormData(editData);
+    setInitialFormData(editData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   const handleDelete = async (asset) => {
@@ -283,7 +341,7 @@ const Assets = () => {
   const handleReset = () => {
     setEditingId(null);
     setEditingAssignmentId(null);
-    setFormData({
+    const resetData = {
       idAsset: "",
       idAssetType: "",
       assetSerialNumber: "",
@@ -293,7 +351,12 @@ const Assets = () => {
       assignedFrom: null,
       assignedTill: null,
       remarks: "",
-    });
+    };
+    setFormData(resetData);
+    setInitialFormData(resetData);
+    if (setHasUnsavedChanges) {
+      setHasUnsavedChanges(false);
+    }
   };
 
   const formatDate = (dateString) => {

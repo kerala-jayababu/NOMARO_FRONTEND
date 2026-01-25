@@ -22,7 +22,7 @@ const BasicDetails = () => {
     lastName: "",
     gender: "",
     idNumber: "",
-    taxIdNumber: "",
+    tinNumber: "",
     socialSecurityNumber: "",
     idDepartment: "",
     idDesignation: "",
@@ -40,6 +40,7 @@ const BasicDetails = () => {
     joiningDate: null,
     reportingTo: "",
     currentStatus: "Working",
+    employeeWorkType: "",
     idBudgetCode: "",
     childrenCount: 0,
     overTimeAllowedStatus: false,
@@ -66,6 +67,13 @@ const BasicDetails = () => {
   const statusOptions = [
     { value: "Working", label: "Working" },
     { value: "NotWorking", label: "Not Working" },
+  ];
+
+  const workTypeOptions = [
+    { value: "Permanent", label: "Permanent" },
+    { value: "Contract", label: "Contract" },
+    { value: "Temporary", label: "Temporary" },
+    { value: "Part-time", label: "Part-time" },
   ];
 
   useEffect(() => {
@@ -199,7 +207,7 @@ const BasicDetails = () => {
         lastName: detailedData.lastName ?? "",
         gender: detailedData.gender ?? "",
         idNumber: detailedData.idNumber ?? "",
-        taxIdNumber: detailedData.taxIdNumber ?? "",
+        tinNumber: detailedData.tinNumber ?? detailedData.taxIdNumber ?? "",
         socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
         idDepartment: detailedData.idDepartment
           ? detailedData.idDepartment.toString()
@@ -223,6 +231,7 @@ const BasicDetails = () => {
           ? detailedData.reportingTo.toString()
           : "",
         currentStatus: detailedData.currentStatus ?? "Working",
+        employeeWorkType: detailedData.employeeWorkType ?? "",
         idBudgetCode: detailedData.idBudgetCode
           ? detailedData.idBudgetCode.toString()
           : "",
@@ -271,7 +280,7 @@ const BasicDetails = () => {
         lastName: detailedData.lastName ?? "",
         gender: detailedData.gender ?? "",
         idNumber: detailedData.idNumber ?? "",
-        taxIdNumber: detailedData.taxIdNumber ?? "",
+        tinNumber: detailedData.tinNumber ?? detailedData.taxIdNumber ?? "",
         socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
         idDepartment: detailedData.idDepartment ? detailedData.idDepartment.toString() : "",
         idDesignation: detailedData.idDesignation ? detailedData.idDesignation.toString() : "",
@@ -289,6 +298,7 @@ const BasicDetails = () => {
         joiningDate: detailedData.joiningDate ? moment(detailedData.joiningDate).format("YYYY-MM-DD") : null,
         reportingTo: detailedData.reportingTo ? detailedData.reportingTo.toString() : "",
         currentStatus: detailedData.currentStatus ?? "Working",
+        employeeWorkType: detailedData.employeeWorkType ?? "",
         idBudgetCode: detailedData.idBudgetCode ? detailedData.idBudgetCode.toString() : "",
         childrenCount: detailedData.childrenCount ?? 0,
         overTimeAllowedStatus: typeof detailedData.overTimeAllowedStatus !== "undefined" ? (detailedData.overTimeAllowedStatus === true || detailedData.overTimeAllowedStatus === "true") : false,
@@ -306,7 +316,7 @@ const BasicDetails = () => {
   };
 
   const phoneFields = ["phoneNumber1", "phoneNumber2"];
-  const numericFields = ["taxIdNumber"];
+  const numericFields = ["tinNumber"];
 
   const handleEmployeeInputChange = (field, value) => {
     let sanitizedValue = value;
@@ -326,7 +336,7 @@ const BasicDetails = () => {
     if (field === "zipCode") {
       sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 6);
     } else if (numericFields.includes(field)) {
-      if (field === "taxIdNumber") {
+      if (field === "tinNumber") {
         sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "");
       }
     }
@@ -535,7 +545,7 @@ const BasicDetails = () => {
             lastName: employeeFormData.lastName,
             gender: employeeFormData.gender,
             idNumber: employeeFormData.idNumber,
-            taxIdNumber: employeeFormData.taxIdNumber,
+            tinNumber: employeeFormData.tinNumber,
             socialSecurityNumber: employeeFormData.socialSecurityNumber,
             idDepartment: employeeFormData.idDepartment,
             idDesignation: employeeFormData.idDesignation,
@@ -553,6 +563,7 @@ const BasicDetails = () => {
             joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD") : null,
             reportingTo: employeeFormData.reportingTo,
             currentStatus: employeeFormData.currentStatus,
+            employeeWorkType: employeeFormData.employeeWorkType,
             idBudgetCode: employeeFormData.idBudgetCode,
             childrenCount: employeeFormData.childrenCount,
             overTimeAllowedStatus: employeeFormData.overTimeAllowedStatus,
@@ -591,7 +602,7 @@ const BasicDetails = () => {
       lastName: "",
       gender: "",
       idNumber: "",
-      taxIdNumber: "",
+      tinNumber: "",
       socialSecurityNumber: "",
       idDepartment: "",
       idDesignation: "",
@@ -607,8 +618,9 @@ const BasicDetails = () => {
       zipCode: "",
       dateOfBirth: null,
       joiningDate: null,
-      reportingTo: "",
+            reportingTo: "",
       currentStatus: "Working",
+      employeeWorkType: "",
       idBudgetCode: "",
       childrenCount: 0,
       overTimeAllowedStatus: false,
@@ -985,6 +997,27 @@ const BasicDetails = () => {
                 )}
               </div>
             )}
+            {employeeFormData.currentStatus !== "NotWorking" && (
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="employeeWorkType">
+                  Employee Work Type
+                </label>
+                <select
+                  id="employeeWorkType"
+                  className="form-select"
+                  name="employeeWorkType"
+                  value={employeeFormData.employeeWorkType}
+                  onChange={(e) => handleEmployeeInputChange("employeeWorkType", e.target.value)}
+                >
+                  <option value="">Select Work Type</option>
+                  {workTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="row mt-3">
@@ -1008,21 +1041,21 @@ const BasicDetails = () => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label mb-1" htmlFor="taxIdNumber">
-                Tax ID Number
+              <label className="form-label mb-1" htmlFor="tinNumber">
+                TIN Number
               </label>
               <input
-                id="taxIdNumber"
-                name="taxIdNumber"
+                id="tinNumber"
+                name="tinNumber"
                 type="text"
                 className="form-control"
-                value={employeeFormData.taxIdNumber}
-                onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
+                value={employeeFormData.tinNumber}
+                onChange={(e) => handleEmployeeInputChange("tinNumber", e.target.value)}
               />
             </div>
             <div className="col-md-4">
               <label className="form-label mb-1" htmlFor="idNumber">
-                ID Number
+                NIS number
               </label>
               <input
                 id="idNumber"
