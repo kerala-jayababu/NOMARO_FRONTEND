@@ -54,6 +54,13 @@ import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import EmployeeManagement from "./pages/MasterData/EmployeeManagement/EmployeeManagement";
+import LeaveTypes from "./pages/MasterData/leaveTypes";
+import LeaveTemplates from "./pages/MasterData/leaveTemplates";
+import EmployeeLeaveConfig from "./pages/MasterData/employeeLeaveConfig";
+import LeaveApproval from "./pages/MasterData/leaveApproval";
+import OffboardingSetup from "./pages/MasterData/offboardingSetup";
+import OffboardingCases from "./pages/MasterData/offboardingCases";
+import OffboardingClearances from "./pages/MasterData/offboardingClearances";
 import ServiceChange from "./pages/MasterData/serviceChange";
 import ServiceApproval from "./pages/MasterData/serviceApproval";
 
@@ -110,6 +117,13 @@ function App() {
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
               <Route path="banks" element={<Banks/>} />
+              <Route path="leave-types" element={<LeaveTypes/>} />
+              <Route path="leave-templates" element={<LeaveTemplates/>} />
+              <Route path="employee-leave-config" element={<EmployeeLeaveConfig/>} />
+              <Route path="leave-approval" element={<LeaveApproval/>} />
+              <Route path="offboarding-setup" element={<OffboardingSetup/>} />
+              <Route path="offboarding-cases" element={<OffboardingCases/>} />
+              <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

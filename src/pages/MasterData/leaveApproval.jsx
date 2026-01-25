@@ -1,0 +1,962 @@
+import { useState, useMemo, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Button from "../../components/button";
+import { toast } from "react-toastify";
+import {
+  fetchLeaveApplicationsForApproval,
+  approveLeaveApplication,
+  rejectLeaveApplication,
+  bulkApproveLeaveApplications,
+  fetchLeaveDashboardEmployee,
+} from "../../redux/reducers/leaveApproval";
+
+const LeaveApproval = () => {
+  const dispatch = useDispatch();
+  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading } = useSelector(
+    (state) => state.leaveApproval
+  );
+
+  // Mock data for leave applications (fallback)
+  const mockLeaveData = [
+    {
+      idLeaveApplication: 1,
+      employeeCode: "E0001",
+      employeeName: "Sriram Vasudevan",
+      designation: "Senior Developer",
+      department: "IT Department",
+      leaveType: "Casual Leave",
+      fromDate: "2026-01-15",
+      toDate: "2026-01-17",
+      totalDays: 3,
+      isHalfDay: false,
+      status: "PENDING",
+      reason: "Family function to attend in hometown",
+      totalLeaves: 12,
+      usedLeaves: 5,
+      pendingLeaves: 2,
+      balanceLeaves: 5,
+      documents: [
+        {
+          documentType: "Medical Certificate",
+          fileName: "medical_cert.pdf",
+          uploadedDate: "2026-01-10",
+        },
+        {
+          documentType: "Travel Ticket",
+          fileName: "ticket_booking.pdf",
+          uploadedDate: "2026-01-10",
+        },
+      ],
+    },
+    {
+      idLeaveApplication: 2,
+      employeeCode: "E0002",
+      employeeName: "Priya Sharma",
+      designation: "HR Manager",
+      department: "Human Resources",
+      leaveType: "Sick Leave",
+      fromDate: "2026-01-20",
+      toDate: "2026-01-22",
+      totalDays: 3,
+      isHalfDay: false,
+      status: "SUBMITTED",
+      reason: "Medical treatment required",
+      totalLeaves: 10,
+      usedLeaves: 3,
+      pendingLeaves: 1,
+      balanceLeaves: 6,
+      documents: [
+        {
+          documentType: "Medical Certificate",
+          fileName: "prescription.pdf",
+          uploadedDate: "2026-01-12",
+        },
+      ],
+    },
+    {
+      idLeaveApplication: 3,
+      employeeCode: "E0003",
+      employeeName: "Rajesh Kumar",
+      designation: "Team Lead",
+      department: "Operations",
+      leaveType: "Annual Leave",
+      fromDate: "2026-02-01",
+      toDate: "2026-02-05",
+      totalDays: 5,
+      isHalfDay: false,
+      status: "PENDING",
+      reason: "Planning vacation with family",
+      totalLeaves: 20,
+      usedLeaves: 8,
+      pendingLeaves: 3,
+      balanceLeaves: 9,
+      documents: [],
+    },
+    {
+      idLeaveApplication: 4,
+      employeeCode: "E0004",
+      employeeName: "Anita Desai",
+      designation: "Finance Executive",
+      department: "Finance",
+      leaveType: "Casual Leave",
+      fromDate: "2026-01-25",
+      toDate: "2026-01-25",
+      totalDays: 0.5,
+      isHalfDay: true,
+      status: "APPROVED",
+      reason: "Personal work",
+      totalLeaves: 12,
+      usedLeaves: 6,
+      pendingLeaves: 0,
+      balanceLeaves: 6,
+      documents: [],
+    },
+  ];
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [remarks, setRemarks] = useState({});
+  const [bulkRemarks, setBulkRemarks] = useState("");
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Fetch leave applications on component mount and when filters change
+  useEffect(() => {
+    const approvalStatus = statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter;
+    dispatch(
+      fetchLeaveApplicationsForApproval({
+        approvalStatus,
+        searchText: searchQuery,
+        fromDate: "",
+        toDate: "",
+      })
+    );
+  }, [dispatch, statusFilter, searchQuery]);
+
+  // Status options
+  const statusOptions = [
+    { value: "ALL", label: "All Status" },
+    { value: "PENDING", label: "Pending" },
+    { value: "SUBMITTED", label: "Submitted" },
+    { value: "APPROVED", label: "Approved" },
+    { value: "REJECTED", label: "Rejected" },
+  ];
+
+  // Get applications data from API response
+  const applicationsData = useMemo(() => {
+    if (!leaveApplications || !leaveApplications.data) {
+      return [];
+    }
+    return leaveApplications.data.map((app) => ({
+      idLeaveApplication: app.idLeaveApplication,
+      idEmployee: app.idEmployee,
+      idLeaveType: app.idLeaveType,
+      employeeCode: app.employeeCode || app.idEmployee || "",
+      employeeName: app.employeeName || "",
+      designation: app.designationName || "",
+      department: app.departmentName || "",
+      leaveType: app.leaveTypeName || "",
+      fromDate: app.fromDate,
+      toDate: app.toDate,
+      totalDays: app.totalLeaveDays || 0,
+      isHalfDay: (app.totalLeaveDays || 0) < 1,
+      status: app.approvalStatus || "PENDING",
+      applicationStatus: app.applicationStatus || "",
+      reason: app.reason || "",
+      appliedOn: app.appliedOn || "",
+      // These fields are not in the API response, using defaults
+      totalLeaves: app.totalLeaves || 0,
+      usedLeaves: app.usedLeaves || 0,
+      pendingLeaves: app.pendingLeaves || 0,
+      balanceLeaves: app.balanceLeaves || 0,
+      documents: app.documents || [],
+    }));
+  }, [leaveApplications]);
+
+  // Filter leave applications based on search (status filter is already applied in API call)
+  const filteredApplications = useMemo(() => {
+    return applicationsData;
+  }, [applicationsData]);
+
+  // Handle select all checkbox
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const selectableIds = filteredApplications
+        .filter(
+          (app) => app.status !== "APPROVED" && app.status !== "REJECTED"
+        )
+        .map((app) => app.idLeaveApplication);
+      setSelectedItems(selectableIds);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  // Handle individual checkbox
+  const handleCheckbox = (id, checked) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, id]);
+    } else {
+      setSelectedItems((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  // Handle approve selected
+  const handleApproveSelected = async () => {
+    try {
+      const resultAction = await dispatch(
+        bulkApproveLeaveApplications({
+          idLeaveApplications: selectedItems,
+          remarks: bulkRemarks,
+        })
+      );
+
+      if (bulkApproveLeaveApplications.fulfilled.match(resultAction)) {
+        if (resultAction.payload && resultAction.payload.success) {
+          toast.success(
+            `${selectedItems.length} application(s) approved successfully!`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+          setSelectedItems([]);
+          setBulkRemarks("");
+          // Refresh the list
+          dispatch(
+            fetchLeaveApplicationsForApproval({
+              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              searchText: searchQuery,
+              fromDate: "",
+              toDate: "",
+            })
+          );
+        } else {
+          toast.error(
+            resultAction.payload?.message || "Failed to approve applications",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error approving applications:", error);
+      toast.error("Failed to approve applications", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  // Handle single approve
+  const handleApprove = async (id) => {
+    try {
+      const app = applicationsData.find((a) => a.idLeaveApplication === id);
+      const resultAction = await dispatch(
+        approveLeaveApplication({
+          idLeaveApplication: id,
+          remarks: remarks[id] || "",
+        })
+      );
+
+      if (approveLeaveApplication.fulfilled.match(resultAction)) {
+        if (resultAction.payload && resultAction.payload.success) {
+          toast.success(
+            `Leave application for ${app?.employeeName} approved successfully!`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+          // Refresh the list
+          dispatch(
+            fetchLeaveApplicationsForApproval({
+              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              searchText: searchQuery,
+              fromDate: "",
+              toDate: "",
+            })
+          );
+        } else {
+          toast.error(
+            resultAction.payload?.message || "Failed to approve application",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error approving application:", error);
+      toast.error("Failed to approve application", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  // Handle reject with validation
+  const handleReject = async (id) => {
+    const remark = remarks[id] || "";
+    if (!remark.trim()) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [id]: "Remarks are mandatory for rejection",
+      }));
+      toast.error("Please enter remarks before rejecting", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    try {
+      const app = applicationsData.find((a) => a.idLeaveApplication === id);
+      const resultAction = await dispatch(
+        rejectLeaveApplication({
+          idLeaveApplication: id,
+          remarks: remark,
+        })
+      );
+
+      if (rejectLeaveApplication.fulfilled.match(resultAction)) {
+        if (resultAction.payload && resultAction.payload.success) {
+          toast.error(`Leave application for ${app?.employeeName} rejected`, {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          setRemarks((prev) => ({ ...prev, [id]: "" }));
+          setValidationErrors((prev) => ({ ...prev, [id]: "" }));
+          // Refresh the list
+          dispatch(
+            fetchLeaveApplicationsForApproval({
+              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              searchText: searchQuery,
+              fromDate: "",
+              toDate: "",
+            })
+          );
+        } else {
+          toast.error(
+            resultAction.payload?.message || "Failed to reject application",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error rejecting application:", error);
+      toast.error("Failed to reject application", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  // Handle remarks change
+  const handleRemarksChange = (id, value) => {
+    setRemarks((prev) => ({ ...prev, [id]: value }));
+    if (validationErrors[id]) {
+      setValidationErrors((prev) => ({ ...prev, [id]: "" }));
+    }
+  };
+
+  // Get badge class based on status
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "APPROVED":
+        return "bg-label-success";
+      case "REJECTED":
+        return "bg-label-danger";
+      case "SUBMITTED":
+        return "bg-label-info";
+      case "PENDING":
+        return "bg-label-warning";
+      default:
+        return "bg-label-secondary";
+    }
+  };
+
+  // Open view modal
+  const openViewModal = (app) => {
+    setSelectedApplication(app);
+    setShowViewModal(true);
+    // Fetch leave dashboard for the employee
+    if (app.idEmployee) {
+      const currentYear = new Date().getFullYear();
+      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentYear }));
+    }
+  };
+
+  // Open documents modal
+  const openDocumentsModal = (app) => {
+    setSelectedApplication(app);
+    setShowDocumentsModal(true);
+  };
+
+  // Close modals
+  const closeModals = () => {
+    setShowViewModal(false);
+    setShowDocumentsModal(false);
+    setSelectedApplication(null);
+  };
+
+  // Handle approve from modal
+  const handleApproveFromModal = () => {
+    if (selectedApplication) {
+      handleApprove(selectedApplication.idLeaveApplication);
+      closeModals();
+    }
+  };
+
+  // Handle reject from modal
+  const handleRejectFromModal = () => {
+    if (selectedApplication) {
+      const remark = remarks[selectedApplication.idLeaveApplication] || "";
+      if (!remark.trim()) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          [selectedApplication.idLeaveApplication]:
+            "Remarks are mandatory for rejection",
+        }));
+        toast.error("Please enter remarks before rejecting", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      }
+      handleReject(selectedApplication.idLeaveApplication);
+      closeModals();
+    }
+  };
+
+  return (
+    <div className="container-xxl flex-grow-1 container-p-y">
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header d-flex align-items-center justify-content-between pb-3">
+              <h5 className="m-0">Leave Approvals</h5>
+            </div>
+            <div className="card-body">
+              {/* Header Controls */}
+              <div className="row mb-3 align-items-end">
+                <div className="col-md-4">
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="selectAll"
+                      checked={
+                        selectedItems.length > 0 &&
+                        selectedItems.length ===
+                          filteredApplications.filter(
+                            (app) =>
+                              app.status !== "APPROVED" &&
+                              app.status !== "REJECTED"
+                          ).length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                    <label className="form-check-label" htmlFor="selectAll">
+                      Select All
+                    </label>
+                  </div>
+                  {selectedItems.length > 0 && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm mb-2"
+                        placeholder="Bulk remarks (optional)"
+                        value={bulkRemarks}
+                        onChange={(e) => setBulkRemarks(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <Button
+                    className="btn btn-primary btn-sm mt-2"
+                    onClick={handleApproveSelected}
+                    disabled={selectedItems.length === 0}
+                  >
+                    Approve Selected ({selectedItems.length})
+                  </Button>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label mb-1">Status</label>
+                  <select
+                    className="form-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    {statusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label mb-1">Search</label>
+                  <div className="list_searchbox">
+                    <input
+                      type="search"
+                      className="form-control"
+                      placeholder="Search by Emp. Code / Name"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <i className="bx bx-search"></i>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leave Approval Cards */}
+              <div className="row">
+                {loading ? (
+                  <div className="col-12 text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="col-12 text-center py-4 text-danger">
+                    {error}
+                  </div>
+                ) : filteredApplications.length === 0 ? (
+                  <div className="col-12 text-center py-4 text-muted">
+                    No leave applications found
+                  </div>
+                ) : (
+                  filteredApplications.map((app) => (
+                    <div
+                      key={app.idLeaveApplication}
+                      className="col-lg-4 col-md-6 mb-3"
+                    >
+                      <div className="card border h-100">
+                        <div className="card-body d-flex flex-column">
+                          {/* Top Section - Checkbox, Employee Info & Icons */}
+                          <div className="d-flex justify-content-between align-items-start mb-3">
+                            <div className="d-flex align-items-start flex-grow-1">
+                              <input
+                                type="checkbox"
+                                className="form-check-input me-3 mt-1"
+                                checked={selectedItems.includes(
+                                  app.idLeaveApplication
+                                )}
+                                onChange={(e) =>
+                                  handleCheckbox(
+                                    app.idLeaveApplication,
+                                    e.target.checked
+                                  )
+                                }
+                                disabled={
+                                  app.status === "APPROVED" ||
+                                  app.status === "REJECTED"
+                                }
+                              />
+                              <div>
+                                <h6 className="mb-0 fw-bold">
+                                  {app.employeeCode} {app.employeeName}
+                                </h6>
+                                <p className="text-muted mb-0 small">
+                                  {app.designation}, {app.department}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="d-flex">
+                              <button
+                                className="btn btn-sm btn-link p-1 text-dark"
+                                onClick={() => openViewModal(app)}
+                                title="View Details"
+                              >
+                                <i className="bx bx-show fs-5"></i>
+                              </button>
+                              {app.documents.length > 0 && (
+                                <button
+                                  className="btn btn-sm btn-link p-1 text-dark"
+                                  onClick={() => openDocumentsModal(app)}
+                                  title="View Documents"
+                                >
+                                  <i className="bx bx-paperclip fs-5"></i>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Leave Details - Two Column Layout */}
+                          <div className="mb-3">
+                            <div className="d-flex justify-content-between mb-2">
+                              <small className="text-muted">Leave Type</small>
+                              <span className="fw-medium">{app.leaveType}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                              <small className="text-muted">Period</small>
+                              <span className="fw-medium text-end">
+                                {new Date(app.fromDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} to{" "}
+                                {new Date(app.toDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                              </span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                              <small className="text-muted">Total Days</small>
+                              <span className="fw-medium">{app.totalDays}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                              <small className="text-muted">Status</small>
+                              <span
+                                className={`badge ${getStatusBadgeClass(
+                                  app.status
+                                )}`}
+                              >
+                                {app.status}
+                              </span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                              <small className="text-muted">Reason</small>
+                              <span className="fw-medium text-end" style={{ maxWidth: "60%" }}>
+                                {app.reason}
+                              </span>
+                            </div>
+                          </div>
+
+                          
+
+                          {/* Remarks Field */}
+                          <div className="mb-3 mt-auto">
+                            <label className="form-label mb-1 small fw-medium">
+                              Remarks (Required for rejection)
+                            </label>
+                            <textarea
+                              className="form-control form-control-sm"
+                              rows="2"
+                              placeholder=""
+                              value={remarks[app.idLeaveApplication] || ""}
+                              onChange={(e) =>
+                                handleRemarksChange(
+                                  app.idLeaveApplication,
+                                  e.target.value
+                                )
+                              }
+                              disabled={
+                                app.status === "APPROVED" ||
+                                app.status === "REJECTED"
+                              }
+                            ></textarea>
+                            {validationErrors[app.idLeaveApplication] && (
+                              <div className="text-danger small mt-1">
+                                {validationErrors[app.idLeaveApplication]}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          {app.status !== "APPROVED" &&
+                            app.status !== "REJECTED" && (
+                              <div className="d-flex gap-2">
+                                <Button
+                                  className="btn btn-primary btn-sm flex-fill px-3 py-2"
+                                  onClick={() =>
+                                    handleApprove(app.idLeaveApplication)
+                                  }
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  className="btn btn-danger btn-sm flex-fill px-3 py-2"
+                                  onClick={() =>
+                                    handleReject(app.idLeaveApplication)
+                                  }
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Leave Application - View Modal */}
+      {showViewModal && selectedApplication && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={closeModals}
+        >
+          <div
+            className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Leave Application - View</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeModals}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {/* Employee Details */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Employee Details
+                  </h6>
+                  <div className="row">
+                    <div className="col-md-6 mb-2">
+                      <strong>Employee ID :</strong>{" "}
+                      {selectedApplication.employeeCode}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Employee Name :</strong>{" "}
+                      {selectedApplication.employeeName}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Department :</strong>{" "}
+                      {selectedApplication.department}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Designation :</strong>{" "}
+                      {selectedApplication.designation}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Leave Type :</strong>{" "}
+                      {selectedApplication.leaveType}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Status :</strong>{" "}
+                      <span
+                        className={`badge ${getStatusBadgeClass(
+                          selectedApplication.status
+                        )}`}
+                      >
+                        {selectedApplication.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Leave Summary */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Leave Summary
+                  </h6>
+                  {leaveDashboardLoading ? (
+                    <div className="text-center py-3">
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : leaveDashboard && leaveDashboard.length > 0 ? (
+                    <div className="table-responsive">
+                      <table className="table table-sm table-bordered">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Leave Type</th>
+                            <th className="text-center">Allocated</th>
+                            <th className="text-center">Taken</th>
+                            <th className="text-center">Approved</th>
+                            <th className="text-center">Rejected</th>
+                            <th className="text-center">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leaveDashboard.map((leave, index) => (
+                            <tr key={index}>
+                              <td>{leave.leaveTypeName}</td>
+                              <td className="text-center">{leave.totalAllocated}</td>
+                              <td className="text-center">{leave.totalTaken}</td>
+                              <td className="text-center">{leave.totalApproved}</td>
+                              <td className="text-center">{leave.totalRejected}</td>
+                              <td className="text-center">{leave.totalBalance}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-muted">No leave summary available</div>
+                  )}
+                </div>
+
+                {/* Request Details */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Request Details
+                  </h6>
+                  <div className="row">
+                    <div className="col-md-6 mb-2">
+                      <strong>Period :</strong>{" "}
+                      {new Date(
+                        selectedApplication.fromDate
+                      ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}{" "}
+                      -{" "}
+                      {new Date(
+                        selectedApplication.toDate
+                      ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Total Days :</strong>{" "}
+                      {selectedApplication.totalDays}
+                    </div>
+                    <div className="col-md-6 mb-2">
+                      <strong>Half Day :</strong>{" "}
+                      {selectedApplication.isHalfDay ? "Yes" : "No"}
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <strong>Reason :</strong>
+                    <textarea
+                      className="form-control mt-2"
+                      rows="3"
+                      value={selectedApplication.reason}
+                      readOnly
+                    ></textarea>
+                  </div>
+                </div>
+
+                {/* Remarks Field */}
+                <div className="mb-3">
+                  <label className="form-label">
+                    Remarks{" "}
+                    <span className="text-muted">
+                      (Required for rejection)
+                    </span>
+                  </label>
+                  <textarea
+                    className="form-control"
+                    rows="2"
+                    placeholder="Enter remarks..."
+                    value={remarks[selectedApplication.idLeaveApplication] || ""}
+                    onChange={(e) =>
+                      handleRemarksChange(
+                        selectedApplication.idLeaveApplication,
+                        e.target.value
+                      )
+                    }
+                  ></textarea>
+                  {validationErrors[selectedApplication.idLeaveApplication] && (
+                    <div className="text-danger small mt-1">
+                      {validationErrors[selectedApplication.idLeaveApplication]}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-primary"
+                  onClick={handleApproveFromModal}
+                >
+                  Approve
+                </Button>
+                <Button
+                  className="btn btn-danger"
+                  onClick={handleRejectFromModal}
+                >
+                  Reject
+                </Button>
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={closeModals}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Application Documents Modal */}
+      {showDocumentsModal && selectedApplication && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={closeModals}
+        >
+          <div
+            className="modal-dialog modal-lg modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Application Documents</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeModals}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {selectedApplication.documents.length === 0 ? (
+                  <div className="text-center py-4 text-muted">
+                    No documents attached
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Document Type</th>
+                          <th>File Name</th>
+                          <th>Uploaded Date</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedApplication.documents.map((doc, index) => (
+                          <tr key={index}>
+                            <td>{doc.documentType}</td>
+                            <td>{doc.fileName}</td>
+                            <td>
+                              {new Date(
+                                doc.uploadedDate
+                              ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                            </td>
+                            <td>
+                              <Button
+                                className="btn btn-primary btn-sm"
+                                onClick={() =>
+                                  alert(`Downloading ${doc.fileName}`)
+                                }
+                              >
+                                Download
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={closeModals}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LeaveApproval;
