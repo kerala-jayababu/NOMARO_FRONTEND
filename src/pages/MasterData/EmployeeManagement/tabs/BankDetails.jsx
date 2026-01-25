@@ -674,6 +674,8 @@ const BankDetails = () => {
             setHasUnsavedChanges(false);
           }
           loadEmployeeData();
+          // Scroll to top
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       } catch (error) {
         toast.error("Failed to save bank details");
@@ -712,6 +714,8 @@ const BankDetails = () => {
               setHasUnsavedChanges(false);
             }
             loadEmployeeData();
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch (error) {
           toast.error("Failed to save bank details");

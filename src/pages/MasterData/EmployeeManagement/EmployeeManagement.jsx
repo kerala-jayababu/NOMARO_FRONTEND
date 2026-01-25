@@ -24,6 +24,7 @@ const EmployeeManagement = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
 
   const tabs = [
     { id: "basic-details", label: "Basic Info", component: BasicDetails },
@@ -62,6 +63,11 @@ const EmployeeManagement = () => {
 
   // Handle tab click with validation
   const handleTabClick = (tabId) => {
+    // Don't show warning if clicking the same tab
+    if (tabId === activeTab) {
+      return;
+    }
+
     if (isTabDisabled(tabId)) {
       toast.warning("Please save employee basic details first to access this tab");
       // Force switch to basic-details if trying to access disabled tab
@@ -70,6 +76,19 @@ const EmployeeManagement = () => {
       return;
     }
     
+    // Check for unsaved changes before switching tabs
+    if (hasUnsavedChanges) {
+      setPendingTabSwitch(tabId);
+      setShowConfirmModal(true);
+      return;
+    }
+    
+    // Switch tab if no unsaved changes
+    switchToTab(tabId);
+  };
+
+  // Switch to a specific tab
+  const switchToTab = (tabId) => {
     setActiveTab(tabId);
     const currentId = searchParams.get("id");
     if (currentId) {
@@ -96,20 +115,28 @@ const EmployeeManagement = () => {
     }
   };
 
-  // Confirm navigation - discard changes
+  // Confirm navigation/tab switch - discard changes
   const handleConfirmNavigation = () => {
     setHasUnsavedChanges(false);
     setShowConfirmModal(false);
-    if (pendingNavigation) {
+    
+    // Handle tab switch
+    if (pendingTabSwitch) {
+      switchToTab(pendingTabSwitch);
+      setPendingTabSwitch(null);
+    }
+    // Handle navigation
+    else if (pendingNavigation) {
       navigate(pendingNavigation);
       setPendingNavigation(null);
     }
   };
 
-  // Cancel navigation
+  // Cancel navigation/tab switch
   const handleCancelNavigation = () => {
     setShowConfirmModal(false);
     setPendingNavigation(null);
+    setPendingTabSwitch(null);
   };
 
   return (
@@ -267,7 +294,10 @@ const EmployeeManagement = () => {
         </Modal.Header>
         <Modal.Body>
           <div className="d-flex align-items-center justify-content-center shortDataHeight">
-            You have unsaved data. Are you sure you want to leave without saving?
+            {pendingTabSwitch 
+              ? "You have unsaved data. Are you sure you want to switch tabs without saving?"
+              : "You have unsaved data. Are you sure you want to leave without saving?"
+            }
           </div>
         </Modal.Body>
         <Modal.Footer>
