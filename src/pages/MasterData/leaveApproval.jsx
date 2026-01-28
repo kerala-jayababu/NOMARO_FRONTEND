@@ -139,7 +139,6 @@ const LeaveApproval = () => {
   // Status options
   const statusOptions = [
     { value: "ALL", label: "All Status" },
-    { value: "PENDING", label: "Pending" },
     { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
     { value: "REJECTED", label: "Rejected" },
@@ -167,6 +166,7 @@ const LeaveApproval = () => {
       applicationStatus: app.applicationStatus || "",
       reason: app.reason || "",
       appliedOn: app.appliedOn || "",
+      actionStatusByUser: app.actionStatusByUser,
       // These fields are not in the API response, using defaults
       totalLeaves: app.totalLeaves || 0,
       usedLeaves: app.usedLeaves || 0,
@@ -185,9 +185,7 @@ const LeaveApproval = () => {
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const selectableIds = filteredApplications
-        .filter(
-          (app) => app.status !== "APPROVED" && app.status !== "REJECTED"
-        )
+        .filter((app) => app.actionStatusByUser === null)
         .map((app) => app.idLeaveApplication);
       setSelectedItems(selectableIds);
     } else {
@@ -459,9 +457,7 @@ const LeaveApproval = () => {
                         selectedItems.length > 0 &&
                         selectedItems.length ===
                           filteredApplications.filter(
-                            (app) =>
-                              app.status !== "APPROVED" &&
-                              app.status !== "REJECTED"
+                            (app) => app.actionStatusByUser === null
                           ).length
                       }
                       onChange={handleSelectAll}
@@ -557,10 +553,7 @@ const LeaveApproval = () => {
                                     e.target.checked
                                   )
                                 }
-                                disabled={
-                                  app.status === "APPROVED" ||
-                                  app.status === "REJECTED"
-                                }
+                                disabled={app.actionStatusByUser !== null}
                               />
                               <div>
                                 <h6 className="mb-0 fw-bold">
@@ -644,10 +637,7 @@ const LeaveApproval = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={
-                                app.status === "APPROVED" ||
-                                app.status === "REJECTED"
-                              }
+                              disabled={app.actionStatusByUser !== null}
                             ></textarea>
                             {validationErrors[app.idLeaveApplication] && (
                               <div className="text-danger small mt-1">
@@ -657,8 +647,7 @@ const LeaveApproval = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          {app.status !== "APPROVED" &&
-                            app.status !== "REJECTED" && (
+                          {app.actionStatusByUser === null && (
                               <div className="d-flex gap-2">
                                 <Button
                                   className="btn btn-primary btn-sm flex-fill px-3 py-2"
@@ -847,6 +836,7 @@ const LeaveApproval = () => {
                         e.target.value
                       )
                     }
+                    disabled={selectedApplication.actionStatusByUser !== null}
                   ></textarea>
                   {validationErrors[selectedApplication.idLeaveApplication] && (
                     <div className="text-danger small mt-1">
@@ -856,18 +846,22 @@ const LeaveApproval = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <Button
-                  className="btn btn-primary"
-                  onClick={handleApproveFromModal}
-                >
-                  Approve
-                </Button>
-                <Button
-                  className="btn btn-danger"
-                  onClick={handleRejectFromModal}
-                >
-                  Reject
-                </Button>
+                {selectedApplication.actionStatusByUser === null && (
+                    <>
+                      <Button
+                        className="btn btn-primary"
+                        onClick={handleApproveFromModal}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        className="btn btn-danger"
+                        onClick={handleRejectFromModal}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
                 <Button
                   className="btn btn-outline-secondary"
                   onClick={closeModals}
