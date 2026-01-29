@@ -524,9 +524,6 @@ const BasicDetails = () => {
           setHasUnsavedChanges(false);
         }
 
-        // Scroll to top and refresh
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
         // If it's a new employee, update the employeeId in context
         if (!editingEmployeeId && result.data?.data?.idEmployee) {
           const newEmployeeId = result.data.data.idEmployee.toString();
@@ -571,6 +568,18 @@ const BasicDetails = () => {
           };
           setInitialFormData(currentData);
         }
+
+        // Scroll to top after all operations complete
+        setTimeout(() => {
+          // Find the scrollable tab-content container
+          const tabContent = document.querySelector('.tab-content');
+          if (tabContent) {
+            tabContent.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            // Fallback to window scroll
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }, 200);
       } else {
         hideLoader();
         console.error("API returned success=false:", result.data);
