@@ -68,14 +68,19 @@ const EmployeeLeaveConfig = () => {
 
   // Fetch initial data on component mount
   useEffect(() => {
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
     dispatch(fetchLeaveTemplates({ status: "ALL", idYear: "", searchText: "" }));
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
 
   // Fetch employee leave setup list when search query or year filter changes
   useEffect(() => {
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+    // Only fetch when yearFilter has a valid value
+    if (yearFilter) {
+      const idYear = parseInt(yearFilter);
+      if (!isNaN(idYear)) {
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear }));
+      }
+    }
   }, [dispatch, searchQuery, yearFilter]);
 
   // Employee options for dropdown
