@@ -12,335 +12,55 @@ const getAuthToken = () => {
   return storedUser ? JSON.parse(storedUser)?.token : null;
 };
 
-// Helper to get current user data
-const getCurrentUser = () => {
+// Helper to get logged in employee ID
+const getLoggedInEmployeeId = () => {
   const storedUser = secureLocalStorage.getItem("user");
-  if (storedUser) {
-    return JSON.parse(storedUser);
-  }
-  return null;
+  return storedUser ? JSON.parse(storedUser)?.idEmployee : null;
 };
 
-// ============= MOCK DATA =============
-const mockExitCases = [
-  {
-    idExitCase: 1,
-    idEmployee: 101,
-    employeeCode: "E0001",
-    employeeName: "Sriram Vasudevan",
-    department: "IT Department",
-    designation: "Senior Developer",
-    employeeType: "Permanent",
-    joinedDate: "2020-03-15",
-    exitType: "Resignation",
-    idExitType: 1,
-    idExitReason: 1,
-    exitReason: "Better Opportunity",
-    initiationDate: "2026-01-05",
-    noticePeriodDays: 30,
-    proposedLWD: "2026-02-05",
-    confirmedLWD: null,
-    approvedLWD: null,
-    status: "SUBMITTED",
-    remarks: "Employee submitted resignation for better career growth.",
-    handoverNotes: "Complete handover of current project documentation and knowledge transfer.",
-    ktPlan: "Week 1: Documentation review\nWeek 2: Shadow sessions with replacement\nWeek 3: Final handover",
-    exitInterviewDate: null,
-    contactAfterExit: "sriram.personal@email.com",
-    idClearanceTemplate: 1,
-    clearanceTemplateName: "Standard IT Exit",
-    clearanceStatus: null,
-    documents: [
-      {
-        idDocument: 1,
-        documentType: "Resignation Letter",
-        fileName: "resignation_sriram.pdf",
-        uploadedDate: "2026-01-05",
-      },
-    ],
-    clearanceDepartments: [],
-    createdBy: 1,
-    createdOn: "2026-01-05",
-    modifiedBy: null,
-    modifiedOn: null,
-  },
-  {
-    idExitCase: 2,
-    idEmployee: 102,
-    employeeCode: "E0002",
-    employeeName: "Priya Sharma",
-    department: "Human Resources",
-    designation: "HR Manager",
-    employeeType: "Permanent",
-    joinedDate: "2019-07-22",
-    exitType: "Retirement",
-    idExitType: 2,
-    idExitReason: 2,
-    exitReason: "Retirement",
-    initiationDate: "2025-12-01",
-    noticePeriodDays: 60,
-    proposedLWD: "2026-01-31",
-    confirmedLWD: "2026-01-31",
-    approvedLWD: "2026-01-31",
-    status: "IN_CLEARANCE",
-    remarks: "Planned retirement after 7 years of service.",
-    handoverNotes: "Complete HR processes documentation and policy files handover.",
-    ktPlan: "Transfer all ongoing recruitment cases and training programs.",
-    exitInterviewDate: "2026-01-25",
-    contactAfterExit: "priya.sharma@personal.com",
-    idClearanceTemplate: 2,
-    clearanceTemplateName: "HR Department Exit",
-    clearanceStatus: "IN_PROGRESS",
-    documents: [
-      {
-        idDocument: 2,
-        documentType: "Retirement Request",
-        fileName: "retirement_priya.pdf",
-        uploadedDate: "2025-12-01",
-      },
-    ],
-    clearanceDepartments: [
-      {
-        idClearanceDept: 1,
-        department: "IT Department",
-        owner: "Ravi Kumar",
-        checklistItems: 5,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-      {
-        idClearanceDept: 2,
-        department: "Finance",
-        owner: "Anita Desai",
-        checklistItems: 4,
-        departmentStatus: "PENDING",
-        dueAmount: 2500,
-      },
-      {
-        idClearanceDept: 3,
-        department: "Admin",
-        owner: "Suresh Menon",
-        checklistItems: 3,
-        departmentStatus: "IN_PROGRESS",
-        dueAmount: 0,
-      },
-    ],
-    createdBy: 1,
-    createdOn: "2025-12-01",
-    modifiedBy: 2,
-    modifiedOn: "2026-01-10",
-  },
-  {
-    idExitCase: 3,
-    idEmployee: 103,
-    employeeCode: "E0003",
-    employeeName: "Rajesh Kumar",
-    department: "Operations",
-    designation: "Team Lead",
-    employeeType: "Permanent",
-    joinedDate: "2018-01-10",
-    exitType: "Resignation",
-    idExitType: 1,
-    idExitReason: 3,
-    exitReason: "Personal Reasons",
-    initiationDate: "2026-01-10",
-    noticePeriodDays: 30,
-    proposedLWD: "2026-02-10",
-    confirmedLWD: "2026-02-10",
-    approvedLWD: "2026-02-10",
-    status: "READY_FOR_CLOSURE",
-    remarks: "All clearances completed. Ready for final settlement.",
-    handoverNotes: "Operations manual and team responsibilities transferred to Anil.",
-    ktPlan: "Completed all KT sessions with the new team lead.",
-    exitInterviewDate: "2026-02-05",
-    contactAfterExit: "rajesh.k@gmail.com",
-    idClearanceTemplate: 1,
-    clearanceTemplateName: "Standard IT Exit",
-    clearanceStatus: "COMPLETED",
-    documents: [
-      {
-        idDocument: 3,
-        documentType: "Resignation Letter",
-        fileName: "resignation_rajesh.pdf",
-        uploadedDate: "2026-01-10",
-      },
-      {
-        idDocument: 4,
-        documentType: "No Dues Certificate",
-        fileName: "no_dues_rajesh.pdf",
-        uploadedDate: "2026-02-08",
-      },
-    ],
-    clearanceDepartments: [
-      {
-        idClearanceDept: 4,
-        department: "IT Department",
-        owner: "Ravi Kumar",
-        checklistItems: 5,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-      {
-        idClearanceDept: 5,
-        department: "Finance",
-        owner: "Anita Desai",
-        checklistItems: 4,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-      {
-        idClearanceDept: 6,
-        department: "Admin",
-        owner: "Suresh Menon",
-        checklistItems: 3,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-    ],
-    createdBy: 1,
-    createdOn: "2026-01-10",
-    modifiedBy: 2,
-    modifiedOn: "2026-02-08",
-  },
-  {
-    idExitCase: 4,
-    idEmployee: 104,
-    employeeCode: "E0004",
-    employeeName: "Anita Desai",
-    department: "Finance",
-    designation: "Finance Executive",
-    employeeType: "Contract",
-    joinedDate: "2023-06-01",
-    exitType: "Contract End",
-    idExitType: 3,
-    idExitReason: 4,
-    exitReason: "Contract Expiry",
-    initiationDate: "2025-12-15",
-    noticePeriodDays: 15,
-    proposedLWD: "2025-12-31",
-    confirmedLWD: "2025-12-31",
-    approvedLWD: "2025-12-31",
-    status: "COMPLETED",
-    remarks: "Contract ended as per agreement. Final settlement processed.",
-    handoverNotes: "All financial reports and documents handed over.",
-    ktPlan: "Completed",
-    exitInterviewDate: "2025-12-28",
-    contactAfterExit: "anita.d@outlook.com",
-    idClearanceTemplate: 3,
-    clearanceTemplateName: "Contract Employee Exit",
-    clearanceStatus: "COMPLETED",
-    documents: [
-      {
-        idDocument: 5,
-        documentType: "Contract End Notice",
-        fileName: "contract_end_anita.pdf",
-        uploadedDate: "2025-12-15",
-      },
-      {
-        idDocument: 6,
-        documentType: "Final Settlement",
-        fileName: "settlement_anita.pdf",
-        uploadedDate: "2026-01-05",
-      },
-    ],
-    clearanceDepartments: [
-      {
-        idClearanceDept: 7,
-        department: "IT Department",
-        owner: "Ravi Kumar",
-        checklistItems: 3,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-      {
-        idClearanceDept: 8,
-        department: "Finance",
-        owner: "Mohan Pillai",
-        checklistItems: 4,
-        departmentStatus: "COMPLETED",
-        dueAmount: 0,
-      },
-    ],
-    createdBy: 2,
-    createdOn: "2025-12-15",
-    modifiedBy: 2,
-    modifiedOn: "2026-01-05",
-  },
-  {
-    idExitCase: 5,
-    idEmployee: 105,
-    employeeCode: "E0005",
-    employeeName: "Vikram Singh",
-    department: "Sales",
-    designation: "Sales Manager",
-    employeeType: "Permanent",
-    joinedDate: "2021-09-15",
-    exitType: "Resignation",
-    idExitType: 1,
-    idExitReason: 1,
-    exitReason: "Better Opportunity",
-    initiationDate: "2026-01-15",
-    noticePeriodDays: 30,
-    proposedLWD: "2026-02-15",
-    confirmedLWD: null,
-    approvedLWD: null,
-    status: "DRAFT",
-    remarks: "",
-    handoverNotes: "",
-    ktPlan: "",
-    exitInterviewDate: null,
-    contactAfterExit: "",
-    idClearanceTemplate: null,
-    clearanceTemplateName: null,
-    clearanceStatus: null,
-    documents: [],
-    clearanceDepartments: [],
-    createdBy: 105,
-    createdOn: "2026-01-15",
-    modifiedBy: null,
-    modifiedOn: null,
-  },
-];
-
-const mockEmployees = [
-  { idEmployee: 101, employeeCode: "E0001", fullName: "Sriram Vasudevan", department: "IT Department", designation: "Senior Developer", employeeType: "Permanent", joinedDate: "2020-03-15" },
-  { idEmployee: 102, employeeCode: "E0002", fullName: "Priya Sharma", department: "Human Resources", designation: "HR Manager", employeeType: "Permanent", joinedDate: "2019-07-22" },
-  { idEmployee: 103, employeeCode: "E0003", fullName: "Rajesh Kumar", department: "Operations", designation: "Team Lead", employeeType: "Permanent", joinedDate: "2018-01-10" },
-  { idEmployee: 104, employeeCode: "E0004", fullName: "Anita Desai", department: "Finance", designation: "Finance Executive", employeeType: "Contract", joinedDate: "2023-06-01" },
-  { idEmployee: 105, employeeCode: "E0005", fullName: "Vikram Singh", department: "Sales", designation: "Sales Manager", employeeType: "Permanent", joinedDate: "2021-09-15" },
-  { idEmployee: 106, employeeCode: "E0006", fullName: "Deepa Nair", department: "Marketing", designation: "Marketing Executive", employeeType: "Permanent", joinedDate: "2022-02-28" },
-  { idEmployee: 107, employeeCode: "E0007", fullName: "Arun Menon", department: "IT Department", designation: "Software Engineer", employeeType: "Permanent", joinedDate: "2023-01-15" },
-];
-
-const mockExitTypes = [
-  { idExitType: 1, typeName: "Resignation" },
-  { idExitType: 2, typeName: "Retirement" },
-  { idExitType: 3, typeName: "Contract End" },
-  { idExitType: 4, typeName: "Termination" },
-  { idExitType: 5, typeName: "Layoff" },
-];
-
-const mockExitReasons = [
-  { idExitReason: 1, reasonName: "Better Opportunity" },
-  { idExitReason: 2, reasonName: "Retirement" },
-  { idExitReason: 3, reasonName: "Personal Reasons" },
-  { idExitReason: 4, reasonName: "Contract Expiry" },
-  { idExitReason: 5, reasonName: "Health Issues" },
-  { idExitReason: 6, reasonName: "Relocation" },
-];
-
-const mockClearanceTemplates = [
-  { idClearanceTemplate: 1, templateName: "Standard IT Exit", description: "Standard exit template for IT employees" },
-  { idClearanceTemplate: 2, templateName: "HR Department Exit", description: "Exit template for HR department" },
-  { idClearanceTemplate: 3, templateName: "Contract Employee Exit", description: "Simplified exit for contract employees" },
-];
-
 // ============= ASYNC THUNKS =============
+
+// Fetch exit cases for listing (uses logged in employee ID)
+export const fetchExitCasesForListing = createAsyncThunk(
+  "offboardingCases/fetchExitCasesForListing",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const idLoggedInEmployee = getLoggedInEmployeeId();
+      if (!idLoggedInEmployee) {
+        console.error("Logged in employee ID missing");
+        return rejectWithValue({ message: "Logged in employee ID missing" });
+      }
+
+      const response = await axios.get(
+        `${OFFBOARDING_API_URL}/GetExitCasesForListing`,
+        {
+          params: { idLoggidLoggedInEmployee: idLoggedInEmployee },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch exit cases for listing" }
+      );
+    }
+  }
+);
 
 // Fetch resignation requests based on role type
 export const fetchResignationRequests = createAsyncThunk(
   "offboardingCases/fetchResignationRequests",
-  async ({ roleType = "REPOFFICER" } = {}, { rejectWithValue }) => {
+  async ({ roleType = "REPOFFICER", idEmployee } = {}, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
       if (!token) {
@@ -351,7 +71,7 @@ export const fetchResignationRequests = createAsyncThunk(
       const response = await axios.get(
         `${OFFBOARDING_API_URL}/GetResignationRequests`,
         {
-          params: { roleType },
+          params: { roleType, idEmployee },
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -400,6 +120,68 @@ export const submitReportingOfficerAction = createAsyncThunk(
       console.error("API Error:", error);
       return rejectWithValue(
         error.response?.data || { message: "Failed to submit action" }
+      );
+    }
+  }
+);
+
+// Submit HR Officer actions (Approve/Reject) - for HREXECUTIVE role
+export const submitHROfficerAction = createAsyncThunk(
+  "offboardingCases/submitHROfficerAction",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${OFFBOARDING_API_URL}/SubmitHROfficerActions`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to submit HR Officer action" }
+      );
+    }
+  }
+);
+
+// Submit HR Manager actions (Approve/Reject) - for HRHEAD role (final approval)
+export const submitHRManagerAction = createAsyncThunk(
+  "offboardingCases/submitHRManagerAction",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${OFFBOARDING_API_URL}/SubmitHRManagerActions`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to submit HR Manager action" }
       );
     }
   }
@@ -471,23 +253,8 @@ export const fetchExitCases = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        // Return mock data for development
-        let filteredData = [...mockExitCases];
-
-        if (status && status !== "ALL") {
-          filteredData = filteredData.filter(c => c.status === status);
-        }
-
-        if (searchText) {
-          const search = searchText.toLowerCase();
-          filteredData = filteredData.filter(c =>
-            c.employeeCode.toLowerCase().includes(search) ||
-            c.employeeName.toLowerCase().includes(search) ||
-            c.status.toLowerCase().includes(search)
-          );
-        }
-
-        return { success: true, data: filteredData };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetExitCases`, {
@@ -499,23 +266,10 @@ export const fetchExitCases = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      // Fallback to mock data on error
-      let filteredData = [...mockExitCases];
-
-      if (status && status !== "ALL") {
-        filteredData = filteredData.filter(c => c.status === status);
-      }
-
-      if (searchText) {
-        const search = searchText.toLowerCase();
-        filteredData = filteredData.filter(c =>
-          c.employeeCode.toLowerCase().includes(search) ||
-          c.employeeName.toLowerCase().includes(search) ||
-          c.status.toLowerCase().includes(search)
-        );
-      }
-
-      return { success: true, data: filteredData };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch exit cases" }
+      );
     }
   }
 );
@@ -526,8 +280,8 @@ export const fetchExitCaseById = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        const exitCase = mockExitCases.find(c => c.idExitCase === id);
-        return { success: true, data: exitCase || null };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetExitCaseById/${id}`, {
@@ -538,8 +292,10 @@ export const fetchExitCaseById = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      const exitCase = mockExitCases.find(c => c.idExitCase === id);
-      return { success: true, data: exitCase || null };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch exit case" }
+      );
     }
   }
 );
@@ -550,7 +306,8 @@ export const addUpdateExitCase = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, message: "Exit case saved successfully (mock)" };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.post(
@@ -565,7 +322,10 @@ export const addUpdateExitCase = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return { success: true, message: "Exit case saved successfully (mock)" };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to save exit case" }
+      );
     }
   }
 );
@@ -576,7 +336,8 @@ export const approveExitCase = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, message: `Exit case ${approvalType} approved successfully (mock)` };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.post(
@@ -591,7 +352,10 @@ export const approveExitCase = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return { success: true, message: `Exit case ${approvalType} approved successfully (mock)` };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to approve exit case" }
+      );
     }
   }
 );
@@ -602,7 +366,8 @@ export const rejectExitCase = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, message: `Exit case ${rejectionType} rejected successfully (mock)` };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.post(
@@ -617,7 +382,10 @@ export const rejectExitCase = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return { success: true, message: `Exit case ${rejectionType} rejected successfully (mock)` };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to reject exit case" }
+      );
     }
   }
 );
@@ -628,7 +396,8 @@ export const initiateClearance = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, message: "Clearance initiated successfully (mock)" };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.post(
@@ -643,7 +412,10 @@ export const initiateClearance = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return { success: true, message: "Clearance initiated successfully (mock)" };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to initiate clearance" }
+      );
     }
   }
 );
@@ -654,7 +426,8 @@ export const closeExitCase = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, message: "Exit case closed successfully (mock)" };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.post(
@@ -669,7 +442,10 @@ export const closeExitCase = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return { success: true, message: "Exit case closed successfully (mock)" };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to close exit case" }
+      );
     }
   }
 );
@@ -680,7 +456,8 @@ export const fetchEmployeesForExit = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, data: mockEmployees };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetEmployeesForExit`, {
@@ -691,7 +468,10 @@ export const fetchEmployeesForExit = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return { success: true, data: mockEmployees };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch employees" }
+      );
     }
   }
 );
@@ -702,7 +482,8 @@ export const fetchExitTypesForCases = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, data: mockExitTypes };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetExitTypes`, {
@@ -713,7 +494,10 @@ export const fetchExitTypesForCases = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return { success: true, data: mockExitTypes };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch exit types" }
+      );
     }
   }
 );
@@ -724,7 +508,8 @@ export const fetchExitReasonsForCases = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, data: mockExitReasons };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetExitReasons`, {
@@ -735,7 +520,10 @@ export const fetchExitReasonsForCases = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return { success: true, data: mockExitReasons };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch exit reasons" }
+      );
     }
   }
 );
@@ -746,7 +534,8 @@ export const fetchClearanceTemplatesForCases = createAsyncThunk(
     try {
       const token = getAuthToken();
       if (!token) {
-        return { success: true, data: mockClearanceTemplates };
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
       }
 
       const response = await axios.get(`${API_BASE_URL}/GetClearanceTemplates`, {
@@ -757,7 +546,99 @@ export const fetchClearanceTemplatesForCases = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return { success: true, data: mockClearanceTemplates };
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch clearance templates" }
+      );
+    }
+  }
+);
+
+// Fetch exit clearance for department user (My Department Queue)
+export const fetchExitClearanceForDepartmentUser = createAsyncThunk(
+  "offboardingCases/fetchExitClearanceForDepartmentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.get(
+        `${OFFBOARDING_API_URL}/ExitClearanceForDepartmentUser`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch department queue" }
+      );
+    }
+  }
+);
+
+// Fetch exit clearance details by case ID and department
+export const fetchExitClearanceDetails = createAsyncThunk(
+  "offboardingCases/fetchExitClearanceDetails",
+  async ({ idExitCase, idDepartment }, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.get(
+        `${OFFBOARDING_API_URL}/GetExitClearanceDetails`,
+        {
+          params: { idExitCase, idDepartment },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch clearance details" }
+      );
+    }
+  }
+);
+
+// Submit exit case department clearance lines
+export const submitExitCaseDepartmentClearanceLines = createAsyncThunk(
+  "offboardingCases/submitExitCaseDepartmentClearanceLines",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${OFFBOARDING_API_URL}/SubmitExitCaseDepartmentClearanceLines`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to submit clearance lines" }
+      );
     }
   }
 );
@@ -766,14 +647,18 @@ const offboardingCasesSlice = createSlice({
   name: "offboardingCases",
   initialState: {
     exitCases: [],
+    exitCasesForListing: [],
     resignationRequests: [],
     selectedExitCase: null,
+    selectedExitCaseDetails: null,
     employees: [],
     exitTypes: [],
     exitReasons: [],
     clearanceTemplates: [],
     offboardingClearanceTemplates: [],
     clearanceTemplateDepartments: [],
+    departmentQueue: [],
+    exitClearanceDetails: null,
     statusCounts: {
       draft: 0,
       submitted: 0,
@@ -784,6 +669,7 @@ const offboardingCasesSlice = createSlice({
     loading: false,
     actionLoading: false,
     templateLoading: false,
+    clearanceLoading: false,
     error: null,
   },
   reducers: {
@@ -792,6 +678,12 @@ const offboardingCasesSlice = createSlice({
     },
     clearSelectedExitCase: (state) => {
       state.selectedExitCase = null;
+    },
+    clearSelectedExitCaseDetails: (state) => {
+      state.selectedExitCaseDetails = null;
+    },
+    clearExitClearanceDetails: (state) => {
+      state.exitClearanceDetails = null;
     },
     updateStatusCounts: (state) => {
       const cases = state.exitCases;
@@ -827,6 +719,20 @@ const offboardingCasesSlice = createSlice({
       .addCase(fetchExitCases.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
+      })
+
+    // Fetch Exit Cases For Listing
+      .addCase(fetchExitCasesForListing.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExitCasesForListing.fulfilled, (state, action) => {
+        state.exitCasesForListing = Array.isArray(action.payload) ? action.payload : [];
+        state.loading = false;
+      })
+      .addCase(fetchExitCasesForListing.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || action.error.message;
       })
 
     // Fetch Exit Case By Id
@@ -955,17 +861,20 @@ const offboardingCasesSlice = createSlice({
         state.error = action.payload || action.error.message;
       })
 
-    // Fetch Resignation Requests
+    // Fetch Resignation Requests (used for viewing details)
       .addCase(fetchResignationRequests.pending, (state) => {
-        state.loading = true;
+        state.actionLoading = true;
         state.error = null;
       })
       .addCase(fetchResignationRequests.fulfilled, (state, action) => {
-        state.resignationRequests = action.payload?.data || [];
-        state.loading = false;
+        const data = action.payload?.data || [];
+        state.resignationRequests = data;
+        // Store the first item as selected exit case details (for view modal)
+        state.selectedExitCaseDetails = data.length > 0 ? data[0] : null;
+        state.actionLoading = false;
       })
       .addCase(fetchResignationRequests.rejected, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
         state.error = action.payload?.message || action.error.message;
       })
 
@@ -978,6 +887,32 @@ const offboardingCasesSlice = createSlice({
         state.actionLoading = false;
       })
       .addCase(submitReportingOfficerAction.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload?.message || action.error.message;
+      })
+
+    // Submit HR Officer Action
+      .addCase(submitHROfficerAction.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(submitHROfficerAction.fulfilled, (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(submitHROfficerAction.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload?.message || action.error.message;
+      })
+
+    // Submit HR Manager Action (HRHEAD final approval)
+      .addCase(submitHRManagerAction.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(submitHRManagerAction.fulfilled, (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(submitHRManagerAction.rejected, (state, action) => {
         state.actionLoading = false;
         state.error = action.payload?.message || action.error.message;
       })
@@ -1008,6 +943,47 @@ const offboardingCasesSlice = createSlice({
       .addCase(fetchClearanceTemplateDepartments.rejected, (state, action) => {
         state.templateLoading = false;
         state.error = action.payload?.message || action.error.message;
+      })
+
+    // Fetch Exit Clearance For Department User
+      .addCase(fetchExitClearanceForDepartmentUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExitClearanceForDepartmentUser.fulfilled, (state, action) => {
+        state.departmentQueue = Array.isArray(action.payload) ? action.payload : [];
+        state.loading = false;
+      })
+      .addCase(fetchExitClearanceForDepartmentUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || action.error.message;
+      })
+
+    // Fetch Exit Clearance Details
+      .addCase(fetchExitClearanceDetails.pending, (state) => {
+        state.clearanceLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchExitClearanceDetails.fulfilled, (state, action) => {
+        state.exitClearanceDetails = action.payload?.data || null;
+        state.clearanceLoading = false;
+      })
+      .addCase(fetchExitClearanceDetails.rejected, (state, action) => {
+        state.clearanceLoading = false;
+        state.error = action.payload?.message || action.error.message;
+      })
+
+    // Submit Exit Case Department Clearance Lines
+      .addCase(submitExitCaseDepartmentClearanceLines.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(submitExitCaseDepartmentClearanceLines.fulfilled, (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(submitExitCaseDepartmentClearanceLines.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload?.message || action.error.message;
       });
   },
 });
@@ -1015,6 +991,8 @@ const offboardingCasesSlice = createSlice({
 export const {
   resetError,
   clearSelectedExitCase,
+  clearSelectedExitCaseDetails,
+  clearExitClearanceDetails,
   updateStatusCounts,
 } = offboardingCasesSlice.actions;
 

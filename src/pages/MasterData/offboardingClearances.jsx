@@ -1,78 +1,44 @@
 import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
-
-// Mock data for department queue
-const mockDepartmentQueue = [
-  {
-    id: 1,
-    caseId: "A004",
-    empCode: "A004",
-    employeeName: "Amy Singh",
-    lwd: "2026-01-31",
-    status: "Pending",
-    departmentStatus: "Pending",
-    dueAmount: 0,
-    remarks: "Laptop return scheduled.",
-    checklistItems: [
-      { id: 1, item: "Return laptop / desktop & accessories", done: false, status: "Pending" },
-      { id: 2, item: "Return ID card / access badge", done: true, status: "Done" },
-      { id: 3, item: "Revoke email & system access (captured)", done: false, status: "Pending" },
-      { id: 4, item: "Handover system credentials (captured)", done: true, status: "Done" },
-    ],
-  },
-  {
-    id: 2,
-    caseId: "A012",
-    empCode: "A012",
-    employeeName: "Ravi Persaud",
-    lwd: "2026-01-15",
-    status: "Cleared",
-    departmentStatus: "Cleared",
-    dueAmount: 0,
-    remarks: "All items cleared.",
-    checklistItems: [
-      { id: 1, item: "Return laptop / desktop & accessories", done: true, status: "Done" },
-      { id: 2, item: "Return ID card / access badge", done: true, status: "Done" },
-      { id: 3, item: "Revoke email & system access (captured)", done: true, status: "Done" },
-      { id: 4, item: "Handover system credentials (captured)", done: true, status: "Done" },
-    ],
-  },
-  {
-    id: 3,
-    caseId: "A015",
-    empCode: "A015",
-    employeeName: "Sarah Johnson",
-    lwd: "2026-02-10",
-    status: "Pending",
-    departmentStatus: "Pending",
-    dueAmount: 150,
-    remarks: "Pending asset return.",
-    checklistItems: [
-      { id: 1, item: "Return laptop / desktop & accessories", done: false, status: "Pending" },
-      { id: 2, item: "Return ID card / access badge", done: false, status: "Pending" },
-      { id: 3, item: "Revoke email & system access (captured)", done: false, status: "Pending" },
-      { id: 4, item: "Handover system credentials (captured)", done: false, status: "Pending" },
-    ],
-  },
-];
+import {
+  fetchExitClearanceForDepartmentUser,
+  fetchExitClearanceDetails,
+  clearExitClearanceDetails,
+  submitExitCaseDepartmentClearanceLines,
+} from "../../redux/reducers/offboardingCases";
 
 const OffboardingClearances = () => {
+  const dispatch = useDispatch();
+  const { departmentQueue, loading, error } = useSelector(
+    (state) => state.offboardingCases
+  );
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null);
-  const [departmentQueue, setDepartmentQueue] = useState(mockDepartmentQueue);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
 
-  // Current department (mock - would come from logged-in user context)
-  const currentDepartment = "IT";
+  // Fetch department queue on mount
+  useEffect(() => {
+    dispatch(fetchExitClearanceForDepartmentUser());
+  }, [dispatch]);
+
+  // Show error toast if any
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   // Filter cases based on search
   const filteredCases = departmentQueue.filter((item) => {
     if (!searchQuery) return true;
     const search = searchQuery.toLowerCase();
     return (
-      item.caseId?.toLowerCase().includes(search) ||
-      item.empCode?.toLowerCase().includes(search) ||
-      item.employeeName?.toLowerCase().includes(search)
+      item.employeeCode?.toLowerCase().includes(search) ||
+      item.employeeName?.toLowerCase().includes(search) ||
+      String(item.idExitCase)?.toLowerCase().includes(search)
     );
   });
 
@@ -91,32 +57,25 @@ const OffboardingClearances = () => {
   const getStatusBadgeClass = (status) => {
     if (!status) return "bg-label-secondary";
     const statusLower = status.toLowerCase();
-    if (statusLower === "cleared" || statusLower === "done") return "bg-label-success";
+    if (statusLower === "cleared" || statusLower === "done" || statusLower === "completed") return "bg-label-success";
     if (statusLower === "pending") return "bg-label-warning";
+    if (statusLower === "in_progress" || statusLower === "inprogress") return "bg-label-info";
     return "bg-label-secondary";
   };
 
   // Handle View button click
   const handleView = (caseItem) => {
-    setSelectedCase({ ...caseItem });
+    setSelectedCaseId(caseItem.idExitCase);
+    setSelectedDepartmentId(caseItem.logginedEmployeeIdDepartment);
     setShowModal(true);
   };
 
   // Close modal
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedCase(null);
-  };
-
-  // Handle save from modal
-  const handleSave = (updatedCase) => {
-    setDepartmentQueue((prev) =>
-      prev.map((item) =>
-        item.id === updatedCase.id ? updatedCase : item
-      )
-    );
-    toast.success("Clearance checklist updated successfully!");
-    handleCloseModal();
+    setSelectedCaseId(null);
+    setSelectedDepartmentId(null);
+    dispatch(clearExitClearanceDetails());
   };
 
   return (
@@ -131,9 +90,6 @@ const OffboardingClearances = () => {
         <div className="card-header d-flex align-items-center justify-content-between pb-3">
           <h5 className="m-0">My Department Queue</h5>
           <div className="d-flex align-items-center gap-3">
-            <span className="text-muted">
-              Dept: <strong>{currentDepartment}</strong>
-            </span>
             <div className="list_searchbox">
               <input
                 type="search"
@@ -148,124 +104,145 @@ const OffboardingClearances = () => {
           </div>
         </div>
         <div className="card-body">
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-4">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
-          <div
-            className="table-responsive text-nowrap"
-            style={{ maxHeight: "450px", overflowY: "auto" }}
-          >
-            <table className="table table-sm">
-              <thead>
-                <tr>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    Case ID
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    Emp Code
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    Employee Name
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    LWD
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    }}
-                  >
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="table-border-bottom-0">
-                {filteredCases.length === 0 ? (
+          {!loading && (
+            <div
+              className="table-responsive text-nowrap"
+              style={{ maxHeight: "450px", overflowY: "auto" }}
+            >
+              <table className="table table-sm">
+                <thead>
                   <tr>
-                    <td colSpan={6} className="text-center py-4 text-muted">
-                      No cases found
-                    </td>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Case ID
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Emp Code
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Employee Name
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Proposed LWD
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Approved LWD
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Status
+                    </th>
+                    <th
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "white",
+                        zIndex: 1,
+                      }}
+                    >
+                      Action
+                    </th>
                   </tr>
-                ) : (
-                  filteredCases.map((caseItem) => (
-                    <tr key={caseItem.id}>
-                      <td>{caseItem.caseId}</td>
-                      <td>{caseItem.empCode}</td>
-                      <td>{caseItem.employeeName}</td>
-                      <td>{formatDate(caseItem.lwd)}</td>
-                      <td>
-                        <span
-                          className={`badge ${getStatusBadgeClass(
-                            caseItem.status
-                          )}`}
-                        >
-                          {caseItem.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-icon btn-outline-secondary border-0"
-                          onClick={() => handleView(caseItem)}
-                          title="View"
-                        >
-                          <i className="bx bx-show"></i>
-                        </button>
+                </thead>
+                <tbody className="table-border-bottom-0">
+                  {filteredCases.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-4 text-muted">
+                        No cases found
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    filteredCases.map((caseItem) => (
+                      <tr key={caseItem.idExitCase}>
+                        <td>{caseItem.idExitCase}</td>
+                        <td>{caseItem.employeeCode}</td>
+                        <td>{caseItem.employeeName}</td>
+                        <td>{formatDate(caseItem.proposedLWD)}</td>
+                        <td>{formatDate(caseItem.approvedLWD)}</td>
+                        <td>
+                          <span
+                            className={`badge ${getStatusBadgeClass(
+                              caseItem.currentStatus
+                            )}`}
+                          >
+                            {caseItem.currentStatus}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-icon btn-outline-secondary border-0"
+                            onClick={() => handleView(caseItem)}
+                            title="View"
+                          >
+                            <i className="bx bx-show"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Clearance Checklist Modal */}
-      {showModal && selectedCase && (
+      {showModal && selectedCaseId && (
         <ClearanceChecklistModal
-          caseData={selectedCase}
+          idExitCase={selectedCaseId}
+          idDepartment={selectedDepartmentId}
           onClose={handleCloseModal}
-          onSave={handleSave}
-          formatDate={formatDate}
           getStatusBadgeClass={getStatusBadgeClass}
         />
       )}
@@ -275,17 +252,45 @@ const OffboardingClearances = () => {
 
 // ============= CLEARANCE CHECKLIST MODAL =============
 const ClearanceChecklistModal = ({
-  caseData,
+  idExitCase,
+  idDepartment,
   onClose,
-  onSave,
-  formatDate,
   getStatusBadgeClass,
 }) => {
+  const dispatch = useDispatch();
+  const { exitClearanceDetails, clearanceLoading, actionLoading } = useSelector(
+    (state) => state.offboardingCases
+  );
+
+  // Form state
   const [formData, setFormData] = useState({
-    ...caseData,
-    checklistItems: [...caseData.checklistItems],
+    deptClearanceStatus: "PENDING",
+    dueAmount: 0,
+    checklist: [],
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch clearance details when modal opens
+  useEffect(() => {
+    if (idExitCase && idDepartment) {
+      dispatch(fetchExitClearanceDetails({ idExitCase, idDepartment }));
+    }
+  }, [dispatch, idExitCase, idDepartment]);
+
+  // Initialize form data when clearance details load
+  useEffect(() => {
+    if (exitClearanceDetails?.departments?.length > 0) {
+      const dept = exitClearanceDetails.departments[0];
+      setFormData({
+        deptClearanceStatus: dept.header?.deptClearanceStatus || "PENDING",
+        dueAmount: dept.header?.dueAmount || 0,
+        checklist: dept.checklist?.map((item) => ({
+          ...item,
+          deptClearanceStatus: item.deptClearanceStatus || "PENDING",
+          remarks: item.remarks || "",
+        })) || [],
+      });
+    }
+  }, [exitClearanceDetails]);
 
   useEffect(() => {
     const modalElement = document.getElementById("clearanceChecklistModal");
@@ -305,68 +310,74 @@ const ClearanceChecklistModal = ({
     }
   }, [onClose]);
 
-  // Check if all checklist items are done
-  const allItemsDone = formData.checklistItems.every((item) => item.done);
-
-  // Auto-update department status when all items are done
-  useEffect(() => {
-    if (allItemsDone) {
-      setFormData((prev) => ({
-        ...prev,
-        departmentStatus: "Cleared",
-        status: "Cleared",
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        departmentStatus: "Pending",
-        status: "Pending",
-      }));
-    }
-  }, [allItemsDone]);
-
-  // Handle checkbox toggle
-  const handleCheckboxChange = (itemId) => {
-    setFormData((prev) => ({
-      ...prev,
-      checklistItems: prev.checklistItems.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              done: !item.done,
-              status: !item.done ? "Done" : "Pending",
-            }
-          : item
-      ),
-    }));
+  // Handle status change for cleared/not required
+  const handleStatusChange = (index, status) => {
+    setFormData((prev) => {
+      const updatedChecklist = [...prev.checklist];
+      updatedChecklist[index] = {
+        ...updatedChecklist[index],
+        deptClearanceStatus: status,
+      };
+      return { ...prev, checklist: updatedChecklist };
+    });
   };
 
-  // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Handle remarks change for checklist item
+  const handleRemarksChange = (index, value) => {
+    setFormData((prev) => {
+      const updatedChecklist = [...prev.checklist];
+      updatedChecklist[index] = {
+        ...updatedChecklist[index],
+        remarks: value,
+      };
+      return { ...prev, checklist: updatedChecklist };
+    });
+  };
+
+  // Handle form field changes
+  const handleFieldChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Handle save
   const handleSave = async () => {
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      onSave(formData);
-      setIsSubmitting(false);
-    }, 500);
+    // Check if all items have been marked (either CLEARED or NOTREQUIRED)
+    const allItemsMarked = formData.checklist.every(
+      (item) => item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "NOTREQUIRED"
+    );
+
+    const payload = {
+      idExitCase,
+      idDepartment,
+      deptRemarks: "",
+      dueAmount: parseFloat(formData.dueAmount) || 0,
+      deptClearanceStatus: allItemsMarked ? "CLEARED" : "PENDING",
+      markDepartmentCleared: allItemsMarked,
+      clearanceLineUpdates: formData.checklist.map((item) => ({
+        idExitCaseDepartmentClearanceLine: item.idExitCaseDepartmentClearanceLine,
+        isCompleted: item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "NOTREQUIRED",
+        clearanceStatus: item.deptClearanceStatus,
+        remarks: item.remarks || "",
+      })),
+    };
+
+    try {
+      const result = await dispatch(submitExitCaseDepartmentClearanceLines(payload)).unwrap();
+      if (result?.success !== false) {
+        toast.success("Clearance submitted successfully");
+        dispatch(fetchExitClearanceForDepartmentUser());
+        onClose();
+      } else {
+        toast.error(result?.message || "Failed to submit clearance");
+      }
+    } catch (error) {
+      toast.error(error?.message || "Failed to submit clearance");
+    }
   };
 
-  // Handle reset
-  const handleReset = () => {
-    setFormData({
-      ...caseData,
-      checklistItems: [...caseData.checklistItems],
-    });
-  };
+  const exitCase = exitClearanceDetails?.exitCase;
+  const department = exitClearanceDetails?.departments?.[0];
+  const canEdit = department?.canEditChecklist || department?.canEditDeptHeader;
 
   return (
     <div
@@ -377,7 +388,7 @@ const ClearanceChecklistModal = ({
       data-bs-backdrop="static"
       data-bs-keyboard="false"
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Clearance Checklist</h5>
@@ -389,143 +400,160 @@ const ClearanceChecklistModal = ({
             ></button>
           </div>
           <div className="modal-body">
-            {/* Employee Details */}
-            <div className="mb-4">
-              <label className="form-label text-muted">Employee</label>
-              <input
-                type="text"
-                className="form-control"
-                value={`${formData.empCode} - ${formData.employeeName}`}
-                readOnly
-              />
-            </div>
-
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <label className="form-label text-muted">Department Status</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.departmentStatus}
-                  readOnly
-                />
+            {clearanceLoading ? (
+              <div className="text-center py-4">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
               </div>
-              <div className="col-md-6">
-                <label className="form-label text-muted">Due Amount (if any)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  name="dueAmount"
-                  value={formData.dueAmount}
-                  onChange={handleInputChange}
-                  min="0"
-                />
-              </div>
-            </div>
+            ) : exitClearanceDetails ? (
+              <>
+                {/* Employee Info */}
+                <div className="mb-3">
+                  <label className="form-label text-muted small mb-1">Employee</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={`${exitCase?.idEmployee || ""} - ${exitCase?.employeeName || ""}`}
+                    disabled
+                  />
+                </div>
 
-            <div className="mb-4">
-              <label className="form-label text-muted">Remarks</label>
-              <textarea
-                className="form-control"
-                name="remarks"
-                rows="3"
-                value={formData.remarks}
-                onChange={handleInputChange}
-                placeholder="Enter remarks..."
-              ></textarea>
-            </div>
+                {/* Department Status & Due Amount - Commented for now */}
+                {/* <div className="row mb-3">
+                  <div className="col-md-6">
+                    <label className="form-label text-muted small mb-1">Department Status</label>
+                    <select
+                      className="form-select"
+                      value={formData.deptClearanceStatus}
+                      onChange={(e) => handleFieldChange("deptClearanceStatus", e.target.value)}
+                      disabled={!department?.canEditDeptHeader}
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="CLEARED">Cleared</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label text-muted small mb-1">Due Amount (if any)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={formData.dueAmount}
+                      onChange={(e) => handleFieldChange("dueAmount", e.target.value)}
+                      disabled={!department?.canEditDeptHeader}
+                      min="0"
+                    />
+                  </div>
+                </div> */}
 
-            {/* Checklist Items Section */}
-            <div className="mb-3">
-              <h6 className="fw-bold mb-3">Checklist Items</h6>
-              <div
-                className="table-responsive"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
-              >
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          backgroundColor: "white",
-                          zIndex: 1,
-                          width: "60px",
-                        }}
-                      >
-                        Done
-                      </th>
-                      <th
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          backgroundColor: "white",
-                          zIndex: 1,
-                        }}
-                      >
-                        Item
-                      </th>
-                      <th
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          backgroundColor: "white",
-                          zIndex: 1,
-                          width: "100px",
-                          textAlign: "right",
-                        }}
-                      >
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-border-bottom-0">
-                    {formData.checklistItems.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <div className="form-check">
-                            <input
-                              type="checkbox"
-                              className="form-check-input"
-                              checked={item.done}
-                              onChange={() => handleCheckboxChange(item.id)}
-                            />
-                          </div>
-                        </td>
-                        <td>{item.item}</td>
-                        <td className="text-end">
-                          <span
-                            className={`badge ${getStatusBadgeClass(
-                              item.status
-                            )}`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/* Checklist Items */}
+                <div className="mb-3">
+                  <h6 className="fw-bold text-primary mb-3">Checklist Items</h6>
+
+                  <div className="table-responsive">
+                    <table className="table table-borderless mb-0">
+                      <thead>
+                        <tr className="border-bottom">
+                          <th style={{ minWidth: "250px" }}>Item</th>
+                          <th style={{ minWidth: "100px", whiteSpace: "nowrap" }}>Status</th>
+                          <th style={{ minWidth: "250px" }}>Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.checklist.length > 0 ? (
+                          formData.checklist.map((item, index) => (
+                            <tr key={item.idExitCaseDepartmentClearanceLine} className="border-bottom">
+                              <td className="align-middle">
+                                {item.checkListItem}
+                              </td>
+                              <td className="align-middle" style={{ whiteSpace: "nowrap" }}>
+                                <div className="d-flex gap-3">
+                                  <div className="form-check">
+                                    <input
+                                      type="radio"
+                                      className="form-check-input"
+                                      name={`status-${item.idExitCaseDepartmentClearanceLine}`}
+                                      id={`cleared-${item.idExitCaseDepartmentClearanceLine}`}
+                                      checked={item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "Cleared"}
+                                      onChange={() => handleStatusChange(index, "CLEARED")}
+                                      disabled={!department?.canEditChecklist}
+                                    />
+                                    <label
+                                      className="form-check-label small"
+                                      htmlFor={`cleared-${item.idExitCaseDepartmentClearanceLine}`}
+                                    >
+                                      Cleared
+                                    </label>
+                                  </div>
+                                  <div className="form-check">
+                                    <input
+                                      type="radio"
+                                      className="form-check-input"
+                                      name={`status-${item.idExitCaseDepartmentClearanceLine}`}
+                                      id={`notrequired-${item.idExitCaseDepartmentClearanceLine}`}
+                                      checked={item.deptClearanceStatus === "NOTREQUIRED" || item.deptClearanceStatus === "NotRequired"}
+                                      onChange={() => handleStatusChange(index, "NOTREQUIRED")}
+                                      disabled={!department?.canEditChecklist}
+                                    />
+                                    <label
+                                      className="form-check-label small"
+                                      htmlFor={`notrequired-${item.idExitCaseDepartmentClearanceLine}`}
+                                    >
+                                      Not Required
+                                    </label>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="align-middle">
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm"
+                                  value={item.remarks}
+                                  onChange={(e) => handleRemarksChange(index, e.target.value)}
+                                  disabled={!department?.canEditChecklist}
+                                  placeholder="Enter remarks"
+                                />
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={3} className="text-center text-muted py-3">
+                              No checklist items
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Auto-status note */}
+                {canEdit && (
+                  <div className="d-flex justify-content-end gap-2 mb-3">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSave}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit"
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-4 text-muted">
+                No clearance details found
               </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={handleReset}
-            >
-              Reset
-            </button>
+            )}
           </div>
         </div>
       </div>

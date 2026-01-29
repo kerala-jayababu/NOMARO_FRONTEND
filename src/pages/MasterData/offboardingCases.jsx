@@ -3,9 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import secureLocalStorage from "react-secure-storage";
 import {
+  fetchExitCasesForListing,
   fetchResignationRequests,
   submitReportingOfficerAction,
-  clearSelectedExitCase,
+  submitHROfficerAction,
+  submitHRManagerAction,
+  clearSelectedExitCaseDetails,
   fetchOffboardingClearanceTemplates,
   fetchClearanceTemplateDepartments,
 } from "../../redux/reducers/offboardingCases";
@@ -17,6 +20,13 @@ const getUserRoleType = () => {
     const userData = JSON.parse(storedUser);
     // Map user role to API roleType
     console.log(userData);
+    const role = userData?.role;
+    if (role === "HR Generalist") {
+      return "HREXECUTIVE";
+    }
+    if (role === "Human Resources Director") {
+      return "HRHEAD";
+    }
     return userData?.roleType || "REPOFFICER";
   }
   return "REPOFFICER";
@@ -25,25 +35,25 @@ const getUserRoleType = () => {
 const OffboardingCases = () => {
   const dispatch = useDispatch();
   const {
-    resignationRequests,
+    exitCasesForListing,
+    selectedExitCaseDetails,
     loading,
     actionLoading,
   } = useSelector((state) => state.offboardingCases);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null);
 
   // Get role type from logged in user
   const roleType = getUserRoleType();
 
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(fetchResignationRequests({ roleType }));
-  }, [dispatch, roleType]);
+    dispatch(fetchExitCasesForListing());
+  }, [dispatch]);
 
   // Filter Exit Cases based on search
-  const filteredRequests = resignationRequests.filter((request) => {
+  const filteredRequests = exitCasesForListing.filter((request) => {
     if (!searchQuery) return true;
     const search = searchQuery.toLowerCase();
     return (
@@ -56,9 +66,9 @@ const OffboardingCases = () => {
 
   // Calculate status counts from current data
   const statusCounts = {
-    pending: resignationRequests.filter(r => r.pendingWith === roleType || r.pendingWith === "HROFFICER").length,
-    approved: resignationRequests.filter(r => r.exitStatus?.includes("Approved")).length,
-    total: resignationRequests.length,
+    pending: exitCasesForListing.filter(r => r.pendingWith === roleType || r.pendingWith === "HROFFICER").length,
+    approved: exitCasesForListing.filter(r => r.exitStatus?.includes("Approved")).length,
+    total: exitCasesForListing.length,
   };
 
   // Get badge class based on status
@@ -79,22 +89,21 @@ const OffboardingCases = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Open view modal
+  // Open view modal - fetch details via GetResignationRequests API
   const handleView = (exitCase) => {
-    setSelectedCase(exitCase);
+    dispatch(fetchResignationRequests({ roleType, idEmployee: exitCase.idEmployee }));
     setShowViewModal(true);
   };
 
   // Close modals
   const closeModals = () => {
     setShowViewModal(false);
-    setSelectedCase(null);
-    dispatch(clearSelectedExitCase());
+    dispatch(clearSelectedExitCaseDetails());
   };
 
   // Refresh data
   const refreshData = () => {
-    dispatch(fetchResignationRequests({ roleType }));
+    dispatch(fetchExitCasesForListing());
   };
 
   return (
@@ -236,7 +245,7 @@ const OffboardingCases = () => {
                       <td>{exitCase.caseNumber}</td>
                       <td>{exitCase.employeeCode}</td>
                       <td>{exitCase.employeeName}</td>
-                      <td>{exitCase.employeeDepartmentName}</td>
+                      <td>{exitCase.departmentName}</td>
                       <td>{exitCase.exitTypeName}</td>
                       <td>{formatDate(exitCase.proposedLWD)}</td>
                       <td>
@@ -264,9 +273,9 @@ const OffboardingCases = () => {
       </div>
 
       {/* View Exit Case Modal */}
-      {showViewModal && selectedCase && (
+      {showViewModal && (
         <ViewExitCaseModal
-          exitCase={selectedCase}
+          exitCase={selectedExitCaseDetails}
           roleType={roleType}
           onClose={closeModals}
           onRefresh={refreshData}
@@ -294,19 +303,50 @@ const ViewExitCaseModal = ({
   } = useSelector((state) => state.offboardingCases);
 
   const [handOverNotes, setHandOverNotes] = useState("");
-  const [approvedLWD, setApprovedLWD] = useState(
-    exitCase.approvedLWD
-      ? new Date(exitCase.approvedLWD).toISOString().split("T")[0]
-      : exitCase.proposedLWD
-      ? new Date(exitCase.proposedLWD).toISOString().split("T")[0]
-      : ""
-  );
-  const [selectedClearanceTemplate, setSelectedClearanceTemplate] = useState(
-    exitCase.idClearanceTemplate || ""
-  );
+  const [approvedLWD, setApprovedLWD] = useState("");
+  const [selectedClearanceTemplate, setSelectedClearanceTemplate] = useState("");
+  const [selectedAssignees, setSelectedAssignees] = useState({});
+
+  // HR Executive specific fields
+  const [exitInterviewDate, setExitInterviewDate] = useState("");
+  const [contactAfterExit, setContactAfterExit] = useState("");
+
+  // HR Head specific fields
+  const [exitInterviewDetails, setExitInterviewDetails] = useState("");
 
   // Check if user is HR (HREXECUTIVE or HRHEAD)
   const isHRRole = roleType === "HREXECUTIVE" || roleType === "HRHEAD";
+
+  // Initialize form values when exitCase data is loaded
+  useEffect(() => {
+    if (exitCase) {
+      setApprovedLWD(
+        exitCase.approvedLWD
+          ? new Date(exitCase.approvedLWD).toISOString().split("T")[0]
+          : exitCase.proposedLWD
+          ? new Date(exitCase.proposedLWD).toISOString().split("T")[0]
+          : ""
+      );
+      setSelectedClearanceTemplate(exitCase.idClearanceTemplate || "");
+      // Pre-populate assignees from existing clearanceAssignments
+      if (exitCase.clearanceAssignments?.length > 0) {
+        const assignees = exitCase.clearanceAssignments.reduce((acc, assignment) => {
+          acc[assignment.idDepartment] = assignment.idAssigneeUser;
+          return acc;
+        }, {});
+        setSelectedAssignees(assignees);
+      } else {
+        setSelectedAssignees({});
+      }
+      setExitInterviewDate(
+        exitCase.exitInterviewDate
+          ? new Date(exitCase.exitInterviewDate).toISOString().split("T")[0]
+          : ""
+      );
+      setContactAfterExit(exitCase.contactAfterExit || "");
+      setExitInterviewDetails(exitCase.exitInterviewDetails || "");
+    }
+  }, [exitCase]);
 
   useEffect(() => {
     const modalElement = document.getElementById("viewExitCaseModal");
@@ -352,14 +392,33 @@ const ViewExitCaseModal = ({
     if (!acc[deptId]) {
       acc[deptId] = {
         idDepartment: deptId,
+        departmentName: item.departmentName,
+        deptEmployees: item.deptEmployees || [],
         checklistItems: [],
         count: 0,
       };
     }
     acc[deptId].checklistItems.push(item);
     acc[deptId].count += 1;
+    // Merge deptEmployees from all items (in case they differ)
+    if (item.deptEmployees?.length > 0) {
+      const existingIds = new Set(acc[deptId].deptEmployees.map(e => e.idEmployee));
+      item.deptEmployees.forEach(emp => {
+        if (!existingIds.has(emp.idEmployee)) {
+          acc[deptId].deptEmployees.push(emp);
+        }
+      });
+    }
     return acc;
   }, {});
+
+  // Handle assignee change for a department
+  const handleAssigneeChange = (deptId, employeeId) => {
+    setSelectedAssignees(prev => ({
+      ...prev,
+      [deptId]: employeeId
+    }));
+  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -386,15 +445,56 @@ const ViewExitCaseModal = ({
     }
 
     try {
-      const result = await dispatch(
-        submitReportingOfficerAction({
-          idExitCase: exitCase.idExitCase,
-          idEmployee: exitCase.idEmployee,
-          approvedLWD: new Date(approvedLWD).toISOString(),
-          handOverNotes: handOverNotes,
-          action: "Approve",
-        })
-      );
+      let result;
+
+      if (roleType === "HREXECUTIVE") {
+        // Validate clearance template selection for HR Executive
+        if (!selectedClearanceTemplate) {
+          toast.error("Please select a clearance template");
+          return;
+        }
+
+        // Build clearance assignments from selected assignees
+        const clearanceAssignments = Object.entries(selectedAssignees)
+          .filter(([_, employeeId]) => employeeId)
+          .map(([deptId, employeeId]) => {
+            const dept = groupedDepartments[deptId];
+            const templateDept = dept?.checklistItems?.[0];
+            return {
+              idExitCaseClearanceAssignment: 0,
+              idDepartment: parseInt(deptId),
+              idTemplateDept: templateDept?.idTemplateDept || 0,
+              idAssigneeUser: parseInt(employeeId),
+            };
+          });
+
+        // Call HR Officer API
+        result = await dispatch(
+          submitHROfficerAction({
+            idExitCase: exitCase.idExitCase,
+            idEmployee: exitCase.idEmployee,
+            approvedLWD: new Date(approvedLWD).toISOString(),
+            exitInterviewDate: exitInterviewDate
+              ? new Date(exitInterviewDate).toISOString()
+              : null,
+            contactAfterExit: contactAfterExit || null,
+            idClearanceTemplate: parseInt(selectedClearanceTemplate),
+            clearanceAssignments: clearanceAssignments,
+          })
+        );
+      } else {
+        // Call Reporting Officer API for other roles
+        result = await dispatch(
+          submitReportingOfficerAction({
+            idExitCase: exitCase.idExitCase,
+            idEmployee: exitCase.idEmployee,
+            approvedLWD: new Date(approvedLWD).toISOString(),
+            handOverNotes: handOverNotes,
+            action: "Approved",
+          })
+        );
+      }
+
       if (result.payload?.success) {
         toast.success(result.payload?.message || "Exit case approved successfully!");
         onRefresh();
@@ -415,17 +515,96 @@ const ViewExitCaseModal = ({
     }
 
     try {
-      const result = await dispatch(
-        submitReportingOfficerAction({
-          idExitCase: exitCase.idExitCase,
-          idEmployee: exitCase.idEmployee,
-          approvedLWD: approvedLWD ? new Date(approvedLWD).toISOString() : null,
-          handOverNotes: handOverNotes,
-          action: "Reject",
-        })
-      );
+      let result;
+
+      if (roleType === "HREXECUTIVE") {
+        // Call HR Officer API with empty clearance assignments for rejection
+        result = await dispatch(
+          submitHROfficerAction({
+            idExitCase: exitCase.idExitCase,
+            idEmployee: exitCase.idEmployee,
+            approvedLWD: approvedLWD ? new Date(approvedLWD).toISOString() : null,
+            exitInterviewDate: null,
+            contactAfterExit: null,
+            idClearanceTemplate: 0,
+            clearanceAssignments: [],
+          })
+        );
+      } else {
+        // Call Reporting Officer API for other roles
+        result = await dispatch(
+          submitReportingOfficerAction({
+            idExitCase: exitCase.idExitCase,
+            idEmployee: exitCase.idEmployee,
+            approvedLWD: approvedLWD ? new Date(approvedLWD).toISOString() : null,
+            handOverNotes: handOverNotes,
+            action: "Reject",
+          })
+        );
+      }
+
       if (result.payload?.success) {
         toast.success(result.payload?.message || "Exit case rejected!");
+        onRefresh();
+        onClose();
+      } else {
+        toast.error(result.payload?.message || "Failed to reject exit case");
+      }
+    } catch (error) {
+      toast.error("Failed to reject exit case");
+    }
+  };
+
+  // Handle HR Head Approve Action (Final Approval)
+  const handleHRHeadApprove = async () => {
+    if (!exitInterviewDate) {
+      toast.error("Please select exit interview date");
+      return;
+    }
+
+    try {
+      const result = await dispatch(
+        submitHRManagerAction({
+          idExitCase: exitCase.idExitCase,
+          idEmployee: exitCase.idEmployee,
+          exitInterviewDate: new Date(exitInterviewDate).toISOString(),
+          exitInterviewDetails: exitInterviewDetails || "",
+        })
+      );
+
+      if (result.payload?.success) {
+        toast.success(result.payload?.message || "Exit case approved by HR Head successfully!");
+        onRefresh();
+        onClose();
+      } else {
+        toast.error(result.payload?.message || "Failed to approve exit case");
+      }
+    } catch (error) {
+      toast.error("Failed to approve exit case");
+    }
+  };
+
+  // Handle HR Head Reject Action
+  const handleHRHeadReject = async () => {
+    if (!exitInterviewDetails.trim()) {
+      toast.error("Please provide exit interview details/remarks for rejection");
+      return;
+    }
+
+    try {
+      const result = await dispatch(
+        submitHRManagerAction({
+          idExitCase: exitCase.idExitCase,
+          idEmployee: exitCase.idEmployee,
+          exitInterviewDate: exitInterviewDate
+            ? new Date(exitInterviewDate).toISOString()
+            : null,
+          exitInterviewDetails: exitInterviewDetails,
+        })
+      );
+
+      if (result.payload?.success) {
+        toast.success(result.payload?.message || "Exit case rejected by HR Head!");
         onRefresh();
         onClose();
       } else {
@@ -440,7 +619,21 @@ const ViewExitCaseModal = ({
   const canTakeAction = () => {
     if (roleType === "REPOFFICER" && exitCase.pendingWith === "REPOFFICER") return true;
     if (roleType === "HREXECUTIVE" && exitCase.pendingWith === "HROFFICER") return true;
-    if (roleType === "HRHEAD" && exitCase.pendingWith === "HRHEAD") return true;
+    // HRHEAD can take action when pendingWith is HRHEAD or HRMANAGER, or when status is ReadyForClosure/Pending HR Head Approval
+    if (roleType === "HRHEAD") {
+      const pendingWith = exitCase.pendingWith?.toUpperCase();
+      const exitStatus = exitCase.exitStatus?.toLowerCase();
+      if (
+        pendingWith === "HRHEAD" ||
+        pendingWith === "HRMANAGER" ||
+        exitStatus?.includes("readyforclosure") ||
+        exitStatus?.includes("ready for closure") ||
+        exitStatus?.includes("pending hr head") ||
+        exitStatus?.includes("pending hrhead")
+      ) {
+        return true;
+      }
+    }
     return false;
   };
 
@@ -457,7 +650,7 @@ const ViewExitCaseModal = ({
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
-              Exit Case - {exitCase.caseNumber}
+              Exit Case {exitCase ? `- ${exitCase.caseNumber}` : ""}
             </h5>
             <button
               type="button"
@@ -467,6 +660,17 @@ const ViewExitCaseModal = ({
             ></button>
           </div>
           <div className="modal-body">
+            {/* Loading State */}
+            {!exitCase && (
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2 text-muted">Loading exit case details...</p>
+              </div>
+            )}
+            {exitCase && (
+            <>
             {/* Employee Details */}
             <div className="mb-4">
               <h6 className="fw-bold border-bottom pb-2 mb-3">
@@ -523,6 +727,12 @@ const ViewExitCaseModal = ({
                 </div>
                 <div className="col-md-4 mb-2">
                   <strong>Pending With:</strong> {exitCase.pendingWith}
+                </div>
+                <div className="col-md-4 mb-2">
+                  <strong>Exit Interview Date:</strong> {formatDate(exitCase.exitInterviewDate)}
+                </div>
+                <div className="col-md-4 mb-2">
+                  <strong>Contact After Exit:</strong> {exitCase.contactAfterExit || "-"}
                 </div>
               </div>
             </div>
@@ -585,8 +795,8 @@ const ViewExitCaseModal = ({
               </div>
             )}
 
-            {/* Clearance Setup Section - Only show for HR roles */}
-            {isHRRole && (
+            {/* Clearance Setup Section - Only show for HREXECUTIVE when not INITIATED/REPOFFICER and not COMPLETED */}
+            {roleType === "HREXECUTIVE" && !(exitCase.exitStatus === "INITIATED" && exitCase.pendingWith === "REPOFFICER") && exitCase.exitStatus?.toLowerCase() !== "completed" && (
               <div className="mb-4">
                 <h6 className="fw-bold border-bottom pb-2 mb-3">
                   Clearance Setup (HR)
@@ -598,6 +808,7 @@ const ViewExitCaseModal = ({
                       className="form-select"
                       value={selectedClearanceTemplate}
                       onChange={handleClearanceTemplateChange}
+                      disabled={exitCase.exitStatus === "InClearance"}
                     >
                       <option value="">Select Clearance Template</option>
                       {offboardingClearanceTemplates.map((template) => (
@@ -612,9 +823,6 @@ const ViewExitCaseModal = ({
                 {/* Display Clearance Departments grouped by department */}
                 {selectedClearanceTemplate && (
                   <>
-                    <p className="text-muted small mb-3">
-                      Assign one clearance owner per department (Phase 1). Owners will action the checklist in <strong>Offboarding Clearances</strong>.
-                    </p>
                     {templateLoading ? (
                       <div className="text-center py-3">
                         <div className="spinner-border spinner-border-sm text-primary" role="status">
@@ -628,14 +836,31 @@ const ViewExitCaseModal = ({
                             <tr>
                               <th>Department</th>
                               <th>Checklist Items</th>
+                              <th>Assignee</th>
                               <th>Dept Status</th>
                             </tr>
                           </thead>
                           <tbody>
                             {Object.values(groupedDepartments).map((dept) => (
                               <tr key={dept.idDepartment}>
-                                <td>Department {dept.idDepartment}</td>
+                                <td>{dept.departmentName}</td>
                                 <td>{dept.count}</td>
+                                <td>
+                                  <select
+                                    className="form-select form-select-sm"
+                                    value={selectedAssignees[dept.idDepartment] || ""}
+                                    onChange={(e) => handleAssigneeChange(dept.idDepartment, e.target.value)}
+                                    style={{ minWidth: "150px" }}
+                                    disabled={exitCase.exitStatus === "InClearance"}
+                                  >
+                                    <option value="">Select Assignee</option>
+                                    {dept.deptEmployees.map((emp) => (
+                                      <option key={emp.idEmployee} value={emp.idEmployee}>
+                                        {emp.employeeName}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
                                 <td>
                                   <span className="badge bg-label-secondary">Not Started</span>
                                 </td>
@@ -652,8 +877,57 @@ const ViewExitCaseModal = ({
               </div>
             )}
 
+            {/* Clearance Items Table - Show for HRHEAD or when status is Completed */}
+            {(roleType === "HRHEAD" || exitCase.exitStatus?.toLowerCase() === "completed") && (
+              <div className="mb-4">
+                <h6 className="fw-bold border-bottom pb-2 mb-3">
+                  Clearance Status
+                </h6>
+                {exitCase.departmentClearanceLines && exitCase.departmentClearanceLines.length > 0 ? (
+                  <div className="table-responsive" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    <table className="table table-sm table-bordered">
+                      <thead>
+                        <tr>
+                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Department</th>
+                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Cleared By</th>
+                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Checklist Item</th>
+                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Status</th>
+                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exitCase.departmentClearanceLines.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.departmentName || "-"}</td>
+                            <td>{item.clearedByEmployee || "-"}</td>
+                            <td>{item.checkListItem || "-"}</td>
+                            <td>
+                              <span className={`badge ${
+                                item.deptClearanceStatus?.toLowerCase() === "cleared"
+                                  ? "bg-label-success"
+                                  : item.deptClearanceStatus?.toLowerCase() === "not required"
+                                  ? "bg-label-secondary"
+                                  : item.deptClearanceStatus?.toLowerCase() === "pending"
+                                  ? "bg-label-warning"
+                                  : "bg-label-info"
+                              }`}>
+                                {item.deptClearanceStatus || "Pending"}
+                              </span>
+                            </td>
+                            <td>{item.deptRemarks || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-muted text-center py-3">No clearance items available</p>
+                )}
+              </div>
+            )}
+
             {/* Action Section - Only show if user can take action */}
-            {canTakeAction() && (
+            {canTakeAction() && roleType !== "HRHEAD" && (
               <div className="mb-4">
                 <h6 className="fw-bold border-bottom pb-2 mb-3">
                   Take Action
@@ -670,7 +944,37 @@ const ViewExitCaseModal = ({
                       onChange={(e) => setApprovedLWD(e.target.value)}
                     />
                   </div>
+                  {/* HR Executive specific fields */}
+                  {roleType === "HREXECUTIVE" && (
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">
+                        Exit Interview Date
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={exitInterviewDate}
+                        onChange={(e) => setExitInterviewDate(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
+                {roleType === "HREXECUTIVE" && (
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">
+                        Contact After Exit
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Enter email or phone number..."
+                        value={contactAfterExit}
+                        onChange={(e) => setContactAfterExit(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="row">
                   <div className="col-12 mb-3">
                     <label className="form-label">
@@ -688,9 +992,47 @@ const ViewExitCaseModal = ({
                 </div>
               </div>
             )}
+
+            {/* HR Head Action Section - Final Approval */}
+            {canTakeAction() && roleType === "HRHEAD" && (
+              <div className="mb-4">
+                <h6 className="fw-bold border-bottom pb-2 mb-3">
+                  HR Head Final Action
+                </h6>
+                <div className="row">
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">
+                      Exit Interview Date <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={exitInterviewDate}
+                      onChange={(e) => setExitInterviewDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-12 mb-3">
+                    <label className="form-label">
+                      Exit Interview Details / Remarks
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows="4"
+                      placeholder="Enter exit interview remarks and observations..."
+                      value={exitInterviewDetails}
+                      onChange={(e) => setExitInterviewDetails(e.target.value)}
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            )}
+            </>
+            )}
           </div>
           <div className="modal-footer">
-            {canTakeAction() && (
+            {exitCase && canTakeAction() && roleType !== "HRHEAD" && (
               <>
                 <button
                   type="button"
@@ -711,6 +1053,40 @@ const ViewExitCaseModal = ({
                   type="button"
                   className="btn btn-danger me-2"
                   onClick={handleReject}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Processing...
+                    </>
+                  ) : (
+                    "Reject"
+                  )}
+                </button>
+              </>
+            )}
+            {exitCase && canTakeAction() && roleType === "HRHEAD" && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-primary me-2"
+                  onClick={handleHRHeadApprove}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Processing...
+                    </>
+                  ) : (
+                    "Final Approve"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger me-2"
+                  onClick={handleHRHeadReject}
                   disabled={actionLoading}
                 >
                   {actionLoading ? (
