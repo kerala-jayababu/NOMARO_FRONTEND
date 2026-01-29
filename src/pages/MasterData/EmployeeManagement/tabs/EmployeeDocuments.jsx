@@ -428,7 +428,7 @@ const EmployeeDocuments = () => {
                         <td>{doc.remarks || "-"}</td>
                         <td>{formatDate(doc.dateValidTill)}</td>
                         <td>{formatDate(doc.createdAt)}</td>
-                        <td>
+                        <td width="20%">
                           <button
                             className="btn btn-sm btn-icon btn-outline-primary px-3 border-0"
                             onClick={() => handleView(doc)}

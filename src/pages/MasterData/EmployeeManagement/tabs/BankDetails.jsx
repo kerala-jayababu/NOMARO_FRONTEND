@@ -156,12 +156,13 @@ const BankDetails = () => {
       ]);
 
       // Handle bank accounts
+      let mappedBankAccounts = [];
       if (
         bankAccountsResult.payload &&
         bankAccountsResult.payload.data &&
         bankAccountsResult.payload.data.length > 0
       ) {
-        const mappedBankAccounts = bankAccountsResult.payload.data.map(
+        mappedBankAccounts = bankAccountsResult.payload.data.map(
           (account) => ({
             ...account,
             selectedBank:
@@ -202,25 +203,26 @@ const BankDetails = () => {
         loadBranchesForBanks();
         setBankAccountsState(mappedBankAccounts);
       } else {
-        setBankAccountsState([
-          {
-            idEmployeeBankAccount: null,
-            selectedBank: banks.length > 0 ? banks[0].value : "",
-            selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
-            accountNumber: "",
-            salaryPercentageDistributed: "",
-            currencyCode: "GYD",
-          },
-        ]);
+        const defaultBankAccount = {
+          idEmployeeBankAccount: null,
+          selectedBank: banks.length > 0 ? banks[0].value : "",
+          selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+          accountNumber: "",
+          salaryPercentageDistributed: "",
+          currencyCode: "GYD",
+        };
+        mappedBankAccounts = [defaultBankAccount];
+        setBankAccountsState([defaultBankAccount]);
       }
 
       // Handle overtime configs
+      let mappedOvertimeDetails = [];
       if (
         overtimeConfigsResult.payload &&
         overtimeConfigsResult.payload.data &&
         overtimeConfigsResult.payload.data.length > 0
       ) {
-        const mappedOvertimeDetails = overtimeConfigsResult.payload.data.map(
+        mappedOvertimeDetails = overtimeConfigsResult.payload.data.map(
           (config) => {
             const matchingOption = overtimeOptions.find(
               (opt) => opt.value === config.dayType
@@ -235,19 +237,19 @@ const BankDetails = () => {
         );
         setOvertimeDetails(mappedOvertimeDetails);
       } else {
-        setOvertimeDetails([
-          {
-            type: "",
-            hourlyRate: "",
-            appliedRate: "",
-          },
-        ]);
+        const defaultOvertimeDetail = {
+          type: "",
+          hourlyRate: "",
+          appliedRate: "",
+        };
+        mappedOvertimeDetails = [defaultOvertimeDetail];
+        setOvertimeDetails([defaultOvertimeDetail]);
       }
 
       // Store initial data for comparison
       const initial = {
-        bankAccounts: JSON.parse(JSON.stringify(mappedBankAccounts || [])),
-        overtimeDetails: JSON.parse(JSON.stringify(mappedOvertimeDetails || [])),
+        bankAccounts: JSON.parse(JSON.stringify(mappedBankAccounts)),
+        overtimeDetails: JSON.parse(JSON.stringify(mappedOvertimeDetails)),
         disbursementType: mappedBankAccounts.length > 0 ? mappedBankAccounts[0].disbursementType : "PERCENTAGE",
         selectedBudgetCode: detailsResult.payload?.data?.idBudgetCode?.toString() || "",
         childCount: detailsResult.payload?.data?.childrenCount || 0,
@@ -386,8 +388,9 @@ const BankDetails = () => {
 
   const handleDeleteRow = (index) => {
     setBankAccountsState((prevState) => {
+      let newState;
       if (prevState.length === 1) {
-        return [
+        newState = [
           {
             idEmployeeBankAccount: null,
             selectedBank: banks.length > 0 ? banks[0].value : "",
@@ -397,8 +400,21 @@ const BankDetails = () => {
             currencyCode: "GYD",
           },
         ];
+      } else {
+        newState = prevState.filter((_, i) => i !== index);
       }
-      return prevState.filter((_, i) => i !== index);
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newState;
     });
     const salaryPercentageValidation = validateSalaryPercentage();
     setBankAccountErrors((prevErrors) => ({
@@ -479,8 +495,9 @@ const BankDetails = () => {
 
   const handleDeleteOvertimeRow = (index) => {
     setOvertimeDetails((prevState) => {
+      let newState;
       if (prevState.length === 1) {
-        return [
+        newState = [
           {
             idEmployeeOvertimeConfig: null,
             type: "",
@@ -488,8 +505,21 @@ const BankDetails = () => {
             appliedRate: "",
           },
         ];
+      } else {
+        newState = prevState.filter((_, i) => i !== index);
       }
-      return prevState.filter((_, i) => i !== index);
+      
+      // Check for unsaved changes
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.overtimeDetails) ||
+          JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount;
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newState;
     });
     setOvertimeErrors((prevErrors) => {
       const newErrors = { ...prevErrors };
@@ -727,32 +757,38 @@ const BankDetails = () => {
   };
 
   const handleReset = () => {
-    setBankAccountsState([
-      {
-        idEmployeeBankAccount: null,
-        selectedBank: banks.length > 0 ? banks[0].value : "",
-        selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
-        accountNumber: "",
-        salaryPercentageDistributed: "",
-        currencyCode: "GYD",
-      },
-    ]);
-    setOvertimeDetails([
-      {
-        type: "",
-        hourlyRate: "",
-        appliedRate: "",
-      },
-    ]);
-    setSelectedBudgetCode("");
-    setChildCount(0);
-    setBankAccountErrors({});
-    setOvertimeErrors({});
-    setAttachmentFile(null);
-    setEditFileName(null);
-    setInitialData(null);
-    if (setHasUnsavedChanges) {
-      setHasUnsavedChanges(false);
+    if (id) {
+      // Reload employee data to restore original state
+      loadEmployeeData();
+    } else {
+      // Reset to empty state if no employee ID
+      setBankAccountsState([
+        {
+          idEmployeeBankAccount: null,
+          selectedBank: banks.length > 0 ? banks[0].value : "",
+          selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+          accountNumber: "",
+          salaryPercentageDistributed: "",
+          currencyCode: "GYD",
+        },
+      ]);
+      setOvertimeDetails([
+        {
+          type: "",
+          hourlyRate: "",
+          appliedRate: "",
+        },
+      ]);
+      setSelectedBudgetCode("");
+      setChildCount(0);
+      setBankAccountErrors({});
+      setOvertimeErrors({});
+      setAttachmentFile(null);
+      setEditFileName(null);
+      setInitialData(null);
+      if (setHasUnsavedChanges) {
+        setHasUnsavedChanges(false);
+      }
     }
   };
 
