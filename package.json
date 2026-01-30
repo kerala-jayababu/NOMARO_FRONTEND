@@ -39,6 +39,7 @@
     "react-icons": "^5.5.0",
     "react-loader-spinner": "^6.1.6",
     "react-number-format": "^5.4.3",
+    "react-organizational-chart": "^2.2.1",
     "react-quill": "^2.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.1",

@@ -167,6 +167,24 @@ export default class CommonService {
     }
   }
 
+  static getAllWorkYears = async () => {
+    try {
+      const response = await API.get("/api/v1/Common/GetAllWorkYears");
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getEmployeeProfileById = async (employeeId) => {
+    try {
+      const response = await API.get(`/api/v1/Employee/GetEmployeeProfileByID?Id=${employeeId}`);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static saveEmployee = async (payload) => {
     try {
       const response = await API.post("/api/v1/Employee/AddEmployee", payload, {

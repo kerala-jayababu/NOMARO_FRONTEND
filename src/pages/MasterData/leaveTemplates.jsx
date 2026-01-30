@@ -17,6 +17,7 @@ import {
   resetLeaveTemplateDetailById
 } from "../../redux/reducers/leaveTemplate";
 import { fetchLeaveTypes } from "../../redux/reducers/leaveType";
+import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 
@@ -39,21 +40,37 @@ const LeaveTemplates = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [workYears, setWorkYears] = useState([]);
 
-  // Year options (current year and next 5 years for form)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 6 }, (_, i) => ({
-    value: String(currentYear + i),
-    label: String(currentYear + i),
-  }));
+  // Fetch work years from API on component mount
+  useEffect(() => {
+    const fetchWorkYears = async () => {
+      const result = await CommonService.getAllWorkYears();
+      if (!result.error && result.data) {
+        setWorkYears(result.data);
+      }
+    };
+    fetchWorkYears();
+  }, []);
 
-  // Year filter options (current year and next 2 years for filter)
-  const yearFilterOptions = [
-    { value: "", label: "All Years" },
-    { value: String(currentYear), label: String(currentYear) },
-    { value: String(currentYear + 1), label: String(currentYear + 1) },
-    { value: String(currentYear + 2), label: String(currentYear + 2) },
-  ];
+  // Year options from API for form dropdown
+  const yearOptions = useMemo(() => {
+    return workYears.map((year) => ({
+      value: String(year.idWorkYear),
+      label: year.displayText,
+    }));
+  }, [workYears]);
+
+  // Year filter options from API with "All Years" option
+  const yearFilterOptions = useMemo(() => {
+    return [
+      { value: "", label: "All Years" },
+      ...workYears.map((year) => ({
+        value: String(year.idWorkYear),
+        label: year.displayText,
+      })),
+    ];
+  }, [workYears]);
 
   // Status options (matching API values)
   const statusOptions = [
@@ -73,19 +90,26 @@ const LeaveTemplates = () => {
     dispatch(fetchLeaveTemplates({ status, idYear, searchText }));
   }, [dispatch, statusFilter, yearFilter, searchQuery]);
 
+  // Helper function to get displayText from idWorkYear
+  const getYearDisplayText = (idYear) => {
+    const yearData = workYears.find((y) => y.idWorkYear === idYear);
+    return yearData ? yearData.displayText : String(idYear);
+  };
+
   // Get templates data from API response
   const templatesData = useMemo(() => {
     if (!leaveTemplates || !leaveTemplates.data) return [];
 
     return leaveTemplates.data.map((template) => ({
       idLeaveTemplate: template.idLeaveTemplate,
-      year: String(template.idYear),
+      idYear: template.idYear,
+      year: getYearDisplayText(template.idYear),
       templateName: template.leaveTemplateName,
       description: template.leaveTemplateDesc || "",
       status: (template.approvlStatus || "DRAFT").toUpperCase(),
       viewDetails: template.idLeaveTemplate,
     }));
-  }, [leaveTemplates]);
+  }, [leaveTemplates, workYears]);
 
   const paginatedTemplates = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -179,7 +203,7 @@ const LeaveTemplates = () => {
     if (template) {
       setTemplateName(template.templateName);
       setDescription(template.description);
-      setSelectedYear(template.year);
+      setSelectedYear(String(template.idYear));
       setStatus(template.status);
       setEditingTemplateId(template.idLeaveTemplate);
       setIsEditing(true);
@@ -660,6 +684,7 @@ const TemplateDetailsModal = ({ template, onClose }) => {
         <LeaveTypeModal
           leaveType={selectedLeaveType}
           templateYear={template.year}
+          templateIdYear={template.idYear}
           templateId={template.idLeaveTemplate}
           onClose={() => {
             setShowLeaveTypeModal(false);
@@ -672,7 +697,7 @@ const TemplateDetailsModal = ({ template, onClose }) => {
   );
 };
 
-const LeaveTypeModal = ({ leaveType, templateYear, templateId, onClose, onSave }) => {
+const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, onClose, onSave }) => {
   const dispatch = useDispatch();
   const { designationList, leaveTemplateDetailById } = useSelector((state) => state.leaveTemplate);
   const { leaveTypes: leaveTypesList } = useSelector((state) => state.leaveType);
@@ -893,7 +918,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateId, onClose, onSave }
       idLeaveType: parseInt(idLeaveType) || 0,
       leaveTypeName: selectedLeaveType,
       leaveCode: leaveCode,
-      idYear: parseInt(year),
+      idYear: templateIdYear,
       effectiveFrom: new Date().toISOString(),
       effectiveTo: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
       applicableGender: applicableGender,
