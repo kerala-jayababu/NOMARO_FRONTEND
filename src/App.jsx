@@ -63,6 +63,7 @@ import OffboardingCases from "./pages/MasterData/offboardingCases";
 import OffboardingClearances from "./pages/MasterData/offboardingClearances";
 import ServiceChange from "./pages/MasterData/serviceChange";
 import ServiceApproval from "./pages/MasterData/serviceApproval";
+import OrgHierarchy from "./pages/MasterData/OrgHierarchy";
 
 function App() {
   return (
@@ -124,6 +125,7 @@ function App() {
               <Route path="offboarding-setup" element={<OffboardingSetup/>} />
               <Route path="offboarding-cases" element={<OffboardingCases/>} />
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
+              <Route path="org-hierarchy" element={<OrgHierarchy/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

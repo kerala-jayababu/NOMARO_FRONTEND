@@ -15,6 +15,7 @@ import {
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplates, fetchLeaveTemplateById } from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
+import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 
@@ -31,7 +32,7 @@ const EmployeeLeaveConfig = () => {
   const [validFrom, setValidFrom] = useState(null);
   const [validTo, setValidTo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [yearFilter, setYearFilter] = useState("2026");
+  const [yearFilter, setYearFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
@@ -40,39 +41,58 @@ const EmployeeLeaveConfig = () => {
   const [templateAllocations, setTemplateAllocations] = useState([]);
   const [formError, setFormError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [workYears, setWorkYears] = useState([]);
 
-  // Year filter options
-  const currentYear = new Date().getFullYear();
-  const yearFilterOptions = [
-    { value: String(currentYear), label: String(currentYear) },
-    { value: String(currentYear + 1), label: String(currentYear + 1) },
-    { value: String(currentYear + 2), label: String(currentYear + 2) },
-  ];
+  // Fetch work years from API on component mount
+  useEffect(() => {
+    const fetchWorkYears = async () => {
+      const result = await CommonService.getAllWorkYears();
+      if (!result.error && result.data) {
+        setWorkYears(result.data);
+        // Set default year filter to first work year if available
+        if (result.data.length > 0 && !yearFilter) {
+          setYearFilter(String(result.data[0].idWorkYear));
+        }
+      }
+    };
+    fetchWorkYears();
+  }, []);
+
+  // Year filter options from API
+  const yearFilterOptions = useMemo(() => {
+    return workYears.map((year) => ({
+      value: String(year.idWorkYear),
+      label: year.displayText,
+    }));
+  }, [workYears]);
 
   // Fetch initial data on component mount
   useEffect(() => {
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
     dispatch(fetchLeaveTemplates({ status: "ALL", idYear: "", searchText: "" }));
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
 
   // Fetch employee leave setup list when search query or year filter changes
   useEffect(() => {
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+    // Only fetch when yearFilter has a valid value
+    if (yearFilter) {
+      const idYear = parseInt(yearFilter);
+      if (!isNaN(idYear)) {
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear }));
+      }
+    }
   }, [dispatch, searchQuery, yearFilter]);
 
   // Employee options for dropdown
   const employeeOptions = useMemo(() => {
     if (employeeList && employeeList.length > 0) {
       return [
-        { value: "", label: "Select Employee" },
         ...employeeList.map((emp) => ({
           value: String(emp.idEmployee),
           label: `${emp.employeeCode} - ${emp.fullName}`,
         })),
       ];
     }
-    return [{ value: "", label: "Select Employee" }];
   }, [employeeList]);
 
   // Template options for dropdown
@@ -466,11 +486,13 @@ const EmployeeLeaveConfig = () => {
           templateAllocations={templateAllocations}
           setTemplateAllocations={setTemplateAllocations}
           formError={formError}
+          setFormError={setFormError}
           isSubmitting={isSubmitting}
           onSubmit={handleSubmit}
           onClose={handleCloseModal}
           dispatch={dispatch}
           editingConfigId={editingConfigId}
+          workYears={workYears}
         />
       )}
     </div>
@@ -493,13 +515,148 @@ const EmployeeLeaveSetupModal = ({
   templateAllocations,
   setTemplateAllocations,
   formError,
+  setFormError,
   isSubmitting,
   onSubmit,
   onClose,
   dispatch,
   editingConfigId,
+  workYears,
 }) => {
   const [savingAllocation, setSavingAllocation] = useState(false);
+  const [selectedYear, setSelectedYear] = useState("");
+  const [employeeJoiningDate, setEmployeeJoiningDate] = useState(null);
+
+  // Year dropdown options
+  const yearOptions = useMemo(() => {
+    return [
+      { value: "", label: "Select Year" },
+      ...workYears.map((year) => ({
+        value: String(year.idWorkYear),
+        label: year.displayText,
+        workDateFrom: year.workDateFrom,
+        workDateTo: year.workDateTo,
+      })),
+    ];
+  }, [workYears]);
+
+  // Helper function to normalize date (remove time component for comparison)
+  const normalizeDate = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  // Helper function to check if Valid From is before joining date
+  const isValidFromBeforeJoiningDate = (fromDate, joiningDate) => {
+    if (!fromDate || !joiningDate) return false;
+    const normalizedFrom = normalizeDate(fromDate);
+    const normalizedJoining = normalizeDate(joiningDate);
+    return normalizedFrom < normalizedJoining;
+  };
+
+  // Handle Year selection - auto-populate Valid From and Valid To (only for new records)
+  const handleYearChange = (e) => {
+    const yearId = e.target.value;
+    setSelectedYear(yearId);
+    setFormError("");
+
+    // Only auto-populate dates when NOT in edit mode
+    if (!isEditing) {
+      if (yearId) {
+        const selectedYearData = workYears.find(
+          (year) => String(year.idWorkYear) === yearId
+        );
+        if (selectedYearData) {
+          const workDateFrom = new Date(selectedYearData.workDateFrom);
+          const workDateTo = new Date(selectedYearData.workDateTo);
+          setValidFrom(workDateFrom);
+          setValidTo(workDateTo);
+        }
+      } else {
+        setValidFrom(null);
+        setValidTo(null);
+      }
+    }
+  };
+
+  // Auto-select Year dropdown based on validFrom when in edit mode
+  useEffect(() => {
+    if (isEditing && validFrom && workYears.length > 0 && !selectedYear) {
+      const normalizedValidFrom = normalizeDate(validFrom);
+      const matchingYear = workYears.find((year) => {
+        const workDateFrom = normalizeDate(new Date(year.workDateFrom));
+        const workDateTo = normalizeDate(new Date(year.workDateTo));
+        return normalizedValidFrom >= workDateFrom && normalizedValidFrom <= workDateTo;
+      });
+      if (matchingYear) {
+        setSelectedYear(String(matchingYear.idWorkYear));
+      }
+    }
+  }, [isEditing, validFrom, workYears]);
+
+  // Handle Employee selection - fetch joining date
+  const handleEmployeeChange = async (e) => {
+    const employeeId = e.target.value;
+    setSelectedEmployee(employeeId);
+    setFormError("");
+    setEmployeeJoiningDate(null);
+
+    if (employeeId) {
+      try {
+        const result = await CommonService.getEmployeeProfileById(employeeId);
+        if (!result.error && result.data && result.data.data && result.data.data.length > 0) {
+          const joiningDate = result.data.data[0]?.joiningDate;
+          if (joiningDate) {
+            const joiningDateObj = new Date(joiningDate);
+            setEmployeeJoiningDate(joiningDateObj);
+
+            // Validate existing Valid From against joining date
+            if (validFrom && isValidFromBeforeJoiningDate(validFrom, joiningDateObj)) {
+              const formattedJoiningDate = joiningDateObj.toLocaleDateString();
+              setFormError(
+                `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching employee profile:", error);
+      }
+    }
+  };
+
+  // Validate Valid From against joining date
+  const handleValidFromChange = (date) => {
+    setValidFrom(date);
+    setFormError("");
+
+    if (date && employeeJoiningDate && isValidFromBeforeJoiningDate(date, employeeJoiningDate)) {
+      const formattedJoiningDate = employeeJoiningDate.toLocaleDateString();
+      setFormError(
+        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+      );
+    }
+  };
+
+  // Submit with joining date validation
+  const handleSubmitWithValidation = () => {
+    // Clear previous error
+    setFormError("");
+
+    // Validate Valid From against joining date
+    if (validFrom && employeeJoiningDate && isValidFromBeforeJoiningDate(validFrom, employeeJoiningDate)) {
+      const formattedJoiningDate = employeeJoiningDate.toLocaleDateString();
+      setFormError(
+        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+      );
+      return;
+    }
+
+    // Call parent submit
+    onSubmit();
+  };
 
   useEffect(() => {
     const modalElement = document.getElementById("employeeLeaveSetupModal");
@@ -518,6 +675,36 @@ const EmployeeLeaveSetupModal = ({
       };
     }
   }, [onClose]);
+
+  // Fetch joining date when modal opens with pre-selected employee (editing mode)
+  useEffect(() => {
+    const fetchJoiningDate = async () => {
+      if (selectedEmployee && !employeeJoiningDate) {
+        try {
+          const result = await CommonService.getEmployeeProfileById(selectedEmployee);
+          if (!result.error && result.data && result.data.data && result.data.data.length > 0) {
+            const joiningDate = result.data.data[0]?.joiningDate;
+            if (joiningDate) {
+              const joiningDateObj = new Date(joiningDate);
+              setEmployeeJoiningDate(joiningDateObj);
+
+              // Validate existing Valid From against joining date
+              if (validFrom && isValidFromBeforeJoiningDate(validFrom, joiningDateObj)) {
+                const formattedJoiningDate = joiningDateObj.toLocaleDateString();
+                setFormError(
+                  `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching employee profile:", error);
+        }
+      }
+    };
+
+    fetchJoiningDate();
+  }, [selectedEmployee]);
 
   const handleAllocationChange = async (index, newValue) => {
     const allocation = templateAllocations[index];
@@ -591,7 +778,7 @@ const EmployeeLeaveSetupModal = ({
                   name="employeeName"
                   options={employeeOptions}
                   value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  onChange={handleEmployeeChange}
                 />
               </div>
               <div className="col-md-6">
@@ -605,7 +792,21 @@ const EmployeeLeaveSetupModal = ({
               </div>
             </div>
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-4">
+                <label className="form-label mb-1">Year</label>
+                <select
+                  className="form-select"
+                  value={selectedYear}
+                  onChange={handleYearChange}
+                >
+                  {yearOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-4">
                 <label className="form-label mb-1">Valid From</label>
                 <br />
                 <DatePicker
@@ -613,11 +814,11 @@ const EmployeeLeaveSetupModal = ({
                   dateFormat="MM/dd/yyyy"
                   placeholderText="Valid From"
                   selected={validFrom}
-                  onChange={(date) => setValidFrom(date)}
+                  onChange={handleValidFromChange}
                   showYearDropdown
                 />
               </div>
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label mb-1">Valid To</label>
                 <br />
                 <DatePicker
@@ -697,7 +898,7 @@ const EmployeeLeaveSetupModal = ({
             <button
               type="button"
               className="btn btn-primary"
-              onClick={onSubmit}
+              onClick={handleSubmitWithValidation}
               disabled={isSubmitting || savingAllocation}
             >
               {isSubmitting ? "Submitting..." : "Submit"}
