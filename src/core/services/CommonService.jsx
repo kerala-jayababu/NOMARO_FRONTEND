@@ -47,6 +47,15 @@ export default class CommonService {
     }
   };
 
+  static getEmployeeWorkTypes = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetEmployeeWorkTypes");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static getAllSalaryMonths = async () => {
     try {
       const res = await API.get("/api/v1/Common/GetAllSalaryMonths");

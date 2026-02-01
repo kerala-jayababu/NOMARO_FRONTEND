@@ -87,7 +87,6 @@ const EmployeeProfile = () => {
     emailID: "",
     phoneNumber1: "",
     phoneNumber2: "",
-    whatsAppNumber: "",
     address1: "",
     address2: "",
     address3: "",
@@ -1092,7 +1091,7 @@ const EmployeeProfile = () => {
     window.URL.revokeObjectURL(url);
   }
 
-  const phoneFields = ["phoneNumber1", "phoneNumber2", "whatsAppNumber"];
+  const phoneFields = ["phoneNumber1", "phoneNumber2"];
   const numericFields = ["zipCode", "taxIdNumber"];
 
   const handleEmployeeInputChange = (field, value) => {
@@ -1230,7 +1229,6 @@ const EmployeeProfile = () => {
       emailID: "",
       phoneNumber1: "",
       phoneNumber2: "",
-      whatsAppNumber: "",
       address1: "",
       address2: "",
       address3: "",
@@ -1409,7 +1407,6 @@ const EmployeeProfile = () => {
       emailID: detailedData.emailID ?? detailedData.emailId ?? profileData.emailId ?? "",
       phoneNumber1: detailedData.phoneNumber1 ?? profileData.phoneNumber1 ?? "",
       phoneNumber2: detailedData.phoneNumber2 ?? profileData.phoneNumber2 ?? "",
-      whatsAppNumber: detailedData.whatsAppNumber ?? profileData.whatsAppNumber ?? "",
       address1: detailedData.address1 ?? profileData.address1 ?? "",
       address2: detailedData.address2 ?? profileData.address2 ?? "",
       address3: detailedData.address3 ?? profileData.address3 ?? "",
@@ -1601,8 +1598,8 @@ const EmployeeProfile = () => {
                       <p className="m-0">{profileData?.phoneNumber1}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
-                      <label className="form-label mb-1">WhatsApp Number</label>
-                      <p className="m-0">{profileData?.whatsAppNumber || "N/A"}</p>
+                      <label className="form-label mb-1">Phone Number 2</label>
+                      <p className="m-0">{profileData?.phoneNumber2 || "N/A"}</p>
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
@@ -1638,8 +1635,8 @@ const EmployeeProfile = () => {
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
-                      <label className="form-label mb-1">SSN</label>
-                      <p className="m-0">{profileData?.ssnNumber || "N/A"}</p>
+                      <label className="form-label mb-1">National ID Number</label>
+                      <p className="m-0">{profileData?.nationalIDNumber || profileData?.nationalIdNumber || "N/A"}</p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Tax ID Number</label>
@@ -2012,20 +2009,20 @@ const EmployeeProfile = () => {
             />
           </div> */}
           <div className="col-md-4">
-            <label className="form-label mb-1 mt-2" htmlFor="whatsAppNumber">
-              WhatsApp Number
+            <label className="form-label mb-1 mt-2" htmlFor="phoneNumber2">
+              Phone Number 2
             </label>
             <input
-              id="whatsAppNumber"
-              name="whatsAppNumber"
+              id="phoneNumber2"
+              name="phoneNumber2"
               type="text"
-              className={`form-control${employeeFormErrors.whatsAppNumber ? " is-invalid" : ""}`}
-              value={employeeFormData.whatsAppNumber}
-              onChange={(e) => handleEmployeeInputChange("whatsAppNumber", e.target.value)}
+              className={`form-control${employeeFormErrors.phoneNumber2 ? " is-invalid" : ""}`}
+              value={employeeFormData.phoneNumber2}
+              onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
             />
-            {employeeFormErrors.whatsAppNumber && (
+            {employeeFormErrors.phoneNumber2 && (
               <div className="invalid-feedback d-block">
-                {employeeFormErrors.whatsAppNumber}
+                {employeeFormErrors.phoneNumber2}
               </div>
             )}
           </div>

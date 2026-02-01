@@ -22,14 +22,13 @@ const BasicDetails = () => {
     lastName: "",
     gender: "",
     idNumber: "",
-    tinNumber: "",
-    socialSecurityNumber: "",
+    taxIdNumber: "",
+    nationalIDNumber: "",
     idDepartment: "",
     idDesignation: "",
     emailID: "",
     phoneNumber1: "",
     phoneNumber2: "",
-    whatsAppNumber: "",
     address1: "",
     address2: "",
     address3: "",
@@ -38,7 +37,7 @@ const BasicDetails = () => {
     zipCode: "",
     dateOfBirth: null,
     joiningDate: null,
-    reportingTo: "",
+    reportingTo: "0",
     currentStatus: "Working",
     employeeWorkType: "",
     idBudgetCode: "",
@@ -53,6 +52,7 @@ const BasicDetails = () => {
   const [designations, setDesignations] = useState([]);
   const [reportingToOptions, setReportingToOptions] = useState([]);
   const [budgetCodeOptions, setBudgetCodeOptions] = useState([]);
+  const [workTypeOptions, setWorkTypeOptions] = useState([]);
   const [employeePhotoPreview, setEmployeePhotoPreview] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,17 +69,11 @@ const BasicDetails = () => {
     { value: "NotWorking", label: "Not Working" },
   ];
 
-  const workTypeOptions = [
-    { value: "Permanent", label: "Permanent" },
-    { value: "Contract", label: "Contract" },
-    { value: "Temporary", label: "Temporary" },
-    { value: "Part-time", label: "Part-time" },
-  ];
-
   useEffect(() => {
     loadDepartmentsAndDesignations();
     loadReportingToOptions();
     loadBudgetCodes();
+    loadEmployeeWorkTypes();
   }, []);
 
   // Load employee data when employeeId is available (for editing)
@@ -157,6 +151,48 @@ const BasicDetails = () => {
     }
   };
 
+  const loadEmployeeWorkTypes = async () => {
+    try {
+      const res = await CommonService.getEmployeeWorkTypes();
+      if (res.error) {
+        throw new Error(res.error);
+      }
+      
+      // Handle different response structures
+      let workTypesData = [];
+      if (res.data?.data) {
+        workTypesData = Array.isArray(res.data.data) ? res.data.data : [];
+      } else if (Array.isArray(res.data)) {
+        workTypesData = res.data;
+      }
+      
+      if (workTypesData.length > 0) {
+        const options = workTypesData.map((workType) => ({
+          value: workType.employeeTypeName || workType.workType || workType.value || workType.employeeWorkType || workType.idEmployeeWorkType?.toString(),
+          label: workType.employeeTypeName || workType.workTypeName || workType.label || workType.displayName || workType.name || workType.workType || workType.value,
+        }));
+        setWorkTypeOptions(options);
+      } else {
+        // If no data returned, use fallback
+        setWorkTypeOptions([
+          { value: "Permanent", label: "Permanent" },
+          { value: "Contract", label: "Contract" },
+          { value: "Temporary", label: "Temporary" },
+          { value: "Part-time", label: "Part-time" },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error loading employee work types:", error);
+      // Fallback to default values
+      setWorkTypeOptions([
+        { value: "Permanent", label: "Permanent" },
+        { value: "Contract", label: "Contract" },
+        { value: "Temporary", label: "Temporary" },
+        { value: "Part-time", label: "Part-time" },
+      ]);
+    }
+  };
+
   const loadEmployeeData = async (id) => {
     if (!id) return;
 
@@ -207,8 +243,8 @@ const BasicDetails = () => {
         lastName: detailedData.lastName ?? "",
         gender: detailedData.gender ?? "",
         idNumber: detailedData.idNumber ?? "",
-        tinNumber: detailedData.tinNumber ?? detailedData.taxIdNumber ?? "",
-        socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
+        taxIdNumber: detailedData.taxIdNumber ?? "",
+        nationalIDNumber: detailedData.nationalIDNumber ?? detailedData.nationalIdNumber ?? "",
         idDepartment: detailedData.idDepartment
           ? detailedData.idDepartment.toString()
           : "",
@@ -218,7 +254,6 @@ const BasicDetails = () => {
         emailID: detailedData.emailID ?? detailedData.emailId ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
-        whatsAppNumber: detailedData.whatsAppNumber ?? "",
         address1: detailedData.address1 ?? "",
         address2: detailedData.address2 ?? "",
         address3: detailedData.address3 ?? "",
@@ -229,7 +264,7 @@ const BasicDetails = () => {
         joiningDate: formatDateForForm(detailedData.joiningDate),
         reportingTo: detailedData.reportingTo
           ? detailedData.reportingTo.toString()
-          : "",
+          : "0",
         currentStatus: detailedData.currentStatus ?? "Working",
         employeeWorkType: detailedData.employeeWorkType ?? "",
         idBudgetCode: detailedData.idBudgetCode
@@ -280,14 +315,13 @@ const BasicDetails = () => {
         lastName: detailedData.lastName ?? "",
         gender: detailedData.gender ?? "",
         idNumber: detailedData.idNumber ?? "",
-        tinNumber: detailedData.tinNumber ?? detailedData.taxIdNumber ?? "",
-        socialSecurityNumber: detailedData.socialSecurityNumber ?? detailedData.ssn ?? "",
+        taxIdNumber: detailedData.taxIdNumber ?? "",
+        nationalIDNumber: detailedData.nationalIDNumber ?? detailedData.nationalIdNumber ?? "",
         idDepartment: detailedData.idDepartment ? detailedData.idDepartment.toString() : "",
         idDesignation: detailedData.idDesignation ? detailedData.idDesignation.toString() : "",
         emailID: detailedData.emailID ?? detailedData.emailId ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
-        whatsAppNumber: detailedData.whatsAppNumber ?? "",
         address1: detailedData.address1 ?? "",
         address2: detailedData.address2 ?? "",
         address3: detailedData.address3 ?? "",
@@ -296,7 +330,7 @@ const BasicDetails = () => {
         zipCode: detailedData.zipCode ?? "",
         dateOfBirth: detailedData.dateOfBirth ? moment(detailedData.dateOfBirth).format("YYYY-MM-DD") : null,
         joiningDate: detailedData.joiningDate ? moment(detailedData.joiningDate).format("YYYY-MM-DD") : null,
-        reportingTo: detailedData.reportingTo ? detailedData.reportingTo.toString() : "",
+        reportingTo: detailedData.reportingTo ? detailedData.reportingTo.toString() : "0",
         currentStatus: detailedData.currentStatus ?? "Working",
         employeeWorkType: detailedData.employeeWorkType ?? "",
         idBudgetCode: detailedData.idBudgetCode ? detailedData.idBudgetCode.toString() : "",
@@ -316,7 +350,6 @@ const BasicDetails = () => {
   };
 
   const phoneFields = ["phoneNumber1", "phoneNumber2"];
-  const numericFields = ["tinNumber"];
 
   const handleEmployeeInputChange = (field, value) => {
     let sanitizedValue = value;
@@ -325,20 +358,13 @@ const BasicDetails = () => {
       sanitizedValue = sanitizedValue.trimStart();
     }
 
-    // WhatsApp number allows country codes with '+' prefix
-    if (field === "whatsAppNumber") {
-      sanitizedValue = sanitizedValue.replace(/[^\d+\s-]/g, "").slice(0, 20);
-    } else if (phoneFields.includes(field)) {
+    if (phoneFields.includes(field)) {
       sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "").slice(0, 20);
     }
 
     // ZIP Code limited to 6 digits
     if (field === "zipCode") {
       sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 6);
-    } else if (numericFields.includes(field)) {
-      if (field === "tinNumber") {
-        sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "");
-      }
     }
 
     setEmployeeFormData((prev) => {
@@ -464,7 +490,7 @@ const BasicDetails = () => {
         ...employeeFormData,
         idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
         idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
-        reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : null,
+        reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : 0,
         idBudgetCode: employeeFormData.idBudgetCode ? parseInt(employeeFormData.idBudgetCode) : null,
         childrenCount: parseInt(employeeFormData.childrenCount) || 0,
         dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD") : null,
@@ -542,14 +568,13 @@ const BasicDetails = () => {
             lastName: employeeFormData.lastName,
             gender: employeeFormData.gender,
             idNumber: employeeFormData.idNumber,
-            tinNumber: employeeFormData.tinNumber,
-            socialSecurityNumber: employeeFormData.socialSecurityNumber,
+            taxIdNumber: employeeFormData.taxIdNumber,
+            nationalIDNumber: employeeFormData.nationalIDNumber,
             idDepartment: employeeFormData.idDepartment,
             idDesignation: employeeFormData.idDesignation,
             emailID: employeeFormData.emailID,
             phoneNumber1: employeeFormData.phoneNumber1,
             phoneNumber2: employeeFormData.phoneNumber2,
-            whatsAppNumber: employeeFormData.whatsAppNumber,
             address1: employeeFormData.address1,
             address2: employeeFormData.address2,
             address3: employeeFormData.address3,
@@ -611,14 +636,13 @@ const BasicDetails = () => {
       lastName: "",
       gender: "",
       idNumber: "",
-      tinNumber: "",
-      socialSecurityNumber: "",
+      taxIdNumber: "",
+      nationalIDNumber: "",
       idDepartment: "",
       idDesignation: "",
       emailID: "",
       phoneNumber1: "",
       phoneNumber2: "",
-      whatsAppNumber: "",
       address1: "",
       address2: "",
       address3: "",
@@ -627,7 +651,7 @@ const BasicDetails = () => {
       zipCode: "",
       dateOfBirth: null,
       joiningDate: null,
-            reportingTo: "",
+      reportingTo: "0",
       currentStatus: "Working",
       employeeWorkType: "",
       idBudgetCode: "",
@@ -850,16 +874,16 @@ const BasicDetails = () => {
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label mb-1" htmlFor="whatsAppNumber">
-                WhatsApp Number
+              <label className="form-label mb-1" htmlFor="phoneNumber2">
+                Phone Number 2
               </label>
               <input
-                id="whatsAppNumber"
-                name="whatsAppNumber"
+                id="phoneNumber2"
+                name="phoneNumber2"
                 type="text"
                 className="form-control"
-                value={employeeFormData.whatsAppNumber}
-                onChange={(e) => handleEmployeeInputChange("whatsAppNumber", e.target.value)}
+                value={employeeFormData.phoneNumber2}
+                onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
               />
             </div>
           </div>
@@ -960,7 +984,7 @@ const BasicDetails = () => {
                 value={employeeFormData.reportingTo}
                 onChange={(e) => handleEmployeeInputChange("reportingTo", e.target.value)}
               >
-                <option value="">Select Reporting Manager</option>
+                <option value="0">Select Reporting Manager</option>
                 {reportingToOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -1050,21 +1074,21 @@ const BasicDetails = () => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label mb-1" htmlFor="tinNumber">
+              <label className="form-label mb-1" htmlFor="taxIdNumber">
                 TIN Number
               </label>
               <input
-                id="tinNumber"
-                name="tinNumber"
+                id="taxIdNumber"
+                name="taxIdNumber"
                 type="text"
                 className="form-control"
-                value={employeeFormData.tinNumber}
-                onChange={(e) => handleEmployeeInputChange("tinNumber", e.target.value)}
+                value={employeeFormData.taxIdNumber}
+                onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
               />
             </div>
             <div className="col-md-4">
               <label className="form-label mb-1" htmlFor="idNumber">
-                NIS number
+                NIS Number
               </label>
               <input
                 id="idNumber"
@@ -1079,17 +1103,17 @@ const BasicDetails = () => {
           </div>
           <div className="row mt-3">
             <div className="col-md-4">
-              <label className="form-label mb-1" htmlFor="socialSecurityNumber">
-                Social Security Number (SSN)
+              <label className="form-label mb-1" htmlFor="nationalIDNumber">
+                National ID Number
               </label>
               <input
-                id="socialSecurityNumber"
-                name="socialSecurityNumber"
+                id="nationalIDNumber"
+                name="nationalIDNumber"
                 type="text"
                 className="form-control"
-                value={employeeFormData.socialSecurityNumber}
-                onChange={(e) => handleEmployeeInputChange("socialSecurityNumber", e.target.value)}
-                placeholder="Enter SSN"
+                value={employeeFormData.nationalIDNumber}
+                onChange={(e) => handleEmployeeInputChange("nationalIDNumber", e.target.value)}
+                placeholder="Enter National ID Number"
               />
             </div>
           </div>

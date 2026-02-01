@@ -48,6 +48,7 @@ const BankDetails = () => {
   const [disbursementType, setDisbursementType] = useState("PERCENTAGE");
   const [selectedBudgetCode, setSelectedBudgetCode] = useState("");
   const [childCount, setChildCount] = useState(0);
+  const [phoneNumber2, setPhoneNumber2] = useState("");
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [editFileName, setEditFileName] = useState(null);
   const [branchesPerBank, setBranchesPerBank] = useState({});
@@ -140,13 +141,14 @@ const BankDetails = () => {
     try {
       showLoader();
       
-      // Fetch employee details for child count and budget code
+      // Fetch employee details for child count, budget code, and phoneNumber2
       const detailsResult = await dispatch(getEmployeeDetailsByID(parseInt(id)));
       if (detailsResult.payload && detailsResult.payload.data) {
         setChildCount(detailsResult.payload.data.childrenCount || 0);
         if (detailsResult.payload.data.idBudgetCode) {
           setSelectedBudgetCode(detailsResult.payload.data.idBudgetCode.toString());
         }
+        setPhoneNumber2(detailsResult.payload.data.phoneNumber2 || "");
       }
 
       // Fetch bank accounts and overtime configs
@@ -253,6 +255,7 @@ const BankDetails = () => {
         disbursementType: mappedBankAccounts.length > 0 ? mappedBankAccounts[0].disbursementType : "PERCENTAGE",
         selectedBudgetCode: detailsResult.payload?.data?.idBudgetCode?.toString() || "",
         childCount: detailsResult.payload?.data?.childrenCount || 0,
+        phoneNumber2: detailsResult.payload?.data?.phoneNumber2 || "",
       };
       setInitialData(initial);
       if (setHasUnsavedChanges) {
@@ -658,6 +661,7 @@ const BankDetails = () => {
     formData.append("EmployeeId", parseInt(id));
     formData.append("BudgetCodeId", parseInt(selectedBudgetCode, 10) || 0);
     formData.append("ChildCount", parseInt(childCount, 10));
+    formData.append("PhoneNumber2", phoneNumber2 || "");
     if (attachmentFile) {
       formData.append("File", attachmentFile);
     }
@@ -781,6 +785,7 @@ const BankDetails = () => {
       ]);
       setSelectedBudgetCode("");
       setChildCount(0);
+      setPhoneNumber2("");
       setBankAccountErrors({});
       setOvertimeErrors({});
       setAttachmentFile(null);
