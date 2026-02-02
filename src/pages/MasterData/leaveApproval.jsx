@@ -142,7 +142,18 @@ const LeaveApproval = () => {
     { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
     { value: "REJECTED", label: "Rejected" },
+    { value: "CANCELLED", label: "Cancelled" },
   ];
+
+  // Helper function to check if action can be taken on an application
+  // Returns true only when: actionStatusByUser is null AND status is not CANCELLED or REJECTED
+  const canTakeAction = (app) => {
+    return (
+      app.actionStatusByUser === null &&
+      app.status !== "CANCELLED" &&
+      app.status !== "REJECTED"
+    );
+  };
 
   // Get applications data from API response
   const applicationsData = useMemo(() => {
@@ -167,6 +178,7 @@ const LeaveApproval = () => {
       reason: app.reason || "",
       appliedOn: app.appliedOn || "",
       actionStatusByUser: app.actionStatusByUser,
+      leaveApprovalHistories: app.leaveApprovalHistories || null,
       // These fields are not in the API response, using defaults
       totalLeaves: app.totalLeaves || 0,
       usedLeaves: app.usedLeaves || 0,
@@ -185,7 +197,7 @@ const LeaveApproval = () => {
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const selectableIds = filteredApplications
-        .filter((app) => app.actionStatusByUser === null)
+        .filter((app) => canTakeAction(app))
         .map((app) => app.idLeaveApplication);
       setSelectedItems(selectableIds);
     } else {
@@ -457,7 +469,7 @@ const LeaveApproval = () => {
                         selectedItems.length > 0 &&
                         selectedItems.length ===
                           filteredApplications.filter(
-                            (app) => app.actionStatusByUser === null
+                            (app) => canTakeAction(app)
                           ).length
                       }
                       onChange={handleSelectAll}
@@ -553,7 +565,7 @@ const LeaveApproval = () => {
                                     e.target.checked
                                   )
                                 }
-                                disabled={app.actionStatusByUser !== null}
+                                disabled={!canTakeAction(app)}
                               />
                               <div>
                                 <h6 className="mb-0 fw-bold">
@@ -637,7 +649,7 @@ const LeaveApproval = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={app.actionStatusByUser !== null}
+                              disabled={!canTakeAction(app)}
                             ></textarea>
                             {validationErrors[app.idLeaveApplication] && (
                               <div className="text-danger small mt-1">
@@ -647,7 +659,7 @@ const LeaveApproval = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          {app.actionStatusByUser === null && (
+                          {canTakeAction(app) && (
                               <div className="d-flex gap-2">
                                 <Button
                                   className="btn btn-primary btn-sm flex-fill px-3 py-2"
@@ -683,7 +695,7 @@ const LeaveApproval = () => {
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={closeModals}
+          //onClick={closeModals}
         >
           <div
             className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
@@ -817,6 +829,65 @@ const LeaveApproval = () => {
                   </div>
                 </div>
 
+                {/* Approval History */}
+                {selectedApplication.leaveApprovalHistories && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      Approval History
+                    </h6>
+                    <div className="table-responsive">
+                      <table className="table table-sm table-bordered">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Action By</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            try {
+                              const histories = JSON.parse(selectedApplication.leaveApprovalHistories);
+                              return histories.map((history, index) => (
+                                <tr key={index}>
+                                  <td>{history.name || "-"}</td>
+                                  <td>
+                                    <span className={`badge ${
+                                      history.status === "APPROVED" ? "bg-label-success" :
+                                      history.status === "REJECTED" ? "bg-label-danger" :
+                                      history.status === "PENDING" ? "bg-label-warning" :
+                                      "bg-label-secondary"
+                                    }`}>
+                                      {history.status || "-"}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {history.statusDate
+                                      ? new Date(history.statusDate).toLocaleDateString("en-US", {
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                          year: "numeric",
+                                        })
+                                      : "-"}
+                                  </td>
+                                </tr>
+                              ));
+                            } catch (e) {
+                              return (
+                                <tr>
+                                  <td colSpan="3" className="text-center text-muted">
+                                    No approval history available
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {/* Remarks Field */}
                 <div className="mb-3">
                   <label className="form-label">
@@ -836,7 +907,7 @@ const LeaveApproval = () => {
                         e.target.value
                       )
                     }
-                    disabled={selectedApplication.actionStatusByUser !== null}
+                    disabled={!canTakeAction(selectedApplication)}
                   ></textarea>
                   {validationErrors[selectedApplication.idLeaveApplication] && (
                     <div className="text-danger small mt-1">
@@ -846,7 +917,7 @@ const LeaveApproval = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                {selectedApplication.actionStatusByUser === null && (
+                {canTakeAction(selectedApplication) && (
                     <>
                       <Button
                         className="btn btn-primary"
@@ -879,7 +950,7 @@ const LeaveApproval = () => {
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={closeModals}
+          //onClick={closeModals}
         >
           <div
             className="modal-dialog modal-lg modal-dialog-centered"

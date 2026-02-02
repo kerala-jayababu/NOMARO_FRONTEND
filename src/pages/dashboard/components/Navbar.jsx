@@ -382,7 +382,7 @@ function Navbar({ view }) {
                 <img
                   src={profilePic}
                   alt=""
-                  className="w-px-40 h-auto rounded-circle"
+                  className="rounded-circle"
                 />
               </div>
             </a>
@@ -395,7 +395,7 @@ function Navbar({ view }) {
                         <img
                           src={profilePic}
                           alt=""
-                          className="w-px-40 h-auto rounded-circle"
+                          className="rounded-circle"
                         />
                       </div>
                     </div>
