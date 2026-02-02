@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Grid from "../../components/grid";
 import Button from "../../components/button";
@@ -41,6 +41,9 @@ const LeaveTemplates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workYears, setWorkYears] = useState([]);
+
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
 
   // Fetch work years from API on component mount
   useEffect(() => {
@@ -218,14 +221,15 @@ const LeaveTemplates = () => {
     },
     {
       key: "viewDetails",
-      label: "Template Details",
+      label: "View Details",
       render: (id) => (
         <button
           type="button"
-          className="btn btn-sm btn-link p-0"
+          className="btn btn-sm p-0"
           onClick={() => handleViewDetails(id)}
+          title="View Details"
         >
-          View
+          <i className="bx bx-show fs-5"></i>
         </button>
       ),
     },
@@ -276,15 +280,21 @@ const LeaveTemplates = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     setTemplateNameError("");
 
     if (!templateName.trim()) {
       setTemplateNameError("Template Name is required.");
+      submitLockRef.current = false;
       return;
     }
 
     if (!selectedYear) {
       setTemplateNameError("Year is required.");
+      submitLockRef.current = false;
       return;
     }
 
@@ -341,6 +351,7 @@ const LeaveTemplates = () => {
       dispatch(fetchLeaveTemplates({ status, idYear, searchText }));
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -521,6 +532,9 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   const [selectedLeaveType, setSelectedLeaveType] = useState(null);
   const [isViewMode, setIsViewMode] = useState(false);
 
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
+
   useEffect(() => {
     // Fetch leave template details by ID
     if (template?.idLeaveTemplate) {
@@ -604,11 +618,16 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   const isSubmitDisabled = leaveTypes.length === 0;
 
   const handleSubmitForApproval = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     if (!template?.idLeaveTemplate) {
       toast.error("No leave template selected", {
         position: 'top-right',
         autoClose: 3000
       });
+      submitLockRef.current = false;
       return;
     }
 
@@ -618,6 +637,7 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
       return;
     }
 
@@ -654,6 +674,8 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
         position: 'top-right',
         autoClose: 4000
       });
+    } finally {
+      submitLockRef.current = false;
     }
   };
 
@@ -844,6 +866,12 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
     { level: 4, approverType: "ROLE", approver: "" },
   ]);
 
+  // Track if submit was attempted (for validation styling)
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
+
   const leaveTypeOptions = useMemo(() => {
     if (leaveTypesList && leaveTypesList.data) {
       return [
@@ -1000,12 +1028,30 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
   }, []);
 
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
+    // Mark that submit was attempted (for validation styling)
+    setSubmitAttempted(true);
+
     // Validation: Leave type must be selected
     if (!idLeaveType) {
       toast.error("Please select a leave type", {
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
+      return;
+    }
+
+    // Validation: Max Leaves Per Year is mandatory
+    if (!maxPerYear || maxPerYear.trim() === "") {
+      toast.error("Max Leaves Per Year is required", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
       return;
     }
 
@@ -1016,6 +1062,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
       return;
     }
 
@@ -1026,6 +1073,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
       return;
     }
     if (maxPerMonthValue > maxPerYearValue && maxPerYearValue > 0) {
@@ -1033,6 +1081,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
       return;
     }
 
@@ -1044,6 +1093,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
           position: 'top-right',
           autoClose: 4000
         });
+        submitLockRef.current = false;
         return;
       }
     }
@@ -1056,6 +1106,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
           position: 'top-right',
           autoClose: 4000
         });
+        submitLockRef.current = false;
         return;
       }
     }
@@ -1068,7 +1119,23 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
           position: 'top-right',
           autoClose: 4000
         });
+        submitLockRef.current = false;
         return;
+      }
+    }
+
+    // Validation: If approverType is "ROLE", approver must be selected
+    if (approvalLevels > 0) {
+      for (let i = 0; i < approvalLevels; i++) {
+        const approver = approvers[i];
+        if (approver.approverType === "ROLE" && !approver.approver) {
+          toast.error(`Please select an approver for Level ${i + 1}`, {
+            position: 'top-right',
+            autoClose: 4000
+          });
+          submitLockRef.current = false;
+          return;
+        }
       }
     }
 
@@ -1158,6 +1225,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       });
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -1186,6 +1254,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       { level: 3, approverType: "ROLE", approver: "" },
       { level: 4, approverType: "ROLE", approver: "" },
     ]);
+    setSubmitAttempted(false);
   };
 
   const handleClose = () => {
@@ -1386,6 +1455,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
                   type="number"
                   value={maxPerYear}
                   onChange={(e) => setMaxPerYear(e.target.value)}
+                  isInvalid={submitAttempted && (!maxPerYear || maxPerYear.trim() === "")}
                 />
               </div>
               <div className="col-md-3">

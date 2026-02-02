@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
 import { toast } from "react-toastify";
@@ -123,6 +123,9 @@ const LeaveApproval = () => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
+  // Ref to track processed application IDs (prevents duplicate actions before Redux refetch)
+  const processedIdsRef = useRef(new Set());
+
   // Fetch leave applications on component mount and when filters change
   useEffect(() => {
     const approvalStatus = statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter;
@@ -145,13 +148,22 @@ const LeaveApproval = () => {
     { value: "CANCELLED", label: "Cancelled" },
   ];
 
+  // Clear processed IDs when new data is fetched (fresh data from server)
+  useEffect(() => {
+    if (leaveApplications?.data) {
+      processedIdsRef.current.clear();
+    }
+  }, [leaveApplications]);
+
   // Helper function to check if action can be taken on an application
   // Returns true only when: actionStatusByUser is null AND status is not CANCELLED or REJECTED
+  // AND the application has not been processed in this session (prevents duplicate actions)
   const canTakeAction = (app) => {
     return (
       app.actionStatusByUser === null &&
       app.status !== "CANCELLED" &&
-      app.status !== "REJECTED"
+      app.status !== "REJECTED" &&
+      !processedIdsRef.current.has(app.idLeaveApplication)
     );
   };
 
@@ -216,18 +228,24 @@ const LeaveApproval = () => {
 
   // Handle approve selected
   const handleApproveSelected = async () => {
+    // Filter out already processed IDs
+    const unprocessedIds = selectedItems.filter(id => !processedIdsRef.current.has(id));
+    if (unprocessedIds.length === 0) return;
+
     try {
       const resultAction = await dispatch(
         bulkApproveLeaveApplications({
-          idLeaveApplications: selectedItems,
+          idLeaveApplications: unprocessedIds,
           remarks: bulkRemarks,
         })
       );
 
       if (bulkApproveLeaveApplications.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark all as processed immediately to prevent duplicate actions
+          unprocessedIds.forEach(id => processedIdsRef.current.add(id));
           toast.success(
-            `${selectedItems.length} application(s) approved successfully!`,
+            `${unprocessedIds.length} application(s) approved successfully!`,
             {
               position: "top-right",
               autoClose: 3000,
@@ -265,6 +283,9 @@ const LeaveApproval = () => {
 
   // Handle single approve
   const handleApprove = async (id) => {
+    // Guard: prevent duplicate action if already processed
+    if (processedIdsRef.current.has(id)) return;
+
     try {
       const app = applicationsData.find((a) => a.idLeaveApplication === id);
       const resultAction = await dispatch(
@@ -276,6 +297,8 @@ const LeaveApproval = () => {
 
       if (approveLeaveApplication.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark as processed immediately to prevent duplicate actions
+          processedIdsRef.current.add(id);
           toast.success(
             `Leave application for ${app?.employeeName} approved successfully!`,
             {
@@ -313,6 +336,9 @@ const LeaveApproval = () => {
 
   // Handle reject with validation
   const handleReject = async (id) => {
+    // Guard: prevent duplicate action if already processed
+    if (processedIdsRef.current.has(id)) return;
+
     const remark = remarks[id] || "";
     if (!remark.trim()) {
       setValidationErrors((prev) => ({
@@ -337,6 +363,8 @@ const LeaveApproval = () => {
 
       if (rejectLeaveApplication.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark as processed immediately to prevent duplicate actions
+          processedIdsRef.current.add(id);
           toast.error(`Leave application for ${app?.employeeName} rejected`, {
             position: "top-right",
             autoClose: 3000,
@@ -840,6 +868,7 @@ const LeaveApproval = () => {
                         <thead className="table-light">
                           <tr>
                             <th>Action By</th>
+                            <th>Level</th>
                             <th>Status</th>
                             <th>Date</th>
                           </tr>
@@ -851,6 +880,7 @@ const LeaveApproval = () => {
                               return histories.map((history, index) => (
                                 <tr key={index}>
                                   <td>{history.name || "-"}</td>
+                                  <td>{history.level || "-"}</td>
                                   <td>
                                     <span className={`badge ${
                                       history.status === "APPROVED" ? "bg-label-success" :
@@ -875,7 +905,7 @@ const LeaveApproval = () => {
                             } catch (e) {
                               return (
                                 <tr>
-                                  <td colSpan="3" className="text-center text-muted">
+                                  <td colSpan="4" className="text-center text-muted">
                                     No approval history available
                                   </td>
                                 </tr>
