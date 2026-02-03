@@ -58,6 +58,7 @@ import LeaveTypes from "./pages/MasterData/leaveTypes";
 import LeaveTemplates from "./pages/MasterData/leaveTemplates";
 import EmployeeLeaveConfig from "./pages/MasterData/employeeLeaveConfig";
 import LeaveApproval from "./pages/MasterData/leaveApproval";
+import OvertimeApproval from "./pages/MasterData/overtimeApproval";
 import OffboardingSetup from "./pages/MasterData/offboardingSetup";
 import OffboardingCases from "./pages/MasterData/offboardingCases";
 import OffboardingClearances from "./pages/MasterData/offboardingClearances";
@@ -118,6 +119,7 @@ function App() {
               <Route path="leave-templates" element={<LeaveTemplates/>} />
               <Route path="employee-leave-config" element={<EmployeeLeaveConfig/>} />
               <Route path="leave-approval" element={<LeaveApproval/>} />
+              <Route path="overtime-approval" element={<OvertimeApproval/>} />
               <Route path="offboarding-setup" element={<OffboardingSetup/>} />
               <Route path="offboarding-cases" element={<OffboardingCases/>} />
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />

@@ -16,105 +16,8 @@ const LeaveApproval = () => {
     (state) => state.leaveApproval
   );
 
-  // Mock data for leave applications (fallback)
-  const mockLeaveData = [
-    {
-      idLeaveApplication: 1,
-      employeeCode: "E0001",
-      employeeName: "Sriram Vasudevan",
-      designation: "Senior Developer",
-      department: "IT Department",
-      leaveType: "Casual Leave",
-      fromDate: "2026-01-15",
-      toDate: "2026-01-17",
-      totalDays: 3,
-      isHalfDay: false,
-      status: "PENDING",
-      reason: "Family function to attend in hometown",
-      totalLeaves: 12,
-      usedLeaves: 5,
-      pendingLeaves: 2,
-      balanceLeaves: 5,
-      documents: [
-        {
-          documentType: "Medical Certificate",
-          fileName: "medical_cert.pdf",
-          uploadedDate: "2026-01-10",
-        },
-        {
-          documentType: "Travel Ticket",
-          fileName: "ticket_booking.pdf",
-          uploadedDate: "2026-01-10",
-        },
-      ],
-    },
-    {
-      idLeaveApplication: 2,
-      employeeCode: "E0002",
-      employeeName: "Priya Sharma",
-      designation: "HR Manager",
-      department: "Human Resources",
-      leaveType: "Sick Leave",
-      fromDate: "2026-01-20",
-      toDate: "2026-01-22",
-      totalDays: 3,
-      isHalfDay: false,
-      status: "SUBMITTED",
-      reason: "Medical treatment required",
-      totalLeaves: 10,
-      usedLeaves: 3,
-      pendingLeaves: 1,
-      balanceLeaves: 6,
-      documents: [
-        {
-          documentType: "Medical Certificate",
-          fileName: "prescription.pdf",
-          uploadedDate: "2026-01-12",
-        },
-      ],
-    },
-    {
-      idLeaveApplication: 3,
-      employeeCode: "E0003",
-      employeeName: "Rajesh Kumar",
-      designation: "Team Lead",
-      department: "Operations",
-      leaveType: "Annual Leave",
-      fromDate: "2026-02-01",
-      toDate: "2026-02-05",
-      totalDays: 5,
-      isHalfDay: false,
-      status: "PENDING",
-      reason: "Planning vacation with family",
-      totalLeaves: 20,
-      usedLeaves: 8,
-      pendingLeaves: 3,
-      balanceLeaves: 9,
-      documents: [],
-    },
-    {
-      idLeaveApplication: 4,
-      employeeCode: "E0004",
-      employeeName: "Anita Desai",
-      designation: "Finance Executive",
-      department: "Finance",
-      leaveType: "Casual Leave",
-      fromDate: "2026-01-25",
-      toDate: "2026-01-25",
-      totalDays: 0.5,
-      isHalfDay: true,
-      status: "APPROVED",
-      reason: "Personal work",
-      totalLeaves: 12,
-      usedLeaves: 6,
-      pendingLeaves: 0,
-      balanceLeaves: 6,
-      documents: [],
-    },
-  ];
-
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("SUBMITTED");
   const [selectedItems, setSelectedItems] = useState([]);
   const [remarks, setRemarks] = useState({});
   const [bulkRemarks, setBulkRemarks] = useState("");
@@ -893,10 +796,13 @@ const LeaveApproval = () => {
                                   </td>
                                   <td>
                                     {history.statusDate
-                                      ? new Date(history.statusDate).toLocaleDateString("en-US", {
+                                      ? new Date(history.statusDate).toLocaleString("en-US", {
                                           month: "2-digit",
                                           day: "2-digit",
                                           year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          hour12: true,
                                         })
                                       : "-"}
                                   </td>
