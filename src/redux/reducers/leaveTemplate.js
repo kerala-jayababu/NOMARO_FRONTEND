@@ -200,6 +200,37 @@ export const submitLeaveTemplateForApproval = createAsyncThunk(
   }
 );
 
+export const deleteLeaveTemplateDetail = createAsyncThunk(
+  "leaveTemplate/deleteLeaveTemplateDetail",
+  async (idLeaveTemplateDetail, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/DeleteLeaveTemplateDetail?idLeaveTemplateDetail=${idLeaveTemplateDetail}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to delete leave template detail" }
+      );
+    }
+  }
+);
+
 export const fetchDesignationList = createAsyncThunk(
   "leaveTemplate/fetchDesignationList",
   async (_, { rejectWithValue }) => {

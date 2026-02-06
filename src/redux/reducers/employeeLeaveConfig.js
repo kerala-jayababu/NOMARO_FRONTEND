@@ -96,6 +96,36 @@ export const addUpdateEmployeeLeaveConfig = createAsyncThunk(
   }
 );
 
+export const fetchEmployeesNotConfiguredLeave = createAsyncThunk(
+  "employeeLeaveConfig/fetchEmployeesNotConfiguredLeave",
+  async ({ idWorkYear }, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetEmployeesNotConfiguredLeave?idWorkYear=${idWorkYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch employees not configured for leave"
+      );
+    }
+  }
+);
+
 export const addOrUpdateEmployeeLeaveConfigDetails = createAsyncThunk(
   "employeeLeaveConfig/addOrUpdateEmployeeLeaveConfigDetails",
   async (data, { rejectWithValue }) => {
@@ -132,6 +162,7 @@ const slice = createSlice({
   initialState: {
     employeeLeaveSetupList: [],
     employeeLeaveSetup: null,
+    employeesNotConfigured: [],
     loading: false,
     error: null,
   },
@@ -191,6 +222,9 @@ const slice = createSlice({
     builder.addCase(addOrUpdateEmployeeLeaveConfigDetails.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
+    });
+    builder.addCase(fetchEmployeesNotConfiguredLeave.fulfilled, (state, action) => {
+      state.employeesNotConfigured = action.payload?.data || [];
     });
   },
 });
