@@ -11,6 +11,7 @@ import {
   fetchLeaveSetupOfAnEmployee,
   addUpdateEmployeeLeaveConfig,
   addOrUpdateEmployeeLeaveConfigDetails,
+  fetchEmployeesNotConfiguredLeave,
   resetEmployeeLeaveSetup,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplates, fetchLeaveTemplateById } from "../../redux/reducers/leaveTemplate";
@@ -610,6 +611,7 @@ const EmployeeLeaveSetupModal = ({
   const [savingAllocation, setSavingAllocation] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [employeeJoiningDate, setEmployeeJoiningDate] = useState(null);
+  const [modalEmployeeOptions, setModalEmployeeOptions] = useState([]);
   const modalRef = useRef(null);
   const onCloseRef = useRef(onClose);
 
@@ -638,6 +640,19 @@ const EmployeeLeaveSetupModal = ({
         const workDateTo = new Date(currentWorkYear.workDateTo);
         setValidFrom(workDateFrom);
         setValidTo(workDateTo);
+
+        // Fetch employees not configured for leave for default year
+        dispatch(
+          fetchEmployeesNotConfiguredLeave({ idWorkYear: currentWorkYear.idWorkYear })
+        ).then((result) => {
+          if (result.payload && result.payload.data) {
+            const options = result.payload.data.map((emp) => ({
+              value: String(emp.idemployee),
+              label: `${emp.employeeCode} - ${emp.employeeName}`,
+            }));
+            setModalEmployeeOptions(options);
+          }
+        });
       }
     }
   }, [isEditing, workYears]);
@@ -682,6 +697,20 @@ const EmployeeLeaveSetupModal = ({
     ];
   }, [filteredWorkYears]);
 
+  // Compute min/max date range from selected work year
+  const yearDateRange = useMemo(() => {
+    if (selectedYear) {
+      const yearData = workYears.find((y) => String(y.idWorkYear) === selectedYear);
+      if (yearData) {
+        return {
+          minDate: new Date(yearData.workDateFrom),
+          maxDate: new Date(yearData.workDateTo),
+        };
+      }
+    }
+    return { minDate: null, maxDate: null };
+  }, [selectedYear, workYears]);
+
   // Helper function to normalize date (remove time component for comparison)
   const normalizeDate = (date) => {
     if (!date) return null;
@@ -698,11 +727,13 @@ const EmployeeLeaveSetupModal = ({
     return normalizedFrom < normalizedJoining;
   };
 
-  // Handle Year selection - auto-populate Valid From and Valid To
-  const handleYearChange = (e) => {
+  // Handle Year selection - auto-populate Valid From and Valid To, fetch unconfigured employees
+  const handleYearChange = async (e) => {
     const yearId = e.target.value;
     setSelectedYear(yearId);
     setFormError("");
+    setSelectedEmployee("");
+    setModalEmployeeOptions([]);
 
     // Auto-populate dates for both Add and Update modes
     if (yearId) {
@@ -714,6 +745,22 @@ const EmployeeLeaveSetupModal = ({
         const workDateTo = new Date(selectedYearData.workDateTo);
         setValidFrom(workDateFrom);
         setValidTo(workDateTo);
+      }
+
+      // Fetch employees not configured for leave for this year
+      try {
+        const result = await dispatch(
+          fetchEmployeesNotConfiguredLeave({ idWorkYear: parseInt(yearId) })
+        );
+        if (result.payload && result.payload.data) {
+          const options = result.payload.data.map((emp) => ({
+            value: String(emp.idemployee),
+            label: `${emp.employeeCode} - ${emp.employeeName}`,
+          }));
+          setModalEmployeeOptions(options);
+        }
+      } catch (error) {
+        console.error("Error fetching unconfigured employees:", error);
       }
     } else {
       setValidFrom(null);
@@ -940,7 +987,7 @@ const EmployeeLeaveSetupModal = ({
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
-              {isEditing ? "Update Employee Leave Setup" : "Add Employee Leave Setup"}
+              {isEditing ? "Update Employee Leave Configuration" : "Add Employee Leave Configuration"}
             </h5>
             <button
               type="button"
@@ -950,12 +997,28 @@ const EmployeeLeaveSetupModal = ({
             ></button>
           </div>
           <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <div className="row mb-3">
+              <div className="col-md-4">
+                <label className="form-label mb-1">Year</label>
+                <select
+                  className="form-select"
+                  value={selectedYear}
+                  onChange={handleYearChange}
+                >
+                  {yearOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="row">
               <div className="col-md-6">
                 <Dropdown
                   label="Employee Name"
                   name="employeeName"
-                  options={employeeOptions}
+                  options={isEditing ? employeeOptions : modalEmployeeOptions}
                   value={selectedEmployee}
                   onChange={handleEmployeeChange}
                 />
@@ -972,20 +1035,6 @@ const EmployeeLeaveSetupModal = ({
             </div>
             <div className="row mb-3">
               <div className="col-md-4">
-                <label className="form-label mb-1">Year</label>
-                <select
-                  className="form-select"
-                  value={selectedYear}
-                  onChange={handleYearChange}
-                >
-                  {yearOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-4">
                 <label className="form-label mb-1">Valid From</label>
                 <br />
                 <DatePicker
@@ -994,7 +1043,10 @@ const EmployeeLeaveSetupModal = ({
                   placeholderText="Valid From"
                   selected={validFrom}
                   onChange={handleValidFromChange}
+                  minDate={yearDateRange.minDate}
+                  maxDate={yearDateRange.maxDate}
                   showYearDropdown
+                  popperProps={{ strategy: "fixed" }}
                 />
               </div>
               <div className="col-md-4">
@@ -1006,7 +1058,10 @@ const EmployeeLeaveSetupModal = ({
                   placeholderText="Valid To"
                   selected={validTo}
                   onChange={(date) => setValidTo(date)}
+                  minDate={yearDateRange.minDate}
+                  maxDate={yearDateRange.maxDate}
                   showYearDropdown
+                  popperProps={{ strategy: "fixed" }}
                 />
               </div>
             </div>

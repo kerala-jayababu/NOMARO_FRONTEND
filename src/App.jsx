@@ -56,6 +56,7 @@ import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import EmployeeManagement from "./pages/MasterData/EmployeeManagement/EmployeeManagement";
 import LeaveTypes from "./pages/MasterData/leaveTypes";
 import LeaveTemplates from "./pages/MasterData/leaveTemplates";
+import LeaveTemplateApproval from "./pages/MasterData/leaveTemplateApproval";
 import EmployeeLeaveConfig from "./pages/MasterData/employeeLeaveConfig";
 import LeaveApproval from "./pages/MasterData/leaveApproval";
 import OvertimeApproval from "./pages/MasterData/overtimeApproval";
@@ -117,6 +118,7 @@ function App() {
               <Route path="banks" element={<Banks/>} />
               <Route path="leave-types" element={<LeaveTypes/>} />
               <Route path="leave-templates" element={<LeaveTemplates/>} />
+              <Route path="leave-template-approval" element={<LeaveTemplateApproval/>} />
               <Route path="employee-leave-config" element={<EmployeeLeaveConfig/>} />
               <Route path="leave-approval" element={<LeaveApproval/>} />
               <Route path="overtime-approval" element={<OvertimeApproval/>} />
