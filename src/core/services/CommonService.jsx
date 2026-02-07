@@ -124,6 +124,15 @@ export default class CommonService {
       return handleApiError(error);
     }
   };
+    static getAllWorkYears = async () => {
+    try {
+      const response = await API.get("/api/v1/Common/GetAllWorkYears");
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
 
   static getSystemParameters = async () => {
     try {
@@ -184,15 +193,6 @@ export default class CommonService {
       return handleApiError(error);
     }
   }
-
-  static getAllWorkYears = async () => {
-    try {
-      const response = await API.get("/api/v1/Common/GetAllWorkYears");
-      return { error: null, data: response.data };
-    } catch (error) {
-      return handleApiError(error);
-    }
-  };
 
   static getEmployeeProfileById = async (employeeId) => {
     try {

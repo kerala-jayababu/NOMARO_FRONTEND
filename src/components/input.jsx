@@ -9,14 +9,15 @@ const Input = ({
   label,
   error,
   style,
-  readOnly
+  readOnly,
+  isInvalid
 }) => {
   return (
     <div className="mb-2" style={{ ...style}}>
       <label className="form-label mb-1">{label}</label>
       <input
         type={type}
-        className="form-control"
+        className={`form-control ${isInvalid ? "is-invalid" : ""}`}
         name={name}
         maxLength={maxLength}
         value={value}
@@ -38,13 +39,15 @@ Input.propTypes = {
   label: PropTypes.string.isRequired,
   error: PropTypes.string,
   style: PropTypes.object,
-  readOnly: PropTypes.bool
+  readOnly: PropTypes.bool,
+  isInvalid: PropTypes.bool
 };
 
 Input.defaultProps = {
   type: "text",
   maxLength: "50",
-  readOnly: false
+  readOnly: false,
+  isInvalid: false
 };
 
 export default Input;

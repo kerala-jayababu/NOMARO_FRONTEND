@@ -12,7 +12,7 @@ import { useLoader } from '../../components/LoaderContext';
 function LeavePassageAmount() {
     const [leavePassages, setLeavePassages] = useState([]);
     const [originalLeavePassages, setOriginalLeavePassages] = useState([]);
-    const [financialYearsList, setFinancialYearsList] = useState([]);
+    const [workYearsList, setWorkYearsList] = useState([]);
     const [selFinancialYear, setSelFinancialYear] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -22,7 +22,7 @@ function LeavePassageAmount() {
     const { showLoader, hideLoader } = useLoader();
 
     useEffect(() => {
-        getFinancialYears();
+        getWorkYears();
     }, []);
 
     useEffect(() => {
@@ -32,12 +32,33 @@ function LeavePassageAmount() {
         }
     }, [selFinancialYear]);
 
-    const getFinancialYears = () => {
-        CommonService.getAllFinancialYears().then(res => {
-            setFinancialYearsList(res.data);
-        }).catch(err => {
-            setFinancialYearsList([]);
-        });
+    const getWorkYears = async () => {
+        const result = await CommonService.getAllWorkYears();
+        if (!result.error && result.data) {
+            // Filter to show: 1 past year + current year + 2 future years
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth();
+            
+            // Determine financial year (assuming April-March or similar)
+            let financialYear = currentYear;
+            if (currentMonth < 3) { // January to March
+                financialYear = currentYear - 1;
+            }
+            
+            // Filter to show years from (financialYear - 1) to (financialYear + 2)
+            const filteredYears = result.data.filter(year => {
+                const yearStart = parseInt(year.displayText.split('-')[0]);
+                return yearStart >= (financialYear - 1) && yearStart <= (financialYear + 2);
+            });
+            
+            setWorkYearsList(filteredYears);
+            // Set default to current year if available
+            if (filteredYears.length > 0 && !selFinancialYear) {
+                setSelFinancialYear(filteredYears[0].idWorkYear);
+            }
+        } else {
+            setWorkYearsList([]);
+        }
     }
 
     const getLeavePassages = () => {
@@ -130,13 +151,13 @@ function LeavePassageAmount() {
                                     <select
                                         className="form-select"
                                         value={selFinancialYear || ''}
-                                        onChange={(e) => setSelFinancialYear(e.target.value || null)}
+                                        onChange={(e) => setSelFinancialYear(e.target.value ? parseInt(e.target.value) : null)}
                                         style={{ width: '250px' }}
                                     >
                                         <option value={''}>Select financial year</option>
-                                        {financialYearsList.map(stat => (
-                                            <option key={stat.idFinancialYear} value={stat.idFinancialYear}>
-                                                {moment(stat.financialYearFrom).format("MMM YYYY")} to {moment(stat.financialYearTo).format("MMM YYYY")}
+                                        {workYearsList.map(year => (
+                                            <option key={year.idWorkYear} value={year.idWorkYear}>
+                                                {year.displayText}
                                             </option>
                                         ))}
                                     </select>

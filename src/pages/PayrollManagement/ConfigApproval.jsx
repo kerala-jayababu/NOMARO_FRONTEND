@@ -80,7 +80,8 @@ const [dateFrom, setDateFrom] = React.useState(() => {
 
   async function getEntityTypes() {
     const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList");
-    setEntityTypes(res.data.data);
+    const filteredData = res.data.data.filter(item => !item.entityName.includes("Leave Approval Workflow"));
+    setEntityTypes(filteredData);
   }
 
   async function getStatusOptions(entityTypeId) {

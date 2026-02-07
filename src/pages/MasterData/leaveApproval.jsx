@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
 import { toast } from "react-toastify";
@@ -16,105 +16,8 @@ const LeaveApproval = () => {
     (state) => state.leaveApproval
   );
 
-  // Mock data for leave applications (fallback)
-  const mockLeaveData = [
-    {
-      idLeaveApplication: 1,
-      employeeCode: "E0001",
-      employeeName: "Sriram Vasudevan",
-      designation: "Senior Developer",
-      department: "IT Department",
-      leaveType: "Casual Leave",
-      fromDate: "2026-01-15",
-      toDate: "2026-01-17",
-      totalDays: 3,
-      isHalfDay: false,
-      status: "PENDING",
-      reason: "Family function to attend in hometown",
-      totalLeaves: 12,
-      usedLeaves: 5,
-      pendingLeaves: 2,
-      balanceLeaves: 5,
-      documents: [
-        {
-          documentType: "Medical Certificate",
-          fileName: "medical_cert.pdf",
-          uploadedDate: "2026-01-10",
-        },
-        {
-          documentType: "Travel Ticket",
-          fileName: "ticket_booking.pdf",
-          uploadedDate: "2026-01-10",
-        },
-      ],
-    },
-    {
-      idLeaveApplication: 2,
-      employeeCode: "E0002",
-      employeeName: "Priya Sharma",
-      designation: "HR Manager",
-      department: "Human Resources",
-      leaveType: "Sick Leave",
-      fromDate: "2026-01-20",
-      toDate: "2026-01-22",
-      totalDays: 3,
-      isHalfDay: false,
-      status: "SUBMITTED",
-      reason: "Medical treatment required",
-      totalLeaves: 10,
-      usedLeaves: 3,
-      pendingLeaves: 1,
-      balanceLeaves: 6,
-      documents: [
-        {
-          documentType: "Medical Certificate",
-          fileName: "prescription.pdf",
-          uploadedDate: "2026-01-12",
-        },
-      ],
-    },
-    {
-      idLeaveApplication: 3,
-      employeeCode: "E0003",
-      employeeName: "Rajesh Kumar",
-      designation: "Team Lead",
-      department: "Operations",
-      leaveType: "Annual Leave",
-      fromDate: "2026-02-01",
-      toDate: "2026-02-05",
-      totalDays: 5,
-      isHalfDay: false,
-      status: "PENDING",
-      reason: "Planning vacation with family",
-      totalLeaves: 20,
-      usedLeaves: 8,
-      pendingLeaves: 3,
-      balanceLeaves: 9,
-      documents: [],
-    },
-    {
-      idLeaveApplication: 4,
-      employeeCode: "E0004",
-      employeeName: "Anita Desai",
-      designation: "Finance Executive",
-      department: "Finance",
-      leaveType: "Casual Leave",
-      fromDate: "2026-01-25",
-      toDate: "2026-01-25",
-      totalDays: 0.5,
-      isHalfDay: true,
-      status: "APPROVED",
-      reason: "Personal work",
-      totalLeaves: 12,
-      usedLeaves: 6,
-      pendingLeaves: 0,
-      balanceLeaves: 6,
-      documents: [],
-    },
-  ];
-
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("SUBMITTED");
   const [selectedItems, setSelectedItems] = useState([]);
   const [remarks, setRemarks] = useState({});
   const [bulkRemarks, setBulkRemarks] = useState("");
@@ -122,6 +25,9 @@ const LeaveApproval = () => {
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Ref to track processed application IDs (prevents duplicate actions before Redux refetch)
+  const processedIdsRef = useRef(new Set());
 
   // Fetch leave applications on component mount and when filters change
   useEffect(() => {
@@ -142,7 +48,27 @@ const LeaveApproval = () => {
     { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
     { value: "REJECTED", label: "Rejected" },
+    { value: "CANCELLED", label: "Cancelled" },
   ];
+
+  // Clear processed IDs when new data is fetched (fresh data from server)
+  useEffect(() => {
+    if (leaveApplications?.data) {
+      processedIdsRef.current.clear();
+    }
+  }, [leaveApplications]);
+
+  // Helper function to check if action can be taken on an application
+  // Returns true only when: actionStatusByUser is null AND status is not CANCELLED or REJECTED
+  // AND the application has not been processed in this session (prevents duplicate actions)
+  const canTakeAction = (app) => {
+    return (
+      app.actionStatusByUser === null &&
+      app.status !== "CANCELLED" &&
+      app.status !== "REJECTED" &&
+      !processedIdsRef.current.has(app.idLeaveApplication)
+    );
+  };
 
   // Get applications data from API response
   const applicationsData = useMemo(() => {
@@ -167,6 +93,7 @@ const LeaveApproval = () => {
       reason: app.reason || "",
       appliedOn: app.appliedOn || "",
       actionStatusByUser: app.actionStatusByUser,
+      leaveApprovalHistories: app.leaveApprovalHistories || null,
       // These fields are not in the API response, using defaults
       totalLeaves: app.totalLeaves || 0,
       usedLeaves: app.usedLeaves || 0,
@@ -185,7 +112,7 @@ const LeaveApproval = () => {
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const selectableIds = filteredApplications
-        .filter((app) => app.actionStatusByUser === null)
+        .filter((app) => canTakeAction(app))
         .map((app) => app.idLeaveApplication);
       setSelectedItems(selectableIds);
     } else {
@@ -204,18 +131,24 @@ const LeaveApproval = () => {
 
   // Handle approve selected
   const handleApproveSelected = async () => {
+    // Filter out already processed IDs
+    const unprocessedIds = selectedItems.filter(id => !processedIdsRef.current.has(id));
+    if (unprocessedIds.length === 0) return;
+
     try {
       const resultAction = await dispatch(
         bulkApproveLeaveApplications({
-          idLeaveApplications: selectedItems,
+          idLeaveApplications: unprocessedIds,
           remarks: bulkRemarks,
         })
       );
 
       if (bulkApproveLeaveApplications.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark all as processed immediately to prevent duplicate actions
+          unprocessedIds.forEach(id => processedIdsRef.current.add(id));
           toast.success(
-            `${selectedItems.length} application(s) approved successfully!`,
+            `${unprocessedIds.length} application(s) approved successfully!`,
             {
               position: "top-right",
               autoClose: 3000,
@@ -253,6 +186,9 @@ const LeaveApproval = () => {
 
   // Handle single approve
   const handleApprove = async (id) => {
+    // Guard: prevent duplicate action if already processed
+    if (processedIdsRef.current.has(id)) return;
+
     try {
       const app = applicationsData.find((a) => a.idLeaveApplication === id);
       const resultAction = await dispatch(
@@ -264,6 +200,8 @@ const LeaveApproval = () => {
 
       if (approveLeaveApplication.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark as processed immediately to prevent duplicate actions
+          processedIdsRef.current.add(id);
           toast.success(
             `Leave application for ${app?.employeeName} approved successfully!`,
             {
@@ -301,6 +239,9 @@ const LeaveApproval = () => {
 
   // Handle reject with validation
   const handleReject = async (id) => {
+    // Guard: prevent duplicate action if already processed
+    if (processedIdsRef.current.has(id)) return;
+
     const remark = remarks[id] || "";
     if (!remark.trim()) {
       setValidationErrors((prev) => ({
@@ -325,6 +266,8 @@ const LeaveApproval = () => {
 
       if (rejectLeaveApplication.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
+          // Mark as processed immediately to prevent duplicate actions
+          processedIdsRef.current.add(id);
           toast.error(`Leave application for ${app?.employeeName} rejected`, {
             position: "top-right",
             autoClose: 3000,
@@ -457,7 +400,7 @@ const LeaveApproval = () => {
                         selectedItems.length > 0 &&
                         selectedItems.length ===
                           filteredApplications.filter(
-                            (app) => app.actionStatusByUser === null
+                            (app) => canTakeAction(app)
                           ).length
                       }
                       onChange={handleSelectAll}
@@ -553,7 +496,7 @@ const LeaveApproval = () => {
                                     e.target.checked
                                   )
                                 }
-                                disabled={app.actionStatusByUser !== null}
+                                disabled={!canTakeAction(app)}
                               />
                               <div>
                                 <h6 className="mb-0 fw-bold">
@@ -637,7 +580,7 @@ const LeaveApproval = () => {
                                   e.target.value
                                 )
                               }
-                              disabled={app.actionStatusByUser !== null}
+                              disabled={!canTakeAction(app)}
                             ></textarea>
                             {validationErrors[app.idLeaveApplication] && (
                               <div className="text-danger small mt-1">
@@ -647,7 +590,7 @@ const LeaveApproval = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          {app.actionStatusByUser === null && (
+                          {canTakeAction(app) && (
                               <div className="d-flex gap-2">
                                 <Button
                                   className="btn btn-primary btn-sm flex-fill px-3 py-2"
@@ -683,7 +626,7 @@ const LeaveApproval = () => {
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={closeModals}
+          //onClick={closeModals}
         >
           <div
             className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
@@ -817,6 +760,70 @@ const LeaveApproval = () => {
                   </div>
                 </div>
 
+                {/* Approval History */}
+                {selectedApplication.leaveApprovalHistories && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      Approval History
+                    </h6>
+                    <div className="table-responsive">
+                      <table className="table table-sm table-bordered">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Action By</th>
+                            <th>Level</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            try {
+                              const histories = JSON.parse(selectedApplication.leaveApprovalHistories);
+                              return histories.map((history, index) => (
+                                <tr key={index}>
+                                  <td>{history.name || "-"}</td>
+                                  <td>{history.level || "-"}</td>
+                                  <td>
+                                    <span className={`badge ${
+                                      history.status === "APPROVED" ? "bg-label-success" :
+                                      history.status === "REJECTED" ? "bg-label-danger" :
+                                      history.status === "PENDING" ? "bg-label-warning" :
+                                      "bg-label-secondary"
+                                    }`}>
+                                      {history.status || "-"}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {history.statusDate
+                                      ? new Date(history.statusDate).toLocaleString("en-US", {
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          hour12: true,
+                                        })
+                                      : "-"}
+                                  </td>
+                                </tr>
+                              ));
+                            } catch (e) {
+                              return (
+                                <tr>
+                                  <td colSpan="4" className="text-center text-muted">
+                                    No approval history available
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {/* Remarks Field */}
                 <div className="mb-3">
                   <label className="form-label">
@@ -836,7 +843,7 @@ const LeaveApproval = () => {
                         e.target.value
                       )
                     }
-                    disabled={selectedApplication.actionStatusByUser !== null}
+                    disabled={!canTakeAction(selectedApplication)}
                   ></textarea>
                   {validationErrors[selectedApplication.idLeaveApplication] && (
                     <div className="text-danger small mt-1">
@@ -846,7 +853,7 @@ const LeaveApproval = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                {selectedApplication.actionStatusByUser === null && (
+                {canTakeAction(selectedApplication) && (
                     <>
                       <Button
                         className="btn btn-primary"
@@ -879,7 +886,7 @@ const LeaveApproval = () => {
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={closeModals}
+          //onClick={closeModals}
         >
           <div
             className="modal-dialog modal-lg modal-dialog-centered"

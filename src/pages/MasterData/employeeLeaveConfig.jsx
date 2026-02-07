@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Grid from "../../components/grid";
 import Button from "../../components/button";
@@ -11,6 +11,7 @@ import {
   fetchLeaveSetupOfAnEmployee,
   addUpdateEmployeeLeaveConfig,
   addOrUpdateEmployeeLeaveConfigDetails,
+  fetchEmployeesNotConfiguredLeave,
   resetEmployeeLeaveSetup,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplates, fetchLeaveTemplateById } from "../../redux/reducers/leaveTemplate";
@@ -49,26 +50,74 @@ const EmployeeLeaveConfig = () => {
       const result = await CommonService.getAllWorkYears();
       if (!result.error && result.data) {
         setWorkYears(result.data);
-        // Set default year filter to first work year if available
+        // Set default year filter based on financial year (July 1 - June 30)
         if (result.data.length > 0 && !yearFilter) {
-          setYearFilter(String(result.data[0].idWorkYear));
+          const today = new Date();
+          const currentMonth = today.getMonth() + 1; // 1-12
+          const currentYear = today.getFullYear();
+
+          // Financial year starts on July 1
+          // If current month is July (7) or later, financial year starts with current year
+          // If current month is before July (1-6), financial year started last year
+          const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+          const currentWorkYear = result.data.find((year) => {
+            if (!year.displayText) return false;
+            // Extract first year from displayText (handles both "2025-26" and "2025-2026" formats)
+            const firstYear = year.displayText.split("-")[0];
+            return firstYear === String(financialYearStart);
+          });
+          if (currentWorkYear) {
+            setYearFilter(String(currentWorkYear.idWorkYear));
+          } else {
+            // Fallback to first work year if financial year not found
+            setYearFilter(String(result.data[0].idWorkYear));
+          }
         }
       }
     };
     fetchWorkYears();
   }, []);
 
-  // Year filter options from API
+  // Get previous, current, and next financial year start years
+  const getRelevantYears = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+
+    // Financial year starts on July 1
+    // If current month is July (7) or later, financial year starts with current year
+    // If current month is before July (1-6), financial year started last year
+    const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+    return [
+      financialYearStart - 1, // Previous year
+      financialYearStart,     // Current year
+      financialYearStart + 1  // Next year
+    ];
+  }, []);
+
+  // Filter work years to only include previous, current, and next financial year
+  const filteredWorkYears = useMemo(() => {
+    return workYears.filter((year) => {
+      if (!year.displayText) return false;
+      const firstYear = parseInt(year.displayText.split("-")[0]);
+      return getRelevantYears.includes(firstYear);
+    });
+  }, [workYears, getRelevantYears]);
+
+  // Year filter options from API (only previous, current, next year)
   const yearFilterOptions = useMemo(() => {
-    return workYears.map((year) => ({
+    return filteredWorkYears.map((year) => ({
       value: String(year.idWorkYear),
       label: year.displayText,
     }));
-  }, [workYears]);
+  }, [filteredWorkYears]);
 
   // Fetch initial data on component mount
   useEffect(() => {
-    dispatch(fetchLeaveTemplates({ status: "ALL", idYear: "", searchText: "" }));
+    // Only fetch APPROVED templates for the dropdown
+    dispatch(fetchLeaveTemplates({ status: "APPROVED", idYear: "", searchText: "" }));
     dispatch(getAllEmployeeDetails());
   }, [dispatch]);
 
@@ -108,6 +157,16 @@ const EmployeeLeaveConfig = () => {
     return [{ value: "", label: "Select Template" }];
   }, [leaveTemplates]);
 
+  // Helper function to format date as MM/DD/YYYY with leading zeros
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   // Get employee leave setup data from API response
   const employeeLeaveData = useMemo(() => {
     if (!employeeLeaveSetupList || !employeeLeaveSetupList.data) return [];
@@ -121,14 +180,14 @@ const EmployeeLeaveConfig = () => {
         idEmployeeLeaveConfig: setup.idEmployeeLeaveConfig,
         employeeCode: employeeCode,
         employeeName: setup.employeeName,
-      templateName: setup.leaveTemplateName,
-      validFrom: setup.effectiveFrom ? new Date(setup.effectiveFrom).toLocaleDateString() : "",
-      validTo: setup.effectiveTo ? new Date(setup.effectiveTo).toLocaleDateString() : "",
-      idEmployee: setup.idEmployee,
-      idLeaveTemplate: setup.idLeaveTemplate,
-      validFromRaw: setup.effectiveFrom,
-      validToRaw: setup.effectiveTo,
-      details: setup.details || [], // Store details array for template allocations
+        templateName: setup.leaveTemplateName,
+        validFrom: formatDate(setup.effectiveFrom),
+        validTo: formatDate(setup.effectiveTo),
+        idEmployee: setup.idEmployee,
+        idLeaveTemplate: setup.idLeaveTemplate,
+        validFromRaw: setup.effectiveFrom,
+        validToRaw: setup.effectiveTo,
+        details: setup.details || [], // Store details array for template allocations
       };
     });
   }, [employeeLeaveSetupList, employeeList]);
@@ -248,7 +307,17 @@ const EmployeeLeaveConfig = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    handleReset();
+    // Refresh the list first to set loading state and clear any error
+    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+    // Reset form state without dispatching resetEmployeeLeaveSetup (to avoid showing error)
+    setSelectedEmployee("");
+    setSelectedTemplate("");
+    setValidFrom(null);
+    setValidTo(null);
+    setFormError("");
+    setIsEditing(false);
+    setEditingConfigId(null);
+    setTemplateAllocations([]);
   };
 
   const handleRowClick = async (id) => {
@@ -307,8 +376,20 @@ const EmployeeLeaveConfig = () => {
     return 1;
   };
 
-  const handleSubmit = async () => {
+  // Helper function to convert date to ISO string preserving local date
+  const toLocalISOString = (date) => {
+    if (!date) return null;
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString();
+  };
+
+  const handleSubmit = async (fromDate, toDate) => {
     setFormError("");
+
+    // Use passed dates or fall back to state
+    const effectiveFromDate = fromDate || validFrom;
+    const effectiveToDate = toDate || validTo;
 
     // Validation
     if (!selectedEmployee) {
@@ -321,18 +402,18 @@ const EmployeeLeaveConfig = () => {
       return;
     }
 
-    if (!validFrom) {
+    if (!effectiveFromDate) {
       setFormError("Valid From date is required.");
       return;
     }
 
-    if (!validTo) {
+    if (!effectiveToDate) {
       setFormError("Valid To date is required.");
       return;
     }
 
     // Validate date range
-    if (validFrom > validTo) {
+    if (effectiveFromDate > effectiveToDate) {
       setFormError("Valid From date must be before Valid To date.");
       return;
     }
@@ -341,8 +422,8 @@ const EmployeeLeaveConfig = () => {
       idEmployeeLeaveConfig: isEditing ? editingConfigId : 0,
       idEmployee: parseInt(selectedEmployee),
       idLeaveTemplate: parseInt(selectedTemplate),
-      effectiveFrom: validFrom.toISOString(),
-      effectiveTo: validTo.toISOString(),
+      effectiveFrom: toLocalISOString(effectiveFromDate),
+      effectiveTo: toLocalISOString(effectiveToDate),
       createdBy: getCurrentUserId(),
       createdAt: new Date().toISOString(),
       updatedBy: isEditing ? getCurrentUserId() : 0,
@@ -375,6 +456,8 @@ const EmployeeLeaveConfig = () => {
             autoClose: 4000,
           }
         );
+        // Refresh the list to clear error state and show selected year data
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
       }
     } catch (error) {
       console.error("Error saving employee leave config:", error);
@@ -382,6 +465,8 @@ const EmployeeLeaveConfig = () => {
         position: "top-right",
         autoClose: 4000,
       });
+      // Refresh the list to clear error state and show selected year data
+      dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
     } finally {
       setIsSubmitting(false);
     }
@@ -405,7 +490,7 @@ const EmployeeLeaveConfig = () => {
         <div className="col-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Employee Leave Setup</h5>
+              <h5 className="m-0">List of Employee Leave Configurations</h5>
             </div>
             <div className="card-body">
               <div className="row mb-3">
@@ -526,19 +611,105 @@ const EmployeeLeaveSetupModal = ({
   const [savingAllocation, setSavingAllocation] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [employeeJoiningDate, setEmployeeJoiningDate] = useState(null);
+  const [modalEmployeeOptions, setModalEmployeeOptions] = useState([]);
+  const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
 
-  // Year dropdown options
+  // Set default year based on financial year (July 1 - June 30) for Add mode
+  useEffect(() => {
+    if (!isEditing && workYears.length > 0 && !selectedYear) {
+      const today = new Date();
+      const currentMonth = today.getMonth() + 1; // 1-12
+      const currentYear = today.getFullYear();
+
+      // Financial year starts on July 1
+      // If current month is July (7) or later, financial year starts with current year
+      // If current month is before July (1-6), financial year started last year
+      const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+      const currentWorkYear = workYears.find((year) => {
+        if (!year.displayText) return false;
+        const firstYear = year.displayText.split("-")[0];
+        return firstYear === String(financialYearStart);
+      });
+
+      if (currentWorkYear) {
+        setSelectedYear(String(currentWorkYear.idWorkYear));
+        // Also auto-populate dates
+        const workDateFrom = new Date(currentWorkYear.workDateFrom);
+        const workDateTo = new Date(currentWorkYear.workDateTo);
+        setValidFrom(workDateFrom);
+        setValidTo(workDateTo);
+
+        // Fetch employees not configured for leave for default year
+        dispatch(
+          fetchEmployeesNotConfiguredLeave({ idWorkYear: currentWorkYear.idWorkYear })
+        ).then((result) => {
+          if (result.payload && result.payload.data) {
+            const options = result.payload.data.map((emp) => ({
+              value: String(emp.idemployee),
+              label: `${emp.employeeCode} - ${emp.employeeName}`,
+            }));
+            setModalEmployeeOptions(options);
+          }
+        });
+      }
+    }
+  }, [isEditing, workYears]);
+
+  // Get previous, current, and next financial year start years
+  const getRelevantYears = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+
+    // Financial year starts on July 1
+    // If current month is July (7) or later, financial year starts with current year
+    // If current month is before July (1-6), financial year started last year
+    const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+    return [
+      financialYearStart - 1, // Previous year
+      financialYearStart,     // Current year
+      financialYearStart + 1  // Next year
+    ];
+  }, []);
+
+  // Filter work years to only include previous, current, and next financial year
+  const filteredWorkYears = useMemo(() => {
+    return workYears.filter((year) => {
+      if (!year.displayText) return false;
+      const firstYear = parseInt(year.displayText.split("-")[0]);
+      return getRelevantYears.includes(firstYear);
+    });
+  }, [workYears, getRelevantYears]);
+
+  // Year dropdown options (only previous, current, next year)
   const yearOptions = useMemo(() => {
     return [
       { value: "", label: "Select Year" },
-      ...workYears.map((year) => ({
+      ...filteredWorkYears.map((year) => ({
         value: String(year.idWorkYear),
         label: year.displayText,
         workDateFrom: year.workDateFrom,
         workDateTo: year.workDateTo,
       })),
     ];
-  }, [workYears]);
+  }, [filteredWorkYears]);
+
+  // Compute min/max date range from selected work year
+  const yearDateRange = useMemo(() => {
+    if (selectedYear) {
+      const yearData = workYears.find((y) => String(y.idWorkYear) === selectedYear);
+      if (yearData) {
+        return {
+          minDate: new Date(yearData.workDateFrom),
+          maxDate: new Date(yearData.workDateTo),
+        };
+      }
+    }
+    return { minDate: null, maxDate: null };
+  }, [selectedYear, workYears]);
 
   // Helper function to normalize date (remove time component for comparison)
   const normalizeDate = (date) => {
@@ -556,28 +727,44 @@ const EmployeeLeaveSetupModal = ({
     return normalizedFrom < normalizedJoining;
   };
 
-  // Handle Year selection - auto-populate Valid From and Valid To (only for new records)
-  const handleYearChange = (e) => {
+  // Handle Year selection - auto-populate Valid From and Valid To, fetch unconfigured employees
+  const handleYearChange = async (e) => {
     const yearId = e.target.value;
     setSelectedYear(yearId);
     setFormError("");
+    setSelectedEmployee("");
+    setModalEmployeeOptions([]);
 
-    // Only auto-populate dates when NOT in edit mode
-    if (!isEditing) {
-      if (yearId) {
-        const selectedYearData = workYears.find(
-          (year) => String(year.idWorkYear) === yearId
-        );
-        if (selectedYearData) {
-          const workDateFrom = new Date(selectedYearData.workDateFrom);
-          const workDateTo = new Date(selectedYearData.workDateTo);
-          setValidFrom(workDateFrom);
-          setValidTo(workDateTo);
-        }
-      } else {
-        setValidFrom(null);
-        setValidTo(null);
+    // Auto-populate dates for both Add and Update modes
+    if (yearId) {
+      const selectedYearData = workYears.find(
+        (year) => String(year.idWorkYear) === yearId
+      );
+      if (selectedYearData) {
+        const workDateFrom = new Date(selectedYearData.workDateFrom);
+        const workDateTo = new Date(selectedYearData.workDateTo);
+        setValidFrom(workDateFrom);
+        setValidTo(workDateTo);
       }
+
+      // Fetch employees not configured for leave for this year
+      try {
+        const result = await dispatch(
+          fetchEmployeesNotConfiguredLeave({ idWorkYear: parseInt(yearId) })
+        );
+        if (result.payload && result.payload.data) {
+          const options = result.payload.data.map((emp) => ({
+            value: String(emp.idemployee),
+            label: `${emp.employeeCode} - ${emp.employeeName}`,
+          }));
+          setModalEmployeeOptions(options);
+        }
+      } catch (error) {
+        console.error("Error fetching unconfigured employees:", error);
+      }
+    } else {
+      setValidFrom(null);
+      setValidTo(null);
     }
   };
 
@@ -640,6 +827,23 @@ const EmployeeLeaveSetupModal = ({
     }
   };
 
+  // Helper function to calculate days between two dates
+  const getDaysBetweenDates = (fromDate, toDate) => {
+    if (!fromDate || !toDate) return 0;
+    const from = normalizeDate(fromDate);
+    const to = normalizeDate(toDate);
+    const diffTime = Math.abs(to - from);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
+    return diffDays;
+  };
+
+  // Calculate total allocated days from all allocations (carried forward is always zero)
+  const getTotalAllocatedDays = () => {
+    return templateAllocations.reduce((total, allocation) => {
+      return total + (allocation.allocatedDays || 0);
+    }, 0);
+  };
+
   // Submit with joining date validation
   const handleSubmitWithValidation = () => {
     // Clear previous error
@@ -654,27 +858,56 @@ const EmployeeLeaveSetupModal = ({
       return;
     }
 
-    // Call parent submit
-    onSubmit();
+    // Validate Total Allocated Days against date range
+    if (validFrom && validTo && templateAllocations.length > 0) {
+      const daysBetween = getDaysBetweenDates(validFrom, validTo);
+      const totalAllocatedDays = getTotalAllocatedDays();
+
+      if (totalAllocatedDays > daysBetween) {
+        setFormError(
+          `Total Allocated Days (${totalAllocatedDays}) cannot exceed the number of days between Valid From and Valid To (${daysBetween} days).`
+        );
+        return;
+      }
+    }
+
+    // Call parent submit with current date values
+    onSubmit(validFrom, validTo);
   };
 
+  // Keep onCloseRef updated with latest onClose callback
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Initialize modal only once on mount
   useEffect(() => {
     const modalElement = document.getElementById("employeeLeaveSetupModal");
-    if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement, {
+    if (modalElement && !modalRef.current) {
+      modalRef.current = new bootstrap.Modal(modalElement, {
         focus: false,
         backdrop: "static",
         keyboard: false,
       });
-      modal.show();
+      modalRef.current.show();
 
-      modalElement.addEventListener("hidden.bs.modal", onClose);
+      const handleHidden = () => {
+        if (onCloseRef.current) {
+          onCloseRef.current();
+        }
+      };
+
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
+
       return () => {
-        modal.dispose();
-        modalElement.removeEventListener("hidden.bs.modal", onClose);
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalRef.current) {
+          modalRef.current.dispose();
+          modalRef.current = null;
+        }
       };
     }
-  }, [onClose]);
+  }, []);
 
   // Fetch joining date when modal opens with pre-selected employee (editing mode)
   useEffect(() => {
@@ -728,14 +961,7 @@ const EmployeeLeaveSetupModal = ({
           allocatedDaysInYear: parsedValue,
         };
 
-        const result = await dispatch(addOrUpdateEmployeeLeaveConfigDetails(payload));
-
-        if (result.payload && result.payload.success) {
-          toast.success("Allocation updated successfully!", {
-            position: "top-right",
-            autoClose: 2000,
-          });
-        }
+        await dispatch(addOrUpdateEmployeeLeaveConfigDetails(payload));
       } catch (error) {
         console.error("Error updating allocation:", error);
         toast.error("Failed to update allocation", {
@@ -761,7 +987,7 @@ const EmployeeLeaveSetupModal = ({
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
-              {isEditing ? "Update Employee Leave Setup" : "Add Employee Leave Setup"}
+              {isEditing ? "Update Employee Leave Configuration" : "Add Employee Leave Configuration"}
             </h5>
             <button
               type="button"
@@ -771,12 +997,28 @@ const EmployeeLeaveSetupModal = ({
             ></button>
           </div>
           <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <div className="row mb-3">
+              <div className="col-md-4">
+                <label className="form-label mb-1">Year</label>
+                <select
+                  className="form-select"
+                  value={selectedYear}
+                  onChange={handleYearChange}
+                >
+                  {yearOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="row">
               <div className="col-md-6">
                 <Dropdown
                   label="Employee Name"
                   name="employeeName"
-                  options={employeeOptions}
+                  options={isEditing ? employeeOptions : modalEmployeeOptions}
                   value={selectedEmployee}
                   onChange={handleEmployeeChange}
                 />
@@ -793,20 +1035,6 @@ const EmployeeLeaveSetupModal = ({
             </div>
             <div className="row mb-3">
               <div className="col-md-4">
-                <label className="form-label mb-1">Year</label>
-                <select
-                  className="form-select"
-                  value={selectedYear}
-                  onChange={handleYearChange}
-                >
-                  {yearOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-4">
                 <label className="form-label mb-1">Valid From</label>
                 <br />
                 <DatePicker
@@ -815,7 +1043,10 @@ const EmployeeLeaveSetupModal = ({
                   placeholderText="Valid From"
                   selected={validFrom}
                   onChange={handleValidFromChange}
+                  minDate={yearDateRange.minDate}
+                  maxDate={yearDateRange.maxDate}
                   showYearDropdown
+                  popperProps={{ strategy: "fixed" }}
                 />
               </div>
               <div className="col-md-4">
@@ -827,7 +1058,10 @@ const EmployeeLeaveSetupModal = ({
                   placeholderText="Valid To"
                   selected={validTo}
                   onChange={(date) => setValidTo(date)}
+                  minDate={yearDateRange.minDate}
+                  maxDate={yearDateRange.maxDate}
                   showYearDropdown
+                  popperProps={{ strategy: "fixed" }}
                 />
               </div>
             </div>
@@ -863,13 +1097,11 @@ const EmployeeLeaveSetupModal = ({
                               onChange={(e) => handleAllocationChange(index, e.target.value)}
                               min="0"
                               style={{ width: "80px" }}
-                              disabled={savingAllocation}
                             />
                           </td>
-                          <td>{allocation.carriedForwardDays || 0}</td>
+                          <td>0</td>
                           <td>
-                            {(allocation.allocatedDays || 0) +
-                              (allocation.carriedForwardDays || 0)}
+                            {allocation.allocatedDays || 0}
                           </td>
                         </tr>
                       ))

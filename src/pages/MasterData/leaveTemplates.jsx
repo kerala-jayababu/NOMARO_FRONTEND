@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Grid from "../../components/grid";
 import Button from "../../components/button";
@@ -14,6 +14,7 @@ import {
   fetchDesignationList,
   fetchLeaveTemplateDetailById,
   submitLeaveTemplateForApproval,
+  deleteLeaveTemplateDetail,
   resetLeaveTemplateDetailById
 } from "../../redux/reducers/leaveTemplate";
 import { fetchLeaveTypes } from "../../redux/reducers/leaveType";
@@ -42,6 +43,9 @@ const LeaveTemplates = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workYears, setWorkYears] = useState([]);
 
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
+
   // Fetch work years from API on component mount
   useEffect(() => {
     const fetchWorkYears = async () => {
@@ -53,28 +57,79 @@ const LeaveTemplates = () => {
     fetchWorkYears();
   }, []);
 
-  // Year options from API for form dropdown
+  // Set default year filter based on financial year (July 1 - June 30)
+  useEffect(() => {
+    if (workYears.length > 0 && !yearFilter) {
+      const today = new Date();
+      const currentMonth = today.getMonth() + 1; // 1-12
+      const currentYear = today.getFullYear();
+
+      // Financial year starts on July 1
+      // If current month is July (7) or later, financial year starts with current year
+      // If current month is before July (1-6), financial year started last year
+      const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+      const currentWorkYear = workYears.find((year) => {
+        if (!year.displayText) return false;
+        // Extract first year from displayText (handles both "2025-26" and "2025-2026" formats)
+        const firstYear = year.displayText.split("-")[0];
+        return firstYear === String(financialYearStart);
+      });
+      if (currentWorkYear) {
+        setYearFilter(String(currentWorkYear.idWorkYear));
+      }
+    }
+  }, [workYears]);
+
+  // Get previous, current, and next financial year start years
+  const getRelevantYears = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+
+    // Financial year starts on July 1
+    // If current month is July (7) or later, financial year starts with current year
+    // If current month is before July (1-6), financial year started last year
+    const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+    return [
+      financialYearStart - 1, // Previous year
+      financialYearStart,     // Current year
+      financialYearStart + 1  // Next year
+    ];
+  }, []);
+
+  // Filter work years to only include previous, current, and next financial year
+  const filteredWorkYears = useMemo(() => {
+    return workYears.filter((year) => {
+      if (!year.displayText) return false;
+      const firstYear = parseInt(year.displayText.split("-")[0]);
+      return getRelevantYears.includes(firstYear);
+    });
+  }, [workYears, getRelevantYears]);
+
+  // Year options from API for form dropdown (only previous, current, next year)
   const yearOptions = useMemo(() => {
-    return workYears.map((year) => ({
+    return filteredWorkYears.map((year) => ({
       value: String(year.idWorkYear),
       label: year.displayText,
     }));
-  }, [workYears]);
+  }, [filteredWorkYears]);
 
-  // Year filter options from API with "All Years" option
+  // Year filter options from API with "All Years" option (only previous, current, next year)
   const yearFilterOptions = useMemo(() => {
     return [
       { value: "", label: "All Years" },
-      ...workYears.map((year) => ({
+      ...filteredWorkYears.map((year) => ({
         value: String(year.idWorkYear),
         label: year.displayText,
       })),
     ];
-  }, [workYears]);
+  }, [filteredWorkYears]);
 
   // Status options (matching API values)
   const statusOptions = [
-    { value: "ALL", label: "All" },
+    { value: "ALL", label: "All Status" },
     { value: "DRAFT", label: "Draft" },
     { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
@@ -168,14 +223,15 @@ const LeaveTemplates = () => {
     },
     {
       key: "viewDetails",
-      label: "Template Details",
+      label: "View Details",
       render: (id) => (
         <button
           type="button"
-          className="btn btn-sm btn-link p-0"
+          className="btn btn-sm p-0"
           onClick={() => handleViewDetails(id)}
+          title="View Details"
         >
-          View
+          <i className="bx bx-show fs-5"></i>
         </button>
       ),
     },
@@ -226,15 +282,21 @@ const LeaveTemplates = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     setTemplateNameError("");
 
     if (!templateName.trim()) {
       setTemplateNameError("Template Name is required.");
+      submitLockRef.current = false;
       return;
     }
 
     if (!selectedYear) {
       setTemplateNameError("Year is required.");
+      submitLockRef.current = false;
       return;
     }
 
@@ -244,7 +306,7 @@ const LeaveTemplates = () => {
       leaveTemplateDesc: description || "",
       idYear: parseInt(selectedYear),
       createdBy: getCurrentUserId(),
-      approvlStatus: "DRAFT",
+      approvlStatus: "SUBMITTED",
     };
 
     try {
@@ -272,6 +334,11 @@ const LeaveTemplates = () => {
           position: 'top-right',
           autoClose: 4000
         });
+        // Refresh the list to clear error state and show selected year data
+        const status = statusFilter || "ALL";
+        const idYear = yearFilter || "";
+        const searchText = searchQuery || "";
+        dispatch(fetchLeaveTemplates({ status, idYear, searchText }));
       }
     } catch (error) {
       console.error("Error saving leave template:", error);
@@ -279,8 +346,14 @@ const LeaveTemplates = () => {
         position: 'top-right',
         autoClose: 4000
       });
+      // Refresh the list to clear error state and show selected year data
+      const status = statusFilter || "ALL";
+      const idYear = yearFilter || "";
+      const searchText = searchQuery || "";
+      dispatch(fetchLeaveTemplates({ status, idYear, searchText }));
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -288,7 +361,7 @@ const LeaveTemplates = () => {
     setTemplateName("");
     setDescription("");
     setSelectedYear("");
-    setStatus("DRAFT");
+    setStatus("SUBMITTED");
     setTemplateNameError("");
     setIsEditing(false);
     setEditingTemplateId(null);
@@ -434,9 +507,18 @@ const LeaveTemplates = () => {
       {showDetailsModal && selectedTemplate && (
         <TemplateDetailsModal
           template={selectedTemplate}
+          statusFilter={statusFilter}
+          yearFilter={yearFilter}
+          searchQuery={searchQuery}
           onClose={() => {
             setShowDetailsModal(false);
             setSelectedTemplate(null);
+            // Refresh the list to clear any error state
+            dispatch(fetchLeaveTemplates({
+              status: statusFilter || "ALL",
+              idYear: yearFilter || "",
+              searchText: searchQuery || ""
+            }));
           }}
         />
       )}
@@ -444,12 +526,16 @@ const LeaveTemplates = () => {
   );
 };
 
-const TemplateDetailsModal = ({ template, onClose }) => {
+const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery, onClose }) => {
   const dispatch = useDispatch();
   const { leaveTemplateDetails } = useSelector((state) => state.leaveTemplate);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [showLeaveTypeModal, setShowLeaveTypeModal] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState(null);
+  const [isViewMode, setIsViewMode] = useState(false);
+
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     // Fetch leave template details by ID
@@ -505,12 +591,21 @@ const TemplateDetailsModal = ({ template, onClose }) => {
   const handleEditLeaveType = (id) => {
     const leaveType = leaveTypes.find((lt) => lt.idLeaveTemplateDetails === id);
     setSelectedLeaveType(leaveType);
+    setIsViewMode(false);
+    setShowLeaveTypeModal(true);
+  };
+
+  const handleViewLeaveType = (id) => {
+    const leaveType = leaveTypes.find((lt) => lt.idLeaveTemplateDetails === id);
+    setSelectedLeaveType(leaveType);
+    setIsViewMode(true);
     setShowLeaveTypeModal(true);
   };
 
   const handleAddLeaveType = () => {
     dispatch(resetLeaveTemplateDetailById());
     setSelectedLeaveType(null);
+    setIsViewMode(false);
     setShowLeaveTypeModal(true);
   };
 
@@ -521,12 +616,69 @@ const TemplateDetailsModal = ({ template, onClose }) => {
     }
   };
 
+  const handleDeleteLeaveType = async (idLeaveTemplateDetails) => {
+    if (!window.confirm("Are you sure you want to delete this leave type?")) {
+      return;
+    }
+
+    try {
+      const resultAction = await dispatch(deleteLeaveTemplateDetail(idLeaveTemplateDetails));
+
+      if (deleteLeaveTemplateDetail.fulfilled.match(resultAction)) {
+        if (resultAction.payload && resultAction.payload.success) {
+          toast.success("Leave type deleted successfully!", {
+            position: "top-right",
+            autoClose: 4000,
+          });
+          // Refresh the template details
+          if (template?.idLeaveTemplate) {
+            dispatch(fetchLeaveTemplateById(template.idLeaveTemplate));
+          }
+        } else {
+          toast.error(resultAction.payload?.message || "Failed to delete leave type", {
+            position: "top-right",
+            autoClose: 4000,
+          });
+        }
+      } else {
+        toast.error(resultAction.payload?.message || "Failed to delete leave type", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting leave type:", error);
+      toast.error("Failed to delete leave type", {
+        position: "top-right",
+        autoClose: 4000,
+      });
+    }
+  };
+
+  // Derived state: disable submit when no leave types exist
+  const isSubmitDisabled = leaveTypes.length === 0;
+
   const handleSubmitForApproval = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     if (!template?.idLeaveTemplate) {
       toast.error("No leave template selected", {
         position: 'top-right',
         autoClose: 3000
       });
+      submitLockRef.current = false;
+      return;
+    }
+
+    // Defensive check: prevent submission if no leave types exist
+    if (leaveTypes.length === 0) {
+      toast.error("Please add at least one leave type before submitting for approval.", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
       return;
     }
 
@@ -563,6 +715,8 @@ const TemplateDetailsModal = ({ template, onClose }) => {
         position: 'top-right',
         autoClose: 4000
       });
+    } finally {
+      submitLockRef.current = false;
     }
   };
 
@@ -634,13 +788,30 @@ const TemplateDetailsModal = ({ template, onClose }) => {
                               </span>
                             </td>
                             <td>
-                              {template.status !== "APPROVED" && (
+                              {template.status !== "APPROVED" ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-icon btn-outline-secondary px-2 border-0"
+                                    onClick={() => handleEditLeaveType(lt.idLeaveTemplateDetails)}
+                                  >
+                                    <span className="bx bx-pencil"></span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-icon btn-outline-danger px-2 border-0"
+                                    onClick={() => handleDeleteLeaveType(lt.idLeaveTemplateDetails)}
+                                  >
+                                    <span className="bx bx-trash"></span>
+                                  </button>
+                                </>
+                              ) : (
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-icon btn-outline-secondary px-2 border-0"
-                                  onClick={() => handleEditLeaveType(lt.idLeaveTemplateDetails)}
+                                  onClick={() => handleViewLeaveType(lt.idLeaveTemplateDetails)}
                                 >
-                                  <span className="bx bx-pencil"></span>
+                                  <span className="bx bx-show"></span>
                                 </button>
                               )}
                             </td>
@@ -657,22 +828,30 @@ const TemplateDetailsModal = ({ template, onClose }) => {
                   </table>
                 </div>
                 {template.status !== "APPROVED" && (
-                  <div className="d-flex justify-content-between mt-2">
-                    <Button
-                      type="button"
-                      className="btn btn-primary px-4"
-                      onClick={handleSubmitForApproval}
-                    >
-                      Submit for Approval
-                    </Button>
-                    <Button
-                      type="button"
-                      className="btn btn-primary px-4"
-                      onClick={handleAddLeaveType}
-                    >
-                      Add Leave Type
-                    </Button>
-                  </div>
+                  <>
+                    {isSubmitDisabled && (
+                      <div className="alert alert-warning py-2 mb-2" role="alert">
+                        Please add at least one leave type before submitting for approval.
+                      </div>
+                    )}
+                    <div className="d-flex justify-content-between mt-2">
+                      <Button
+                        type="button"
+                        className="btn btn-primary px-4"
+                        onClick={handleSubmitForApproval}
+                        disabled={isSubmitDisabled}
+                      >
+                        Submit for Approval
+                      </Button>
+                      <Button
+                        type="button"
+                        className="btn btn-primary px-4"
+                        onClick={handleAddLeaveType}
+                      >
+                        Add Leave Type
+                      </Button>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -686,9 +865,11 @@ const TemplateDetailsModal = ({ template, onClose }) => {
           templateYear={template.year}
           templateIdYear={template.idYear}
           templateId={template.idLeaveTemplate}
+          isViewMode={isViewMode}
           onClose={() => {
             setShowLeaveTypeModal(false);
             setSelectedLeaveType(null);
+            setIsViewMode(false);
           }}
           onSave={handleLeaveTypeSaved}
         />
@@ -697,7 +878,7 @@ const TemplateDetailsModal = ({ template, onClose }) => {
   );
 };
 
-const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, onClose, onSave }) => {
+const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, isViewMode = false, onClose, onSave }) => {
   const dispatch = useDispatch();
   const { designationList, leaveTemplateDetailById } = useSelector((state) => state.leaveTemplate);
   const { leaveTypes: leaveTypesList } = useSelector((state) => state.leaveType);
@@ -735,10 +916,15 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
     { level: 4, approverType: "ROLE", approver: "" },
   ]);
 
+  // Track if submit was attempted (for validation styling)
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Ref to prevent duplicate API calls on rapid button clicks
+  const submitLockRef = useRef(false);
+
   const leaveTypeOptions = useMemo(() => {
     if (leaveTypesList && leaveTypesList.data) {
       return [
-        { value: "", label: "Select Leave Type" },
         ...leaveTypesList.data.map((lt) => ({
           value: String(lt.idLeaveType),
           label: lt.leaveTypeName,
@@ -746,7 +932,6 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
         })),
       ];
     }
-    return [{ value: "", label: "Select Leave Type" }];
   }, [leaveTypesList]);
 
   const roleOptions = useMemo(() => {
@@ -893,13 +1078,150 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
   }, []);
 
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
+    // Mark that submit was attempted (for validation styling)
+    setSubmitAttempted(true);
+
     // Validation: Leave type must be selected
     if (!idLeaveType) {
       toast.error("Please select a leave type", {
         position: 'top-right',
         autoClose: 4000
       });
+      submitLockRef.current = false;
       return;
+    }
+
+    // Validation: Max Leaves Per Year is mandatory
+    if (!maxPerYear || maxPerYear.trim() === "") {
+      toast.error("Max Leaves Per Year is required", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
+      return;
+    }
+
+    // Validation: Max Leaves per year should not accept >366
+    const maxPerYearValue = parseInt(maxPerYear) || 0;
+    if (maxPerYearValue > 366) {
+      toast.error("Max Leaves Per Year cannot exceed 366 days", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
+      return;
+    }
+
+    // Validation: Max Leaves Per Month should not accept >31 and should be less than Max Leaves Per Year
+    const maxPerMonthValue = parseInt(maxPerMonth) || 0;
+    if (maxPerMonthValue > 31) {
+      toast.error("Max Leaves Per Month cannot exceed 31 days", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
+      return;
+    }
+    if (maxPerMonthValue > maxPerYearValue && maxPerYearValue > 0) {
+      toast.error("Max Leaves Per Month cannot exceed Max Leaves Per Year", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
+      return;
+    }
+
+    // Validation: Backdate Limit should not accept >365
+    if (backdatedAllowed === "Yes") {
+      const backdateLimitValue = parseInt(backdateLimit) || 0;
+      if (backdateLimitValue > 365) {
+        toast.error("Backdate Limit cannot exceed 365 days", {
+          position: 'top-right',
+          autoClose: 4000
+        });
+        submitLockRef.current = false;
+        return;
+      }
+    }
+
+    // Validation: Max Carry Forward Days should not be > Max Leaves Per Year
+    if (carryForwardAllowed === "Yes") {
+      const carryForwardLimitValue = parseInt(carryForwardLimit) || 0;
+      if (carryForwardLimitValue > maxPerYearValue) {
+        toast.error("Max Carry Forward Days cannot exceed Max Leaves Per Year", {
+          position: 'top-right',
+          autoClose: 4000
+        });
+        submitLockRef.current = false;
+        return;
+      }
+    }
+
+    // Validation: Doc Required After Days should not accept >31
+    if (requiresDocument === "Yes") {
+      const docRequiredAfterDaysValue = parseInt(docRequiredAfterDays) || 0;
+      if (docRequiredAfterDaysValue > 31) {
+        toast.error("Doc Required After Days cannot exceed 31 days", {
+          position: 'top-right',
+          autoClose: 4000
+        });
+        submitLockRef.current = false;
+        return;
+      }
+    }
+
+    // Validation: If approverType is "ROLE", approver must be selected
+    if (approvalLevels > 0) {
+      for (let i = 0; i < approvalLevels; i++) {
+        const approver = approvers[i];
+        if (approver.approverType === "ROLE" && !approver.approver) {
+          toast.error(`Please select an approver for Level ${i + 1}`, {
+            position: 'top-right',
+            autoClose: 4000
+          });
+          submitLockRef.current = false;
+          return;
+        }
+      }
+
+      // Validation: No duplicate approvers allowed across levels
+      if (approvalLevels >= 2) {
+        const activeApprovers = approvers.slice(0, approvalLevels);
+
+        // Check REPOFFICER is not selected on multiple levels
+        const repOfficerLevels = activeApprovers
+          .map((a, i) => a.approverType === "REPOFFICER" ? i + 1 : null)
+          .filter(Boolean);
+        if (repOfficerLevels.length > 1) {
+          toast.error(`REPOFFICER is selected on multiple levels (${repOfficerLevels.join(", ")}). It can only be used on one level.`, {
+            position: 'top-right',
+            autoClose: 4000
+          });
+          submitLockRef.current = false;
+          return;
+        }
+
+        // Check no duplicate ROLE approvers across levels
+        const seen = new Set();
+        for (let i = 0; i < activeApprovers.length; i++) {
+          if (activeApprovers[i].approverType === "ROLE" && activeApprovers[i].approver) {
+            const key = `ROLE-${activeApprovers[i].approver}`;
+            if (seen.has(key)) {
+              toast.error(`Duplicate approver selected at Level ${i + 1}. Each level must have a different approver.`, {
+                position: 'top-right',
+                autoClose: 4000
+              });
+              submitLockRef.current = false;
+              return;
+            }
+            seen.add(key);
+          }
+        }
+      }
     }
 
     // Build workflow details
@@ -988,6 +1310,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
       });
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -1016,6 +1339,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
       { level: 3, approverType: "ROLE", approver: "" },
       { level: 4, approverType: "ROLE", approver: "" },
     ]);
+    setSubmitAttempted(false);
   };
 
   const handleClose = () => {
@@ -1052,7 +1376,9 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
         <div className="modal-dialog modal-xl modal-dialog-centered">
           <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Add / Update Template Leave Type</h5>
+            <h5 className="modal-title">
+              {isViewMode ? "View Template Leave Type" : "Add / Update Template Leave Type"}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -1061,6 +1387,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
             ></button>
           </div>
           <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <fieldset disabled={isViewMode}>
             <h6 className="fw-bold mb-3">Basic</h6>
             <div className="row mb-3">
               <div className="col-md-4">
@@ -1212,7 +1539,13 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
                   name="maxPerYear"
                   type="number"
                   value={maxPerYear}
-                  onChange={(e) => setMaxPerYear(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 366)) {
+                      setMaxPerYear(val);
+                    }
+                  }}
+                  isInvalid={submitAttempted && (!maxPerYear || maxPerYear.trim() === "")}
                 />
               </div>
               <div className="col-md-3">
@@ -1221,7 +1554,12 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
                   name="maxPerMonth"
                   type="number"
                   value={maxPerMonth}
-                  onChange={(e) => setMaxPerMonth(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 31)) {
+                      setMaxPerMonth(val);
+                    }
+                  }}
                 />
               </div>
               <div className="col-md-3">
@@ -1244,7 +1582,12 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
                     type="number"
                     placeholder="e.g., 2"
                     value={backdateLimit}
-                    onChange={(e) => setBackdateLimit(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 365)) {
+                        setBackdateLimit(val);
+                      }
+                    }}
                   />
                 </div>
               )}
@@ -1312,7 +1655,12 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
                     type="number"
                     placeholder="e.g., 2"
                     value={docRequiredAfterDays}
-                    onChange={(e) => setDocRequiredAfterDays(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 31)) {
+                        setDocRequiredAfterDays(val);
+                      }
+                    }}
                   />
                 </div>
               )}
@@ -1340,29 +1688,48 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, o
                     name="carryForwardLimit"
                     type="number"
                     value={carryForwardLimit}
-                    onChange={(e) => setCarryForwardLimit(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const maxAllowed = parseInt(maxPerYear) || 366;
+                      if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= maxAllowed)) {
+                        setCarryForwardLimit(val);
+                      }
+                    }}
                   />
                 </div>
               )}
             </div>
+            </fieldset>
           </div>
           <div className="modal-footer">
-            <Button
-              type="button"
-              className="btn btn-primary btn-sm py-2 px-4 me-2"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-            <Button
-              type="button"
-              className="btn btn-outline-secondary btn-sm py-2 px-4"
-              onClick={handleReset}
-              disabled={isSubmitting}
-            >
-              Reset
-            </Button>
+            {isViewMode ? (
+              <Button
+                type="button"
+                className="btn btn-outline-secondary btn-sm py-2 px-4"
+                onClick={handleClose}
+              >
+                Close
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  className="btn btn-primary btn-sm py-2 px-4 me-2"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+                <Button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm py-2 px-4"
+                  onClick={handleReset}
+                  disabled={isSubmitting}
+                >
+                  Reset
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
