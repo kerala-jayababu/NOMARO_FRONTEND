@@ -235,11 +235,11 @@ const Qualifications = () => {
         idEmployee: parseInt(id),
         idQualificationType: qualificationTypeId,
         qualificationName: formData.qualificationName,
-        specialization: formData.specialization,
+        specialization: formData.specialization?.trim() || null,
         institutionName: formData.institutionName,
         idCountry: parseInt(countryId),
         yearOfCompletion: parseInt(formData.yearOfCompletion),
-        gradeOrPercentage: formData.gradeOrPercentage,
+        gradeOrPercentage: formData.gradeOrPercentage?.trim() || null,
         certificateFile: formData.certificate,
         idUser: getCurrentUserId(),
       };

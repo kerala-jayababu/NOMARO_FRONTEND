@@ -29,6 +29,15 @@ export default class CommonService {
     }
   };
 
+  static getBudgetCodesList = async () => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetBudgetList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static getSalaryHeadList = async () => {
     try {
       const res = await API.get("/api/v1/MasterData/GetSalaryHeadList");
@@ -218,6 +227,15 @@ export default class CommonService {
         },
       });
       return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getCountries = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetCountries");
+      return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
     }
