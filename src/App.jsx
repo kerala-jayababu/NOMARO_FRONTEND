@@ -42,6 +42,7 @@ import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
 import ShiftManagement from "./pages/AdminTools/ShiftManagement"
 import ShiftAssignment from "./pages/AdminTools/ShiftAssignment"
+import Assets from "./pages/AdminTools/assets"
 import "../src/core/services/PreventMultipleClickButton"
 import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
 import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
@@ -130,6 +131,7 @@ function App() {
               <Route path="offboarding-cases" element={<OffboardingCases/>} />
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
               <Route path="org-hierarchy" element={<OrgHierarchy/>} />
+              <Route path="assets" element={<Assets/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

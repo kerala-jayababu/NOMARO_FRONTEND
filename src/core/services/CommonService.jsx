@@ -29,6 +29,15 @@ export default class CommonService {
     }
   };
 
+  static getBudgetCodesList = async () => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetBudgetList");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static getSalaryHeadList = async () => {
     try {
       const res = await API.get("/api/v1/MasterData/GetSalaryHeadList");
@@ -218,6 +227,64 @@ export default class CommonService {
         },
       });
       return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getCountries = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetCountries");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getNationalities = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetNationalities");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  // Asset APIs
+  static getAssetTypes = async () => {
+    try {
+      const res = await API.get("/api/v1/Asset/GetAssetTypes");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static addOrUpdateAssetTypes = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/Asset/AddOrUpdateAssetTypes", payload);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getAssets = async (searchText = "") => {
+    try {
+      const url = searchText 
+        ? `/api/v1/Asset/GetAssets?searchText=${encodeURIComponent(searchText)}`
+        : "/api/v1/Asset/GetAssets";
+      const res = await API.get(url);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static addOrUpdateAssets = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/Asset/AddOrUpdateAssets", payload);
+      return { error: null, data: res.data };
     } catch (error) {
       return handleApiError(error);
     }

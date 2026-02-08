@@ -1,5 +1,5 @@
-import React, { useState, createContext, useMemo, Suspense, lazy } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, createContext, useMemo, Suspense, lazy, useRef, useEffect, useLayoutEffect } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Modal } from "react-bootstrap";
 import Qualifications from "./tabs/Qualifications";
@@ -16,6 +16,7 @@ export const EmployeeContext = createContext(null);
 
 const EmployeeManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const employeeIdFromUrl = searchParams.get("id");
   const tabFromUrl = searchParams.get("tab");
@@ -25,9 +26,13 @@ const EmployeeManagement = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
+  const [employeeName, setEmployeeName] = useState("");
+  const previousLocationRef = useRef(location);
+  const isNavigatingAwayRef = useRef(false);
+  const shouldBlockRef = useRef(false);
 
   const tabs = [
-    { id: "basic-details", label: "Basic Info", component: BasicDetails },
+    { id: "basic-details", label: "General Info", component: BasicDetails },
     { id: "bank-details", label: "Bank Details", component: BankDetails },
     { id: "qualifications", label: "Qualifications", component: Qualifications },
     { id: "experience", label: "Experiences", component: Experience },
@@ -35,6 +40,173 @@ const EmployeeManagement = () => {
     { id: "assets", label: "Assets", component: Assets },
     // { id: "actions", label: "Employee Actions", component: EmployeeActions },
   ];
+
+  // Initialize previous location on mount
+  useEffect(() => {
+    previousLocationRef.current = location;
+  }, []);
+
+  // Intercept navigation by overriding history methods
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return; // No need to intercept if no unsaved changes
+    }
+
+    // Store original methods
+    const originalPushState = window.history.pushState.bind(window.history);
+    const originalReplaceState = window.history.replaceState.bind(window.history);
+
+    // Helper to extract path from URL (handles both hash and regular URLs)
+    const getPathFromUrl = (url) => {
+      if (!url) return '';
+      if (typeof url === 'string') {
+        // For HashRouter, URL might be like "/#/dashboard/employee-profile"
+        if (url.includes('#')) {
+          const hashPart = url.split('#')[1];
+          return hashPart.split('?')[0];
+        }
+        return url.split('?')[0];
+      }
+      return '';
+    };
+
+    // Override pushState
+    window.history.pushState = function(state, title, url) {
+      if (isNavigatingAwayRef.current) {
+        // Allow navigation if user confirmed
+        return originalPushState(state, title, url);
+      }
+
+      // Get current and new paths
+      const currentHash = window.location.hash;
+      const currentPath = currentHash ? currentHash.substring(1).split('?')[0] : window.location.pathname;
+      const newPath = getPathFromUrl(url);
+
+      // Check if leaving employee-management page
+      if (currentPath.includes('/employee-management') && newPath && !newPath.includes('/employee-management')) {
+        // Block navigation - show modal
+        const fullNewPath = newPath + (url && url.includes('?') ? '?' + url.split('?')[1] : '');
+        setPendingNavigation(fullNewPath);
+        setShowConfirmModal(true);
+        return; // Don't call original pushState
+      }
+
+      // Allow navigation
+      return originalPushState(state, title, url);
+    };
+
+    // Override replaceState
+    window.history.replaceState = function(state, title, url) {
+      if (isNavigatingAwayRef.current) {
+        // Allow navigation if user confirmed
+        return originalReplaceState(state, title, url);
+      }
+
+      // Get current and new paths
+      const currentHash = window.location.hash;
+      const currentPath = currentHash ? currentHash.substring(1).split('?')[0] : window.location.pathname;
+      const newPath = getPathFromUrl(url);
+
+      // Check if leaving employee-management page
+      if (currentPath.includes('/employee-management') && newPath && !newPath.includes('/employee-management')) {
+        // Block navigation - show modal
+        const fullNewPath = newPath + (url && url.includes('?') ? '?' + url.split('?')[1] : '');
+        setPendingNavigation(fullNewPath);
+        setShowConfirmModal(true);
+        return; // Don't call original replaceState
+      }
+
+      // Allow navigation
+      return originalReplaceState(state, title, url);
+    };
+
+    // Cleanup: restore original methods
+    return () => {
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+    };
+  }, [hasUnsavedChanges]);
+
+  // Also listen to hashchange as backup
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return;
+    }
+
+    const handleHashChange = () => {
+      if (isNavigatingAwayRef.current) {
+        return; // Allow if user confirmed
+      }
+
+      const hash = window.location.hash;
+      const hashPath = hash.substring(1);
+      const [path] = hashPath.split('?');
+      
+      // Check if we're leaving employee-management
+      if (!path.includes('/employee-management') && previousLocationRef.current.pathname.includes('/employee-management')) {
+        // Block and revert
+        const previousFullPath = previousLocationRef.current.pathname + previousLocationRef.current.search;
+        const previousHash = '#' + previousFullPath;
+        window.history.replaceState(null, '', window.location.pathname + previousHash);
+        navigate(previousFullPath, { replace: true });
+        setPendingNavigation(path);
+        setShowConfirmModal(true);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [hasUnsavedChanges, navigate]);
+
+  // Detect route changes and block navigation if there are unsaved changes
+  // Use useLayoutEffect to run synchronously before browser paint
+  useLayoutEffect(() => {
+    if (isNavigatingAwayRef.current) {
+      // User confirmed navigation, allow it
+      previousLocationRef.current = location;
+      return;
+    }
+
+    const currentPath = location.pathname + location.search;
+    const previousPath = previousLocationRef.current.pathname + previousLocationRef.current.search;
+    
+    // Skip if paths are the same (no navigation occurred)
+    if (currentPath === previousPath) {
+      return;
+    }
+
+    // Check if we're navigating away from employee-management page
+    const isLeavingPage = previousLocationRef.current.pathname.includes('/employee-management') && 
+                          !location.pathname.includes('/employee-management');
+    
+    // Only block if we're leaving the page (not just changing tabs/query params)
+    if (isLeavingPage && hasUnsavedChanges) {
+      // Store the target location
+      const targetPath = location.pathname + location.search;
+      const previousFullPath = previousLocationRef.current.pathname + previousLocationRef.current.search;
+      
+      // Immediately revert navigation using both methods
+      // Method 1: Direct hash manipulation for HashRouter
+      const currentHash = window.location.hash;
+      if (currentHash) {
+        const newHash = '#' + previousFullPath;
+        // Use requestAnimationFrame to ensure this happens after React Router's update
+        requestAnimationFrame(() => {
+          window.history.replaceState(null, '', window.location.pathname + newHash);
+        });
+      }
+      
+      // Method 2: React Router navigate
+      navigate(previousFullPath, { replace: true });
+      
+      // Set pending navigation and show modal
+      setPendingNavigation(targetPath);
+      setShowConfirmModal(true);
+    } else {
+      // Update previous location only if we're not blocking
+      previousLocationRef.current = location;
+    }
+  }, [location, hasUnsavedChanges, navigate]);
 
   // Check if tab should be disabled (all tabs except basic-details require employeeId)
   const isTabDisabled = (tabId) => {
@@ -46,6 +218,11 @@ const EmployeeManagement = () => {
     const tab = searchParams.get("tab");
     
     setEmployeeId(id);
+    
+    // Clear employee name if no employee ID
+    if (!id) {
+      setEmployeeName("");
+    }
     
     if (tab && tab !== "basic-details" && !id) {
       navigate(`/dashboard/employee-management?tab=basic-details`, { replace: true });
@@ -119,17 +296,23 @@ const EmployeeManagement = () => {
   const handleConfirmNavigation = () => {
     setHasUnsavedChanges(false);
     setShowConfirmModal(false);
+    isNavigatingAwayRef.current = true;
     
     // Handle tab switch
     if (pendingTabSwitch) {
       switchToTab(pendingTabSwitch);
       setPendingTabSwitch(null);
     }
-    // Handle navigation
+    // Handle navigation (from button click or menu/sidebar)
     else if (pendingNavigation) {
       navigate(pendingNavigation);
       setPendingNavigation(null);
     }
+    
+    // Reset flag after a short delay to allow navigation to complete
+    setTimeout(() => {
+      isNavigatingAwayRef.current = false;
+    }, 100);
   };
 
   // Cancel navigation/tab switch
@@ -155,7 +338,21 @@ const EmployeeManagement = () => {
                 padding: '1rem 1.5rem'
               }}
             >
-              <h5 className="m-0">Employee Management</h5>
+              <div className="d-flex align-items-center gap-3">
+                <h5 className="m-0">Employee Management</h5>
+                {employeeName && (
+                  <span 
+                    className="badge bg-primary"
+                    style={{
+                      fontSize: '0.95rem',
+                      fontWeight: 500,
+                      color: '#fff'
+                    }}
+                  >
+                    {employeeName}
+                  </span>
+                )}
+              </div>
               <button
                 className="btn btn-secondary"
                 onClick={() => handleNavigation("/dashboard/employee-profile")}
@@ -250,7 +447,8 @@ const EmployeeManagement = () => {
                     employeeId, 
                     setEmployeeId,
                     setHasUnsavedChanges,
-                    hasUnsavedChanges
+                    hasUnsavedChanges,
+                    setEmployeeName
                   }), [employeeId, hasUnsavedChanges]);
                   
                   return (

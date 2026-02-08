@@ -3,6 +3,8 @@ import moment from "moment";
 import "./LiveDashboard.css";
 import CommonService from "../../core/services/CommonService";
 import LiveDashboardService from "../../core/services/LiveDashboardService";
+import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
 
 const defaultStats = {
   totalEmployees: 0,
@@ -360,6 +362,81 @@ function LiveDashboard() {
     fetchDetails(stat.detailType, stat.detailLabel || stat.label);
   };
 
+  const handleExportToExcel = () => {
+    if (filteredRows.length === 0) {
+      toast.warning("No data available to export", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    try {
+      // Prepare data for Excel export
+      const excelData = filteredRows.map((row) => ({
+        "Emp Code": row.code || "--",
+        "Employee": row.employee || "--",
+        "Department": row.department || "--",
+        "Email": row.email || "--",
+        "Phone": row.phone || "--",
+        "Status": row.statusLabel || "--",
+        "Clock-In": row.checkIn || "--",
+        "Clock-Out": row.checkOut || "--",
+      }));
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 12 }, // Emp Code
+        { wch: 30 }, // Employee
+        { wch: 20 }, // Department
+        { wch: 30 }, // Email
+        { wch: 15 }, // Phone
+        { wch: 20 }, // Status
+        { wch: 12 }, // Clock-In
+        { wch: 12 }, // Clock-Out
+      ];
+      worksheet["!cols"] = columnWidths;
+
+      // Style header row
+      const headerRange = XLSX.utils.decode_range(worksheet["!ref"]);
+      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!worksheet[cellAddress]) worksheet[cellAddress] = {};
+        worksheet[cellAddress].s = {
+          fill: { fgColor: { rgb: "0F3C54" } },
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          alignment: { horizontal: "center", vertical: "center" },
+        };
+      }
+
+      // Add worksheet to workbook
+      const sheetName = selectedDetailLabel.replace(/[\/\\?*\[\]]/g, "_");
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+      // Generate filename with current date and detail label
+      const currentDate = moment().format("MM-DD-YYYY");
+      const fileName = `Live_Dashboard_${sheetName}_${currentDate}.xlsx`;
+
+      // Write file
+      XLSX.writeFile(workbook, fileName);
+
+      toast.success("Excel file downloaded successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast.error("Failed to export Excel file", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+
   return (
     <div className="container-fluid p-2 live-dashboard">
       <div className="page-header">
@@ -432,12 +509,28 @@ function LiveDashboard() {
 
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="fw-bold mb-0">Live Attendance Status</h5>
-          <span
-            className="fw-bold "
-            style={{ fontSize: "14px" }}
-          >
-            Showing: {selectedDetailLabel}
-          </span>
+          <div className="d-flex align-items-center gap-3">
+            <span
+              className="fw-bold "
+              style={{ fontSize: "14px" }}
+            >
+              Showing: {selectedDetailLabel}
+            </span>
+            <button
+              className="btn btn-sm btn-success"
+              onClick={handleExportToExcel}
+              disabled={isDetailsLoading || filteredRows.length === 0}
+              title="Export to Excel"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <i className="bx bx-download"></i>
+              Export Excel
+            </button>
+          </div>
         </div>
         <div className="table-responsive table-scroll">
           <table className="table table-sm table-bordered">

@@ -15,6 +15,7 @@ import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from "xlsx";
 
 function AttendanceDetails() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -317,13 +318,113 @@ function AttendanceDetails() {
         navigate("/dashboard/overtime-transactions", { state: dataToSend });
     }
 
+    const exportToExcel = () => {
+        if (!attendanceDetails || attendanceDetails.length === 0) {
+            toast.warning("No data available to export", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        // Prepare data for Excel export
+        const excelData = attendanceDetails.map((item) => {
+            let statusDetailsText = '';
+            if (item.timeSheetApprovalStatus === 'APPROVED') {
+                statusDetailsText = item.timeSheetApprovalStatus;
+            } else if (item.statusType === 'SHORTTIME') {
+                statusDetailsText = item.reasonForShortTime || item.statusDetails || '';
+            } else if (item.statusType === 'EXTRAHOURS') {
+                statusDetailsText = item.statusDetails || '';
+            } else if (item.statusType === 'UNAUTH') {
+                statusDetailsText = item.statusDetails || '';
+            } else {
+                statusDetailsText = item.statusDetails || '';
+            }
+
+            // Handle special status types (INOUTMISS, UNAUTH, LEAVE)
+            const isSpecialStatus = item.statusType === 'INOUTMISS' || item.statusType === 'UNAUTH' || item.statusType === 'LEAVE';
+
+            return {
+                "Emp Code": item.employeeCode || '',
+                "Emp Name": item.employeeName || '',
+                "Date": item.attendanceDate && moment(item.attendanceDate).isValid() 
+                    ? moment(item.attendanceDate).format('MM-DD-YYYY') 
+                    : '',
+                "First In": (!isSpecialStatus && item.firstInDateTime && moment(item.firstInDateTime).isValid()) 
+                    ? moment(item.firstInDateTime).format('hh:mm A') 
+                    : (isSpecialStatus ? 'N/A' : ''),
+                "Last Out": (!isSpecialStatus && item.lastOutDateTime && moment(item.lastOutDateTime).isValid()) 
+                    ? moment(item.lastOutDateTime).format('hh:mm A') 
+                    : (isSpecialStatus ? 'N/A' : ''),
+                "Total Duration": !isSpecialStatus ? (item.totalDurationHoursText || '') : 'N/A',
+                "Actual IN Hrs": !isSpecialStatus ? (item.actualHoursText || '') : 'N/A',
+                "Status Details": statusDetailsText
+            };
+        });
+
+        // Create workbook and worksheet
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+        // Set column widths
+        const columnWidths = [
+            { wch: 12 }, // Emp Code
+            { wch: 25 }, // Emp Name
+            { wch: 12 }, // Date
+            { wch: 12 }, // First In
+            { wch: 12 }, // Last Out
+            { wch: 15 }, // Total Duration
+            { wch: 15 }, // Actual IN Hrs
+            { wch: 40 }  // Status Details
+        ];
+        worksheet['!cols'] = columnWidths;
+
+        // Style header row
+        const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
+        for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+            if (!worksheet[cellAddress]) worksheet[cellAddress] = {};
+            worksheet[cellAddress].s = {
+                fill: { fgColor: { rgb: "CBD5E1" } },
+                font: { bold: true, color: { rgb: "000000" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+        }
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Details");
+
+        // Generate filename with date range
+        const fileName = `Attendance_Details_${moment(startDate).format('MM-DD-YYYY')}_to_${moment(endDate).format('MM-DD-YYYY')}.xlsx`;
+
+        // Write file
+        XLSX.writeFile(workbook, fileName);
+
+        toast.success("Excel file downloaded successfully", {
+            position: "top-right",
+            autoClose: 2000,
+        });
+    }
+
     return (
         <div className="container-xxl flex-grow-1 container-p-y">
             <div className="row">
                 <div className="col-lg-12">
                     <div className="card">
                         <div className="card-header d-flex align-items-center justify-content-between pb-3">
-                            <h5 className="m-0">List of Attendance details</h5>
+                            <div className="d-flex align-items-center gap-2">
+                                <h5 className="m-0">List of Attendance details</h5>
+                                <button
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={exportToExcel}
+                                    disabled={!attendanceDetails || attendanceDetails.length === 0}
+                                    title="Export to Excel"
+                                    style={{ padding: '4px 8px', border: '1px solid #007bff' }}
+                                >
+                                    <i className="bx bx-file" style={{ fontSize: '18px' }}></i>
+                                </button>
+                            </div>
                             <div className="list_menu">
                                 <div className="list_searchbox">
                                     <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
