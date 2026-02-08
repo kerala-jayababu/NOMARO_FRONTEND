@@ -338,7 +338,7 @@ const BasicDetails = () => {
         idDesignation: detailedData.idDesignation
           ? detailedData.idDesignation.toString()
           : "",
-        emailID: detailedData.emailID ?? detailedData.emailId ?? "",
+        emailID: detailedData.emailID ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
         address1: detailedData.address1 ?? "",
@@ -369,8 +369,8 @@ const BasicDetails = () => {
         citizenShip: detailedData.citizenShip ?? "",
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
-        workPhone: detailedData.workPhone ?? "",
-        workEmail: detailedData.workEmail ?? "",
+        workPhone: "",
+        workEmail: "",
         homeEmail: detailedData.homeEmail ?? "",
         emergencyContactPersonName: detailedData.emergencyContactPersonName ?? "",
         emergencyContactNumbers: detailedData.emergencyContactNumbers ?? "",
@@ -426,7 +426,7 @@ const BasicDetails = () => {
         nationalIDNumber: detailedData.nationalIDNumber ?? detailedData.nationalIdNumber ?? "",
         idDepartment: detailedData.idDepartment ? detailedData.idDepartment.toString() : "",
         idDesignation: detailedData.idDesignation ? detailedData.idDesignation.toString() : "",
-        emailID: detailedData.emailID ?? detailedData.emailId ?? "",
+        emailID: detailedData.emailId ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
         address1: detailedData.address1 ?? "",
@@ -448,8 +448,8 @@ const BasicDetails = () => {
         citizenShip: detailedData.citizenShip ?? "",
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
-        workPhone: detailedData.workPhone ?? "",
-        workEmail: detailedData.workEmail ?? "",
+        workPhone: "",
+        workEmail: "",
         homeEmail: detailedData.homeEmail ?? "",
         emergencyContactPersonName: detailedData.emergencyContactPersonName ?? "",
         emergencyContactNumbers: detailedData.emergencyContactNumbers ?? "",
@@ -466,7 +466,7 @@ const BasicDetails = () => {
     }
   };
 
-  const phoneFields = ["phoneNumber1", "phoneNumber2", "workPhone", "whatsAppNumber", "emergencyContactNumbers"];
+  const phoneFields = ["phoneNumber1", "phoneNumber2", "whatsAppNumber", "emergencyContactNumbers"];
 
   const handleEmployeeInputChange = (field, value) => {
     let sanitizedValue = value;
@@ -568,8 +568,8 @@ const BasicDetails = () => {
       errors.emailID = "Invalid email format";
     }
 
-    if (employeeFormData.workEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.workEmail)) {
-      errors.workEmail = "Invalid email format";
+    if (employeeFormData.emailID && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)) {
+      errors.emailID = "Invalid email format";
     }
 
     if (employeeFormData.homeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.homeEmail)) {
@@ -614,9 +614,19 @@ const BasicDetails = () => {
     try {
       const {
         employeePhoto,
-        ...payloadWithoutPhoto
-      } = {
-        ...employeeFormData,
+        phoneNumber1: formPhoneNumber1,
+        phoneNumber2: formPhoneNumber2,
+        emailID: formEmailID,
+        ...restFormData
+      } = employeeFormData;
+
+      const payloadWithoutPhoto = {
+        ...restFormData,
+        // Map form fields to backend fields: workPhone gets phoneNumber1, phoneNumber1 gets phoneNumber2, workEmail gets emailID
+        phoneNumber1: formPhoneNumber1 || "",
+        phoneNumber2: formPhoneNumber2 || "",
+        workEmail: formEmailID || "",
+        emailID: formEmailID || "",
         idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
         idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
         reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : 0,
@@ -733,8 +743,8 @@ const BasicDetails = () => {
             citizenShip: employeeFormData.citizenShip,
             maritalStatus: employeeFormData.maritalStatus,
             passportNumber: employeeFormData.passportNumber,
-            workPhone: employeeFormData.workPhone,
-            workEmail: employeeFormData.workEmail,
+            workPhone: "",
+            workEmail: "",
             homeEmail: employeeFormData.homeEmail,
             emergencyContactPersonName: employeeFormData.emergencyContactPersonName,
             emergencyContactNumbers: employeeFormData.emergencyContactNumbers,
@@ -1231,21 +1241,8 @@ const BasicDetails = () => {
             </div>
             <div className="row">
               <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="workPhone">
-                  Work Phone with Extn
-                </label>
-                <input
-                  id="workPhone"
-                  name="workPhone"
-                  type="text"
-                  className="form-control"
-                  value={employeeFormData.workPhone}
-                  onChange={(e) => handleEmployeeInputChange("workPhone", e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
                 <label className="form-label mb-1" htmlFor="phoneNumber1">
-                  Mobile Phone
+                  Work Phone with Extn
                 </label>
                 <input
                   id="phoneNumber1"
@@ -1254,6 +1251,19 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.phoneNumber1}
                   onChange={(e) => handleEmployeeInputChange("phoneNumber1", e.target.value)}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="phoneNumber2">
+                  Mobile Phone
+                </label>
+                <input
+                  id="phoneNumber2"
+                  name="phoneNumber2"
+                  type="text"
+                  className="form-control"
+                  value={employeeFormData.phoneNumber2}
+                  onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
                 />
               </div>
               <div className="col-md-4">
@@ -1273,19 +1283,19 @@ const BasicDetails = () => {
 
             <div className="row mt-3">
               <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="workEmail">
+                <label className="form-label mb-1" htmlFor="emailID">
                   Work Email
                 </label>
                 <input
-                  id="workEmail"
-                  name="workEmail"
+                  id="emailID"
+                  name="emailID"
                   type="email"
-                  className={`form-control${employeeFormErrors.workEmail ? " is-invalid" : ""}`}
-                  value={employeeFormData.workEmail}
-                  onChange={(e) => handleEmployeeInputChange("workEmail", e.target.value)}
+                  className={`form-control${employeeFormErrors.emailID ? " is-invalid" : ""}`}
+                  value={employeeFormData.emailID}
+                  onChange={(e) => handleEmployeeInputChange("emailID", e.target.value)}
                 />
-                {employeeFormErrors.workEmail && (
-                  <div className="invalid-feedback d-block">{employeeFormErrors.workEmail}</div>
+                {employeeFormErrors.emailID && (
+                  <div className="invalid-feedback d-block">{employeeFormErrors.emailID}</div>
                 )}
               </div>
               <div className="col-md-4">
