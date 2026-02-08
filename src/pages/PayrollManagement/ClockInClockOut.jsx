@@ -12,6 +12,7 @@ import { NumericFormat } from "react-number-format";
 import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import { useLoader } from "../../components/LoaderContext";
+import * as XLSX from "xlsx";
 
 function ClockInClockOut() {
   const [clockInDetails, setClockInDetails] = useState([]);
@@ -186,6 +187,108 @@ function ClockInClockOut() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const exportToExcel = () => {
+    if (!clockInDetails || clockInDetails.length === 0) {
+      toast.warning("No data available to export", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    // Prepare data for Excel export
+    const excelData = clockInDetails.map((item) => {
+      const isSpecialStatus = item.clockType === 'LEAVE' || item.clockType === 'UNAUTH';
+
+      let inTime = '';
+      let outTime = '';
+      let duration = '';
+
+      if (isSpecialStatus) {
+        inTime = item.statusDetails || '';
+        outTime = 'N/A';
+        duration = 'N/A';
+      } else {
+        // Handle IN time
+        if (item.inTime === 'Missing') {
+          inTime = 'Missing';
+        } else if (item.inTime != null && item.inTime !== 'Missing') {
+          inTime = item.inTime;
+        } else {
+          inTime = '';
+        }
+
+        // Handle OUT time
+        if (item.outTime === 'Missing') {
+          outTime = 'Missing';
+        } else if (item.outTime != null && item.outTime !== 'Missing') {
+          outTime = item.outTime;
+        } else {
+          outTime = '';
+        }
+
+        // Handle Duration
+        duration = item.totalHoursText || 'NA';
+      }
+
+      return {
+        "Emp Code": item.employeeCode || '',
+        "Emp Name": item.employeeName || '',
+        "Day": item.clockDate && moment(item.clockDate).isValid() 
+          ? moment(item.clockDate).format('dddd') 
+          : '',
+        "Date": item.clockDate && moment(item.clockDate).isValid() 
+          ? moment(item.clockDate).format('MM-DD-YYYY') 
+          : '',
+        "IN": inTime,
+        "OUT": outTime,
+        "Duration": duration
+      };
+    });
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths
+    const columnWidths = [
+      { wch: 12 }, // Emp Code
+      { wch: 25 }, // Emp Name
+      { wch: 12 }, // Day
+      { wch: 12 }, // Date
+      { wch: 12 }, // IN
+      { wch: 12 }, // OUT
+      { wch: 15 }  // Duration
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Style header row
+    const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
+    for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!worksheet[cellAddress]) worksheet[cellAddress] = {};
+      worksheet[cellAddress].s = {
+        fill: { fgColor: { rgb: "CBD5E1" } },
+        font: { bold: true, color: { rgb: "000000" } },
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Clock In-Out Details");
+
+    // Generate filename with date range
+    const fileName = `Clock_In_Out_Details_${moment(startDate).format('MM-DD-YYYY')}_to_${moment(endDate).format('MM-DD-YYYY')}.xlsx`;
+
+    // Write file
+    XLSX.writeFile(workbook, fileName);
+
+    toast.success("Excel file downloaded successfully", {
+      position: "top-right",
+      autoClose: 2000,
+    });
+  }
+
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -193,7 +296,18 @@ function ClockInClockOut() {
         <div className="col-lg-12">
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">List of Clock In-Clock Out details</h5>
+              <div className="d-flex align-items-center gap-2">
+                <h5 className="m-0">List of Clock In-Clock Out details</h5>
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={exportToExcel}
+                  disabled={!clockInDetails || clockInDetails.length === 0}
+                  title="Export to Excel"
+                  style={{ padding: '4px 8px', border: '1px solid #007bff' }}
+                >
+                  <i className="bx bx-file" style={{ fontSize: '18px' }}></i>
+                </button>
+              </div>
               <div className="list_menu">
                 <div className="list_searchbox">
                   <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}

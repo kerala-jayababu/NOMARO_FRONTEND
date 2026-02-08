@@ -64,6 +64,7 @@ const BasicDetails = () => {
   const [budgetCodeOptions, setBudgetCodeOptions] = useState([]);
   const [workTypeOptions, setWorkTypeOptions] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
+  const [nationalityOptions, setNationalityOptions] = useState([]);
   const [employeePhotoPreview, setEmployeePhotoPreview] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,6 +96,7 @@ const BasicDetails = () => {
     loadBudgetCodes();
     loadEmployeeWorkTypes();
     loadCountries();
+    loadNationalities();
   }, []);
 
   // Load employee data when employeeId is available (for editing)
@@ -243,6 +245,38 @@ const BasicDetails = () => {
     } catch (error) {
       console.error("Error loading countries:", error);
       setCountryOptions([]);
+    }
+  };
+
+  const loadNationalities = async () => {
+    try {
+      const res = await CommonService.getNationalities();
+      if (res.error) {
+        throw new Error(res.error);
+      }
+      
+      // Handle different response structures
+      let nationalitiesData = [];
+      if (res.data?.data) {
+        nationalitiesData = Array.isArray(res.data.data) ? res.data.data : [];
+      } else if (Array.isArray(res.data)) {
+        nationalitiesData = res.data;
+      }
+      
+      if (nationalitiesData.length > 0) {
+        // Map nationalities - use nationality name as both value and label to pass name to backend
+        const options = nationalitiesData.map((nationality) => ({
+          value: nationality.nationalityName || nationality.name || nationality.nationality || nationality.value || "",
+          label: nationality.nationalityName || nationality.name || nationality.nationality || nationality.label || nationality.value || "",
+        }));
+        setNationalityOptions(options);
+      } else {
+        console.warn("No nationalities data returned from API");
+        setNationalityOptions([]);
+      }
+    } catch (error) {
+      console.error("Error loading nationalities:", error);
+      setNationalityOptions([]);
     }
   };
 
@@ -1148,9 +1182,9 @@ const BasicDetails = () => {
                   onChange={(e) => handleEmployeeInputChange("nationality", e.target.value)}
                 >
                   <option value="">Select Nationality</option>
-                  {countryOptions.map((country) => (
-                    <option key={country.value} value={country.value}>
-                      {country.label}
+                  {nationalityOptions.map((nationality) => (
+                    <option key={nationality.value} value={nationality.value}>
+                      {nationality.label}
                     </option>
                   ))}
                 </select>

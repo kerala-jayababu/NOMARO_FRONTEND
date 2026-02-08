@@ -240,4 +240,53 @@ export default class CommonService {
       return handleApiError(error);
     }
   };
+
+  static getNationalities = async () => {
+    try {
+      const res = await API.get("/api/v1/Common/GetNationalities");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  // Asset APIs
+  static getAssetTypes = async () => {
+    try {
+      const res = await API.get("/api/v1/Asset/GetAssetTypes");
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static addOrUpdateAssetTypes = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/Asset/AddOrUpdateAssetTypes", payload);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static getAssets = async (searchText = "") => {
+    try {
+      const url = searchText 
+        ? `/api/v1/Asset/GetAssets?searchText=${encodeURIComponent(searchText)}`
+        : "/api/v1/Asset/GetAssets";
+      const res = await API.get(url);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static addOrUpdateAssets = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/Asset/AddOrUpdateAssets", payload);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }
