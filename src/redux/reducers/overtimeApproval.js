@@ -70,6 +70,31 @@ export const fetchEmployeeOvertimeConfigs = createAsyncThunk(
   }
 );
 
+// Handle approval workflow (approve/reject overtime transactions)
+export const handleApprovalWorkflow = createAsyncThunk(
+  "overtimeApproval/handleApprovalWorkflow",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_COMMON_URL}/HandleApprovalWorkflow`,
+        payload,
+        authHeaders(token)
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to process approval" }
+      );
+    }
+  }
+);
+
 // Fetch all salary months
 export const fetchAllSalaryMonths = createAsyncThunk(
   "overtimeApproval/fetchAllSalaryMonths",

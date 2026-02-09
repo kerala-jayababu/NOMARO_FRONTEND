@@ -6,6 +6,7 @@ import {
   fetchOvertimeTransactionsFullDetails,
   fetchEmployeeOvertimeConfigs,
   fetchAllSalaryMonths,
+  handleApprovalWorkflow,
 } from "../../redux/reducers/overtimeApproval";
 
 const OvertimeApproval = () => {
@@ -21,6 +22,9 @@ const OvertimeApproval = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedItems, setSelectedItems] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // "APPROVED" or "REJECTED"
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Track which employee configs have already been fetched to avoid duplicate calls
   const fetchedEmployeeIds = useRef(new Set());
@@ -170,23 +174,67 @@ const OvertimeApproval = () => {
     }
   };
 
-  // TODO: Wire approve/reject to actual API endpoints when available
+  // Show confirmation modal before bulk action
   const handleApproveSelected = () => {
     if (selectedItems.length === 0) return;
-    toast.success(
-      `${selectedItems.length} overtime request(s) approved successfully!`,
-      { position: "top-right", autoClose: 3000 }
-    );
-    setSelectedItems([]);
+    setConfirmAction("APPROVED");
+    setShowConfirmModal(true);
   };
 
   const handleRejectSelected = () => {
     if (selectedItems.length === 0) return;
-    toast.error(
-      `${selectedItems.length} overtime request(s) rejected`,
-      { position: "top-right", autoClose: 3000 }
-    );
-    setSelectedItems([]);
+    setConfirmAction("REJECTED");
+    setShowConfirmModal(true);
+  };
+
+  // Execute bulk approval/rejection after confirmation
+  const executeBulkAction = async () => {
+    if (!confirmAction || selectedItems.length === 0) return;
+
+    const payload = selectedItems.map((id) => ({
+      entityTablePrimaryKeyID: id,
+      entityCode: "OVERTIME",
+      status: confirmAction,
+      rejectReason: "",
+      leavePassageAmount: 0,
+      idPayRollScreen: 0,
+    }));
+
+    try {
+      setIsProcessing(true);
+      const resultAction = await dispatch(handleApprovalWorkflow(payload));
+
+      if (handleApprovalWorkflow.fulfilled.match(resultAction)) {
+        if (resultAction.payload?.success !== false) {
+          toast.success(
+            `${selectedItems.length} OT transaction(s) ${confirmAction === "APPROVED" ? "approved" : "rejected"} successfully!`,
+            { position: "top-right", autoClose: 3000 }
+          );
+          setSelectedItems([]);
+          fetchedEmployeeIds.current.clear();
+          dispatch(fetchOvertimeTransactionsFullDetails());
+        } else {
+          toast.error(resultAction.payload?.message || "Failed to process approval", {
+            position: "top-right",
+            autoClose: 4000,
+          });
+        }
+      } else {
+        toast.error(resultAction.payload?.message || "Failed to process approval", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to process approval", {
+        position: "top-right",
+        autoClose: 4000,
+      });
+    } finally {
+      setIsProcessing(false);
+      setShowConfirmModal(false);
+      setConfirmAction(null);
+    }
   };
 
   // Badge class helper
@@ -437,6 +485,65 @@ const OvertimeApproval = () => {
           </div>
         </div>
       </div>
+
+      {/* Bulk Confirmation Modal */}
+      {showConfirmModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Confirm {confirmAction === "APPROVED" ? "Approval" : "Rejection"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                  }}
+                  disabled={isProcessing}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-0">
+                  Are you sure you want to {confirmAction === "APPROVED" ? "Approve" : "Reject"} all the{" "}
+                  <strong>{selectedItems.length}</strong> OT Transaction{selectedItems.length !== 1 ? "s" : ""}?
+                </p>
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                  }}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className={`btn ${confirmAction === "APPROVED" ? "btn-primary" : "btn-danger"}`}
+                  onClick={executeBulkAction}
+                  disabled={isProcessing}
+                >
+                  {isProcessing
+                    ? "Processing..."
+                    : confirmAction === "APPROVED"
+                    ? "Approve"
+                    : "Reject"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

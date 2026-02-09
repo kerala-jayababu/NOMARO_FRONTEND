@@ -14,7 +14,7 @@ import {
   fetchEmployeesNotConfiguredLeave,
   resetEmployeeLeaveSetup,
 } from "../../redux/reducers/employeeLeaveConfig";
-import { fetchLeaveTemplates, fetchLeaveTemplateById } from "../../redux/reducers/leaveTemplate";
+import { fetchLeaveTemplates, fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
 import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
@@ -25,7 +25,7 @@ const EmployeeLeaveConfig = () => {
   const { employeeLeaveSetupList, employeeLeaveSetup, loading, error } = useSelector(
     (state) => state.employeeLeaveConfig
   );
-  const { leaveTemplates } = useSelector((state) => state.leaveTemplate);
+  const { leaveTemplates, designationList } = useSelector((state) => state.leaveTemplate);
   const { options: employeeList } = useSelector((state) => state.getAllEmployeeDetails);
 
   const [selectedEmployee, setSelectedEmployee] = useState("");
@@ -34,6 +34,7 @@ const EmployeeLeaveConfig = () => {
   const [validTo, setValidTo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [designationFilter, setDesignationFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
@@ -119,7 +120,22 @@ const EmployeeLeaveConfig = () => {
     // Only fetch APPROVED templates for the dropdown
     dispatch(fetchLeaveTemplates({ status: "APPROVED", idYear: "", searchText: "" }));
     dispatch(getAllEmployeeDetails());
+    dispatch(fetchDesignationList());
   }, [dispatch]);
+
+  // Designation filter options
+  const designationFilterOptions = useMemo(() => {
+    if (designationList && designationList.data) {
+      return [
+        { value: "", label: "All Designations" },
+        ...designationList.data.map((d) => ({
+          value: String(d.idDesignation),
+          label: d.designationName,
+        })),
+      ];
+    }
+    return [{ value: "", label: "All Designations" }];
+  }, [designationList]);
 
   // Fetch employee leave setup list when search query or year filter changes
   useEffect(() => {
@@ -171,15 +187,19 @@ const EmployeeLeaveConfig = () => {
   const employeeLeaveData = useMemo(() => {
     if (!employeeLeaveSetupList || !employeeLeaveSetupList.data) return [];
 
-    return employeeLeaveSetupList.data.map((setup) => {
+    let data = employeeLeaveSetupList.data.map((setup) => {
       // Look up employee code from employeeList using idEmployee
       const employee = employeeList?.find((emp) => emp.idEmployee === setup.idEmployee);
       const employeeCode = setup.employeeCode || setup.empCode || employee?.employeeCode || "";
+      const designationName = setup.designationName || employee?.designationName || "";
+      const idDesignation = setup.idDesignation || employee?.idDesignation || null;
 
       return {
         idEmployeeLeaveConfig: setup.idEmployeeLeaveConfig,
         employeeCode: employeeCode,
         employeeName: setup.employeeName,
+        designation: designationName,
+        idDesignation: idDesignation,
         templateName: setup.leaveTemplateName,
         validFrom: formatDate(setup.effectiveFrom),
         validTo: formatDate(setup.effectiveTo),
@@ -190,7 +210,14 @@ const EmployeeLeaveConfig = () => {
         details: setup.details || [], // Store details array for template allocations
       };
     });
-  }, [employeeLeaveSetupList, employeeList]);
+
+    // Apply designation filter
+    if (designationFilter) {
+      data = data.filter((item) => String(item.idDesignation) === designationFilter);
+    }
+
+    return data;
+  }, [employeeLeaveSetupList, employeeList, designationFilter]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -203,8 +230,9 @@ const EmployeeLeaveConfig = () => {
   const handlePageChange = (page) => setCurrentPage(page);
 
   const columns = [
-    { key: "employeeCode", label: "Employee Code" },
+    { key: "employeeCode", label: "Emp. Code" },
     { key: "employeeName", label: "Employee Name" },
+    { key: "designation", label: "Designation" },
     { key: "templateName", label: "Template Name" },
     { key: "validFrom", label: "Valid From" },
     { key: "validTo", label: "Valid To" },
@@ -507,7 +535,20 @@ const EmployeeLeaveConfig = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-8">
+                <div className="col-md-2">
+                  <select
+                    className="form-select"
+                    value={designationFilter}
+                    onChange={(e) => setDesignationFilter(e.target.value)}
+                  >
+                    {designationFilterOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
                   <div className="list_searchbox">
                     <input
                       type="search"

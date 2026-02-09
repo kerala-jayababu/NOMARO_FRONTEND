@@ -162,6 +162,37 @@ export const fetchLeaveDashboardEmployee = createAsyncThunk(
   }
 );
 
+// Fetch leave application documents
+export const fetchLeaveApplicationDocuments = createAsyncThunk(
+  "leaveApproval/fetchLeaveApplicationDocuments",
+  async (idLeaveApplication, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetLeaveApplicationDocuments/${idLeaveApplication}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch documents" }
+      );
+    }
+  }
+);
+
 // Bulk approve leave applications (remarks optional)
 export const bulkApproveLeaveApplications = createAsyncThunk(
   "leaveApproval/bulkApproveLeaveApplications",
@@ -206,6 +237,8 @@ const slice = createSlice({
     leaveApplications: [],
     leaveDashboard: [],
     leaveDashboardLoading: false,
+    leaveDocuments: [],
+    leaveDocumentsLoading: false,
     loading: false,
     error: null,
   },
@@ -267,6 +300,20 @@ const slice = createSlice({
     builder.addCase(bulkApproveLeaveApplications.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload?.message || action.error.message;
+    });
+
+    // Fetch leave application documents
+    builder.addCase(fetchLeaveApplicationDocuments.pending, (state) => {
+      state.leaveDocumentsLoading = true;
+      state.leaveDocuments = [];
+    });
+    builder.addCase(fetchLeaveApplicationDocuments.fulfilled, (state, action) => {
+      state.leaveDocuments = action.payload;
+      state.leaveDocumentsLoading = false;
+    });
+    builder.addCase(fetchLeaveApplicationDocuments.rejected, (state) => {
+      state.leaveDocumentsLoading = false;
+      state.leaveDocuments = [];
     });
 
     // Fetch leave dashboard employee

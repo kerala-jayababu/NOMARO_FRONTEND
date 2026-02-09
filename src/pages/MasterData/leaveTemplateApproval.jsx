@@ -1,16 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Grid from "../../components/grid";
+import Button from "../../components/button";
 import Pagination from "../../components/pagination";
 import {
   fetchLeaveTemplates,
   fetchLeaveTemplateById,
   fetchDesignationList,
   fetchLeaveTemplateDetailById,
+  approveLeaveTemplate,
   resetLeaveTemplateDetailById
 } from "../../redux/reducers/leaveTemplate";
 import { fetchLeaveTypes } from "../../redux/reducers/leaveType";
 import CommonService from "../../core/services/CommonService";
+import { toast } from "react-toastify";
 
 const LeaveTemplateApproval = () => {
   const dispatch = useDispatch();
@@ -184,15 +187,18 @@ const LeaveTemplateApproval = () => {
     {
       key: "viewDetails",
       label: "View Details",
+      headerStyle: { textAlign: "center" },
       render: (id) => (
-        <button
-          type="button"
-          className="btn btn-sm p-0"
-          onClick={() => handleViewDetails(id)}
-          title="View Details"
-        >
-          <i className="bx bx-show fs-5"></i>
-        </button>
+        <div className="text-center">
+          <button
+            type="button"
+            className="btn btn-sm p-0"
+            onClick={() => handleViewDetails(id)}
+            title="View Details"
+          >
+            <i className="bx bx-show fs-5"></i>
+          </button>
+        </div>
       ),
     },
   ];
@@ -278,9 +284,18 @@ const LeaveTemplateApproval = () => {
       {showDetailsModal && selectedTemplate && (
         <TemplateDetailsViewModal
           template={selectedTemplate}
+          statusFilter={statusFilter}
+          yearFilter={yearFilter}
+          searchQuery={searchQuery}
           onClose={() => {
             setShowDetailsModal(false);
             setSelectedTemplate(null);
+            // Refresh the list
+            dispatch(fetchLeaveTemplates({
+              status: statusFilter || "ALL",
+              idYear: yearFilter || "",
+              searchText: searchQuery || ""
+            }));
           }}
         />
       )}
@@ -289,12 +304,17 @@ const LeaveTemplateApproval = () => {
 };
 
 // Template Details View Modal Component (View Only)
-const TemplateDetailsViewModal = ({ template, onClose }) => {
+const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQuery, onClose }) => {
   const dispatch = useDispatch();
   const { leaveTemplateDetails } = useSelector((state) => state.leaveTemplate);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [showLeaveTypeModal, setShowLeaveTypeModal] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(template.status);
+
+  // Ref to prevent duplicate API calls
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     if (template?.idLeaveTemplate) {
@@ -348,6 +368,68 @@ const TemplateDetailsViewModal = ({ template, onClose }) => {
     const leaveType = leaveTypes.find((lt) => lt.idLeaveTemplateDetails === id);
     setSelectedLeaveType(leaveType);
     setShowLeaveTypeModal(true);
+  };
+
+  const handleApproveReject = async (approvalStatus) => {
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
+    const actionText = approvalStatus === "APPROVED" ? "approve" : "reject";
+
+    if (!window.confirm(`Are you sure you want to ${actionText} this leave template?`)) {
+      submitLockRef.current = false;
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const resultAction = await dispatch(
+        approveLeaveTemplate({
+          idLeaveTemplate: template.idLeaveTemplate,
+          approvalStatus: approvalStatus
+        })
+      );
+
+      if (approveLeaveTemplate.fulfilled.match(resultAction)) {
+        if (resultAction.payload && resultAction.payload.success) {
+          toast.success(
+            approvalStatus === "APPROVED"
+              ? "Leave template approved successfully!"
+              : "Leave template rejected successfully!",
+            {
+              position: "top-right",
+              autoClose: 4000,
+            }
+          );
+          setCurrentStatus(approvalStatus);
+          // Refresh the list
+          dispatch(fetchLeaveTemplates({
+            status: statusFilter || "ALL",
+            idYear: yearFilter || "",
+            searchText: searchQuery || ""
+          }));
+        } else {
+          toast.error(resultAction.payload?.message || `Failed to ${actionText} leave template`, {
+            position: "top-right",
+            autoClose: 4000,
+          });
+        }
+      } else {
+        toast.error(resultAction.payload?.message || `Failed to ${actionText} leave template`, {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      console.error(`Error ${actionText}ing leave template:`, error);
+      toast.error(`Failed to ${actionText} leave template`, {
+        position: "top-right",
+        autoClose: 4000,
+      });
+    } finally {
+      setIsProcessing(false);
+      submitLockRef.current = false;
+    }
   };
 
   return (
@@ -438,6 +520,26 @@ const TemplateDetailsViewModal = ({ template, onClose }) => {
                 </div>
               </div>
             </div>
+            {currentStatus === "SUBMITTED" && (
+              <div className="modal-footer justify-content-end">
+                <Button
+                  type="button"
+                  className="btn btn-primary px-4 me-2"
+                  onClick={() => handleApproveReject("APPROVED")}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Approve"}
+                </Button>
+                <Button
+                  type="button"
+                  className="btn btn-danger px-4"
+                  onClick={() => handleApproveReject("REJECTED")}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Reject"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

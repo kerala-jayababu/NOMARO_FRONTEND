@@ -157,6 +157,37 @@ export const addOrUpdateEmployeeLeaveConfigDetails = createAsyncThunk(
   }
 );
 
+export const approveEmployeeLeaveConfig = createAsyncThunk(
+  "employeeLeaveConfig/approveEmployeeLeaveConfig",
+  async ({ IdEmployeeLeaveConfig, approvalStatus }, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/ApproveEmployeeLeaveConfig?IdEmployeeLeaveConfig=${IdEmployeeLeaveConfig}&approvalStatus=${approvalStatus}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to approve/reject employee leave config" }
+      );
+    }
+  }
+);
+
 const slice = createSlice({
   name: "employeeLeaveConfig",
   initialState: {
@@ -225,6 +256,17 @@ const slice = createSlice({
     });
     builder.addCase(fetchEmployeesNotConfiguredLeave.fulfilled, (state, action) => {
       state.employeesNotConfigured = action.payload?.data || [];
+    });
+    builder.addCase(approveEmployeeLeaveConfig.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(approveEmployeeLeaveConfig.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(approveEmployeeLeaveConfig.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
     });
   },
 });

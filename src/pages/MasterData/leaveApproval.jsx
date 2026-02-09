@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import {
   fetchLeaveApplicationsForApproval,
@@ -8,16 +10,23 @@ import {
   rejectLeaveApplication,
   bulkApproveLeaveApplications,
   fetchLeaveDashboardEmployee,
+  fetchLeaveApplicationDocuments,
 } from "../../redux/reducers/leaveApproval";
+import CommonService from "../../core/services/CommonService";
 
 const LeaveApproval = () => {
   const dispatch = useDispatch();
-  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading } = useSelector(
+  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading, leaveDocuments, leaveDocumentsLoading } = useSelector(
     (state) => state.leaveApproval
   );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("SUBMITTED");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split("T")[0];
+  });
   const [selectedItems, setSelectedItems] = useState([]);
   const [remarks, setRemarks] = useState({});
   const [bulkRemarks, setBulkRemarks] = useState("");
@@ -25,9 +34,36 @@ const LeaveApproval = () => {
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [currentFinancialYearId, setCurrentFinancialYearId] = useState(null);
 
   // Ref to track processed application IDs (prevents duplicate actions before Redux refetch)
   const processedIdsRef = useRef(new Set());
+
+  // Fetch work years and determine current financial year
+  useEffect(() => {
+    const fetchWorkYears = async () => {
+      const result = await CommonService.getAllWorkYears();
+      if (!result.error && result.data && result.data.length > 0) {
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
+        const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+        const currentWorkYear = result.data.find((year) => {
+          if (!year.displayText) return false;
+          const firstYear = year.displayText.split("-")[0];
+          return firstYear === String(financialYearStart);
+        });
+
+        if (currentWorkYear) {
+          setCurrentFinancialYearId(currentWorkYear.idWorkYear);
+        } else {
+          setCurrentFinancialYearId(result.data[0].idWorkYear);
+        }
+      }
+    };
+    fetchWorkYears();
+  }, []);
 
   // Fetch leave applications on component mount and when filters change
   useEffect(() => {
@@ -36,11 +72,11 @@ const LeaveApproval = () => {
       fetchLeaveApplicationsForApproval({
         approvalStatus,
         searchText: searchQuery,
-        fromDate: "",
+        fromDate: dateFrom || "",
         toDate: "",
       })
     );
-  }, [dispatch, statusFilter, searchQuery]);
+  }, [dispatch, statusFilter, searchQuery, dateFrom]);
 
   // Status options
   const statusOptions = [
@@ -330,10 +366,9 @@ const LeaveApproval = () => {
   const openViewModal = (app) => {
     setSelectedApplication(app);
     setShowViewModal(true);
-    // Fetch leave dashboard for the employee
-    if (app.idEmployee) {
-      const currentYear = new Date().getFullYear();
-      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentYear }));
+    // Fetch leave dashboard for the employee using current financial year
+    if (app.idEmployee && currentFinancialYearId) {
+      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentFinancialYearId }));
     }
   };
 
@@ -341,6 +376,9 @@ const LeaveApproval = () => {
   const openDocumentsModal = (app) => {
     setSelectedApplication(app);
     setShowDocumentsModal(true);
+    if (app.idLeaveApplication) {
+      dispatch(fetchLeaveApplicationDocuments(app.idLeaveApplication));
+    }
   };
 
   // Close modals
@@ -390,7 +428,7 @@ const LeaveApproval = () => {
             <div className="card-body">
               {/* Header Controls */}
               <div className="row mb-3 align-items-end">
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <div className="form-check">
                     <input
                       type="checkbox"
@@ -428,7 +466,21 @@ const LeaveApproval = () => {
                     Approve Selected ({selectedItems.length})
                   </Button>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
+                  <label className="form-label d-block mb-1">Date From</label>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="Date"
+                    selected={dateFrom}
+                    onChange={(date) => {
+                      setDateFrom(date ? date.toISOString().slice(0, 10) : "");
+                    }}
+                    showYearDropdown
+                    maxDate={new Date()}
+                  />
+                </div>
+                <div className="col-md-3">
                   <label className="form-label mb-1">Status</label>
                   <select
                     className="form-select"
@@ -442,7 +494,7 @@ const LeaveApproval = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label mb-1">Search</label>
                   <div className="list_searchbox">
                     <input
@@ -515,15 +567,13 @@ const LeaveApproval = () => {
                               >
                                 <i className="bx bx-show fs-5"></i>
                               </button>
-                              {app.documents.length > 0 && (
-                                <button
-                                  className="btn btn-sm btn-link p-1 text-dark"
-                                  onClick={() => openDocumentsModal(app)}
-                                  title="View Documents"
-                                >
-                                  <i className="bx bx-paperclip fs-5"></i>
-                                </button>
-                              )}
+                              <button
+                                className="btn btn-sm btn-link p-1 text-dark"
+                                onClick={() => openDocumentsModal(app)}
+                                title="View Documents"
+                              >
+                                <i className="bx bx-paperclip fs-5"></i>
+                              </button>
                             </div>
                           </div>
 
@@ -902,7 +952,9 @@ const LeaveApproval = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                {selectedApplication.documents.length === 0 ? (
+                {leaveDocumentsLoading ? (
+                  <div className="text-center py-4">Loading...</div>
+                ) : !leaveDocuments || leaveDocuments.length === 0 ? (
                   <div className="text-center py-4 text-muted">
                     No documents attached
                   </div>
@@ -911,31 +963,20 @@ const LeaveApproval = () => {
                     <table className="table table-bordered">
                       <thead>
                         <tr>
-                          <th>Document Type</th>
+                          <th>File Type</th>
                           <th>File Name</th>
                           <th>Uploaded Date</th>
-                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedApplication.documents.map((doc, index) => (
-                          <tr key={index}>
-                            <td>{doc.documentType}</td>
+                        {leaveDocuments.map((doc) => (
+                          <tr key={doc.idLeaveApplicationDocument}>
+                            <td>{doc.fileType}</td>
                             <td>{doc.fileName}</td>
                             <td>
                               {new Date(
-                                doc.uploadedDate
+                                doc.uploadedAt
                               ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
-                            </td>
-                            <td>
-                              <Button
-                                className="btn btn-primary btn-sm"
-                                onClick={() =>
-                                  alert(`Downloading ${doc.fileName}`)
-                                }
-                              >
-                                Download
-                              </Button>
                             </td>
                           </tr>
                         ))}

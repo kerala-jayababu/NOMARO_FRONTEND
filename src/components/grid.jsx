@@ -18,7 +18,7 @@ const Grid = ({
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} style={{position:'sticky',top:0,backgroundColor:'white',zIndex:1}}>{column.label}</th>
+              <th key={column.key} style={{position:'sticky',top:0,backgroundColor:'white',zIndex:1, ...(column.headerStyle || {})}}>{column.label}</th>
             ))}
           </tr>
         </thead>
