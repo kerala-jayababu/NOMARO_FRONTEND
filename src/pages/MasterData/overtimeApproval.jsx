@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
+import secureLocalStorage from "react-secure-storage";
 import {
   fetchOvertimeTransactionsFullDetails,
   fetchEmployeeOvertimeConfigs,
@@ -21,6 +24,11 @@ const OvertimeApproval = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split("T")[0];
+  });
   const [selectedItems, setSelectedItems] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null); // "APPROVED" or "REJECTED"
@@ -29,11 +37,18 @@ const OvertimeApproval = () => {
   // Track which employee configs have already been fetched to avoid duplicate calls
   const fetchedEmployeeIds = useRef(new Set());
 
-  // Fetch main listing + salary months on mount
+  // Get logged-in user's employee ID
+  const loggedInEmployeeId = useMemo(() => {
+    const storedUser = secureLocalStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser)?.idEmployee : null;
+  }, []);
+
+  // Fetch main listing + salary months on mount and when dateFrom changes
   useEffect(() => {
-    dispatch(fetchOvertimeTransactionsFullDetails());
+    const today = new Date().toISOString().split("T")[0];
+    dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
     dispatch(fetchAllSalaryMonths());
-  }, [dispatch]);
+  }, [dispatch, dateFrom]);
 
   // Once transactions are loaded, fetch overtime configs for each unique employee
   useEffect(() => {
@@ -123,13 +138,17 @@ const OvertimeApproval = () => {
         multiplier,
         totalAmount,
         salaryStatus,
-        approvalCycles: (item.approvalCycles || []).map((cycle) => ({
-          name: cycle.actionedByName || cycle.approvalAuthorityName || "-",
-          level: cycle.levelNumber,
-          statusLabel: cycle.approvalStatusName || "",
-          status: cycle.approvalStatus || "Pending",
-          actionDate: cycle.actionDate,
-        })),
+        approvalCycles: (item.approvalCycles || [])
+          .slice()
+          .sort((a, b) => a.levelNumber - b.levelNumber)
+          .map((cycle) => ({
+            name: cycle.actionedByName || cycle.approvalAuthorityName || "-",
+            level: cycle.levelNumber,
+            statusLabel: cycle.approvalStatusName || "",
+            status: cycle.approvalStatus || "Pending",
+            actionDate: cycle.actionDate,
+            approvalAuthorityIdEmployees: cycle.approvalAuthorityIdEmployees || "",
+          })),
       };
     });
   }, [overtimeTransactions, employeeOvertimeConfigs, salaryMonthMap]);
@@ -150,9 +169,52 @@ const OvertimeApproval = () => {
     });
   }, [applicationsData, searchQuery, statusFilter]);
 
-  // Only non-final items can be selected for approval/rejection
-  const canTakeAction = (item) =>
-    item.status !== "APPROVED" && item.status !== "REJECTED";
+  // Determine if the logged-in user can act on a given overtime item
+  const canTakeAction = (item) => {
+    if (!loggedInEmployeeId) return false;
+
+    const userIdStr = String(loggedInEmployeeId);
+    const cycles = item.approvalCycles || [];
+
+    // Find the highest approval cycle level where the logged-in user is an authority
+    let userCycleIndex = -1;
+    for (let i = cycles.length - 1; i >= 0; i--) {
+      const authorityIds = (cycles[i].approvalAuthorityIdEmployees || "")
+        .split(",")
+        .map((id) => id.trim());
+      if (authorityIds.includes(userIdStr)) {
+        userCycleIndex = i;
+        break;
+      }
+    }
+
+    // User is not part of any approval level — disable
+    if (userCycleIndex === -1) return false;
+
+    const userCycle = cycles[userCycleIndex];
+
+    // Check logged-in user's own approval status:
+    // If Rejected — disable (already actioned)
+    const userStatus = (userCycle.status || "").toLowerCase();
+    if (userStatus === "rejected") return false;
+
+    // If this is the first level (no previous level), enable when Pending
+    if (userCycleIndex === 0) {
+      return userStatus === "pending";
+    }
+
+    // Check previous level's approval status
+    const prevCycle = cycles[userCycleIndex - 1];
+    const prevStatus = (prevCycle.status || "").toLowerCase();
+
+    // Previous level Pending or Rejected — disable
+    if (prevStatus === "pending" || prevStatus === "rejected") return false;
+
+    
+    if (userStatus === "pending" ) return true;
+
+    return false;
+  };
 
   const selectableItems = filteredData.filter(canTakeAction);
 
@@ -212,7 +274,8 @@ const OvertimeApproval = () => {
           );
           setSelectedItems([]);
           fetchedEmployeeIds.current.clear();
-          dispatch(fetchOvertimeTransactionsFullDetails());
+          const today = new Date().toISOString().split("T")[0];
+          dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
         } else {
           toast.error(resultAction.payload?.message || "Failed to process approval", {
             position: "top-right",
@@ -333,7 +396,21 @@ const OvertimeApproval = () => {
                     Reject Selected ({selectedItems.length})
                   </Button>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-2">
+                  <label className="form-label d-block mb-1">Date From</label>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="Date"
+                    selected={dateFrom}
+                    onChange={(date) => {
+                      setDateFrom(date ? date.toISOString().slice(0, 10) : "");
+                    }}
+                    showYearDropdown
+                    maxDate={new Date()}
+                  />
+                </div>
+                <div className="col-md-3">
                   <label className="form-label mb-1">Status</label>
                   <select
                     className="form-select"
@@ -347,7 +424,7 @@ const OvertimeApproval = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label mb-1">Search</label>
                   <div className="list_searchbox">
                     <input
