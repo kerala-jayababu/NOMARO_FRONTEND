@@ -136,6 +136,7 @@ const LeaveApproval = () => {
       pendingLeaves: app.pendingLeaves || 0,
       balanceLeaves: app.balanceLeaves || 0,
       documents: app.documents || [],
+      hasDocuments: app.hasDocuments || false,
     }));
   }, [leaveApplications]);
 
@@ -567,13 +568,15 @@ const LeaveApproval = () => {
                               >
                                 <i className="bx bx-show fs-5"></i>
                               </button>
-                              <button
-                                className="btn btn-sm btn-link p-1 text-dark"
-                                onClick={() => openDocumentsModal(app)}
-                                title="View Documents"
-                              >
-                                <i className="bx bx-paperclip fs-5"></i>
-                              </button>
+                              {app.hasDocuments && (
+                                <button
+                                  className="btn btn-sm btn-link p-1 text-dark"
+                                  onClick={() => openDocumentsModal(app)}
+                                  title="View Documents"
+                                >
+                                  <i className="bx bx-paperclip fs-5"></i>
+                                </button>
+                              )}
                             </div>
                           </div>
 

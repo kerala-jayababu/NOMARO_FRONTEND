@@ -22,6 +22,7 @@ import axios from "axios";
 import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const LeaveTemplates = () => {
   const dispatch = useDispatch();
@@ -1181,15 +1182,12 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
 
   const roleOptions = useMemo(() => {
     if (designationList && designationList.data) {
-      return [
-        { value: "", label: "Select Role" },
-        ...designationList.data.map((designation) => ({
-          value: String(designation.idDesignation),
-          label: designation.designationName,
-        })),
-      ];
+      return designationList.data.map((designation) => ({
+        value: String(designation.idDesignation),
+        label: designation.designationName,
+      }));
     }
-    return [{ value: "", label: "Select Role" }];
+    return [];
   }, [designationList]);
 
   // Fetch designation list and leave types on mount
@@ -1759,17 +1757,28 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
                       />
                     </div>
                   ) : (
-                    <Dropdown
-                      label="Approver"
-                      name={`approver${level}`}
-                      options={roleOptions}
-                      value={approvers[level - 1].approver}
-                      onChange={(e) => {
-                        const newApprovers = [...approvers];
-                        newApprovers[level - 1].approver = e.target.value;
-                        setApprovers(newApprovers);
-                      }}
-                    />
+                    <div className="form-group mb-2">
+                      <label className="form-label mb-1">Approver</label>
+                      <Select
+                        classNamePrefix="form-control-select"
+                        options={roleOptions}
+                        isSearchable
+                        isClearable
+                        value={roleOptions.find((opt) => opt.value === approvers[level - 1].approver) || null}
+                        onChange={(selected) => {
+                          const newApprovers = [...approvers];
+                          newApprovers[level - 1].approver = selected ? selected.value : "";
+                          setApprovers(newApprovers);
+                        }}
+                        placeholder="Select Role"
+
+                        styles={{
+                          container: (base) => ({...base, marginTop: "7px"}),
+                          control: (base) => ({ ...base, minHeight: "38px" }),
+                          menu: (base) => ({ ...base, zIndex: 9999}),
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </div>

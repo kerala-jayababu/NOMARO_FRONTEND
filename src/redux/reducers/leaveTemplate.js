@@ -182,7 +182,7 @@ export const submitLeaveTemplateForApproval = createAsyncThunk(
       }
 
       const response = await axios.post(
-        `${API_BASE_URL}/SubmitLeaveTemplateForApproval?idLeaveTemplate=${idLeaveTemplate}`,
+        `${API_BASE_URL}/SubmitLeaveTemplateForApproval?idLeaveTemplate=${idLeaveTemplate}&ApprovalStatus=SUBMITTED`,
         {},
         {
           headers: {

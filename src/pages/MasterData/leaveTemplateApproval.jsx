@@ -374,13 +374,6 @@ const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQu
     if (submitLockRef.current) return;
     submitLockRef.current = true;
 
-    const actionText = approvalStatus === "APPROVED" ? "approve" : "reject";
-
-    if (!window.confirm(`Are you sure you want to ${actionText} this leave template?`)) {
-      submitLockRef.current = false;
-      return;
-    }
-
     try {
       setIsProcessing(true);
       const resultAction = await dispatch(

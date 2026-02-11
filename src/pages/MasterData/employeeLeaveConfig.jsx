@@ -19,6 +19,7 @@ import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetail
 import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const EmployeeLeaveConfig = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,7 @@ const EmployeeLeaveConfig = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState("");
   const [designationFilter, setDesignationFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
@@ -43,6 +45,8 @@ const EmployeeLeaveConfig = () => {
   const [templateAllocations, setTemplateAllocations] = useState([]);
   const [formError, setFormError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewData, setViewData] = useState(null);
   const [workYears, setWorkYears] = useState([]);
 
   // Fetch work years from API on component mount
@@ -126,27 +130,33 @@ const EmployeeLeaveConfig = () => {
   // Designation filter options
   const designationFilterOptions = useMemo(() => {
     if (designationList && designationList.data) {
-      return [
-        { value: "", label: "All Designations" },
-        ...designationList.data.map((d) => ({
-          value: String(d.idDesignation),
-          label: d.designationName,
-        })),
-      ];
+      return designationList.data.map((d) => ({
+        value: String(d.idDesignation),
+        label: d.designationName,
+      }));
     }
-    return [{ value: "", label: "All Designations" }];
+    return [];
   }, [designationList]);
 
-  // Fetch employee leave setup list when search query or year filter changes
+  // Status filter options
+  const statusOptions = [
+    { value: "ALL", label: "All Status" },
+    { value: "SUBMITTED", label: "Submitted" },
+    { value: "APPROVED", label: "Approved" },
+    { value: "REJECTED", label: "Rejected" },
+  ];
+
+  // Fetch employee leave setup list when search query, year filter, or status filter changes
   useEffect(() => {
     // Only fetch when yearFilter has a valid value
     if (yearFilter) {
       const idYear = parseInt(yearFilter);
       if (!isNaN(idYear)) {
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear }));
+        const approvalStatus = statusFilter === "ALL" ? "" : statusFilter;
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear, approvalStatus }));
       }
     }
-  }, [dispatch, searchQuery, yearFilter]);
+  }, [dispatch, searchQuery, yearFilter, statusFilter]);
 
   // Employee options for dropdown
   const employeeOptions = useMemo(() => {
@@ -207,6 +217,7 @@ const EmployeeLeaveConfig = () => {
         idLeaveTemplate: setup.idLeaveTemplate,
         validFromRaw: setup.effectiveFrom,
         validToRaw: setup.effectiveTo,
+        approvalStatus: setup.approvalStatus || null,
         details: setup.details || [], // Store details array for template allocations
       };
     });
@@ -229,6 +240,19 @@ const EmployeeLeaveConfig = () => {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  const getStatusBadgeClass = (status) => {
+    switch ((status || "").toUpperCase()) {
+      case "APPROVED":
+        return "bg-label-success";
+      case "REJECTED":
+        return "bg-label-danger";
+      case "SUBMITTED":
+        return "bg-label-info";
+      default:
+        return "bg-label-secondary";
+    }
+  };
+
   const columns = [
     { key: "employeeCode", label: "Emp. Code" },
     { key: "employeeName", label: "Employee Name" },
@@ -236,7 +260,42 @@ const EmployeeLeaveConfig = () => {
     { key: "templateName", label: "Template Name" },
     { key: "validFrom", label: "Valid From" },
     { key: "validTo", label: "Valid To" },
-    { key: "actions", label: "" },
+    {
+      key: "approvalStatus",
+      label: "Status",
+      render: (value) => (
+        <span className={`badge ${getStatusBadgeClass(value)}`}>
+          {value || "-"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "",
+      render: (_value, row) => (
+        <div className="text-end">
+          {(row.approvalStatus || "").toUpperCase() === "SUBMITTED" ? (
+            <button
+              type="button"
+              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+              onClick={() => handleEdit(row.idEmployeeLeaveConfig)}
+              title="Edit"
+            >
+              <span className="bx bx-pencil"></span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+              onClick={() => handleView(row.idEmployeeLeaveConfig)}
+              title="View Details"
+            >
+              <span className="bx bx-show"></span>
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   const handleEdit = async (id) => {
@@ -328,6 +387,54 @@ const EmployeeLeaveConfig = () => {
     }
   };
 
+  const handleView = async (id) => {
+    const setup = employeeLeaveData.find((s) => s.idEmployeeLeaveConfig === id);
+    if (setup) {
+      const viewInfo = { ...setup, allocations: [] };
+
+      // Fetch detailed employee leave setup to get allocations
+      try {
+        const detailResult = await dispatch(
+          fetchLeaveSetupOfAnEmployee({
+            IdEmployee: setup.idEmployee,
+            idYear: parseInt(yearFilter),
+          })
+        );
+
+        if (detailResult.payload && detailResult.payload.data) {
+          const detailedSetup = detailResult.payload.data;
+          const configDetails =
+            detailedSetup.details ||
+            detailedSetup.employeeLeaveConfigDetails ||
+            detailedSetup.employeeLeaveConfigDetail ||
+            [];
+
+          if (configDetails.length > 0) {
+            viewInfo.allocations = configDetails.map((detail) => ({
+              leaveTypeName: detail.leaveTypeName,
+              allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+              carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching view details:", error);
+      }
+
+      // Fallback to details from list API
+      if (viewInfo.allocations.length === 0 && setup.details && setup.details.length > 0) {
+        viewInfo.allocations = setup.details.map((detail) => ({
+          leaveTypeName: detail.leaveTypeName,
+          allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+          carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+        }));
+      }
+
+      setViewData(viewInfo);
+      setShowViewModal(true);
+    }
+  };
+
   const handleAddNew = () => {
     handleReset();
     setShowModal(true);
@@ -336,7 +443,7 @@ const EmployeeLeaveConfig = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     // Refresh the list first to set loading state and clear any error
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
     // Reset form state without dispatching resetEmployeeLeaveSetup (to avoid showing error)
     setSelectedEmployee("");
     setSelectedTemplate("");
@@ -346,11 +453,6 @@ const EmployeeLeaveConfig = () => {
     setIsEditing(false);
     setEditingConfigId(null);
     setTemplateAllocations([]);
-  };
-
-  const handleRowClick = async (id) => {
-    // Use handleEdit for row click as well
-    handleEdit(id);
   };
 
   // Update template allocations when template changes (only for new records, not when editing)
@@ -452,6 +554,7 @@ const EmployeeLeaveConfig = () => {
       idLeaveTemplate: parseInt(selectedTemplate),
       effectiveFrom: toLocalISOString(effectiveFromDate),
       effectiveTo: toLocalISOString(effectiveToDate),
+      approvalStatus: "SUBMITTED",
       createdBy: getCurrentUserId(),
       createdAt: new Date().toISOString(),
       updatedBy: isEditing ? getCurrentUserId() : 0,
@@ -475,7 +578,7 @@ const EmployeeLeaveConfig = () => {
         setShowModal(false);
         handleReset();
         // Refresh the list
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
       } else {
         toast.error(
           resultAction.payload?.message || "Failed to save employee leave config",
@@ -485,7 +588,7 @@ const EmployeeLeaveConfig = () => {
           }
         );
         // Refresh the list to clear error state and show selected year data
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
       }
     } catch (error) {
       console.error("Error saving employee leave config:", error);
@@ -494,7 +597,7 @@ const EmployeeLeaveConfig = () => {
         autoClose: 4000,
       });
       // Refresh the list to clear error state and show selected year data
-      dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+      dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
     } finally {
       setIsSubmitting(false);
     }
@@ -535,20 +638,35 @@ const EmployeeLeaveConfig = () => {
                     ))}
                   </select>
                 </div>
+                <div className="col-md-3">
+                  <Select
+                    classNamePrefix="form-control-select"
+                    options={designationFilterOptions}
+                    isSearchable
+                    isClearable
+                    onChange={(selected) => setDesignationFilter(selected ? selected.value : "")}
+                    value={designationFilterOptions.find((opt) => opt.value === designationFilter) || null}
+                    placeholder="All Designations"
+                    styles={{
+                      control: (base) => ({ ...base, minHeight: "38px" }),
+                      menu: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                  />
+                </div>
                 <div className="col-md-2">
                   <select
                     className="form-select"
-                    value={designationFilter}
-                    onChange={(e) => setDesignationFilter(e.target.value)}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    {designationFilterOptions.map((opt) => (
+                    {statusOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
                   </select>
                 </div>
-                <div className="col-md-6">
+                <div className="col-md-3">
                   <div className="list_searchbox">
                     <input
                       type="search"
@@ -579,8 +697,6 @@ const EmployeeLeaveConfig = () => {
                   columns={columns}
                   data={paginatedData}
                   idKey="idEmployeeLeaveConfig"
-                  onEditClick={handleEdit}
-                  onRowClick={handleRowClick}
                 />
               )}
               <div className="text-end pt-2">
@@ -594,6 +710,18 @@ const EmployeeLeaveConfig = () => {
           </div>
         </div>
       </div>
+
+      {/* View Employee Leave Config Modal */}
+      {showViewModal && viewData && (
+        <ViewEmployeeLeaveModal
+          data={viewData}
+          getStatusBadgeClass={getStatusBadgeClass}
+          onClose={() => {
+            setShowViewModal(false);
+            setViewData(null);
+          }}
+        />
+      )}
 
       {/* Add/Update Employee Leave Setup Modal */}
       {showModal && (
@@ -825,8 +953,8 @@ const EmployeeLeaveSetupModal = ({
   }, [isEditing, validFrom, workYears]);
 
   // Handle Employee selection - fetch joining date
-  const handleEmployeeChange = async (e) => {
-    const employeeId = e.target.value;
+  const handleEmployeeChange = async (selected) => {
+    const employeeId = selected ? selected.value : "";
     setSelectedEmployee(employeeId);
     setFormError("");
     setEmployeeJoiningDate(null);
@@ -1024,7 +1152,7 @@ const EmployeeLeaveSetupModal = ({
       data-bs-backdrop="static"
       data-bs-keyboard="false"
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered">
+      <div className="modal-dialog modal-lg modal-dialog-centered" style={{ transform: "none" }}>
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
@@ -1056,12 +1184,27 @@ const EmployeeLeaveSetupModal = ({
             </div>
             <div className="row">
               <div className="col-md-6">
-                <Dropdown
-                  label="Employee Name"
-                  name="employeeName"
+                <label className="form-label mb-1">Employee Name</label>
+                <Select
+                  classNamePrefix="form-control-select"
                   options={isEditing ? employeeOptions : modalEmployeeOptions}
-                  value={selectedEmployee}
+                  isSearchable
                   onChange={handleEmployeeChange}
+                  value={
+                    (isEditing ? employeeOptions : modalEmployeeOptions)?.find(
+                      (opt) => opt.value === selectedEmployee
+                    ) || null
+                  }
+                  placeholder="Select Employee"
+                  menuPosition="fixed"
+                  menuPlacement="bottom"
+                  menuShouldScrollIntoView={false}
+
+                  styles={{
+                    container: (base) => ({...base, marginTop: "7px"}),
+                    control: (base) => ({ ...base, minHeight: "38px" }),
+                    menu: (base) => ({ ...base, zIndex: 9999}),
+                  }}
                 />
               </div>
               <div className="col-md-6">
@@ -1175,6 +1318,154 @@ const EmployeeLeaveSetupModal = ({
               disabled={isSubmitting || savingAllocation}
             >
               {isSubmitting ? "Submitting..." : "Submit"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// View Employee Leave Config Modal Component (Read-Only)
+const ViewEmployeeLeaveModal = ({ data, getStatusBadgeClass, onClose }) => {
+  const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    const modalElement = document.getElementById("viewEmployeeLeaveModal");
+    if (modalElement && !modalRef.current) {
+      modalRef.current = new bootstrap.Modal(modalElement, {
+        focus: false,
+        backdrop: "static",
+        keyboard: false,
+      });
+      modalRef.current.show();
+
+      const handleHidden = () => {
+        if (onCloseRef.current) {
+          onCloseRef.current();
+        }
+      };
+
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
+
+      return () => {
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalRef.current) {
+          modalRef.current.dispose();
+          modalRef.current = null;
+        }
+      };
+    }
+  }, []);
+
+  return (
+    <div
+      className="modal fade"
+      id="viewEmployeeLeaveModal"
+      tabIndex="-1"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
+      <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Employee Leave Configuration Details</h5>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label fw-bold mb-1">Employee Code</label>
+                <p className="mb-0">{data.employeeCode || "-"}</p>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold mb-1">Employee Name</label>
+                <p className="mb-0">{data.employeeName || "-"}</p>
+              </div>
+            </div>
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label fw-bold mb-1">Designation</label>
+                <p className="mb-0">{data.designation || "-"}</p>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-bold mb-1">Template Name</label>
+                <p className="mb-0">{data.templateName || "-"}</p>
+              </div>
+            </div>
+            <div className="row mb-3">
+              <div className="col-md-4">
+                <label className="form-label fw-bold mb-1">Valid From</label>
+                <p className="mb-0">{data.validFrom || "-"}</p>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold mb-1">Valid To</label>
+                <p className="mb-0">{data.validTo || "-"}</p>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold mb-1">Status</label>
+                <p className="mb-0">
+                  <span className={`badge ${getStatusBadgeClass(data.approvalStatus)}`}>
+                    {data.approvalStatus || "-"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h6 className="fw-bold mb-2">Template Allocations</h6>
+              <div className="table-responsive">
+                <table className="table table-bordered table-sm">
+                  <thead>
+                    <tr>
+                      <th>Leave Type</th>
+                      <th>No. of Days Allocated</th>
+                      <th>No. of Days Carried Forward</th>
+                      <th>Total Allocated Days</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.allocations && data.allocations.length > 0 ? (
+                      data.allocations.map((allocation, index) => (
+                        <tr key={index}>
+                          <td>{allocation.leaveTypeName || "-"}</td>
+                          <td>{allocation.allocatedDays || 0}</td>
+                          <td>{allocation.carriedForwardDays || 0}</td>
+                          <td>
+                            {(allocation.allocatedDays || 0) + (allocation.carriedForwardDays || 0)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center text-muted">
+                          No allocations available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
             </button>
           </div>
         </div>

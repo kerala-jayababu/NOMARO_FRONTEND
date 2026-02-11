@@ -71,7 +71,6 @@ const OvertimeApproval = () => {
   const statusOptions = [
     { value: "ALL", label: "All Status" },
     { value: "PENDING", label: "Pending" },
-    { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
     { value: "REJECTED", label: "Rejected" },
   ];
@@ -161,9 +160,24 @@ const OvertimeApproval = () => {
         item.employeeCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
 
+      const statusKeyword =
+        statusFilter === "APPROVED" ? "APPROV" :
+        statusFilter === "REJECTED" ? "REJECT" :
+        statusFilter;
+
+      // Find the logged-in user's cycle status
+      const userIdStr = String(loggedInEmployeeId);
+      const userCycle = (item.approvalCycles || []).find((cycle) => {
+        const authorityIds = (cycle.approvalAuthorityIdEmployees || "")
+          .split(",")
+          .map((id) => id.trim());
+        return authorityIds.includes(userIdStr);
+      });
+      const userCycleStatus = userCycle ? (userCycle.status || "").toUpperCase() : "";
+
       const matchesStatus =
         statusFilter === "ALL" ||
-        item.status.toUpperCase() === statusFilter;
+        userCycleStatus.includes(statusKeyword);
 
       return matchesSearch && matchesStatus;
     });
@@ -531,7 +545,7 @@ const OvertimeApproval = () => {
                                       <td>{cycle.level}</td>
                                       <td>
                                         <span className={`badge ${getStatusBadgeClass(cycle.status)}`}>
-                                          {cycle.status}
+                                          { cycle.status}
                                         </span>
                                       </td>
                                       <td>{cycle.actionDate ? formatDateTime(cycle.actionDate) : "-"}</td>

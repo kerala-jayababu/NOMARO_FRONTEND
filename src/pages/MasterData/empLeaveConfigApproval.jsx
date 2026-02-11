@@ -12,6 +12,7 @@ import { fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reduce
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
 import CommonService from "../../core/services/CommonService";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const EmpLeaveConfigApproval = () => {
   const dispatch = useDispatch();
@@ -105,15 +106,12 @@ const EmpLeaveConfigApproval = () => {
   // Designation filter options
   const designationFilterOptions = useMemo(() => {
     if (designationList && designationList.data) {
-      return [
-        { value: "", label: "All Designations" },
-        ...designationList.data.map((d) => ({
-          value: String(d.idDesignation),
-          label: d.designationName,
-        })),
-      ];
+      return designationList.data.map((d) => ({
+        value: String(d.idDesignation),
+        label: d.designationName,
+      }));
     }
-    return [{ value: "", label: "All Designations" }];
+    return [];
   }, [designationList]);
 
   // Fetch employee leave setup list when search query, year filter, or status filter changes
@@ -121,10 +119,11 @@ const EmpLeaveConfigApproval = () => {
     if (yearFilter) {
       const idYear = parseInt(yearFilter);
       if (!isNaN(idYear)) {
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear }));
+        const approvalStatus = statusFilter === "ALL" ? "" : statusFilter;
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear, approvalStatus }));
       }
     }
-  }, [dispatch, searchQuery, yearFilter]);
+  }, [dispatch, searchQuery, yearFilter, statusFilter]);
 
   // Helper function to format date as MM/DD/YYYY
   const formatDate = (dateString) => {
@@ -155,7 +154,7 @@ const EmpLeaveConfigApproval = () => {
         templateName: setup.leaveTemplateName,
         validFrom: formatDate(setup.effectiveFrom),
         validTo: formatDate(setup.effectiveTo),
-        status: setup.status || "SUBMITTED",
+        status: setup.approvalStatus || "SUBMITTED",
         viewDetails: setup.idEmployeeLeaveConfig,
         idEmployee: setup.idEmployee,
         idLeaveTemplate: setup.idLeaveTemplate,
@@ -165,18 +164,13 @@ const EmpLeaveConfigApproval = () => {
       };
     });
 
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      data = data.filter((item) => item.status === statusFilter);
-    }
-
     // Apply designation filter
     if (designationFilter) {
       data = data.filter((item) => String(item.idDesignation) === designationFilter);
     }
 
     return data;
-  }, [employeeLeaveSetupList, employeeList, statusFilter, designationFilter]);
+  }, [employeeLeaveSetupList, employeeList, designationFilter]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -354,7 +348,7 @@ const EmpLeaveConfigApproval = () => {
     setTemplateAllocations([]);
     setCurrentStatus("");
     // Refresh the list
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
   };
 
   const handleApproveReject = async (approvalStatus) => {
@@ -380,7 +374,7 @@ const EmpLeaveConfigApproval = () => {
         );
         setCurrentStatus(approvalStatus);
         // Refresh the list
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter) }));
+        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
       } else {
         toast.error(result.payload?.message || "Failed to process request", {
           position: "top-right",
@@ -419,18 +413,20 @@ const EmpLeaveConfigApproval = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-2">
-                  <select
-                    className="form-select"
-                    value={designationFilter}
-                    onChange={(e) => setDesignationFilter(e.target.value)}
-                  >
-                    {designationFilterOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="col-md-3">
+                  <Select
+                    classNamePrefix="form-control-select"
+                    options={designationFilterOptions}
+                    isSearchable
+                    isClearable
+                    onChange={(selected) => setDesignationFilter(selected ? selected.value : "")}
+                    value={designationFilterOptions.find((opt) => opt.value === designationFilter) || null}
+                    placeholder="All Designations"
+                    styles={{
+                      control: (base) => ({ ...base, minHeight: "38px" }),
+                      menu: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                  />
                 </div>
                 <div className="col-md-2">
                   <select
@@ -583,7 +579,7 @@ const ViewEmployeeLeaveConfigModal = ({
                         ? "bg-success"
                         : currentStatus === "REJECTED"
                         ? "bg-danger"
-                        : "bg-warning"
+                        : "bg-info"
                     }`}
                   >
                     {currentStatus}

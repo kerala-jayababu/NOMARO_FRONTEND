@@ -7,7 +7,7 @@ const API_BASE_URL = `${BASE_URL}/api/v1/LeaveManagement`;
 
 export const fetchEmployeeLeaveSetup = createAsyncThunk(
   "employeeLeaveConfig/fetchEmployeeLeaveSetup",
-  async ({ searchText = "", idYear = 2026 }, { rejectWithValue }) => {
+  async ({ searchText = "", idYear = 2026, approvalStatus = "" }, { rejectWithValue }) => {
     try {
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
@@ -17,8 +17,13 @@ export const fetchEmployeeLeaveSetup = createAsyncThunk(
         return rejectWithValue("Authorization token missing");
       }
 
+      const params = new URLSearchParams();
+      params.append("searchText", searchText);
+      params.append("IdYear", idYear);
+      if (approvalStatus) params.append("ApprovalStatus", approvalStatus);
+
       const response = await axios.get(
-        `${API_BASE_URL}/GetEmployeeLeaveSetup?searchText=${searchText}&idYear=${idYear}`,
+        `${API_BASE_URL}/GetEmployeeLeaveSetup?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
