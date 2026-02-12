@@ -20,6 +20,47 @@ const LeaveApproval = () => {
     (state) => state.leaveApproval
   );
 
+  const handleDownloadDocument = (doc) => {
+    try {
+      if (!doc.fileBinary) {
+        toast.error("File content is not available for download");
+        return;
+      }
+
+      const mimeTypes = {
+        JPG: "image/jpeg",
+        JPEG: "image/jpeg",
+        PNG: "image/png",
+        GIF: "image/gif",
+        PDF: "application/pdf",
+        DOC: "application/msword",
+        DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        XLS: "application/vnd.ms-excel",
+        XLSX: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      };
+
+      const mimeType = mimeTypes[doc.fileType?.toUpperCase()] || "application/octet-stream";
+      const byteCharacters = atob(doc.fileBinary);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeType });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = doc.fileName || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Failed to download file");
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("SUBMITTED");
   const [dateFrom, setDateFrom] = useState(() => {
@@ -969,6 +1010,7 @@ const LeaveApproval = () => {
                           <th>File Type</th>
                           <th>File Name</th>
                           <th>Uploaded Date</th>
+                          <th style={{ width: "80px", textAlign: "center" }}>Download</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -980,6 +1022,18 @@ const LeaveApproval = () => {
                               {new Date(
                                 doc.uploadedAt
                               ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                title="Download"
+                                onClick={() => handleDownloadDocument(doc)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                              </button>
                             </td>
                           </tr>
                         ))}
