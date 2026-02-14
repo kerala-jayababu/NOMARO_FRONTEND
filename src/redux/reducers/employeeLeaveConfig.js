@@ -162,6 +162,98 @@ export const addOrUpdateEmployeeLeaveConfigDetails = createAsyncThunk(
   }
 );
 
+export const fetchEmployeeLeaveConfigApprovers = createAsyncThunk(
+  "employeeLeaveConfig/fetchEmployeeLeaveConfigApprovers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetEmployeeLeaveConfigApprovers`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch employee leave config approvers"
+      );
+    }
+  }
+);
+
+export const addUpdateEmployeeLeaveConfigWithDetails = createAsyncThunk(
+  "employeeLeaveConfig/addUpdateEmployeeLeaveConfigWithDetails",
+  async (data, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/AddUpdateEmployeeLeaveConfigWithDetails`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to add/update employee leave config with details"
+      );
+    }
+  }
+);
+
+export const submitEmployeeLeaveConfigForApproval = createAsyncThunk(
+  "employeeLeaveConfig/submitEmployeeLeaveConfigForApproval",
+  async (idEmployeeLeaveTemplate, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/SubmitEmployeeLeaveConfigForApproval?idEmployeeLeaveTemplate=${idEmployeeLeaveTemplate}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to submit employee leave config for approval" }
+      );
+    }
+  }
+);
+
 export const approveEmployeeLeaveConfig = createAsyncThunk(
   "employeeLeaveConfig/approveEmployeeLeaveConfig",
   async ({ IdEmployeeLeaveConfig, approvalStatus }, { rejectWithValue }) => {
@@ -256,6 +348,17 @@ const slice = createSlice({
       state.loading = false;
     });
     builder.addCase(addOrUpdateEmployeeLeaveConfigDetails.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+    builder.addCase(addUpdateEmployeeLeaveConfigWithDetails.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(addUpdateEmployeeLeaveConfigWithDetails.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(addUpdateEmployeeLeaveConfigWithDetails.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });

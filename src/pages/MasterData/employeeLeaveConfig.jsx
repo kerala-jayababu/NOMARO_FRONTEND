@@ -9,10 +9,10 @@ import Pagination from "../../components/pagination";
 import {
   fetchEmployeeLeaveSetup,
   fetchLeaveSetupOfAnEmployee,
-  addUpdateEmployeeLeaveConfig,
-  addOrUpdateEmployeeLeaveConfigDetails,
+  addUpdateEmployeeLeaveConfigWithDetails,
   fetchEmployeesNotConfiguredLeave,
   resetEmployeeLeaveSetup,
+  submitEmployeeLeaveConfigForApproval,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplates, fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
@@ -554,27 +554,43 @@ const EmployeeLeaveConfig = () => {
       idLeaveTemplate: parseInt(selectedTemplate),
       effectiveFrom: toLocalISOString(effectiveFromDate),
       effectiveTo: toLocalISOString(effectiveToDate),
-      approvalStatus: "SUBMITTED",
-      createdBy: getCurrentUserId(),
-      createdAt: new Date().toISOString(),
-      updatedBy: isEditing ? getCurrentUserId() : 0,
-      updatedAt: isEditing ? new Date().toISOString() : new Date().toISOString(),
+      details: templateAllocations.map((allocation) => ({
+        idEmployeeLeaveConfigDetails: allocation.idEmployeeLeaveConfigDetails || 0,
+        idEmployeeLeaveConfig: isEditing ? editingConfigId : 0,
+        idLeaveTemplateDetail: allocation.idLeaveTemplateDetail || 0,
+        idLeaveType: allocation.idLeaveType || 0,
+        allocatedDaysInYear: allocation.allocatedDays || 0,
+      })),
     };
 
     try {
       setIsSubmitting(true);
-      const resultAction = await dispatch(addUpdateEmployeeLeaveConfig(configData));
+      const resultAction = await dispatch(addUpdateEmployeeLeaveConfigWithDetails(configData));
 
       if (resultAction.payload && resultAction.payload.success) {
-        toast.success(
-          isEditing
-            ? "Employee leave config updated successfully!"
-            : "Employee leave config added successfully!",
-          {
-            position: "top-right",
-            autoClose: 4000,
+        // Submit for approval using the returned config ID
+        const configId = resultAction.payload.data;
+        if (configId) {
+          const submitResult = await dispatch(submitEmployeeLeaveConfigForApproval(configId));
+          if (submitResult.payload && submitResult.payload.success) {
+            toast.success("Employee leave config submitted for approval successfully!", {
+              position: "top-right",
+              autoClose: 4000,
+            });
+          } else {
+            toast.warning(
+              submitResult.payload?.message || "Config saved but failed to submit for approval",
+              { position: "top-right", autoClose: 4000 }
+            );
           }
-        );
+        } else {
+          toast.success(
+            isEditing
+              ? "Employee leave config updated successfully!"
+              : "Employee leave config added successfully!",
+            { position: "top-right", autoClose: 4000 }
+          );
+        }
         setShowModal(false);
         handleReset();
         // Refresh the list
@@ -745,7 +761,6 @@ const EmployeeLeaveConfig = () => {
           onSubmit={handleSubmit}
           onClose={handleCloseModal}
           dispatch={dispatch}
-          editingConfigId={editingConfigId}
           workYears={workYears}
         />
       )}
@@ -774,10 +789,8 @@ const EmployeeLeaveSetupModal = ({
   onSubmit,
   onClose,
   dispatch,
-  editingConfigId,
   workYears,
 }) => {
-  const [savingAllocation, setSavingAllocation] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [employeeJoiningDate, setEmployeeJoiningDate] = useState(null);
   const [modalEmployeeOptions, setModalEmployeeOptions] = useState([]);
@@ -1108,39 +1121,13 @@ const EmployeeLeaveSetupModal = ({
     fetchJoiningDate();
   }, [selectedEmployee]);
 
-  const handleAllocationChange = async (index, newValue) => {
-    const allocation = templateAllocations[index];
+  const handleAllocationChange = (index, newValue) => {
     const parsedValue = parseInt(newValue) || 0;
 
-    // Update local state immediately
     const updatedAllocations = templateAllocations.map((item, i) =>
       i === index ? { ...item, allocatedDays: parsedValue } : item
     );
     setTemplateAllocations(updatedAllocations);
-
-    // Only call API if we have an existing config (editing mode)
-    if (isEditing && editingConfigId && allocation.idEmployeeLeaveConfig) {
-      try {
-        setSavingAllocation(true);
-        const payload = {
-          idEmployeeLeaveConfigDetails: allocation.idEmployeeLeaveConfigDetails || 0,
-          idEmployeeLeaveConfig: allocation.idEmployeeLeaveConfig || editingConfigId,
-          idLeaveTemplateDetail: allocation.idLeaveTemplateDetail || 0,
-          idLeaveType: allocation.idLeaveType || 0,
-          allocatedDaysInYear: parsedValue,
-        };
-
-        await dispatch(addOrUpdateEmployeeLeaveConfigDetails(payload));
-      } catch (error) {
-        console.error("Error updating allocation:", error);
-        toast.error("Failed to update allocation", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } finally {
-        setSavingAllocation(false);
-      }
-    }
   };
 
   return (
@@ -1315,9 +1302,9 @@ const EmployeeLeaveSetupModal = ({
               type="button"
               className="btn btn-primary"
               onClick={handleSubmitWithValidation}
-              disabled={isSubmitting || savingAllocation}
+              disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Submitting..." : "Submit for Approval"}
             </button>
           </div>
         </div>

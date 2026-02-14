@@ -7,10 +7,12 @@ import {
   fetchEmployeeLeaveSetup,
   fetchLeaveSetupOfAnEmployee,
   approveEmployeeLeaveConfig,
+  fetchEmployeeLeaveConfigApprovers,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
 import CommonService from "../../core/services/CommonService";
+import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import Select from "react-select";
 
@@ -33,6 +35,8 @@ const EmpLeaveConfigApproval = () => {
   const [selectedConfig, setSelectedConfig] = useState(null);
   const [templateAllocations, setTemplateAllocations] = useState([]);
   const [currentStatus, setCurrentStatus] = useState("");
+  const [isApprover, setIsApprover] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Status filter options
   const statusOptions = [
@@ -101,6 +105,19 @@ const EmpLeaveConfigApproval = () => {
   useEffect(() => {
     dispatch(getAllEmployeeDetails());
     dispatch(fetchDesignationList());
+
+    // Check if current user is an approver
+    const checkApprover = async () => {
+      const result = await dispatch(fetchEmployeeLeaveConfigApprovers());
+      if (result.payload && result.payload.success && result.payload.data) {
+        const storedUser = secureLocalStorage.getItem("user");
+        const currentUserId = storedUser ? JSON.parse(storedUser)?.idEmployee : null;
+        if (currentUserId && result.payload.data.includes(currentUserId)) {
+          setIsApprover(true);
+        }
+      }
+    };
+    checkApprover();
   }, [dispatch]);
 
   // Designation filter options
@@ -355,6 +372,7 @@ const EmpLeaveConfigApproval = () => {
     if (!selectedConfig) return;
 
     try {
+      setIsProcessing(true);
       const result = await dispatch(
         approveEmployeeLeaveConfig({
           IdEmployeeLeaveConfig: selectedConfig.idEmployeeLeaveConfig,
@@ -375,6 +393,8 @@ const EmpLeaveConfigApproval = () => {
         setCurrentStatus(approvalStatus);
         // Refresh the list
         dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+        // Close the modal after successful approve/reject
+        handleCloseModal();
       } else {
         toast.error(result.payload?.message || "Failed to process request", {
           position: "top-right",
@@ -387,6 +407,8 @@ const EmpLeaveConfigApproval = () => {
         position: "top-right",
         autoClose: 4000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -483,6 +505,8 @@ const EmpLeaveConfigApproval = () => {
           config={selectedConfig}
           templateAllocations={templateAllocations}
           currentStatus={currentStatus}
+          isApprover={isApprover}
+          isProcessing={isProcessing}
           onClose={handleCloseModal}
           onApproveReject={handleApproveReject}
         />
@@ -496,6 +520,8 @@ const ViewEmployeeLeaveConfigModal = ({
   config,
   templateAllocations,
   currentStatus,
+  isApprover,
+  isProcessing,
   onClose,
   onApproveReject,
 }) => {
@@ -636,19 +662,21 @@ const ViewEmployeeLeaveConfigModal = ({
             </div>
           </div>
           <div className="modal-footer justify-content-end">
-            {currentStatus === "SUBMITTED" && (
+            {currentStatus === "SUBMITTED" && isApprover && (
               <>
                 <Button
                   className="btn btn-primary px-4 me-2"
                   onClick={() => onApproveReject("APPROVED")}
+                  disabled={isProcessing}
                 >
-                  Approve
+                  {isProcessing ? "Approving..." : "Approve"}
                 </Button>
                 <Button
                   className="btn btn-danger px-4"
                   onClick={() => onApproveReject("REJECTED")}
+                  disabled={isProcessing}
                 >
-                  Reject
+                  {isProcessing ? "Rejecting..." : "Reject"}
                 </Button>
               </>
             )}

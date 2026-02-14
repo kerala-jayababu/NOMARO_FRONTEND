@@ -262,6 +262,36 @@ export const deleteLeaveTemplateDetail = createAsyncThunk(
   }
 );
 
+export const fetchLeaveTemplateApprovers = createAsyncThunk(
+  "leaveTemplate/fetchLeaveTemplateApprovers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetLeaveTemplateApprovers`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch leave template approvers"
+      );
+    }
+  }
+);
+
 export const fetchDesignationList = createAsyncThunk(
   "leaveTemplate/fetchDesignationList",
   async (_, { rejectWithValue }) => {

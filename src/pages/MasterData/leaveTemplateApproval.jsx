@@ -9,10 +9,12 @@ import {
   fetchDesignationList,
   fetchLeaveTemplateDetailById,
   approveLeaveTemplate,
+  fetchLeaveTemplateApprovers,
   resetLeaveTemplateDetailById
 } from "../../redux/reducers/leaveTemplate";
 import { fetchLeaveTypes } from "../../redux/reducers/leaveType";
 import CommonService from "../../core/services/CommonService";
+import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 
 const LeaveTemplateApproval = () => {
@@ -312,14 +314,37 @@ const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQu
   const [selectedLeaveType, setSelectedLeaveType] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(template.status);
+  const [isApprover, setIsApprover] = useState(false);
 
   // Ref to prevent duplicate API calls
   const submitLockRef = useRef(false);
+
+  // Refs to prevent modal re-initialization on every render
+  const modalInstanceRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  // Keep onCloseRef in sync without re-initializing modal
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (template?.idLeaveTemplate) {
       dispatch(fetchLeaveTemplateById(template.idLeaveTemplate));
     }
+
+    // Fetch approvers and check if current user is an approver
+    const checkApprover = async () => {
+      const result = await dispatch(fetchLeaveTemplateApprovers());
+      if (result.payload && result.payload.success && result.payload.data) {
+        const storedUser = secureLocalStorage.getItem("user");
+        const currentUserId = storedUser ? JSON.parse(storedUser)?.idEmployee : null;
+        if (currentUserId && result.payload.data.includes(currentUserId)) {
+          setIsApprover(true);
+        }
+      }
+    };
+    checkApprover();
   }, [dispatch, template?.idLeaveTemplate]);
 
   useEffect(() => {
@@ -344,21 +369,28 @@ const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQu
 
   useEffect(() => {
     const modalElement = document.getElementById("templateDetailsViewModal");
-    if (modalElement) {
+    if (modalElement && !modalInstanceRef.current) {
       const modal = new bootstrap.Modal(modalElement, {
         focus: false,
         backdrop: 'static',
         keyboard: false
       });
+      modalInstanceRef.current = modal;
       modal.show();
 
-      modalElement.addEventListener("hidden.bs.modal", onClose);
+      const handleHidden = () => {
+        onCloseRef.current();
+      };
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
       return () => {
-        modal.dispose();
-        modalElement.removeEventListener("hidden.bs.modal", onClose);
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalInstanceRef.current) {
+          modalInstanceRef.current.dispose();
+          modalInstanceRef.current = null;
+        }
       };
     }
-  }, [onClose]);
+  }, []);
 
   const getStatusBadgeClass = (status) => {
     return status === "Active" ? "bg-label-success" : "bg-label-warning";
@@ -401,6 +433,10 @@ const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQu
             idYear: yearFilter || "",
             searchText: searchQuery || ""
           }));
+          // Close the modal after successful approve/reject
+          if (modalInstanceRef.current) {
+            modalInstanceRef.current.hide();
+          }
         } else {
           toast.error(resultAction.payload?.message || `Failed to ${actionText} leave template`, {
             position: "top-right",
@@ -513,7 +549,7 @@ const TemplateDetailsViewModal = ({ template, statusFilter, yearFilter, searchQu
                 </div>
               </div>
             </div>
-            {currentStatus === "SUBMITTED" && (
+            {currentStatus === "SUBMITTED" && isApprover && (
               <div className="modal-footer justify-content-end">
                 <Button
                   type="button"

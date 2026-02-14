@@ -548,6 +548,15 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   // Ref to prevent duplicate API calls on rapid button clicks
   const submitLockRef = useRef(false);
 
+  // Refs to prevent modal re-initialization on every render
+  const modalInstanceRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  // Keep onCloseRef in sync without re-initializing modal
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     // Fetch leave template details by ID
     if (template?.idLeaveTemplate) {
@@ -579,21 +588,28 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
 
   useEffect(() => {
     const modalElement = document.getElementById("templateDetailsModal");
-    if (modalElement) {
+    if (modalElement && !modalInstanceRef.current) {
       const modal = new bootstrap.Modal(modalElement, {
         focus: false,        // 🔑 CRITICAL
         backdrop: 'static',
         keyboard: false
       });
+      modalInstanceRef.current = modal;
       modal.show();
 
-      modalElement.addEventListener("hidden.bs.modal", onClose);
+      const handleHidden = () => {
+        onCloseRef.current();
+      };
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
       return () => {
-        modal.dispose();
-        modalElement.removeEventListener("hidden.bs.modal", onClose);
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalInstanceRef.current) {
+          modalInstanceRef.current.dispose();
+          modalInstanceRef.current = null;
+        }
       };
     }
-  }, [onClose]);
+  }, []);
 
   // Fetch all templates for the "Copy From Template" dropdown
   useEffect(() => {
