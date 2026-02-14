@@ -91,6 +91,32 @@ export const getEmployeeSalaryConfigById = createAsyncThunk(
     }
   }
 );
+export const getMaternityLeaveSalaryById = createAsyncThunk(
+  "configApprovals/getMaternityLeaveSalaryById",
+  async (id) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) console.error("Authorization token missing");
+
+      const response = await axios.get(
+        `${API_BASE_URL}/PayRollManagement/GetMaternityLeaveSalaryById?id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return error;
+    }
+  }
+);
+
 
 export const getSalaryTemplateById = createAsyncThunk(
   "configApprovals/getSalaryTemplateById",
@@ -125,6 +151,7 @@ const configApprovalsSlice = createSlice({
     configApprovalList: [],
     overtimeTransaction: [],
     employeeSalaryConfig: [],
+     maternityLeaveSalary: null,
     salaryTemplate: [],
     loading: false,
     error: null,
@@ -148,6 +175,10 @@ const configApprovalsSlice = createSlice({
     builder.addCase(getOvertimeTransactionById.pending, (state) => {
       state.loading = true;
     });
+    builder.addCase(getMaternityLeaveSalaryById.fulfilled, (state, action) => {
+  state.loading = false;
+  state.maternityLeaveSalary = action.payload.data; // ✅ because API returns { data: ... }
+});
     builder.addCase(getOvertimeTransactionById.fulfilled, (state, action) => {
       state.loading = false;
       state.overtimeTransaction = action.payload.data; // Store the fetched overtime transaction
