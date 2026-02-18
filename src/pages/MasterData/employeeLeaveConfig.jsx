@@ -13,6 +13,8 @@ import {
   fetchEmployeesNotConfiguredLeave,
   resetEmployeeLeaveSetup,
   submitEmployeeLeaveConfigForApproval,
+  fetchEmployeesLeaveConfigStatus,
+  applyLeaveTemplateToMultipleEmployees,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplates, fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
@@ -48,6 +50,7 @@ const EmployeeLeaveConfig = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewData, setViewData] = useState(null);
   const [workYears, setWorkYears] = useState([]);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   // Fetch work years from API on component mount
   useEffect(() => {
@@ -638,6 +641,13 @@ const EmployeeLeaveConfig = () => {
           <div className="card">
             <div className="card-header d-flex align-items-center justify-content-between pb-3">
               <h5 className="m-0">List of Employee Leave Configurations</h5>
+              <Button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowBulkModal(true)}
+              >
+                Bulk Configure
+              </Button>
             </div>
             <div className="card-body">
               <div className="row mb-3">
@@ -735,6 +745,22 @@ const EmployeeLeaveConfig = () => {
           onClose={() => {
             setShowViewModal(false);
             setViewData(null);
+          }}
+        />
+      )}
+
+      {/* Bulk Configure Modal */}
+      {showBulkModal && (
+        <BulkConfigureModal
+          workYears={filteredWorkYears}
+          yearFilterOptions={yearFilterOptions}
+          templateOptions={templateOptions}
+          dispatch={dispatch}
+          onClose={() => {
+            setShowBulkModal(false);
+            if (yearFilter) {
+              dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+            }
           }}
         />
       )}
@@ -1303,6 +1329,391 @@ const EmployeeLeaveSetupModal = ({
               className="btn btn-primary"
               onClick={handleSubmitWithValidation}
               disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit for Approval"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Bulk Configure Modal Component
+const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dispatch, onClose }) => {
+  const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedDesignation, setSelectedDesignation] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [designations, setDesignations] = useState([]);
+  const [employeeList, setEmployeeList] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOnlyNotConfigured, setShowOnlyNotConfigured] = useState(false);
+
+  // Set default year to current financial year
+  useEffect(() => {
+    if (workYears.length > 0 && !selectedYear) {
+      const today = new Date();
+      const currentMonth = today.getMonth() + 1;
+      const currentYear = today.getFullYear();
+      const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+      const currentWorkYear = workYears.find((year) => {
+        if (!year.displayText) return false;
+        const firstYear = year.displayText.split("-")[0];
+        return firstYear === String(financialYearStart);
+      });
+
+      if (currentWorkYear) {
+        setSelectedYear(String(currentWorkYear.idWorkYear));
+      }
+    }
+  }, [workYears]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Initialize modal
+  useEffect(() => {
+    const modalElement = document.getElementById("bulkConfigureModal");
+    if (modalElement && !modalRef.current) {
+      modalRef.current = new bootstrap.Modal(modalElement, {
+        focus: false,
+        backdrop: "static",
+        keyboard: false,
+      });
+      modalRef.current.show();
+
+      const handleHidden = () => {
+        if (onCloseRef.current) onCloseRef.current();
+      };
+
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
+
+      return () => {
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalRef.current) {
+          modalRef.current.dispose();
+          modalRef.current = null;
+        }
+      };
+    }
+  }, []);
+
+  // Fetch departments and designations on mount
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      const deptResult = await CommonService.getDepartmentsList();
+      if (!deptResult.error && deptResult.data?.data) {
+        setDepartments(deptResult.data.data.map((d) => ({
+          value: String(d.idDepartment),
+          label: d.departmentName,
+        })));
+      }
+      const desigResult = await CommonService.getDesignationsList();
+      if (!desigResult.error && desigResult.data?.data) {
+        setDesignations(desigResult.data.data.map((d) => ({
+          value: String(d.idDesignation),
+          label: d.designationName,
+        })));
+      }
+    };
+    fetchDropdowns();
+  }, []);
+
+  // Fetch employee list when year is selected (optionally with department/designation)
+  useEffect(() => {
+    if (!selectedYear) {
+      setEmployeeList([]);
+      setSelectedEmployees([]);
+      return;
+    }
+
+    const fetchEmployees = async () => {
+      setLoadingEmployees(true);
+      try {
+        const result = await dispatch(
+          fetchEmployeesLeaveConfigStatus({
+            idYear: parseInt(selectedYear),
+            idDepartment: selectedDepartment ? parseInt(selectedDepartment) : null,
+            idDesignation: selectedDesignation ? parseInt(selectedDesignation) : null,
+          })
+        );
+        if (result.payload?.data) {
+          setEmployeeList(result.payload.data);
+          setSelectedEmployees([]);
+        } else {
+          setEmployeeList([]);
+          setSelectedEmployees([]);
+        }
+      } catch {
+        setEmployeeList([]);
+      } finally {
+        setLoadingEmployees(false);
+      }
+    };
+    fetchEmployees();
+  }, [selectedYear, selectedDepartment, selectedDesignation, dispatch]);
+
+  const handleCheckboxChange = (idEmployee, checked) => {
+    if (checked) {
+      setSelectedEmployees((prev) => [...prev, idEmployee]);
+    } else {
+      setSelectedEmployees((prev) => prev.filter((id) => id !== idEmployee));
+    }
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const unconfiguredIds = employeeList
+        .filter((emp) => !emp.isConfigured)
+        .map((emp) => emp.idEmployee);
+      setSelectedEmployees(unconfiguredIds);
+    } else {
+      setSelectedEmployees([]);
+    }
+  };
+
+  const filteredEmployeeList = showOnlyNotConfigured
+    ? employeeList.filter((emp) => !emp.isConfigured)
+    : employeeList;
+  const allUnconfigured = filteredEmployeeList.filter((emp) => !emp.isConfigured);
+  const allChecked = allUnconfigured.length > 0 && selectedEmployees.length === allUnconfigured.length;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const handleSubmitForApproval = async () => {
+    if (!selectedYear) {
+      toast.error("Please select a year.", { position: "top-right", autoClose: 4000 });
+      return;
+    }
+    if (!selectedTemplate) {
+      toast.error("Please select a template.", { position: "top-right", autoClose: 4000 });
+      return;
+    }
+    if (selectedEmployees.length === 0) {
+      toast.error("Please select at least one employee.", { position: "top-right", autoClose: 4000 });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await dispatch(
+        applyLeaveTemplateToMultipleEmployees({
+          idEmployees: selectedEmployees,
+          idLeaveTemplate: parseInt(selectedTemplate),
+          idYear: parseInt(selectedYear),
+        })
+      );
+      if (result.payload?.success) {
+        toast.success(result.payload.message || "Leave template applied successfully!", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+        if (modalRef.current) modalRef.current.hide();
+      } else {
+        toast.error(result.payload?.message || "Failed to apply leave template.", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch {
+      toast.error("Failed to apply leave template.", { position: "top-right", autoClose: 4000 });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="modal fade"
+      id="bulkConfigureModal"
+      tabIndex="-1"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
+      <div className="modal-dialog modal-xl modal-dialog-centered" style={{ transform: "none" }}>
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Bulk Configure Employee Leave</h5>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <div className="row mb-3">
+              <div className="col-md-3">
+                <label className="form-label mb-1">Year</label>
+                <select
+                  className="form-select"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                >
+                  <option value="">Select Year</option>
+                  {yearFilterOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label mb-1">Template</label>
+                <select
+                  className="form-select"
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                >
+                  <option value="">Select Template</option>
+                  {templateOptions
+                    .filter((opt) => opt.value)
+                    .map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label mb-1">Department</label>
+                <Select
+                  classNamePrefix="form-control-select"
+                  options={departments}
+                  isSearchable
+                  isClearable
+                  onChange={(selected) => setSelectedDepartment(selected ? selected.value : "")}
+                  value={departments.find((opt) => opt.value === selectedDepartment) || null}
+                  placeholder="Select Department"
+                  styles={{
+                    control: (base) => ({ ...base, minHeight: "38px" }),
+                    menu: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label mb-1">Designation</label>
+                <Select
+                  classNamePrefix="form-control-select"
+                  options={designations}
+                  isSearchable
+                  isClearable
+                  onChange={(selected) => setSelectedDesignation(selected ? selected.value : "")}
+                  value={designations.find((opt) => opt.value === selectedDesignation) || null}
+                  placeholder="Select Designation"
+                  styles={{
+                    control: (base) => ({ ...base, minHeight: "38px" }),
+                    menu: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </div>
+            </div>
+
+            {employeeList.length > 0 && (
+              <div className="mb-3">
+                <div className="form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="showNotConfigured"
+                    checked={showOnlyNotConfigured}
+                    onChange={(e) => setShowOnlyNotConfigured(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="showNotConfigured">
+                    Show only Not Configured
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {loadingEmployees ? (
+              <div className="text-center py-4">Loading...</div>
+            ) : filteredEmployeeList.length > 0 ? (
+              <div className="table-responsive">
+                <table className="table table-bordered table-sm">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "40px" }}>
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={allChecked}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          disabled={allUnconfigured.length === 0}
+                        />
+                      </th>
+                      <th>Emp Code</th>
+                      <th>Employee Name</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Joining Date</th>
+                      <th>Is Configured</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEmployeeList.map((emp) => (
+                      <tr key={emp.idEmployee}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            checked={selectedEmployees.includes(emp.idEmployee)}
+                            onChange={(e) => handleCheckboxChange(emp.idEmployee, e.target.checked)}
+                            disabled={emp.isConfigured}
+                          />
+                        </td>
+                        <td>{emp.employeeCode}</td>
+                        <td>{emp.employeeName}</td>
+                        <td>{emp.designationName}</td>
+                        <td>{emp.departmentName}</td>
+                        <td>{formatDate(emp.joiningDate)}</td>
+                        <td>
+                          <span className={`badge ${emp.isConfigured ? "bg-label-success" : "bg-label-warning"}`}>
+                            {emp.isConfigured ? "Yes" : "No"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : selectedYear ? (
+              <div className="text-center text-muted py-4">No employees found.</div>
+            ) : (
+              <div className="text-center text-muted py-4">
+                Select a Year to view employees.
+              </div>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSubmitForApproval}
+              disabled={isSubmitting || selectedEmployees.length === 0}
             >
               {isSubmitting ? "Submitting..." : "Submit for Approval"}
             </button>

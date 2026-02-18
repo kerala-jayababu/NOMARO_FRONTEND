@@ -254,6 +254,72 @@ export const submitEmployeeLeaveConfigForApproval = createAsyncThunk(
   }
 );
 
+export const fetchEmployeesLeaveConfigStatus = createAsyncThunk(
+  "employeeLeaveConfig/fetchEmployeesLeaveConfigStatus",
+  async ({ idYear, idDepartment, idDesignation }, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const params = new URLSearchParams();
+      params.append("IdYear", idYear);
+      if (idDepartment) params.append("IdDepartment", idDepartment);
+      if (idDesignation) params.append("IdDesignation", idDesignation);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetEmployeesLeaveConfigStatusDetails?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch employees leave config status"
+      );
+    }
+  }
+);
+
+export const applyLeaveTemplateToMultipleEmployees = createAsyncThunk(
+  "employeeLeaveConfig/applyLeaveTemplateToMultipleEmployees",
+  async (data, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/ApplyLeaveTemplateToMultipleEmployees`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to apply leave template to multiple employees"
+      );
+    }
+  }
+);
+
 export const approveEmployeeLeaveConfig = createAsyncThunk(
   "employeeLeaveConfig/approveEmployeeLeaveConfig",
   async ({ IdEmployeeLeaveConfig, approvalStatus }, { rejectWithValue }) => {
