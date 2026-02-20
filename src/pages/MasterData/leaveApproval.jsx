@@ -552,7 +552,7 @@ const LeaveApproval = () => {
               </div>
 
               {/* Leave Approval Cards */}
-              <div className="row">
+              <div className="row" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
                 {loading ? (
                   <div className="col-12 text-center py-4">
                     <div className="spinner-border text-primary" role="status">

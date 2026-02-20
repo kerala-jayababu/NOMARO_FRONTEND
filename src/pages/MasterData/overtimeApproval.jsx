@@ -26,13 +26,15 @@ const OvertimeApproval = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [dateFrom, setDateFrom] = useState(() => {
     const date = new Date();
-    date.setMonth(date.getMonth() - 3);
+    date.setDate(date.getDate() - 15);
     return date.toISOString().split("T")[0];
   });
   const [selectedItems, setSelectedItems] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null); // "APPROVED" or "REJECTED"
   const [isProcessing, setIsProcessing] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectReasonError, setRejectReasonError] = useState("");
 
   // Track which employee configs have already been fetched to avoid duplicate calls
   const fetchedEmployeeIds = useRef(new Set());
@@ -190,9 +192,9 @@ const OvertimeApproval = () => {
     const userIdStr = String(loggedInEmployeeId);
     const cycles = item.approvalCycles || [];
 
-    // Find the highest approval cycle level where the logged-in user is an authority
+    // Find the lowest pending approval cycle level where the logged-in user is an authority
     let userCycleIndex = -1;
-    for (let i = cycles.length - 1; i >= 0; i--) {
+    for (let i = 0; i < cycles.length; i++) {
       const authorityIds = (cycles[i].approvalAuthorityIdEmployees || "")
         .split(",")
         .map((id) => id.trim());
@@ -267,11 +269,16 @@ const OvertimeApproval = () => {
   const executeBulkAction = async () => {
     if (!confirmAction || selectedItems.length === 0) return;
 
+    if (confirmAction === "REJECTED" && !rejectReason.trim()) {
+      setRejectReasonError("Reason for rejection is mandatory");
+      return;
+    }
+
     const payload = selectedItems.map((id) => ({
       entityTablePrimaryKeyID: id,
       entityCode: "OVERTIME",
       status: confirmAction,
-      rejectReason: "",
+      rejectReason: confirmAction === "REJECTED" ? rejectReason.trim() : "",
       leavePassageAmount: 0,
       idPayRollScreen: 0,
     }));
@@ -311,6 +318,8 @@ const OvertimeApproval = () => {
       setIsProcessing(false);
       setShowConfirmModal(false);
       setConfirmAction(null);
+      setRejectReason("");
+      setRejectReasonError("");
     }
   };
 
@@ -410,7 +419,7 @@ const OvertimeApproval = () => {
                     Reject Selected ({selectedItems.length})
                   </Button>
                 </div>
-                <div className="col-md-2">
+                <div className="col-md-2" style={{ zIndex: 2 }}>
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
@@ -463,9 +472,9 @@ const OvertimeApproval = () => {
               ) : error ? (
                 <div className="text-center py-4 text-danger">{error}</div>
               ) : (
-                <div className="table-responsive">
+                <div className="table-responsive" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
                   <table className="table table-striped table-bordered">
-                    <thead className="table-light">
+                    <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                       <tr>
                         <th className="text-center" style={{ width: "40px" }}>
                           <input
@@ -598,6 +607,8 @@ const OvertimeApproval = () => {
                   onClick={() => {
                     setShowConfirmModal(false);
                     setConfirmAction(null);
+                    setRejectReason("");
+                    setRejectReasonError("");
                   }}
                   disabled={isProcessing}
                 ></button>
@@ -607,6 +618,27 @@ const OvertimeApproval = () => {
                   Are you sure you want to {confirmAction === "APPROVED" ? "Approve" : "Reject"} all the{" "}
                   <strong>{selectedItems.length}</strong> OT Transaction{selectedItems.length !== 1 ? "s" : ""}?
                 </p>
+                {confirmAction === "REJECTED" && (
+                  <div className="mt-3">
+                    <label className="form-label mb-1 fw-medium">
+                      Reason for Rejection <span className="text-danger">*</span>
+                    </label>
+                    <textarea
+                      className={`form-control ${rejectReasonError ? "is-invalid" : ""}`}
+                      rows="3"
+                      placeholder="Enter reason for rejection..."
+                      value={rejectReason}
+                      onChange={(e) => {
+                        setRejectReason(e.target.value);
+                        if (rejectReasonError) setRejectReasonError("");
+                      }}
+                      disabled={isProcessing}
+                    ></textarea>
+                    {rejectReasonError && (
+                      <div className="invalid-feedback">{rejectReasonError}</div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <Button
@@ -614,6 +646,8 @@ const OvertimeApproval = () => {
                   onClick={() => {
                     setShowConfirmModal(false);
                     setConfirmAction(null);
+                    setRejectReason("");
+                    setRejectReasonError("");
                   }}
                   disabled={isProcessing}
                 >

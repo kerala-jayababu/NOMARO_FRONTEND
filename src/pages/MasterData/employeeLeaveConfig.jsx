@@ -277,7 +277,7 @@ const EmployeeLeaveConfig = () => {
       label: "",
       render: (_value, row) => (
         <div className="text-end">
-          {(row.approvalStatus || "").toUpperCase() === "SUBMITTED" ? (
+          {["SUBMITTED", "REJECTED"].includes((row.approvalStatus || "").toUpperCase()) ? (
             <button
               type="button"
               className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
@@ -337,7 +337,7 @@ const EmployeeLeaveConfig = () => {
                 idLeaveType: detail.idLeaveType || 0,
                 leaveTypeName: detail.leaveTypeName,
                 allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
-                carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+                carriedForwardDays: 0,
               };
             });
             setTemplateAllocations(allocations);
@@ -357,7 +357,7 @@ const EmployeeLeaveConfig = () => {
           idLeaveType: detail.idLeaveType || 0,
           leaveTypeName: detail.leaveTypeName,
           allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
-          carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+          carriedForwardDays: 0,
         }));
         setTemplateAllocations(allocations);
       } else if (setup.idLeaveTemplate) {
@@ -377,7 +377,7 @@ const EmployeeLeaveConfig = () => {
               idLeaveType: detail.idLeaveType || 0,
               leaveTypeName: detail.leaveTypeName,
               allocatedDays: detail.maxLeavesPerYear || 0,
-              carriedForwardDays: detail.isCarryForwardAllowed ? detail.maxCarryForwardDays || 0 : 0,
+              carriedForwardDays: 0,
             }));
 
             setTemplateAllocations(allocations);
@@ -416,7 +416,7 @@ const EmployeeLeaveConfig = () => {
             viewInfo.allocations = configDetails.map((detail) => ({
               leaveTypeName: detail.leaveTypeName,
               allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
-              carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+              carriedForwardDays: 0,
             }));
           }
         }
@@ -429,7 +429,7 @@ const EmployeeLeaveConfig = () => {
         viewInfo.allocations = setup.details.map((detail) => ({
           leaveTypeName: detail.leaveTypeName,
           allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
-          carriedForwardDays: detail.maxCarryForwardDays || detail.carriedForwardDays || detail.carryForwardDays || 0,
+          carriedForwardDays: 0,
         }));
       }
 
@@ -483,7 +483,7 @@ const EmployeeLeaveConfig = () => {
               idLeaveType: detail.idLeaveType || 0,
               leaveTypeName: detail.leaveTypeName,
               allocatedDays: detail.maxLeavesPerYear || 0,
-              carriedForwardDays: detail.isCarryForwardAllowed ? detail.maxCarryForwardDays || 0 : 0,
+              carriedForwardDays: 0,
             }));
 
             setTemplateAllocations(allocations);

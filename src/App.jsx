@@ -68,6 +68,7 @@ import OffboardingClearances from "./pages/MasterData/offboardingClearances";
 import ServiceChange from "./pages/MasterData/serviceChange";
 import ServiceApproval from "./pages/MasterData/serviceApproval";
 import OrgHierarchy from "./pages/MasterData/OrgHierarchy";
+import MissingEntryApproval from "./pages/MasterData/missingEntryApproval";
 
 function App() {
   return (
@@ -134,6 +135,7 @@ function App() {
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
               <Route path="org-hierarchy" element={<OrgHierarchy/>} />
               <Route path="assets" element={<Assets/>} />
+              <Route path="missing-entry-approval" element={<MissingEntryApproval/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

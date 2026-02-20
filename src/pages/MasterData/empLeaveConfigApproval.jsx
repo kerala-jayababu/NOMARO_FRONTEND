@@ -297,11 +297,7 @@ const EmpLeaveConfigApproval = () => {
               idLeaveType: detail.idLeaveType || 0,
               leaveTypeName: detail.leaveTypeName,
               allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
-              carriedForwardDays:
-                detail.maxCarryForwardDays ||
-                detail.carriedForwardDays ||
-                detail.carryForwardDays ||
-                0,
+              carriedForwardDays: 0,
             }));
             setTemplateAllocations(allocations);
             return;
@@ -344,9 +340,7 @@ const EmpLeaveConfigApproval = () => {
               idLeaveType: detail.idLeaveType || 0,
               leaveTypeName: detail.leaveTypeName,
               allocatedDays: detail.maxLeavesPerYear || 0,
-              carriedForwardDays: detail.isCarryForwardAllowed
-                ? detail.maxCarryForwardDays || 0
-                : 0,
+              carriedForwardDays: 0,
             }));
 
             setTemplateAllocations(allocations);
