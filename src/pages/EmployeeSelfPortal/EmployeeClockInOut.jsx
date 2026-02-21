@@ -30,6 +30,10 @@ function EmployeeClockInOut() {
     const [selectedType, setSelectedType] = useState('');
     const [newTime, setNewTime] = useState('');
     const [reason, setReason] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [toggling, setToggling] = useState({});
+    const [showConfirmSwapModal, setShowConfirmSwapModal] = useState(false);
+    const [itemToSwap, setItemToSwap] = useState(null);
 
     useEffect(() => {
         if (startDate != '' && endDate != '') {
@@ -72,40 +76,66 @@ function EmployeeClockInOut() {
     }
 
     const checkMissingDetails = () => {
-        const newTimeMoment = moment(newTime, 'hh:mm A');
+        if (!newTime) {
+            toast.warning("Please enter the actual time of entry", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        // Input time is in 24-hour format (HH:mm), convert to moment
+        const newTimeMoment = moment(newTime, 'HH:mm');
+
+        if (!newTimeMoment.isValid()) {
+            toast.warning("Please enter a valid time", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
 
         if (selectedType === 'IN') {
             let outTime = selectedData.outTime;
 
-            const outTimeMoment = moment(outTime, 'hh:mm A');
+            if (outTime && outTime !== 'Missing') {
+                const outTimeMoment = moment(outTime, 'hh:mm A');
 
-            if (newTimeMoment.isSameOrBefore(outTimeMoment)) {
-                saveMissingDetails();
-            } else {
-                toast.warning("Cannot enter time same or after out-time", {
-                    position: "top-right",
-                    autoClose: 2000,
-                });
+                if (newTimeMoment.isSameOrAfter(outTimeMoment)) {
+                    toast.warning("Cannot enter time same or after out-time", {
+                        position: "top-right",
+                        autoClose: 2000,
+                    });
+                    return;
+                }
             }
+            saveMissingDetails();
         } else {
             let inTime = selectedData.inTime;
 
-            const inTimeMoment = moment(inTime, 'hh:mm A');
+            if (inTime && inTime !== 'Missing') {
+                const inTimeMoment = moment(inTime, 'hh:mm A');
 
-            if (newTimeMoment.isSameOrAfter(inTimeMoment)) {
-                saveMissingDetails();
-            } else {
-                toast.warning("Cannot enter time same or before in-time", {
-                    position: "top-right",
-                    autoClose: 2000,
-                });
+                if (newTimeMoment.isSameOrBefore(inTimeMoment)) {
+                    toast.warning("Cannot enter time same or before in-time", {
+                        position: "top-right",
+                        autoClose: 2000,
+                    });
+                    return;
+                }
             }
+            saveMissingDetails();
         }
     };
 
     const saveMissingDetails = () => {
+        if (saving) return; // Prevent multiple submissions
+
+        setSaving(true);
         const date = moment(selectedData.clockDate).format('YYYY-MM-DD');
-        const time24hrWithSeconds = moment(newTime, 'hh:mm A').format('HH:mm:ss');
+        // Input time is in 24-hour format (HH:mm), convert to HH:mm:ss
+        const time24hrWithSeconds = moment(newTime, 'HH:mm').format('HH:mm:ss');
+        
         let payload = {
             idClockDetail: selectedData.idClockDetails,
             idEmployee: selectedData.idEmployee,
@@ -113,17 +143,33 @@ function EmployeeClockInOut() {
             time: date + ' ' + time24hrWithSeconds,
             reason: reason
         }
+        
         ClockInOutService.saveMissingEntries([payload]).then(res => {
             if (res.data.status === 200) {
                 toast.success("Data updated successfully", {
                     position: "top-right",
                     autoClose: 2000,
                 });
-                getClockInOutDetails();
                 resetValues();
                 setShowModal(false);
+                setSaving(false);
+                // Refresh the data after a short delay to ensure backend has processed
+                setTimeout(() => {
+                    getClockInOutDetails();
+                }, 500);
+            } else {
+                toast.error(res.data.message || "Failed to update data", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                setSaving(false);
             }
         }).catch(err => {
+            toast.error(err.response?.data?.message || "An error occurred while saving. Please try again.", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            setSaving(false);
         });
     }
 
@@ -132,6 +178,7 @@ function EmployeeClockInOut() {
         setSelectedType('');
         setNewTime('');
         setReason('');
+        setSaving(false);
     }
 
     const paginatedData = useMemo(() => {
@@ -143,6 +190,64 @@ function EmployeeClockInOut() {
     const validPaySlips = clockInDetails.filter(slip => slip.employeeCode);
 
     const handlePageChange = (page) => setCurrentPage(page);
+
+    const handleToggleMissingEntry = (item) => {
+        if (!item.idClockDetails) {
+            toast.warning("Invalid entry data", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            return;
+        }
+
+        // Prevent multiple clicks
+        if (toggling[item.idClockDetails]) {
+            return;
+        }
+
+        // Show confirmation modal
+        setItemToSwap(item);
+        setShowConfirmSwapModal(true);
+    };
+
+    const confirmSwap = () => {
+        if (!itemToSwap || !itemToSwap.idClockDetails) {
+            setShowConfirmSwapModal(false);
+            setItemToSwap(null);
+            return;
+        }
+
+        const idClockInDetail = itemToSwap.idClockDetails;
+        setShowConfirmSwapModal(false);
+        setToggling(prev => ({ ...prev, [idClockInDetail]: true }));
+
+        ClockInOutService.toggleMissingEntry(idClockInDetail).then(res => {
+            if (res.data && res.data.status === 200) {
+                toast.success("Entry swapped successfully", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                // Refresh the data after a short delay
+                setTimeout(() => {
+                    getClockInOutDetails();
+                }, 500);
+            } else {
+                toast.error(res.data?.message || "Failed to swap entry", {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            }
+            setToggling(prev => ({ ...prev, [idClockInDetail]: false }));
+            setItemToSwap(null);
+        }).catch(err => {
+            toast.error(err.response?.data?.message || "An error occurred while swapping. Please try again.", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+            setToggling(prev => ({ ...prev, [idClockInDetail]: false }));
+            setItemToSwap(null);
+        });
+    };
 
 
     return (
@@ -177,6 +282,7 @@ function EmployeeClockInOut() {
                                                 <th className='text-center'>IN</th>
                                                 <th className='text-center'>OUT</th>
                                                 <th>Duration</th>
+                                                <th className='text-center'>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="table-border-bottom-0">
@@ -217,13 +323,26 @@ function EmployeeClockInOut() {
                                                                     <td className='text-center'></td>
                                                                 }
                                                                 <td>{item.totalHoursText || 'NA'}</td>
+                                                                <td className='text-center'>
+                                                                    {item.remarks && item.remarks.startsWith('Wrong Entry') && (
+                                                                        <button
+                                                                            className="btn btn-sm btn-outline-primary"
+                                                                            onClick={() => handleToggleMissingEntry(item)}
+                                                                            disabled={toggling[item.idClockDetails]}
+                                                                            title="Toggle Missing Entry"
+                                                                            style={{ padding: '2px 8px', border: '1px solid #007bff' }}
+                                                                        >
+                                                                            <i className={`bx ${toggling[item.idClockDetails] ? 'bx-loader-alt bx-spin' : 'bx-transfer-alt'}`} style={{ fontSize: '18px' }}></i>
+                                                                        </button>
+                                                                    )}
+                                                                </td>
                                                             </>
                                                         }
                                                     </tr>
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan="5" className="text-center">
+                                                    <td colSpan="6" className="text-center">
                                                         <div className="Nodatafound_box">
                                                             <h6><i className="bx bx-search"></i> No data available!</h6>
                                                         </div>
@@ -338,6 +457,22 @@ function EmployeeClockInOut() {
                                                             <label>Duration</label>
                                                             <p className='m-0'>{item.totalHoursText || 'NA'}</p>
                                                         </div>
+                                                        {
+                                                            item.remarks && item.remarks.startsWith('Wrong Entry') && (
+                                                                <div className='col-12 px-0 py-1' >
+                                                                    <button
+                                                                        className="btn btn-sm btn-outline-primary"
+                                                                        onClick={() => handleToggleMissingEntry(item)}
+                                                                        disabled={toggling[item.idClockDetails]}
+                                                                        title="Toggle Missing Entry"
+                                                                        style={{ padding: '4px 12px', border: '1px solid #007bff', width: '100%' }}
+                                                                    >
+                                                                        <i className={`bx ${toggling[item.idClockDetails] ? 'bx-loader-alt bx-spin' : 'bx-transfer-alt'}`} style={{ fontSize: '18px', marginRight: '8px' }}></i>
+                                                                        {toggling[item.idClockDetails] ? 'Toggling...' : 'Toggle Entry'}
+                                                                    </button>
+                                                                </div>
+                                                            )
+                                                        }
                                                     </>
                                                 }
                                             </div>
@@ -368,9 +503,17 @@ function EmployeeClockInOut() {
 
             </div >
             <Modal
-                show={showModal} onHide={() => { setShowModal(false) }} size='sm'
+                show={showModal} 
+                onHide={() => { 
+                    if (!saving) {
+                        setShowModal(false);
+                        resetValues();
+                    }
+                }} 
+                size='sm'
                 aria-labelledby="contained-modal-title-vcenter"
-                centered backdrop="static"
+                centered 
+                backdrop="static"
                 keyboard={false}>
                 <Modal.Header closeButton>
                     <Modal.Title>
@@ -410,11 +553,75 @@ function EmployeeClockInOut() {
                         </div>
                     </div>
                     <div className="modal-footer">
-                        <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={() => checkMissingDetails()}>Save</button>
-                        <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => { setShowModal(false); resetValues() }}>Close</button>
+                        <button 
+                            className="btn btn-primary btn-sm py-2 px-4 me-2" 
+                            onClick={() => checkMissingDetails()}
+                            disabled={saving}
+                        >
+                            {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button 
+                            className="btn btn-outline-secondary btn-sm py-2 px-4" 
+                            onClick={() => { setShowModal(false); resetValues() }}
+                            disabled={saving}
+                        >
+                            Close
+                        </button>
                     </div>
                 </Modal.Body>
             </Modal >
+
+            {/* Confirmation Modal for Swap Entry */}
+            <Modal
+                show={showConfirmSwapModal}
+                onHide={() => {
+                    setShowConfirmSwapModal(false);
+                    setItemToSwap(null);
+                }}
+                size="sm"
+                aria-labelledby="contained-modal-title-vcenter"
+                centered
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header className="border-0" closeButton>
+                    <Modal.Title>
+                        <h5>Confirm Toggle</h5>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="d-flex align-items-center justify-content-center shortDataHeight">
+                        <div>
+                            <p className="mb-2">Are you sure you want to toggle this entry?</p>
+                            {itemToSwap && (
+                                <div className="text-start">
+                                    <p className="mb-1"><strong>Date:</strong> {moment(itemToSwap.clockDate).format('MM-DD-YYYY')}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <button
+                        type="button"
+                        className="btn btn-secondary px-3"
+                        onClick={() => {
+                            setShowConfirmSwapModal(false);
+                            setItemToSwap(null);
+                        }}
+                        autoFocus
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-primary px-3"
+                        onClick={confirmSwap}
+                    >
+                        Confirm
+                    </button>
+                </Modal.Footer>
+            </Modal>
 
         </>
 

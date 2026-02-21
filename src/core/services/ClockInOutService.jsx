@@ -22,4 +22,14 @@ export default class ClockInOutService {
     }
   }
 
+  static toggleMissingEntry = async (idClockInDetail) => {
+    try {
+      const res = await API.post("/api/v1/Shift/TogglingMissingEntry?IdClockInDetail=" + idClockInDetail);
+      handleApiSuccessOrError(res, false);
+      return { error: null, data: res };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
+
 }

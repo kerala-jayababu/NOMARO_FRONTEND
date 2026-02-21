@@ -45,6 +45,7 @@ function ClockInClockOut() {
   const [selectedType, setSelectedType] = useState('');
   const [newTime, setNewTime] = useState('');
   const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getEmployeesData();
@@ -114,41 +115,67 @@ function ClockInClockOut() {
   };
 
   const checkMissingDetails = () => {
-    const newTimeMoment = moment(newTime, 'hh:mm A');
+    if (!newTime) {
+      toast.warning("Please enter the actual time of entry", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    // Input time is in 24-hour format (HH:mm), convert to moment
+    const newTimeMoment = moment(newTime, 'HH:mm');
+
+    if (!newTimeMoment.isValid()) {
+      toast.warning("Please enter a valid time", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
 
     if (selectedType === 'IN') {
       let outTime = selectedData.outTime;
 
-      const outTimeMoment = moment(outTime, 'hh:mm A');
+      if (outTime && outTime !== 'Missing') {
+        const outTimeMoment = moment(outTime, 'hh:mm A');
 
-      if (newTimeMoment.isSameOrBefore(outTimeMoment)) {
-        saveMissingDetails();
-      } else {
-        toast.warning("Cannot enter time same or after out-time", {
-          position: "top-right",
-          autoClose: 2000,
-        });
+        if (newTimeMoment.isSameOrAfter(outTimeMoment)) {
+          toast.warning("Cannot enter time same or after out-time", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          return;
+        }
       }
+      saveMissingDetails();
     } else {
       let inTime = selectedData.inTime;
 
-      const inTimeMoment = moment(inTime, 'hh:mm A');
+      if (inTime && inTime !== 'Missing') {
+        const inTimeMoment = moment(inTime, 'hh:mm A');
 
-      if (newTimeMoment.isSameOrAfter(inTimeMoment)) {
-        saveMissingDetails();
-      } else {
-        toast.warning("Cannot enter time same or before in-time", {
-          position: "top-right",
-          autoClose: 2000,
-        });
+        if (newTimeMoment.isSameOrBefore(inTimeMoment)) {
+          toast.warning("Cannot enter time same or before in-time", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          return;
+        }
       }
+      saveMissingDetails();
     }
   };
 
 
   const saveMissingDetails = () => {
+    if (saving) return; // Prevent multiple submissions
+
+    setSaving(true);
     const date = moment(selectedData.clockDate).format('YYYY-MM-DD');
-    const time24hrWithSeconds = moment(newTime, 'hh:mm A').format('HH:mm:ss');
+    // Input time is in 24-hour format (HH:mm), convert to HH:mm:ss
+    const time24hrWithSeconds = moment(newTime, 'HH:mm').format('HH:mm:ss');
+    
     let payload = {
       idClockDetail: selectedData.idClockDetails,
       idEmployee: selectedData.idEmployee,
@@ -156,17 +183,33 @@ function ClockInClockOut() {
       time: date + ' ' + time24hrWithSeconds,
       reason: reason
     }
+    
     ClockInOutService.saveMissingEntries([payload]).then(res => {
       if (res.data.status === 200) {
         toast.success("Data updated successfully", {
           position: "top-right",
           autoClose: 2000,
         });
-        getClockInOutDetails();
         resetValues();
         setShowModal(false);
+        setSaving(false);
+        // Refresh the data after a short delay to ensure backend has processed
+        setTimeout(() => {
+          getClockInOutDetails();
+        }, 500);
+      } else {
+        toast.error(res.data.message || "Failed to update data", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        setSaving(false);
       }
     }).catch(err => {
+      toast.error(err.response?.data?.message || "An error occurred while saving. Please try again.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      setSaving(false);
     });
   }
 
@@ -175,6 +218,24 @@ function ClockInClockOut() {
     setSelectedType('');
     setNewTime('');
     setReason('');
+    setSaving(false);
+  }
+
+  const handleMissingEntryClick = (item, type) => {
+    // Check if the logged-in employee is trying to update their own data
+    if (userData && userData.idEmployee && item.idEmployee) {
+      if (userData.idEmployee !== item.idEmployee) {
+        toast.warning("Not allowed to update other employee data", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        return;
+      }
+    }
+    // Allow the update if it's the same employee
+    setSelectedData(item);
+    setSelectedType(type);
+    setShowModal(true);
   }
 
   const paginatedData = useMemo(() => {
@@ -333,7 +394,7 @@ function ClockInClockOut() {
                     ))}
                   </select>
                 </div>
-                <div className="list_searchbox" style={{ width: '200px', zIndex: '100' }}>
+                <div className="list_searchbox" style={{ width: '200px' }}>
                   {/* <select className="form-select"
                     value={selectedEmployee}
                     onChange={(e) => setSelectedEmployee(e.target.value)}>
@@ -392,7 +453,7 @@ function ClockInClockOut() {
                             <>
                               {
                                 item.inTime === 'Missing' &&
-                                <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => { setSelectedData(item); setSelectedType('IN'); setShowModal(true) }}>Missing</td>
+                                <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => handleMissingEntryClick(item, 'IN')}>Missing</td>
                               }
                               {
                                 item.inTime != null && item.inTime !== 'Missing' &&
@@ -404,7 +465,7 @@ function ClockInClockOut() {
                               }
                               {
                                 item.outTime === 'Missing' &&
-                                <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => { setSelectedData(item); setSelectedType('OUT'); setShowModal(true) }}>Missing</td>
+                                <td className='text-center' style={{ color: 'brown', cursor: 'pointer' }} onClick={() => handleMissingEntryClick(item, 'OUT')}>Missing</td>
                               }
                               {
                                 item.outTime != null && item.outTime !== 'Missing' &&
@@ -444,9 +505,17 @@ function ClockInClockOut() {
       </div >
 
       <Modal
-        show={showModal} onHide={() => { setShowModal(false) }} size='sm'
+        show={showModal} 
+        onHide={() => { 
+          if (!saving) {
+            setShowModal(false);
+            resetValues();
+          }
+        }} 
+        size='sm'
         aria-labelledby="contained-modal-title-vcenter"
-        centered backdrop="static"
+        centered 
+        backdrop="static"
         keyboard={false}>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -486,8 +555,20 @@ function ClockInClockOut() {
             </div>
           </div>
           <div className="modal-footer">
-            <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={() => checkMissingDetails()}>Save</button>
-            <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => { setShowModal(false); resetValues() }}>Close</button>
+            <button 
+              className="btn btn-primary btn-sm py-2 px-4 me-2" 
+              onClick={() => checkMissingDetails()}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button 
+              className="btn btn-outline-secondary btn-sm py-2 px-4" 
+              onClick={() => { setShowModal(false); resetValues() }}
+              disabled={saving}
+            >
+              Close
+            </button>
           </div>
         </Modal.Body>
       </Modal >
