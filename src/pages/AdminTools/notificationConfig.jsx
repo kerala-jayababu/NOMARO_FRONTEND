@@ -12,6 +12,9 @@ function NotificationConfig() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const rightCardRef = useRef(null);
+    const [rightCardHeight, setRightCardHeight] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
         idNotificationConfig: 0,
         notificationType: '',
@@ -23,7 +26,18 @@ function NotificationConfig() {
 
     useEffect(() => {
         getNotificationTypes();
-    }, []); 
+    }, []);
+
+    useEffect(() => {
+        const updateHeight = () => {
+            if (rightCardRef.current) {
+                setRightCardHeight(rightCardRef.current.offsetHeight);
+            }
+        };
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        return () => window.removeEventListener('resize', updateHeight);
+    }, [selectedNotification]);
 
     const getNotificationTypes = () => {
         setLoading(true);
@@ -94,20 +108,30 @@ function NotificationConfig() {
         <div class="row">
 
           <div class="col-lg-5">
-            <div class="card SystemParametersCard">
+            <div class="card SystemParametersCard" style={rightCardHeight ? { height: rightCardHeight + 'px', overflow: 'hidden' } : {}}>
               <div class="card-header d-flex align-items-center justify-content-between pb-3">
                 <h5 class="m-0">List of Notification Types</h5>
+                <div class="list_searchbox" style={{ width: '200px' }}>
+                  <input
+                    type="search"
+                    class="form-control form-control-sm"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <i class="bx bx-search"></i>
+                </div>
               </div>
-              <div class="card-body">
-                <div class="table-responsive">
+              <div class="card-body" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div class="table-responsive" style={{ flex: 1, overflowY: 'auto' }}>
                   <table class="table table-sm">
-                    <thead>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'white' }}>
                       <tr>
                         <th class="text-nowrap">Notification Type</th>
                       </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
-                      {notificationTypes && notificationTypes.map((notificationType) => (
+                      {notificationTypes && notificationTypes.filter((n) => !searchQuery || n.notificationType?.toLowerCase().includes(searchQuery.toLowerCase())).map((notificationType) => (
                         <tr 
                           key={notificationType.idNotificationConfig}
                           onClick={() => handleNotificationSelect(notificationType)}
@@ -132,7 +156,7 @@ function NotificationConfig() {
           </div>
 
           <div class="col-lg-7">
-            <div class="card">
+            <div class="card" ref={rightCardRef}>
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Update Notification Type</h5>
               </div>

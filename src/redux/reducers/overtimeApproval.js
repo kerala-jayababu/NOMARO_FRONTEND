@@ -23,15 +23,19 @@ const authHeaders = (token) => ({
 // Fetch overtime transactions with full details (approval cycles)
 export const fetchOvertimeTransactionsFullDetails = createAsyncThunk(
   "overtimeApproval/fetchOvertimeTransactionsFullDetails",
-  async (_, { rejectWithValue }) => {
+  async ({ dateFrom = "", dateTo = "" } = {}, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
       if (!token) {
         return rejectWithValue({ message: "Authorization token missing" });
       }
 
+      const params = new URLSearchParams();
+      if (dateFrom) params.append("dateFrom", dateFrom);
+      if (dateTo) params.append("dateTo", dateTo);
+
       const response = await axios.get(
-        `${API_BASE_URL}/GetOvertimeTransactionsFullDetails`,
+        `${API_BASE_URL}/GetOvertimeTransactionsFullDetails?${params.toString()}`,
         authHeaders(token)
       );
 
@@ -65,6 +69,31 @@ export const fetchEmployeeOvertimeConfigs = createAsyncThunk(
       console.error("API Error:", error);
       return rejectWithValue(
         error.response?.data || { message: "Failed to fetch employee overtime configs" }
+      );
+    }
+  }
+);
+
+// Handle approval workflow (approve/reject overtime transactions)
+export const handleApprovalWorkflow = createAsyncThunk(
+  "overtimeApproval/handleApprovalWorkflow",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_COMMON_URL}/HandleApprovalWorkflow`,
+        payload,
+        authHeaders(token)
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to process approval" }
       );
     }
   }

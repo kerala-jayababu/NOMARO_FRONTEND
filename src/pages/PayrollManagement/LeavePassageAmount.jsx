@@ -154,7 +154,7 @@ function LeavePassageAmount() {
                                         onChange={(e) => setSelFinancialYear(e.target.value ? parseInt(e.target.value) : null)}
                                         style={{ width: '250px' }}
                                     >
-                                        <option value={''}>Select financial year</option>
+                                        <option value={''}>Select Year</option>
                                         {workYearsList.map(year => (
                                             <option key={year.idWorkYear} value={year.idWorkYear}>
                                                 {year.displayText}

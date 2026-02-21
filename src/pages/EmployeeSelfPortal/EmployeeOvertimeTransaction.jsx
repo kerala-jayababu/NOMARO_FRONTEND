@@ -373,6 +373,14 @@ function EmployeeOvertimeTransaction() {
                       <label>Duration</label>
                       <p className="m-0">{item.durationInHours} Hr</p>
                     </div>
+                    <div className="col-12 px-0 py-1">
+                      <label>Paid In</label>
+                      <p className="m-0">
+                        {item.salaryMonthText && item.salaryAccountedAmount
+                          ? `${item.salaryMonthText} GYD ${parseFloat(item.salaryAccountedAmount).toFixed(2)}`
+                          : '-'}
+                      </p>
+                    </div>
 
                   </div>
                   <div className="row m-0 align-items-end">
@@ -480,13 +488,13 @@ function EmployeeOvertimeTransaction() {
                         {/* <th className="checkbox_td">
                         <input type="checkbox" className="form-check-input" />
                       </th> */}
-                        <th>ID</th>
                         <th>Name</th>
                         {/* <th>Type</th> */}
                         <th>Date</th>
                         <th className="white-space-nowrap">Start Time</th>
                         <th className="white-space-nowrap">End Time</th>
                         <th className="text-center">Duration</th>
+                        <th>Paid In</th>
                         {/* <th>Reason</th> */}
                         <th>Status</th>
                         <th className="text-center"></th>
@@ -501,13 +509,17 @@ function EmployeeOvertimeTransaction() {
                             {" "}
                             <input type="checkbox" className="form-check-input" />
                           </td> */}
-                            <td>{item?.employeeCode}</td>
                             <td className="white-space-nowrap">{item?.employeeName}</td>
                             {/* <td>{item?.overtimeTypeName}</td> */}
                             <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
                             <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
                             <td>{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</td>
                             <td className="text-center">{item.durationInHours} Hr</td>
+                            <td className="white-space-nowrap">
+                              {item.salaryMonthText && item.salaryAccountedAmount
+                                ? `${item.salaryMonthText} GYD ${parseFloat(item.salaryAccountedAmount).toFixed(2)}`
+                                : '-'}
+                            </td>
                             {/* <td>{item.reasonForOvertime}</td> */}
                             <td>
                               <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>

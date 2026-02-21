@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import {
   fetchLeaveApplicationsForApproval,
@@ -8,16 +10,64 @@ import {
   rejectLeaveApplication,
   bulkApproveLeaveApplications,
   fetchLeaveDashboardEmployee,
+  fetchLeaveApplicationDocuments,
 } from "../../redux/reducers/leaveApproval";
+import CommonService from "../../core/services/CommonService";
 
 const LeaveApproval = () => {
   const dispatch = useDispatch();
-  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading } = useSelector(
+  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading, leaveDocuments, leaveDocumentsLoading } = useSelector(
     (state) => state.leaveApproval
   );
 
+  const handleDownloadDocument = (doc) => {
+    try {
+      if (!doc.fileBinary) {
+        toast.error("File content is not available for download");
+        return;
+      }
+
+      const mimeTypes = {
+        JPG: "image/jpeg",
+        JPEG: "image/jpeg",
+        PNG: "image/png",
+        GIF: "image/gif",
+        PDF: "application/pdf",
+        DOC: "application/msword",
+        DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        XLS: "application/vnd.ms-excel",
+        XLSX: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      };
+
+      const mimeType = mimeTypes[doc.fileType?.toUpperCase()] || "application/octet-stream";
+      const byteCharacters = atob(doc.fileBinary);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeType });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = doc.fileName || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Failed to download file");
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("SUBMITTED");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split("T")[0];
+  });
   const [selectedItems, setSelectedItems] = useState([]);
   const [remarks, setRemarks] = useState({});
   const [bulkRemarks, setBulkRemarks] = useState("");
@@ -25,9 +75,36 @@ const LeaveApproval = () => {
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [currentFinancialYearId, setCurrentFinancialYearId] = useState(null);
 
   // Ref to track processed application IDs (prevents duplicate actions before Redux refetch)
   const processedIdsRef = useRef(new Set());
+
+  // Fetch work years and determine current financial year
+  useEffect(() => {
+    const fetchWorkYears = async () => {
+      const result = await CommonService.getAllWorkYears();
+      if (!result.error && result.data && result.data.length > 0) {
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
+        const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+
+        const currentWorkYear = result.data.find((year) => {
+          if (!year.displayText) return false;
+          const firstYear = year.displayText.split("-")[0];
+          return firstYear === String(financialYearStart);
+        });
+
+        if (currentWorkYear) {
+          setCurrentFinancialYearId(currentWorkYear.idWorkYear);
+        } else {
+          setCurrentFinancialYearId(result.data[0].idWorkYear);
+        }
+      }
+    };
+    fetchWorkYears();
+  }, []);
 
   // Fetch leave applications on component mount and when filters change
   useEffect(() => {
@@ -36,11 +113,11 @@ const LeaveApproval = () => {
       fetchLeaveApplicationsForApproval({
         approvalStatus,
         searchText: searchQuery,
-        fromDate: "",
+        fromDate: dateFrom || "",
         toDate: "",
       })
     );
-  }, [dispatch, statusFilter, searchQuery]);
+  }, [dispatch, statusFilter, searchQuery, dateFrom]);
 
   // Status options
   const statusOptions = [
@@ -100,6 +177,7 @@ const LeaveApproval = () => {
       pendingLeaves: app.pendingLeaves || 0,
       balanceLeaves: app.balanceLeaves || 0,
       documents: app.documents || [],
+      hasDocuments: app.hasDocuments || false,
     }));
   }, [leaveApplications]);
 
@@ -330,10 +408,9 @@ const LeaveApproval = () => {
   const openViewModal = (app) => {
     setSelectedApplication(app);
     setShowViewModal(true);
-    // Fetch leave dashboard for the employee
-    if (app.idEmployee) {
-      const currentYear = new Date().getFullYear();
-      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentYear }));
+    // Fetch leave dashboard for the employee using current financial year
+    if (app.idEmployee && currentFinancialYearId) {
+      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentFinancialYearId }));
     }
   };
 
@@ -341,6 +418,9 @@ const LeaveApproval = () => {
   const openDocumentsModal = (app) => {
     setSelectedApplication(app);
     setShowDocumentsModal(true);
+    if (app.idLeaveApplication) {
+      dispatch(fetchLeaveApplicationDocuments(app.idLeaveApplication));
+    }
   };
 
   // Close modals
@@ -390,7 +470,7 @@ const LeaveApproval = () => {
             <div className="card-body">
               {/* Header Controls */}
               <div className="row mb-3 align-items-end">
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <div className="form-check">
                     <input
                       type="checkbox"
@@ -428,7 +508,21 @@ const LeaveApproval = () => {
                     Approve Selected ({selectedItems.length})
                   </Button>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
+                  <label className="form-label d-block mb-1">Date From</label>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="Date"
+                    selected={dateFrom}
+                    onChange={(date) => {
+                      setDateFrom(date ? date.toISOString().slice(0, 10) : "");
+                    }}
+                    showYearDropdown
+                    maxDate={new Date()}
+                  />
+                </div>
+                <div className="col-md-3">
                   <label className="form-label mb-1">Status</label>
                   <select
                     className="form-select"
@@ -442,7 +536,7 @@ const LeaveApproval = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label mb-1">Search</label>
                   <div className="list_searchbox">
                     <input
@@ -458,7 +552,7 @@ const LeaveApproval = () => {
               </div>
 
               {/* Leave Approval Cards */}
-              <div className="row">
+              <div className="row" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
                 {loading ? (
                   <div className="col-12 text-center py-4">
                     <div className="spinner-border text-primary" role="status">
@@ -515,7 +609,7 @@ const LeaveApproval = () => {
                               >
                                 <i className="bx bx-show fs-5"></i>
                               </button>
-                              {app.documents.length > 0 && (
+                              {app.hasDocuments && (
                                 <button
                                   className="btn btn-sm btn-link p-1 text-dark"
                                   onClick={() => openDocumentsModal(app)}
@@ -902,7 +996,9 @@ const LeaveApproval = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                {selectedApplication.documents.length === 0 ? (
+                {leaveDocumentsLoading ? (
+                  <div className="text-center py-4">Loading...</div>
+                ) : !leaveDocuments || leaveDocuments.length === 0 ? (
                   <div className="text-center py-4 text-muted">
                     No documents attached
                   </div>
@@ -911,31 +1007,33 @@ const LeaveApproval = () => {
                     <table className="table table-bordered">
                       <thead>
                         <tr>
-                          <th>Document Type</th>
+                          <th>File Type</th>
                           <th>File Name</th>
                           <th>Uploaded Date</th>
-                          <th>Action</th>
+                          <th style={{ width: "80px", textAlign: "center" }}>Download</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedApplication.documents.map((doc, index) => (
-                          <tr key={index}>
-                            <td>{doc.documentType}</td>
+                        {leaveDocuments.map((doc) => (
+                          <tr key={doc.idLeaveApplicationDocument}>
+                            <td>{doc.fileType}</td>
                             <td>{doc.fileName}</td>
                             <td>
                               {new Date(
-                                doc.uploadedDate
+                                doc.uploadedAt
                               ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
                             </td>
-                            <td>
-                              <Button
-                                className="btn btn-primary btn-sm"
-                                onClick={() =>
-                                  alert(`Downloading ${doc.fileName}`)
-                                }
+                            <td style={{ textAlign: "center" }}>
+                              <button
+                                className="btn btn-sm btn-outline-primary"
+                                title="Download"
+                                onClick={() => handleDownloadDocument(doc)}
                               >
-                                Download
-                              </Button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                              </button>
                             </td>
                           </tr>
                         ))}

@@ -18,9 +18,11 @@ import {
   resetLeaveTemplateDetailById
 } from "../../redux/reducers/leaveTemplate";
 import { fetchLeaveTypes } from "../../redux/reducers/leaveType";
+import axios from "axios";
 import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const LeaveTemplates = () => {
   const dispatch = useDispatch();
@@ -224,15 +226,18 @@ const LeaveTemplates = () => {
     {
       key: "viewDetails",
       label: "View Details",
+      headerStyle: { textAlign: "center" },
       render: (id) => (
-        <button
-          type="button"
-          className="btn btn-sm p-0"
-          onClick={() => handleViewDetails(id)}
-          title="View Details"
-        >
-          <i className="bx bx-show fs-5"></i>
-        </button>
+        <div className="text-center">
+          <button
+            type="button"
+            className="btn btn-sm p-0"
+            onClick={() => handleViewDetails(id)}
+            title="View Details"
+          >
+            <i className="bx bx-show fs-5"></i>
+          </button>
+        </div>
       ),
     },
     {
@@ -306,7 +311,7 @@ const LeaveTemplates = () => {
       leaveTemplateDesc: description || "",
       idYear: parseInt(selectedYear),
       createdBy: getCurrentUserId(),
-      approvlStatus: "SUBMITTED",
+      approvlStatus: "DRAFT",
     };
 
     try {
@@ -361,7 +366,7 @@ const LeaveTemplates = () => {
     setTemplateName("");
     setDescription("");
     setSelectedYear("");
-    setStatus("SUBMITTED");
+    setStatus("DRAFT");
     setTemplateNameError("");
     setIsEditing(false);
     setEditingTemplateId(null);
@@ -533,9 +538,24 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   const [showLeaveTypeModal, setShowLeaveTypeModal] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState(null);
   const [isViewMode, setIsViewMode] = useState(false);
+  const [copyFromTemplateId, setCopyFromTemplateId] = useState("");
+  const [isCopying, setIsCopying] = useState(false);
+  const [copyTemplatesList, setCopyTemplatesList] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Ref to prevent duplicate API calls on rapid button clicks
   const submitLockRef = useRef(false);
+
+  // Refs to prevent modal re-initialization on every render
+  const modalInstanceRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  // Keep onCloseRef in sync without re-initializing modal
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     // Fetch leave template details by ID
@@ -568,21 +588,169 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
 
   useEffect(() => {
     const modalElement = document.getElementById("templateDetailsModal");
-    if (modalElement) {
+    if (modalElement && !modalInstanceRef.current) {
       const modal = new bootstrap.Modal(modalElement, {
         focus: false,        // 🔑 CRITICAL
         backdrop: 'static',
         keyboard: false
       });
+      modalInstanceRef.current = modal;
       modal.show();
 
-      modalElement.addEventListener("hidden.bs.modal", onClose);
+      const handleHidden = () => {
+        onCloseRef.current();
+      };
+      modalElement.addEventListener("hidden.bs.modal", handleHidden);
       return () => {
-        modal.dispose();
-        modalElement.removeEventListener("hidden.bs.modal", onClose);
+        modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+        if (modalInstanceRef.current) {
+          modalInstanceRef.current.dispose();
+          modalInstanceRef.current = null;
+        }
       };
     }
-  }, [onClose]);
+  }, []);
+
+  // Fetch all templates for the "Copy From Template" dropdown
+  useEffect(() => {
+    if (template?.idLeaveTemplate && template.status !== "APPROVED") {
+      const fetchTemplatesForCopy = async () => {
+        try {
+          const storedUser = secureLocalStorage.getItem("user");
+          const token = storedUser ? JSON.parse(storedUser)?.token : null;
+          if (!token) return;
+
+          const apiBaseUrl = `${import.meta.env.VITE_API_URL}/api/v1/LeaveManagement`;
+          const response = await axios.get(
+            `${apiBaseUrl}/GetLeaveTemplates?Status=All&IdYear=&searchText=`,
+            { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+          );
+          setCopyTemplatesList(response.data?.data || []);
+        } catch (error) {
+          console.error("Failed to fetch templates for copy:", error);
+        }
+      };
+      fetchTemplatesForCopy();
+    }
+  }, [template?.idLeaveTemplate, template?.status]);
+
+  const handleCopyFromTemplate = async () => {
+    if (!copyFromTemplateId) {
+      toast.error("Please select a template to copy from", { position: "top-right", autoClose: 4000 });
+      return;
+    }
+
+    setIsCopying(true);
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+      if (!token) {
+        toast.error("Authorization token missing", { position: "top-right", autoClose: 4000 });
+        return;
+      }
+
+      const apiBaseUrl = `${import.meta.env.VITE_API_URL}/api/v1/LeaveManagement`;
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+      // Fetch source template details
+      const sourceResponse = await axios.get(
+        `${apiBaseUrl}/GetLeaveTemplateByID?idLeaveTemplate=${copyFromTemplateId}`,
+        { headers }
+      );
+
+      const sourceDetails = sourceResponse.data?.data?.leaveTemplateDetails || [];
+      if (sourceDetails.length === 0) {
+        toast.warning("Selected template has no leave types to copy", { position: "top-right", autoClose: 4000 });
+        return;
+      }
+
+      // Filter out leave types already in current template
+      const existingLeaveTypeIds = leaveTypes.map((lt) => lt.idLeaveType);
+      const newLeaveTypes = sourceDetails.filter(
+        (detail) => !existingLeaveTypeIds.includes(detail.idLeaveType)
+      );
+
+      if (newLeaveTypes.length === 0) {
+        toast.info("All leave types from the selected template already exist in this template", { position: "top-right", autoClose: 4000 });
+        return;
+      }
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const detail of newLeaveTypes) {
+        // Fetch full details with workflow for each leave type
+        const detailResponse = await axios.get(
+          `${apiBaseUrl}/GetLeaveTemplateDetailById/${detail.idLeaveTemplateDetails}`,
+          { headers }
+        );
+
+        const fullDetail = detailResponse.data?.data;
+        if (!fullDetail) {
+          failCount++;
+          continue;
+        }
+
+        // Build workflow details
+        const leaveWorkFlowDetails = fullDetail.leaveWorkFlowDetails?.map((wf) => ({
+          idWorkFlowConfigDetail: 0,
+          idWorkFlowConfig: 0,
+          levelNumber: wf.levelNumber,
+          approvalAuthorityType: wf.approvalAuthorityType,
+          approvalAuthorityID: wf.approvalAuthorityID || 0,
+          approvalStatusName: "APPROVED",
+        })) || [];
+
+        const payload = {
+          idLeaveTemplateDetails: 0,
+          idLeaveTemplate: template.idLeaveTemplate,
+          idLeaveType: fullDetail.idLeaveType,
+          leaveTypeName: fullDetail.leaveTypeName,
+          leaveCode: fullDetail.leaveCode,
+          idYear: template.idYear,
+          effectiveFrom: fullDetail.effectiveFrom || new Date().toISOString(),
+          effectiveTo: fullDetail.effectiveTo || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+          applicableGender: fullDetail.applicableGender || "BOTH",
+          isPaid: fullDetail.isPaid !== false,
+          salaryDeductionPercent: fullDetail.salaryDeductionPercent || 0,
+          allowHalfDay: fullDetail.allowHalfDay || false,
+          requiresApproval: (fullDetail.requiredApprovalLevel || 0) > 0,
+          requiredApprovalLevel: fullDetail.requiredApprovalLevel || 0,
+          requiresDocument: fullDetail.requiresDocument || false,
+          documentRequiredAfterDays: fullDetail.documentRequiredAfterDays || 0,
+          isCarryForwardAllowed: fullDetail.isCarryForwardAllowed || false,
+          maxCarryForwardDays: fullDetail.maxCarryForwardDays || 0,
+          includeHolidaysBetween: fullDetail.includeHolidaysBetween || false,
+          maxLeavesPerYear: fullDetail.maxLeavesPerYear || 0,
+          maxLeavesPerMonth: fullDetail.maxLeavesPerMonth || 0,
+          allowBackdatedLeave: fullDetail.allowBackdatedLeave || false,
+          backdateLimitDays: fullDetail.backdateLimitDays || 0,
+          leaveWorkFlowDetails: leaveWorkFlowDetails,
+        };
+
+        const resultAction = await dispatch(addUpdateLeaveTemplateDetails(payload));
+        if (addUpdateLeaveTemplateDetails.fulfilled.match(resultAction) && resultAction.payload?.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully copied ${successCount} leave type(s)`, { position: "top-right", autoClose: 4000 });
+        dispatch(fetchLeaveTemplateById(template.idLeaveTemplate));
+      }
+      if (failCount > 0) {
+        toast.warning(`${failCount} leave type(s) failed to copy`, { position: "top-right", autoClose: 4000 });
+      }
+      setCopyFromTemplateId("");
+    } catch (error) {
+      console.error("Error copying from template:", error);
+      toast.error("Failed to copy from template", { position: "top-right", autoClose: 4000 });
+    } finally {
+      setIsCopying(false);
+    }
+  };
 
   const getStatusBadgeClass = (status) => {
     return status === "Active" ? "bg-label-success" : "bg-label-warning";
@@ -616,13 +784,17 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
     }
   };
 
-  const handleDeleteLeaveType = async (idLeaveTemplateDetails) => {
-    if (!window.confirm("Are you sure you want to delete this leave type?")) {
-      return;
-    }
+  const handleDeleteLeaveType = (idLeaveTemplateDetails) => {
+    setDeleteTargetId(idLeaveTemplateDetails);
+    setShowDeleteConfirm(true);
+  };
+
+  const executeDeleteLeaveType = async () => {
+    if (!deleteTargetId) return;
 
     try {
-      const resultAction = await dispatch(deleteLeaveTemplateDetail(idLeaveTemplateDetails));
+      setIsDeleting(true);
+      const resultAction = await dispatch(deleteLeaveTemplateDetail(deleteTargetId));
 
       if (deleteLeaveTemplateDetail.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
@@ -630,7 +802,6 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
             position: "top-right",
             autoClose: 4000,
           });
-          // Refresh the template details
           if (template?.idLeaveTemplate) {
             dispatch(fetchLeaveTemplateById(template.idLeaveTemplate));
           }
@@ -652,6 +823,10 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
         position: "top-right",
         autoClose: 4000,
       });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
     }
   };
 
@@ -696,6 +871,8 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
           const idYear = yearFilter || "";
           const searchText = searchQuery || "";
           dispatch(fetchLeaveTemplates({ status, idYear, searchText }));
+          // Close the modal
+          onClose();
         } else {
           toast.error(resultAction.payload?.message || "Failed to submit for approval", {
             position: 'top-right',
@@ -755,6 +932,45 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
                   <p>{template.templateName}</p>
                 </div>
               </div>
+
+              {template.status !== "APPROVED" && (
+                <div className="row mb-3 align-items-end">
+                  <div className="col-md-5">
+                    <label className="form-label fw-bold mb-1">Copy From Template</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={copyFromTemplateId}
+                      onChange={(e) => setCopyFromTemplateId(e.target.value)}
+                      disabled={isCopying}
+                    >
+                      <option value="">Select Template</option>
+                      {copyTemplatesList
+                        .filter((t) => t.idLeaveTemplate !== template.idLeaveTemplate)
+                        .map((t) => (
+                          <option key={t.idLeaveTemplate} value={t.idLeaveTemplate}>
+                            {t.leaveTemplateName}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <Button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm px-3"
+                      onClick={handleCopyFromTemplate}
+                      disabled={!copyFromTemplateId || isCopying}
+                    >
+                      {isCopying ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-1" /> Copying...
+                        </>
+                      ) : (
+                        "Copy"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="mb-3">
                 <h6 className="fw-bold">Leave Types in Template</h6>
@@ -859,6 +1075,46 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
         </div>
       </div>
 
+      {showDeleteConfirm && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1200 }}
+        >
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteTargetId(null); }}
+                  disabled={isDeleting}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-0">Are you sure you want to delete this leave type?</p>
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteTargetId(null); }}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="btn btn-danger"
+                  onClick={executeDeleteLeaveType}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showLeaveTypeModal && (
         <LeaveTypeModal
           leaveType={selectedLeaveType}
@@ -866,6 +1122,7 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
           templateIdYear={template.idYear}
           templateId={template.idLeaveTemplate}
           isViewMode={isViewMode}
+          existingLeaveTypes={leaveTypes}
           onClose={() => {
             setShowLeaveTypeModal(false);
             setSelectedLeaveType(null);
@@ -878,7 +1135,7 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   );
 };
 
-const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, isViewMode = false, onClose, onSave }) => {
+const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, isViewMode = false, existingLeaveTypes = [], onClose, onSave }) => {
   const dispatch = useDispatch();
   const { designationList, leaveTemplateDetailById } = useSelector((state) => state.leaveTemplate);
   const { leaveTypes: leaveTypesList } = useSelector((state) => state.leaveType);
@@ -924,27 +1181,29 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
 
   const leaveTypeOptions = useMemo(() => {
     if (leaveTypesList && leaveTypesList.data) {
-      return [
-        ...leaveTypesList.data.map((lt) => ({
+      // Get IDs of leave types already used in this template
+      const usedLeaveTypeIds = existingLeaveTypes
+        .filter((lt) => lt.idLeaveType !== (leaveType?.idLeaveType || null))
+        .map((lt) => String(lt.idLeaveType));
+
+      return leaveTypesList.data
+        .filter((lt) => !usedLeaveTypeIds.includes(String(lt.idLeaveType)))
+        .map((lt) => ({
           value: String(lt.idLeaveType),
           label: lt.leaveTypeName,
           code: lt.leaveCode,
-        })),
-      ];
+        }));
     }
-  }, [leaveTypesList]);
+  }, [leaveTypesList, existingLeaveTypes, leaveType]);
 
   const roleOptions = useMemo(() => {
     if (designationList && designationList.data) {
-      return [
-        { value: "", label: "Select Role" },
-        ...designationList.data.map((designation) => ({
-          value: String(designation.idDesignation),
-          label: designation.designationName,
-        })),
-      ];
+      return designationList.data.map((designation) => ({
+        value: String(designation.idDesignation),
+        label: designation.designationName,
+      }));
     }
-    return [{ value: "", label: "Select Role" }];
+    return [];
   }, [designationList]);
 
   // Fetch designation list and leave types on mount
@@ -1514,17 +1773,28 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
                       />
                     </div>
                   ) : (
-                    <Dropdown
-                      label="Approver"
-                      name={`approver${level}`}
-                      options={roleOptions}
-                      value={approvers[level - 1].approver}
-                      onChange={(e) => {
-                        const newApprovers = [...approvers];
-                        newApprovers[level - 1].approver = e.target.value;
-                        setApprovers(newApprovers);
-                      }}
-                    />
+                    <div className="form-group mb-2">
+                      <label className="form-label mb-1">Approver</label>
+                      <Select
+                        classNamePrefix="form-control-select"
+                        options={roleOptions}
+                        isSearchable
+                        isClearable
+                        value={roleOptions.find((opt) => opt.value === approvers[level - 1].approver) || null}
+                        onChange={(selected) => {
+                          const newApprovers = [...approvers];
+                          newApprovers[level - 1].approver = selected ? selected.value : "";
+                          setApprovers(newApprovers);
+                        }}
+                        placeholder="Select Role"
+
+                        styles={{
+                          container: (base) => ({...base, marginTop: "7px"}),
+                          control: (base) => ({ ...base, minHeight: "38px" }),
+                          menu: (base) => ({ ...base, zIndex: 9999}),
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </div>

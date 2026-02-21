@@ -182,7 +182,7 @@ export const submitLeaveTemplateForApproval = createAsyncThunk(
       }
 
       const response = await axios.post(
-        `${API_BASE_URL}/SubmitLeaveTemplateForApproval?idLeaveTemplate=${idLeaveTemplate}`,
+        `${API_BASE_URL}/SubmitLeaveTemplateForApproval?idLeaveTemplate=${idLeaveTemplate}&ApprovalStatus=SUBMITTED`,
         {},
         {
           headers: {
@@ -195,6 +195,37 @@ export const submitLeaveTemplateForApproval = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data || { message: "Failed to submit leave template for approval" }
+      );
+    }
+  }
+);
+
+export const approveLeaveTemplate = createAsyncThunk(
+  "leaveTemplate/approveLeaveTemplate",
+  async ({ idLeaveTemplate, approvalStatus }, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/ApproveLeaveTemplate?idLeaveTemplate=${idLeaveTemplate}&approvalStatus=${approvalStatus}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to approve/reject leave template" }
       );
     }
   }
@@ -226,6 +257,36 @@ export const deleteLeaveTemplateDetail = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data || { message: "Failed to delete leave template detail" }
+      );
+    }
+  }
+);
+
+export const fetchLeaveTemplateApprovers = createAsyncThunk(
+  "leaveTemplate/fetchLeaveTemplateApprovers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        console.error("Authorization token missing");
+        return rejectWithValue("Authorization token missing");
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/GetLeaveTemplateApprovers`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch leave template approvers"
       );
     }
   }

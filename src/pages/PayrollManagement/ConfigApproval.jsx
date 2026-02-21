@@ -6,6 +6,7 @@ import SalaryGenerationService from "../../core/services/SalaryGenerationService
 import EmployeeSalaryConfigApproval from "./Components/EmployeeSalaryConfigApproval";
 import LeavePassageApproval from "./Components/LeavePassageApproval";
 import SalaryTemplateApproval from "./Components/SalaryTemplateApproval";
+import MaternityLeaveSalaryApproval from "./Components/MaternityLeaveSalaryApproval";
 import OvertimeTransactionApproval from "./Components/OvertimeTransactionApproval";
 import DatePicker from "react-datepicker";
 import { API } from "../../redux/api/utils";
@@ -529,7 +530,14 @@ const [dateFrom, setDateFrom] = React.useState(() => {
           selectedRow={selectedRow}
         />
       )}
-
+{entityName === "Maternity Leave Sal Config" && (
+  <MaternityLeaveSalaryApproval
+    setEntityType={setEntityName}
+    entityId={entityId}
+    setRefresh={setRefresh}
+    selectedRow={selectedRow}
+  />
+)}
       {entityName === "Salary Template" && (
         <SalaryTemplateApproval
           setEntityType={setEntityName}

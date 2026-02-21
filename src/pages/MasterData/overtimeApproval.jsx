@@ -1,11 +1,15 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../../components/button";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
+import secureLocalStorage from "react-secure-storage";
 import {
   fetchOvertimeTransactionsFullDetails,
   fetchEmployeeOvertimeConfigs,
   fetchAllSalaryMonths,
+  handleApprovalWorkflow,
 } from "../../redux/reducers/overtimeApproval";
 
 const OvertimeApproval = () => {
@@ -20,16 +24,33 @@ const OvertimeApproval = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 15);
+    return date.toISOString().split("T")[0];
+  });
   const [selectedItems, setSelectedItems] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // "APPROVED" or "REJECTED"
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectReasonError, setRejectReasonError] = useState("");
 
   // Track which employee configs have already been fetched to avoid duplicate calls
   const fetchedEmployeeIds = useRef(new Set());
 
-  // Fetch main listing + salary months on mount
+  // Get logged-in user's employee ID
+  const loggedInEmployeeId = useMemo(() => {
+    const storedUser = secureLocalStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser)?.idEmployee : null;
+  }, []);
+
+  // Fetch main listing + salary months on mount and when dateFrom changes
   useEffect(() => {
-    dispatch(fetchOvertimeTransactionsFullDetails());
+    const today = new Date().toISOString().split("T")[0];
+    dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
     dispatch(fetchAllSalaryMonths());
-  }, [dispatch]);
+  }, [dispatch, dateFrom]);
 
   // Once transactions are loaded, fetch overtime configs for each unique employee
   useEffect(() => {
@@ -52,7 +73,6 @@ const OvertimeApproval = () => {
   const statusOptions = [
     { value: "ALL", label: "All Status" },
     { value: "PENDING", label: "Pending" },
-    { value: "SUBMITTED", label: "Submitted" },
     { value: "APPROVED", label: "Approved" },
     { value: "REJECTED", label: "Rejected" },
   ];
@@ -119,13 +139,17 @@ const OvertimeApproval = () => {
         multiplier,
         totalAmount,
         salaryStatus,
-        approvalCycles: (item.approvalCycles || []).map((cycle) => ({
-          name: cycle.actionedByName || cycle.approvalAuthorityName || "-",
-          level: cycle.levelNumber,
-          statusLabel: cycle.approvalStatusName || "",
-          status: cycle.approvalStatus || "Pending",
-          actionDate: cycle.actionDate,
-        })),
+        approvalCycles: (item.approvalCycles || [])
+          .slice()
+          .sort((a, b) => a.levelNumber - b.levelNumber)
+          .map((cycle) => ({
+            name: cycle.actionedByName || cycle.approvalAuthorityName || "-",
+            level: cycle.levelNumber,
+            statusLabel: cycle.approvalStatusName || "",
+            status: cycle.approvalStatus || "Pending",
+            actionDate: cycle.actionDate,
+            approvalAuthorityIdEmployees: cycle.approvalAuthorityIdEmployees || "",
+          })),
       };
     });
   }, [overtimeTransactions, employeeOvertimeConfigs, salaryMonthMap]);
@@ -138,17 +162,75 @@ const OvertimeApproval = () => {
         item.employeeCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
 
+      const statusKeyword =
+        statusFilter === "APPROVED" ? "APPROV" :
+        statusFilter === "REJECTED" ? "REJECT" :
+        statusFilter;
+
+      // Find the logged-in user's cycle status
+      const userIdStr = String(loggedInEmployeeId);
+      const userCycle = (item.approvalCycles || []).find((cycle) => {
+        const authorityIds = (cycle.approvalAuthorityIdEmployees || "")
+          .split(",")
+          .map((id) => id.trim());
+        return authorityIds.includes(userIdStr);
+      });
+      const userCycleStatus = userCycle ? (userCycle.status || "").toUpperCase() : "";
+
       const matchesStatus =
         statusFilter === "ALL" ||
-        item.status.toUpperCase() === statusFilter;
+        userCycleStatus.includes(statusKeyword);
 
       return matchesSearch && matchesStatus;
     });
   }, [applicationsData, searchQuery, statusFilter]);
 
-  // Only non-final items can be selected for approval/rejection
-  const canTakeAction = (item) =>
-    item.status !== "APPROVED" && item.status !== "REJECTED";
+  // Determine if the logged-in user can act on a given overtime item
+  const canTakeAction = (item) => {
+    if (!loggedInEmployeeId) return false;
+
+    const userIdStr = String(loggedInEmployeeId);
+    const cycles = item.approvalCycles || [];
+
+    // Find the lowest pending approval cycle level where the logged-in user is an authority
+    let userCycleIndex = -1;
+    for (let i = 0; i < cycles.length; i++) {
+      const authorityIds = (cycles[i].approvalAuthorityIdEmployees || "")
+        .split(",")
+        .map((id) => id.trim());
+      if (authorityIds.includes(userIdStr)) {
+        userCycleIndex = i;
+        break;
+      }
+    }
+
+    // User is not part of any approval level — disable
+    if (userCycleIndex === -1) return false;
+
+    const userCycle = cycles[userCycleIndex];
+
+    // Check logged-in user's own approval status:
+    // If Rejected — disable (already actioned)
+    const userStatus = (userCycle.status || "").toLowerCase();
+    if (userStatus === "rejected") return false;
+
+    // If this is the first level (no previous level), enable when Pending
+    if (userCycleIndex === 0) {
+      return userStatus === "pending";
+    }
+
+    // Check previous level's approval status
+    const prevCycle = cycles[userCycleIndex - 1];
+    const prevStatus = (prevCycle.status || "").toLowerCase();
+
+    // Previous level Pending or Rejected — disable
+    if (prevStatus === "pending" || prevStatus === "rejected") return false;
+
+    
+    if (userStatus === "pending" ) return true;
+
+    return false;
+  };
 
   const selectableItems = filteredData.filter(canTakeAction);
 
@@ -170,23 +252,75 @@ const OvertimeApproval = () => {
     }
   };
 
-  // TODO: Wire approve/reject to actual API endpoints when available
+  // Show confirmation modal before bulk action
   const handleApproveSelected = () => {
     if (selectedItems.length === 0) return;
-    toast.success(
-      `${selectedItems.length} overtime request(s) approved successfully!`,
-      { position: "top-right", autoClose: 3000 }
-    );
-    setSelectedItems([]);
+    setConfirmAction("APPROVED");
+    setShowConfirmModal(true);
   };
 
   const handleRejectSelected = () => {
     if (selectedItems.length === 0) return;
-    toast.error(
-      `${selectedItems.length} overtime request(s) rejected`,
-      { position: "top-right", autoClose: 3000 }
-    );
-    setSelectedItems([]);
+    setConfirmAction("REJECTED");
+    setShowConfirmModal(true);
+  };
+
+  // Execute bulk approval/rejection after confirmation
+  const executeBulkAction = async () => {
+    if (!confirmAction || selectedItems.length === 0) return;
+
+    if (confirmAction === "REJECTED" && !rejectReason.trim()) {
+      setRejectReasonError("Reason for rejection is mandatory");
+      return;
+    }
+
+    const payload = selectedItems.map((id) => ({
+      entityTablePrimaryKeyID: id,
+      entityCode: "OVERTIME",
+      status: confirmAction,
+      rejectReason: confirmAction === "REJECTED" ? rejectReason.trim() : "",
+      leavePassageAmount: 0,
+      idPayRollScreen: 0,
+    }));
+
+    try {
+      setIsProcessing(true);
+      const resultAction = await dispatch(handleApprovalWorkflow(payload));
+
+      if (handleApprovalWorkflow.fulfilled.match(resultAction)) {
+        if (resultAction.payload?.success !== false) {
+          toast.success(
+            `${selectedItems.length} OT transaction(s) ${confirmAction === "APPROVED" ? "approved" : "rejected"} successfully!`,
+            { position: "top-right", autoClose: 3000 }
+          );
+          setSelectedItems([]);
+          fetchedEmployeeIds.current.clear();
+          const today = new Date().toISOString().split("T")[0];
+          dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
+        } else {
+          toast.error(resultAction.payload?.message || "Failed to process approval", {
+            position: "top-right",
+            autoClose: 4000,
+          });
+        }
+      } else {
+        toast.error(resultAction.payload?.message || "Failed to process approval", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to process approval", {
+        position: "top-right",
+        autoClose: 4000,
+      });
+    } finally {
+      setIsProcessing(false);
+      setShowConfirmModal(false);
+      setConfirmAction(null);
+      setRejectReason("");
+      setRejectReasonError("");
+    }
   };
 
   // Badge class helper
@@ -285,7 +419,21 @@ const OvertimeApproval = () => {
                     Reject Selected ({selectedItems.length})
                   </Button>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-2" style={{ zIndex: 2 }}>
+                  <label className="form-label d-block mb-1">Date From</label>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat="MM/dd/yyyy"
+                    placeholderText="Date"
+                    selected={dateFrom}
+                    onChange={(date) => {
+                      setDateFrom(date ? date.toISOString().slice(0, 10) : "");
+                    }}
+                    showYearDropdown
+                    maxDate={new Date()}
+                  />
+                </div>
+                <div className="col-md-3">
                   <label className="form-label mb-1">Status</label>
                   <select
                     className="form-select"
@@ -299,7 +447,7 @@ const OvertimeApproval = () => {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label mb-1">Search</label>
                   <div className="list_searchbox">
                     <input
@@ -324,9 +472,9 @@ const OvertimeApproval = () => {
               ) : error ? (
                 <div className="text-center py-4 text-danger">{error}</div>
               ) : (
-                <div className="table-responsive">
+                <div className="table-responsive" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
                   <table className="table table-striped table-bordered">
-                    <thead className="table-light">
+                    <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                       <tr>
                         <th className="text-center" style={{ width: "40px" }}>
                           <input
@@ -406,7 +554,7 @@ const OvertimeApproval = () => {
                                       <td>{cycle.level}</td>
                                       <td>
                                         <span className={`badge ${getStatusBadgeClass(cycle.status)}`}>
-                                          {cycle.status}
+                                          { cycle.status}
                                         </span>
                                       </td>
                                       <td>{cycle.actionDate ? formatDateTime(cycle.actionDate) : "-"}</td>
@@ -437,6 +585,90 @@ const OvertimeApproval = () => {
           </div>
         </div>
       </div>
+
+      {/* Bulk Confirmation Modal */}
+      {showConfirmModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Confirm {confirmAction === "APPROVED" ? "Approval" : "Rejection"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setRejectReason("");
+                    setRejectReasonError("");
+                  }}
+                  disabled={isProcessing}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-0">
+                  Are you sure you want to {confirmAction === "APPROVED" ? "Approve" : "Reject"} all the{" "}
+                  <strong>{selectedItems.length}</strong> OT Transaction{selectedItems.length !== 1 ? "s" : ""}?
+                </p>
+                {confirmAction === "REJECTED" && (
+                  <div className="mt-3">
+                    <label className="form-label mb-1 fw-medium">
+                      Reason for Rejection <span className="text-danger">*</span>
+                    </label>
+                    <textarea
+                      className={`form-control ${rejectReasonError ? "is-invalid" : ""}`}
+                      rows="3"
+                      placeholder="Enter reason for rejection..."
+                      value={rejectReason}
+                      onChange={(e) => {
+                        setRejectReason(e.target.value);
+                        if (rejectReasonError) setRejectReasonError("");
+                      }}
+                      disabled={isProcessing}
+                    ></textarea>
+                    {rejectReasonError && (
+                      <div className="invalid-feedback">{rejectReasonError}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setRejectReason("");
+                    setRejectReasonError("");
+                  }}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className={`btn ${confirmAction === "APPROVED" ? "btn-primary" : "btn-danger"}`}
+                  onClick={executeBulkAction}
+                  disabled={isProcessing}
+                >
+                  {isProcessing
+                    ? "Processing..."
+                    : confirmAction === "APPROVED"
+                    ? "Approve"
+                    : "Reject"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
