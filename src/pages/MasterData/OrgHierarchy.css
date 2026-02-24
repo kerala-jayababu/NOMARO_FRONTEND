@@ -168,3 +168,153 @@
 .org-hierarchy-container li > ul:empty {
   display: none !important;
 }
+
+/* ─── RC Tree View Styles ─── */
+
+.rc-tree-container {
+  padding: 20px;
+  min-height: 400px;
+}
+
+/* Override rc-tree base */
+.rc-tree-container .rc-tree {
+  font-family: inherit;
+}
+
+/* Treenode spacing — keep rc-tree default layout, just adjust spacing */
+.rc-tree-container .rc-tree-treenode {
+  padding: 4px 0;
+  line-height: 48px;
+}
+
+/* Node content card */
+.rc-tree-container .rc-tree-node-content-wrapper {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--secondary-color);
+  cursor: default;
+  transition: all 0.15s ease-in-out;
+  height: auto;
+  vertical-align: middle;
+  box-shadow: 0 1px 3px rgba(67, 89, 113, 0.08);
+}
+
+.rc-tree-container .rc-tree-node-content-wrapper:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(67, 89, 113, 0.15);
+}
+
+.rc-tree-container .rc-tree-node-selected {
+  background: var(--secondary-color) !important;
+  box-shadow: 0 1px 3px rgba(67, 89, 113, 0.08) !important;
+  opacity: 1 !important;
+}
+
+/* Node content layout */
+.rc-tree-node-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rc-tree-node-photo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+  flex-shrink: 0;
+}
+
+.rc-tree-node-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rc-tree-node-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--heading-color);
+  line-height: 1.3;
+}
+
+.rc-tree-node-designation {
+  font-size: 0.72rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Custom switcher +/- icon */
+.rc-tree-switcher-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.rc-tree-switcher-icon:hover {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* Switcher — clear default sprite icon but keep rc-tree's native sizing/positioning */
+.rc-tree-container .rc-tree .rc-tree-treenode span.rc-tree-switcher {
+  background-image: none;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* Hide default file/folder icons */
+.rc-tree-container .rc-tree-iconEle {
+  display: none !important;
+}
+
+/* Indent width — push children so card aligns under parent name */
+.rc-tree-container .rc-tree-indent-unit {
+  width: 48px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rc-tree-container {
+    padding: 10px;
+  }
+
+  .rc-tree-node-photo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .rc-tree-node-name {
+    font-size: 0.75rem;
+  }
+
+  .rc-tree-node-designation {
+    font-size: 0.65rem;
+  }
+}
+.rc-tree .rc-tree-treenode .rc-tree-node-content-wrapper {
+  height: 48px !important;
+  padding: 6px !important;
+}

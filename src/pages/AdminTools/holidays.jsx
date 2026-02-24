@@ -246,7 +246,7 @@ const Holiday = () => {
               {availableHolidayTypes
                 .filter(item => item.holidayType?.toLowerCase().includes("holiday"))
                 .map((data) => (
-                  <option key={data.holidayType} value={data.holidayTypeName}>
+                  <option key={data.holidayType} value={data.holidayType}>
                     {data.holidayTypeName}
                   </option>
                 ))}

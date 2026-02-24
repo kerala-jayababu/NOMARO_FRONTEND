@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Tree, TreeNode } from "react-organizational-chart";
+import RCTree from "rc-tree";
+import "rc-tree/assets/index.css";
 import Card from "../../components/card";
 import OrgHierarchyService from "../../core/services/OrgHierarchyService";
 import { useLoader } from "../../components/LoaderContext";
@@ -13,7 +15,9 @@ const OrgHierarchy = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [maxLevel, setMaxLevel] = useState(0);
-  const [selectedLevel, setSelectedLevel] = useState(0); // 0 means show all
+  const [selectedLevel, setSelectedLevel] = useState(0);
+  const [viewMode, setViewMode] = useState("org");
+  const [expandedKeys, setExpandedKeys] = useState([]);
   const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
@@ -38,11 +42,16 @@ const OrgHierarchy = () => {
         const tree = buildTree(data);
         setTreeData(tree);
 
-        // Calculate max level from data
         const levels = data.map((emp) => emp.levelNumber);
         const maxLevelValue = Math.max(...levels);
         setMaxLevel(maxLevelValue);
-        setSelectedLevel(maxLevelValue + 1); // Show all levels by default (All Levels option)
+        setSelectedLevel(maxLevelValue + 1);
+
+        // Set default expanded keys to root nodes only
+        const roots = data.filter(
+          (emp) => emp.reportingTo === 0 || !data.find((e) => e.idEmployee === emp.reportingTo)
+        );
+        setExpandedKeys(roots.map((r) => String(r.idEmployee)));
       } else {
         setError("No hierarchy data available");
       }
@@ -59,31 +68,24 @@ const OrgHierarchy = () => {
   const buildTree = (employees) => {
     if (!employees || employees.length === 0) return null;
 
-    // Create a map of employees by ID
     const employeeMap = {};
     employees.forEach((emp) => {
       employeeMap[emp.idEmployee] = { ...emp, children: [] };
     });
 
-    // Build the tree by linking children to parents
     let roots = [];
     employees.forEach((emp) => {
       if (emp.reportingTo === 0 || !employeeMap[emp.reportingTo]) {
-        // Root node (no manager or manager not in list)
         roots.push(employeeMap[emp.idEmployee]);
       } else {
-        // Add as child to parent
         employeeMap[emp.reportingTo].children.push(employeeMap[emp.idEmployee]);
       }
     });
 
-    // Sort by level number for proper ordering
     roots.sort((a, b) => a.levelNumber - b.levelNumber);
-
     return roots.length === 1 ? roots[0] : { isMultiRoot: true, roots };
   };
 
-  // Deep clone a node to prevent mutation of original data
   const deepCloneNode = (node) => {
     if (!node) return null;
     return {
@@ -92,20 +94,12 @@ const OrgHierarchy = () => {
     };
   };
 
-  // Filter tree by level - uses the actual levelNumber from API data
   const filterTreeByLevel = (node, targetLevel) => {
     if (!node) return null;
-
-    // If this node's level is greater than target, don't include it
     if (node.levelNumber > targetLevel) return null;
 
-    // Deep clone to prevent mutation
-    const filteredNode = {
-      ...node,
-      children: [],
-    };
+    const filteredNode = { ...node, children: [] };
 
-    // If this node is below the target level, include filtered children
     if (node.levelNumber < targetLevel && node.children && node.children.length > 0) {
       filteredNode.children = node.children
         .map((child) => filterTreeByLevel(child, targetLevel))
@@ -115,16 +109,10 @@ const OrgHierarchy = () => {
     return filteredNode;
   };
 
-  // Get filtered tree based on selected level
-  const getDisplayTree = () => {
-    // Show all levels if: no selection, 0, or "All Levels" option selected
+  const getDisplayTree = useCallback(() => {
     if (!treeData || selectedLevel === 0 || selectedLevel > maxLevel) {
-      // Return a deep clone to prevent any potential mutation
       if (treeData?.isMultiRoot) {
-        return {
-          isMultiRoot: true,
-          roots: treeData.roots.map(deepCloneNode),
-        };
+        return { isMultiRoot: true, roots: treeData.roots.map(deepCloneNode) };
       }
       return treeData ? deepCloneNode(treeData) : null;
     }
@@ -139,48 +127,39 @@ const OrgHierarchy = () => {
     }
 
     return filterTreeByLevel(treeData, selectedLevel);
-  };
+  }, [treeData, selectedLevel, maxLevel]);
 
-  // Generate level options for dropdown
-  const getLevelOptions = () => {
+  const getLevelOptions = useCallback(() => {
     const options = [];
     for (let i = 1; i <= maxLevel; i++) {
       options.push({ value: i, label: `Level ${i}` });
     }
-    // Add "All Levels" option at the end
     options.push({ value: maxLevel + 1, label: "All Levels" });
     return options;
-  };
+  }, [maxLevel]);
 
-  // Handle level change
-  const handleLevelChange = (e) => {
+  const handleLevelChange = useCallback((e) => {
     setSelectedLevel(parseInt(e.target.value, 10));
-  };
+  }, []);
 
-  // Get employee photo URL from binary data
-  const getPhotoUrl = (employeePhoto) => {
+  const getPhotoUrl = useCallback((employeePhoto) => {
     if (employeePhoto && employeePhoto.trim() !== "") {
       return `data:image/jpeg;base64,${employeePhoto}`;
     }
     return defaultAvatar;
-  };
+  }, []);
 
-  // Determine if children should be rendered for this node
-  // Rules:
-  // - Nodes at level < selectedLevel → render children (return true)
-  // - Nodes at level >= selectedLevel → don't render children (return false)
-  // - If "All Levels" selected → render all children (return true)
-  const shouldRenderChildren = (node) => {
-    // If "All Levels" is selected (selectedLevel > maxLevel), render all children
-    if (selectedLevel > maxLevel) {
-      return true;
-    }
-    // Only render children if node level is less than selected level
-    return node.levelNumber < selectedLevel;
-  };
+  const shouldRenderChildren = useCallback(
+    (node) => {
+      if (selectedLevel > maxLevel) return true;
+      return node.levelNumber < selectedLevel;
+    },
+    [selectedLevel, maxLevel]
+  );
 
-  // Employee Card Component
-  const EmployeeCard = ({ employee }) => (
+  // ─── Org Chart View ───
+
+  const EmployeeCard = React.memo(({ employee }) => (
     <div className="org-card-wrapper">
       <div className="org-employee-card">
         <div className="org-employee-photo-container">
@@ -200,13 +179,10 @@ const OrgHierarchy = () => {
         </div>
       </div>
     </div>
-  );
+  ));
 
-  // Recursive TreeNode renderer
-  // Only renders children if node level < selectedLevel (or All Levels selected)
   const renderTreeNodes = (node) => {
     if (!node) return null;
-
     const renderChildren = shouldRenderChildren(node);
 
     return (
@@ -223,17 +199,15 @@ const OrgHierarchy = () => {
     );
   };
 
-  // Render the full tree
-  const renderTree = () => {
+  const renderOrgChart = () => {
     const displayTree = getDisplayTree();
     if (!displayTree) return null;
 
-    // Handle multiple root nodes case
     if (displayTree.isMultiRoot) {
       return (
         <div className="org-multi-root-container">
           {displayTree.roots.map((root) => {
-            const renderChildren = shouldRenderChildren(root);
+            const rc = shouldRenderChildren(root);
             return (
               <Tree
                 key={root.idEmployee}
@@ -242,7 +216,7 @@ const OrgHierarchy = () => {
                 lineBorderRadius={"10px"}
                 label={<EmployeeCard employee={root} />}
               >
-                {renderChildren &&
+                {rc &&
                   root.children &&
                   root.children.map((child) => (
                     <React.Fragment key={child.idEmployee}>
@@ -256,8 +230,7 @@ const OrgHierarchy = () => {
       );
     }
 
-    // Single root node
-    const renderChildren = shouldRenderChildren(displayTree);
+    const rc = shouldRenderChildren(displayTree);
     return (
       <Tree
         lineWidth={"2px"}
@@ -265,7 +238,7 @@ const OrgHierarchy = () => {
         lineBorderRadius={"10px"}
         label={<EmployeeCard employee={displayTree} />}
       >
-        {renderChildren &&
+        {rc &&
           displayTree.children &&
           displayTree.children.map((child) => (
             <React.Fragment key={child.idEmployee}>
@@ -276,7 +249,114 @@ const OrgHierarchy = () => {
     );
   };
 
-  // Loading state
+  // ─── RC Tree View ───
+
+  // Convert hierarchy node to rc-tree data format
+  const convertToRCTreeData = useCallback(
+    (node) => {
+      if (!node) return null;
+
+      const hasChildren = node.children && node.children.length > 0;
+
+      return {
+        key: String(node.idEmployee),
+        title: (
+          <div className="rc-tree-node-content">
+            <img
+              src={getPhotoUrl(node.employeePhoto)}
+              alt={node.fullName}
+              className="rc-tree-node-photo"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = defaultAvatar;
+              }}
+            />
+            <div className="rc-tree-node-info">
+              <span className="rc-tree-node-name">{node.fullName}</span>
+              <span className="rc-tree-node-designation">{node.designationName}</span>
+            </div>
+          </div>
+        ),
+        children: hasChildren
+          ? node.children.map((child) => convertToRCTreeData(child)).filter(Boolean)
+          : [],
+        isLeaf: !hasChildren,
+      };
+    },
+    [getPhotoUrl]
+  );
+
+  // Memoized rc-tree data from the filtered display tree
+  const rcTreeData = useMemo(() => {
+    const displayTree = getDisplayTree();
+    if (!displayTree) return [];
+
+    if (displayTree.isMultiRoot) {
+      return displayTree.roots.map((root) => convertToRCTreeData(root)).filter(Boolean);
+    }
+
+    const converted = convertToRCTreeData(displayTree);
+    return converted ? [converted] : [];
+  }, [getDisplayTree, convertToRCTreeData]);
+
+  // Collect all keys for expand/collapse all
+  const allNodeKeys = useMemo(() => {
+    const keys = [];
+    const collectKeys = (nodes) => {
+      if (!nodes) return;
+      nodes.forEach((node) => {
+        if (node.children && node.children.length > 0) {
+          keys.push(node.key);
+          collectKeys(node.children);
+        }
+      });
+    };
+    collectKeys(rcTreeData);
+    return keys;
+  }, [rcTreeData]);
+
+  const handleExpandAll = useCallback(() => {
+    setExpandedKeys(allNodeKeys);
+  }, [allNodeKeys]);
+
+  const handleCollapseAll = useCallback(() => {
+    setExpandedKeys([]);
+  }, []);
+
+  const handleExpand = useCallback((keys) => {
+    setExpandedKeys(keys);
+  }, []);
+
+  // Custom switcher icon: + when collapsed, − when expanded
+  const switcherIcon = useCallback((nodeProps) => {
+    if (nodeProps.isLeaf) return <span style={{ display: "inline-block", width: 16 }} />;
+    return (
+      <span className="rc-tree-switcher-icon">
+        {nodeProps.expanded ? "−" : "+"}
+      </span>
+    );
+  }, []);
+
+  const renderRCTree = () => {
+    if (rcTreeData.length === 0) return null;
+
+    return (
+      <div className="rc-tree-container">
+        <RCTree
+          treeData={rcTreeData}
+          expandedKeys={expandedKeys}
+          onExpand={handleExpand}
+          switcherIcon={switcherIcon}
+          showLine={{ showLeafIcon: false }}
+          showIcon={false}
+          selectable={false}
+        />
+      </div>
+    );
+  };
+
+  // ─── Render ───
+
   if (loading) {
     return (
       <div className="container-xxl flex-grow-1 container-p-y">
@@ -296,7 +376,6 @@ const OrgHierarchy = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container-xxl flex-grow-1 container-p-y">
@@ -306,10 +385,7 @@ const OrgHierarchy = () => {
               <div className="text-center py-5">
                 <i className="bx bx-error-circle text-danger" style={{ fontSize: "3rem" }}></i>
                 <p className="mt-2 text-danger">{error}</p>
-                <button
-                  className="btn btn-primary mt-2"
-                  onClick={fetchHierarchyData}
-                >
+                <button className="btn btn-primary mt-2" onClick={fetchHierarchyData}>
                   Retry
                 </button>
               </div>
@@ -320,7 +396,6 @@ const OrgHierarchy = () => {
     );
   }
 
-  // Empty state
   if (!treeData || hierarchyData.length === 0) {
     return (
       <div className="container-xxl flex-grow-1 container-p-y">
@@ -343,27 +418,67 @@ const OrgHierarchy = () => {
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
-            <div className="card-header d-flex justify-content-between align-items-center">
+            <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 className="mb-0">Organization Hierarchy</h5>
-              <div className="org-level-filter">
-                <select
-                  className="form-select form-select-sm"
-                  value={selectedLevel}
-                  onChange={handleLevelChange}
-                  style={{ minWidth: "120px" }}
-                >
-                  {getLevelOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                {viewMode === "tree" && (
+                  <>
+                    <div className="d-flex gap-1">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={handleExpandAll}
+                      >
+                        Expand All
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={handleCollapseAll}
+                      >
+                        Collapse All
+                      </button>
+                    </div>
+                  </>
+                )}
+                <div className="org-level-filter">
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedLevel}
+                    onChange={handleLevelChange}
+                    style={{ minWidth: "120px" }}
+                  >
+                    {getLevelOptions().map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="btn-group btn-group-sm" role="group">
+                  <button
+                    type="button"
+                    className={`btn ${viewMode === "org" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => setViewMode("org")}
+                  >
+                    Org Chart
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${viewMode === "tree" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => setViewMode("tree")}
+                  >
+                    Tree View
+                  </button>
+                </div>
               </div>
             </div>
             <div className="card-body">
-              <div className="org-hierarchy-container">
-                {renderTree()}
-              </div>
+              {viewMode === "org" ? (
+                <div className="org-hierarchy-container">{renderOrgChart()}</div>
+              ) : (
+                renderRCTree()
+              )}
             </div>
           </div>
         </div>

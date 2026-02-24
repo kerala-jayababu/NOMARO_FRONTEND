@@ -1152,6 +1152,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
   const [status, setStatus] = useState("Active");
   const [isPaid, setIsPaid] = useState(fullDetails?.isPaid !== false ? "Yes" : "No");
   const [salaryDeduction, setSalaryDeduction] = useState(fullDetails?.salaryDeductionPercent ? String(fullDetails.salaryDeductionPercent) : "");
+  const [salaryDeductAfterDays, setSalaryDeductAfterDays] = useState(fullDetails?.salaryDeductAfterDays != null ? String(fullDetails.salaryDeductAfterDays) : "");
   const [approvalLevels, setApprovalLevels] = useState(fullDetails?.requiredApprovalLevel || 1);
   const [maxPerYear, setMaxPerYear] = useState(fullDetails?.maxLeavesPerYear ? String(fullDetails.maxLeavesPerYear) : "");
   const [maxPerMonth, setMaxPerMonth] = useState(fullDetails?.maxLeavesPerMonth ? String(fullDetails.maxLeavesPerMonth) : "");
@@ -1222,6 +1223,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       setStatus("Active");
       setIsPaid("Yes");
       setSalaryDeduction("");
+      setSalaryDeductAfterDays("");
       setApprovalLevels(1);
       setMaxPerYear("");
       setMaxPerMonth("");
@@ -1264,6 +1266,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       setLeaveCode(detail.leaveCode || "");
       setIsPaid(detail.isPaid ? "Yes" : "No");
       setSalaryDeduction(detail.salaryDeductionPercent ? String(detail.salaryDeductionPercent) : "");
+      setSalaryDeductAfterDays(detail.salaryDeductAfterDays != null ? String(detail.salaryDeductAfterDays) : "");
       setApprovalLevels(detail.requiredApprovalLevel || 1);
       setMaxPerYear(detail.maxLeavesPerYear ? String(detail.maxLeavesPerYear) : "");
       setMaxPerMonth(detail.maxLeavesPerMonth ? String(detail.maxLeavesPerMonth) : "");
@@ -1352,6 +1355,28 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       });
       submitLockRef.current = false;
       return;
+    }
+
+    // Validation: Deduct Salary After Days is mandatory when not paid
+    if (isPaid === "No" && (!salaryDeductAfterDays || salaryDeductAfterDays.trim() === "")) {
+      toast.error("Deduct Salary After Days is required when Paid is No", {
+        position: 'top-right',
+        autoClose: 4000
+      });
+      submitLockRef.current = false;
+      return;
+    }
+
+    if (isPaid === "No" && salaryDeductAfterDays) {
+      const deductAfterDaysValue = parseInt(salaryDeductAfterDays);
+      if (deductAfterDaysValue < 0 || deductAfterDaysValue > 100) {
+        toast.error("Deduct Salary After Days must be between 0 and 100", {
+          position: 'top-right',
+          autoClose: 4000
+        });
+        submitLockRef.current = false;
+        return;
+      }
     }
 
     // Validation: Max Leaves Per Year is mandatory
@@ -1505,6 +1530,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       applicableGender: applicableGender,
       isPaid: isPaid === "Yes",
       salaryDeductionPercent: isPaid === "No" ? parseFloat(salaryDeduction) || 0 : 0,
+      salaryDeductAfterDays: isPaid === "No" ? parseInt(salaryDeductAfterDays) || 0 : 0,
       allowHalfDay: allowHalfDay === "Yes",
       requiresApproval: approvalLevels > 0,
       requiredApprovalLevel: parseInt(approvalLevels) || 0,
@@ -1580,6 +1606,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
     setStatus("Active");
     setIsPaid("Yes");
     setSalaryDeduction("");
+    setSalaryDeductAfterDays("");
     setApprovalLevels(0);
     setMaxPerYear("");
     setMaxPerMonth("");
@@ -1698,6 +1725,7 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
                   />
                 </div>
                 {isPaid === "No" && (
+                <>
                 <div className="col-md-4">
                   <Input
                     label="Salary Deduction %"
@@ -1706,7 +1734,23 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
                     value={salaryDeduction}
                     onChange={(e) => setSalaryDeduction(e.target.value)}
                   />
-                </div> 
+                </div>
+                <div className="col-md-4">
+                  <Input
+                    label="Deduct Salary After Days"
+                    name="salaryDeductAfterDays"
+                    type="number"
+                    value={salaryDeductAfterDays}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                        setSalaryDeductAfterDays(val);
+                      }
+                    }}
+                    isInvalid={submitAttempted && isPaid === "No" && (!salaryDeductAfterDays || salaryDeductAfterDays.trim() === "")}
+                  />
+                </div>
+                </>
                 )}
               </div>
 

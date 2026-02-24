@@ -320,8 +320,8 @@ const MissingEntryApproval = () => {
                         </th>
                         <th>Employee</th>
                         <th>Designation</th>
-                        <th>Department</th>
-                        <th>Entry Type</th>
+                        <th style={{ width: "150px" }}>Reason</th>
+                        <th>Entry</th>
                         <th>Entry Date & Time</th>
                         <th>Status</th>
                       </tr>
@@ -352,7 +352,7 @@ const MissingEntryApproval = () => {
                             </td>
                             <td>{item.employeeName}</td>
                             <td>{item.designation}</td>
-                            <td>{item.department}</td>
+                            <td style={{ width: "150px" }}>{item.reason}</td>
                             <td>
                               <span
                                 className={`badge ${
