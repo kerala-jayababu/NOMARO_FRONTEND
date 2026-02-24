@@ -320,6 +320,40 @@ export const applyLeaveTemplateToMultipleEmployees = createAsyncThunk(
   }
 );
 
+export const approveEmployeeLeaveConfigMultiple = createAsyncThunk(
+  "employeeLeaveConfig/approveEmployeeLeaveConfigMultiple",
+  async ({ approvalStatus, reason, ids }, { rejectWithValue }) => {
+    try {
+      const storedUser = secureLocalStorage.getItem("user");
+      const token = storedUser ? JSON.parse(storedUser)?.token : null;
+
+      if (!token) {
+        return rejectWithValue({ message: "Authorization token missing" });
+      }
+
+      const params = new URLSearchParams();
+      params.append("approvalStatus", approvalStatus);
+      if (reason) params.append("reason", reason);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/ApproveEmployeeLeaveConfigMultiple?${params.toString()}`,
+        ids,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to bulk approve/reject employee leave config" }
+      );
+    }
+  }
+);
+
 export const approveEmployeeLeaveConfig = createAsyncThunk(
   "employeeLeaveConfig/approveEmployeeLeaveConfig",
   async ({ IdEmployeeLeaveConfig, approvalStatus }, { rejectWithValue }) => {

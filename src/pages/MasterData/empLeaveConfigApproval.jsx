@@ -7,6 +7,7 @@ import {
   fetchEmployeeLeaveSetup,
   fetchLeaveSetupOfAnEmployee,
   approveEmployeeLeaveConfig,
+  approveEmployeeLeaveConfigMultiple,
   fetchEmployeeLeaveConfigApprovers,
 } from "../../redux/reducers/employeeLeaveConfig";
 import { fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
@@ -37,6 +38,11 @@ const EmpLeaveConfigApproval = () => {
   const [currentStatus, setCurrentStatus] = useState("");
   const [isApprover, setIsApprover] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [actionReason, setActionReason] = useState("");
+  const [reasonError, setReasonError] = useState("");
 
   // Status filter options
   const statusOptions = [
@@ -189,6 +195,13 @@ const EmpLeaveConfigApproval = () => {
     return data;
   }, [employeeLeaveSetupList, employeeList, designationFilter]);
 
+  // Items that can be selected (only SUBMITTED status when user is approver)
+  const selectableItems = useMemo(() => {
+    return employeeLeaveData.filter(
+      (item) => item.status?.toUpperCase() === "SUBMITTED" && isApprover
+    );
+  }, [employeeLeaveData, isApprover]);
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -198,6 +211,87 @@ const EmpLeaveConfigApproval = () => {
   const totalPages = Math.ceil(employeeLeaveData.length / rowsPerPage);
 
   const handlePageChange = (page) => setCurrentPage(page);
+
+  // Multi-select handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedItems(selectableItems.map((item) => item.idEmployeeLeaveConfig));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleCheckbox = (id, checked) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, id]);
+    } else {
+      setSelectedItems((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  const handleApproveSelected = () => {
+    if (selectedItems.length === 0) return;
+    setConfirmAction("APPROVED");
+    setShowConfirmModal(true);
+  };
+
+  const handleRejectSelected = () => {
+    if (selectedItems.length === 0) return;
+    setConfirmAction("REJECTED");
+    setShowConfirmModal(true);
+  };
+
+  const executeBulkAction = async () => {
+    if (!confirmAction || selectedItems.length === 0) return;
+
+    if (confirmAction === "REJECTED" && !actionReason.trim()) {
+      setReasonError("Reason for rejection is mandatory");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const result = await dispatch(
+        approveEmployeeLeaveConfigMultiple({
+          approvalStatus: confirmAction,
+          reason: actionReason.trim(),
+          ids: selectedItems,
+        })
+      );
+
+      if (result.payload && result.payload.success !== false) {
+        toast.success(
+          `${selectedItems.length} record(s) ${confirmAction === "APPROVED" ? "approved" : "rejected"} successfully!`,
+          { position: "top-right", autoClose: 3000 }
+        );
+        setSelectedItems([]);
+        // Refresh the list
+        dispatch(
+          fetchEmployeeLeaveSetup({
+            searchText: searchQuery,
+            idYear: parseInt(yearFilter),
+            approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+          })
+        );
+      } else {
+        toast.error(result.payload?.message || "Failed to process request", {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to process request", {
+        position: "top-right",
+        autoClose: 4000,
+      });
+    } finally {
+      setIsProcessing(false);
+      setShowConfirmModal(false);
+      setConfirmAction(null);
+      setActionReason("");
+      setReasonError("");
+    }
+  };
 
   const getStatusBadgeClass = (status) => {
     const upperStatus = status?.toUpperCase();
@@ -229,6 +323,39 @@ const EmpLeaveConfigApproval = () => {
   };
 
   const columns = [
+    {
+      key: "select",
+      label: (
+        <input
+          type="checkbox"
+          className="form-check-input"
+          checked={
+            selectableItems.length > 0 &&
+            selectedItems.length === selectableItems.length
+          }
+          onChange={handleSelectAll}
+          disabled={selectableItems.length === 0}
+        />
+      ),
+      headerStyle: { textAlign: "center", width: "40px" },
+      render: (_, row) => {
+        const isSelectable =
+          row.status?.toUpperCase() === "SUBMITTED" && isApprover;
+        return (
+          <div className="text-center">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={selectedItems.includes(row.idEmployeeLeaveConfig)}
+              onChange={(e) =>
+                handleCheckbox(row.idEmployeeLeaveConfig, e.target.checked)
+              }
+              disabled={!isSelectable}
+            />
+          </div>
+        );
+      },
+    },
     { key: "employeeCode", label: "Emp. Code" },
     { key: "employeeName", label: "Employee Name" },
     { key: "designation", label: "Designation" },
@@ -415,6 +542,28 @@ const EmpLeaveConfigApproval = () => {
               <h5 className="m-0">Employee Leave Configuration Approval</h5>
             </div>
             <div className="card-body">
+              <div className="row mb-3 align-items-end">
+                {isApprover && (
+                  <div className="col-md-4 d-flex align-items-center gap-2 mb-2">
+                    <Button
+                      className={`btn btn-primary btn-sm${
+                        selectedItems.length === 0 ? " disabled" : ""
+                      }`}
+                      onClick={handleApproveSelected}
+                    >
+                      Approve Selected ({selectedItems.length})
+                    </Button>
+                    <Button
+                      className={`btn btn-danger btn-sm${
+                        selectedItems.length === 0 ? " disabled" : ""
+                      }`}
+                      onClick={handleRejectSelected}
+                    >
+                      Reject Selected ({selectedItems.length})
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="row mb-3">
                 <div className="col-md-2">
                   <select
@@ -504,6 +653,109 @@ const EmpLeaveConfigApproval = () => {
           onClose={handleCloseModal}
           onApproveReject={handleApproveReject}
         />
+      )}
+
+      {/* Bulk Confirm Modal */}
+      {showConfirmModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Confirm {confirmAction === "APPROVED" ? "Approval" : "Rejection"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setActionReason("");
+                    setReasonError("");
+                  }}
+                  disabled={isProcessing}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-0">
+                  Are you sure you want to{" "}
+                  {confirmAction === "APPROVED" ? "approve" : "reject"} the selected{" "}
+                  <strong>{selectedItems.length}</strong> record
+                  {selectedItems.length !== 1 ? "s" : ""}?
+                </p>
+                {confirmAction === "APPROVED" && (
+                  <div className="mt-3">
+                    <label className="form-label mb-1 fw-medium">
+                      Reason (Optional)
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      placeholder="Enter reason..."
+                      value={actionReason}
+                      onChange={(e) => setActionReason(e.target.value)}
+                      disabled={isProcessing}
+                    ></textarea>
+                  </div>
+                )}
+                {confirmAction === "REJECTED" && (
+                  <div className="mt-3">
+                    <label className="form-label mb-1 fw-medium">
+                      Reason for Rejection <span className="text-danger">*</span>
+                    </label>
+                    <textarea
+                      className={`form-control ${reasonError ? "is-invalid" : ""}`}
+                      rows="3"
+                      placeholder="Enter reason for rejection..."
+                      value={actionReason}
+                      onChange={(e) => {
+                        setActionReason(e.target.value);
+                        if (reasonError) setReasonError("");
+                      }}
+                      disabled={isProcessing}
+                    ></textarea>
+                    {reasonError && (
+                      <div className="invalid-feedback">{reasonError}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <Button
+                  className="btn btn-outline-secondary"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setActionReason("");
+                    setReasonError("");
+                  }}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className={`btn ${
+                    confirmAction === "APPROVED" ? "btn-primary" : "btn-danger"
+                  }`}
+                  onClick={executeBulkAction}
+                  disabled={isProcessing}
+                >
+                  {isProcessing
+                    ? "Processing..."
+                    : confirmAction === "APPROVED"
+                    ? "Approve"
+                    : "Reject"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
