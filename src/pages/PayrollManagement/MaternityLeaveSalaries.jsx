@@ -32,7 +32,8 @@ function MaternityLeaveSalaries() {
     totalDeductions: 0,
     file: null,
     attachmentBlob: null,
-    documentFilePath: null
+    documentFilePath: null,
+    approvalStatus: null
   });
   const [salaryDetails, setSalaryDetails] = useState([
     {
@@ -228,6 +229,7 @@ function MaternityLeaveSalaries() {
       file: item.file,
       attachmentBlob: item.attachmentBlob,
       documentFilePath: item.documentFilePath,
+      approvalStatus: item.approvalStatus,
     });
     handleMonthFromChangeEdit(item.idSalaryMonthFrom)
     setSalaryDetails(item.maternityLeaveSalaryDetailDto);
@@ -397,7 +399,8 @@ function MaternityLeaveSalaries() {
       totalEarnings: 0,
       totalDeductions: 0,
       file: null,
-      documentFilePath: null
+      documentFilePath: null,
+      approvalStatus: null
     });
     setSalaryDetails([
       {
@@ -554,6 +557,7 @@ function MaternityLeaveSalaries() {
                       <th>Salary Month To</th>
                       <th className="text-end">Net Salary</th>
                       <th className="text-end">Maternity Salary</th>
+                      <th className="text-center">Status</th>
                       <th className="text-center"></th>
                       <th className="text-end"></th>
                     </tr>
@@ -569,6 +573,9 @@ function MaternityLeaveSalaries() {
                           <td>{moment(item?.maternityLeaveTo).format("MMMM, YYYY")}</td>
                           <td className="text-end">{Utils.formattedNumber(item.defaultNetSalary)}</td>
                           <td className="text-end">{Utils.formattedNumber(item.maternityLeaveNetSalary)}</td>
+                          <td className="text-center">
+                            <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>
+                          </td>
                           <td>
                             {
                               item.attachmentBlob != null &&
@@ -876,15 +883,19 @@ function MaternityLeaveSalaries() {
               </Form>
             </div>
             <div className="modal-footer">
-              {
-                isEdit &&
-                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateMaternityLeaveSalaries(e)}>Update</button>
-              }
-              {
-                !isEdit &&
-                <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveMaternityLeaveSalaries(e)}>Submit</button>
-              }
-              <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+              {newData.approvalStatus !== 'APPROVED' && (
+                <>
+                  {
+                    isEdit &&
+                    <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => updateMaternityLeaveSalaries(e)}>Update</button>
+                  }
+                  {
+                    !isEdit &&
+                    <button className="btn btn-primary btn-sm py-2 px-4 me-2" onClick={(e) => saveMaternityLeaveSalaries(e)}>Submit</button>
+                  }
+                  <button className="btn btn-outline-secondary  btn-sm py-2 px-4" onClick={() => resetValues()}>Reset</button>
+                </>
+              )}
             </div>
           </Modal.Body>
         </Modal>
