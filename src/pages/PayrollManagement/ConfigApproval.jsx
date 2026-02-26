@@ -81,7 +81,14 @@ const [dateFrom, setDateFrom] = React.useState(() => {
 
   async function getEntityTypes() {
     const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList");
-    const filteredData = res.data.data.filter(item => !item.entityName.includes("Leave Approval Workflow"));
+    const filteredData = res.data.data.filter((item) => {
+      // Hide entities that have their own separate approval screens
+      if (item.entityName === "Leave Template") return false;
+      if (item.entityName === "Employee Leave Config") return false;
+
+      // Existing filter
+      return !item.entityName.includes("Leave Approval Workflow");
+    });
     setEntityTypes(filteredData);
   }
 
