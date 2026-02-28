@@ -445,6 +445,7 @@ function OvertimeTransaction() {
                       <th>Start Time</th>
                       <th>End Time</th>
                       <th className="text-center">Duration</th>
+                      <th>Paid In</th>
                       {/* <th>Reason</th> */}
                       <th>Status</th>
                       <th className="text-center"></th>
@@ -466,6 +467,11 @@ function OvertimeTransaction() {
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td>{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td className="text-center">{item.durationInHours} Hr</td>
+                          <td className="white-space-nowrap">
+                            {item.salaryMonthText && item.salaryAccountedAmount
+                              ? `${item.salaryMonthText} GYD ${parseFloat(item.salaryAccountedAmount).toFixed(2)}`
+                              : '-'}
+                          </td>
                           {/* <td>{item.reasonForOvertime}</td> */}
                           <td>
                             <span className={`badge ${item.approvalStatus == 'APPROVED' ? 'bg-label-success' : item.approvalStatus == 'SUBMITTED' ? 'bg-label-warning' : item.approvalStatus == 'REJECTED' ? 'bg-label-danger' : 'bg-label-primary'}`}>{item.approvalStatus}</span>

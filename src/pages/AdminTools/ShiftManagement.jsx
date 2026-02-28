@@ -13,6 +13,7 @@ import { showToast } from '../../components/ToastNotifications/toastUtils';
 
 const ShiftManagement = () => {
   const [shiftName, setShiftName] = useState("");
+  const [isRegularShiftJustTimeChange, setIsRegularShiftJustTimeChange] = useState(false);
   const [shifts, setShifts] = useState([]);
   const [editingShiftId, setEditingShiftId] = useState(null);
   const [selectedShift, setSelectedShift] = useState(null);
@@ -69,19 +70,23 @@ const ShiftManagement = () => {
       .catch(() => {});
   };
 
-  const getShiftList = () => {
+  const getShiftList = async () => {
     setLoadingShift(true);
-    ShiftManagementService.getShiftList()
-    .then((res) => {
+    try {
+      const res = await ShiftManagementService.getShiftList();
       const sortedShifts = (res.data.data || []).slice().sort((a, b) => a.idShift - b.idShift);
       setShifts(sortedShifts);
-    }).finally(()=> setLoadingShift(false));
+      return sortedShifts;
+    } finally {
+      setLoadingShift(false);
+    }
   };
 
   const handleShiftEdit = async (idShift) => {
     setLoadingEdit(true);
     const shift = shifts.find((s) => s.idShift === idShift);
     setShiftName(shift.shiftName);
+    setIsRegularShiftJustTimeChange(shift.isRegularShiftJustTimeChange ?? false);
     setEditingShiftId(idShift);
     setSelectedShift(shift);
 
@@ -102,13 +107,15 @@ const ShiftManagement = () => {
     if (!validateForm()) return;
     let shiftResponse;
     if (editingShiftId) {
-      shiftPayload = { idShift: editingShiftId, shiftName };
+      shiftPayload = { idShift: editingShiftId, shiftName, isRegularShiftJustTimeChange };
       shiftResponse = await ShiftManagementService.updateShift(shiftPayload);
     } else {
-      shiftPayload = { shiftName };
+      shiftPayload = { shiftName, isRegularShiftJustTimeChange };
       shiftResponse = await ShiftManagementService.saveShift(shiftPayload);
-      await getShiftList();
-      const createdShift = shifts.find((s) => s.shiftName === shiftName);
+      const freshShifts = await getShiftList();
+      const createdShift = freshShifts
+        .filter((s) => s.shiftName === shiftName)
+        .sort((a, b) => b.idShift - a.idShift)[0];
       shiftPayload.idShift = createdShift?.idShift;
       setEditingShiftId(shiftPayload.idShift);
     }
@@ -225,6 +232,7 @@ const ShiftManagement = () => {
 
   const handleReset = () => {
     setShiftName("");
+    setIsRegularShiftJustTimeChange(false);
     setEditingShiftId(null);
     setEmployeeRows([]);
     setScheduleRows([]);
@@ -353,7 +361,25 @@ const ShiftManagement = () => {
               </div>
             )}
           <Card title="Add/Update Shifts">
-            <Input label="Shift Name" value={shiftName} onChange={(e) => {setShiftName(e.target.value);setShiftNameError(false);}} placeholder="Shift Name" className={shiftNameError ? "is-invalid" : ""}/>
+            <div className="row g-2 justify-content-between">
+              <div className="col-6">
+                <Input label="Shift Name" value={shiftName} onChange={(e) => {setShiftName(e.target.value);setShiftNameError(false);}} placeholder="Shift Name" className={shiftNameError ? "is-invalid" : ""}/>
+              </div>
+              <div className="col-6 d-flex align-items-center gap-2" style={{paddingTop:'20px'}}>
+                <input
+                  type="checkbox"
+                  id="isRegularShiftJustTimeChange"
+                  className="form-check-input"
+                  style={{ width: "1.1rem", height: "1.1rem", cursor: editingShiftId ? "not-allowed" : "pointer", flexShrink: 0 }}
+                  checked={isRegularShiftJustTimeChange}
+                  disabled={!!editingShiftId}
+                  onChange={(e) => setIsRegularShiftJustTimeChange(e.target.checked)}
+                />
+                <label htmlFor="isRegularShiftJustTimeChange" className="form-check-label mb-0" style={{ cursor: editingShiftId ? "not-allowed" : "pointer" }}>
+                   Regular Shift – Time Change Only
+                </label>
+              </div>
+            </div>
             <br/>
             <label className="form-label mb-1"><b>Employees</b></label>
             <table className="table table-bordered table-sm" style={{ tableLayout: "fixed", width: "100%" }}>
@@ -547,7 +573,7 @@ const ShiftManagement = () => {
                         <button className="btn btn-outline-danger border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={() => handleDeleteSchedule(index)}>
                           <i className="bx bx-trash"></i>
                         </button>
-                        {index === scheduleRows.length - 1 && (
+                        {index === scheduleRows.length - 1 && !(isRegularShiftJustTimeChange && scheduleRows.length >= 1) && (
                           <button className="btn btn-outline-primary border-0" style={{padding: "0.1rem 0.1rem", fontSize: "0.6rem", borderRadius:" 0.1rem"}} onClick={handleAddScheduleRow}>
                             <i className="bx bx-plus"></i>
                           </button>
@@ -566,6 +592,13 @@ const ShiftManagement = () => {
                   </tr>
                   : <tr></tr>
                 }
+                {isRegularShiftJustTimeChange && scheduleRows.length >= 1 && (
+                  <tr>
+                    <td colSpan={4}>
+                      <small className="text-muted fst-italic">Only one schedule is allowed for a Regular Shift.</small>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </Card>

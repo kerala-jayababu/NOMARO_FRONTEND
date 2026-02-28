@@ -474,7 +474,7 @@ const OvertimeApproval = () => {
               ) : (
                 <div className="table-responsive" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
                   <table className="table table-striped table-bordered">
-                    <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                    <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 1, background: "#f8f9fa" }}>
                       <tr>
                         <th className="text-center" style={{ width: "40px" }}>
                           <input
