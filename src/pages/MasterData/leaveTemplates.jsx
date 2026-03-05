@@ -515,6 +515,7 @@ const LeaveTemplates = () => {
           statusFilter={statusFilter}
           yearFilter={yearFilter}
           searchQuery={searchQuery}
+          workYears={workYears}
           onClose={() => {
             setShowDetailsModal(false);
             setSelectedTemplate(null);
@@ -531,7 +532,7 @@ const LeaveTemplates = () => {
   );
 };
 
-const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery, onClose }) => {
+const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery, workYears = [], onClose }) => {
   const dispatch = useDispatch();
   const { leaveTemplateDetails } = useSelector((state) => state.leaveTemplate);
   const [leaveTypes, setLeaveTypes] = useState([]);
@@ -708,8 +709,8 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
           leaveTypeName: fullDetail.leaveTypeName,
           leaveCode: fullDetail.leaveCode,
           idYear: template.idYear,
-          effectiveFrom: fullDetail.effectiveFrom || new Date().toISOString(),
-          effectiveTo: fullDetail.effectiveTo || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+          effectiveFrom: (() => { const wy = workYears.find((y) => y.idWorkYear === template.idYear); return wy?.workDateFrom ? new Date(wy.workDateFrom).toISOString() : (fullDetail.effectiveFrom || new Date().toISOString()); })(),
+          effectiveTo: (() => { const wy = workYears.find((y) => y.idWorkYear === template.idYear); return wy?.workDateTo ? new Date(wy.workDateTo).toISOString() : (fullDetail.effectiveTo || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()); })(),
           applicableGender: fullDetail.applicableGender || "BOTH",
           isPaid: fullDetail.isPaid !== false,
           salaryDeductionPercent: fullDetail.salaryDeductionPercent || 0,
@@ -1123,6 +1124,7 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
           templateId={template.idLeaveTemplate}
           isViewMode={isViewMode}
           existingLeaveTypes={leaveTypes}
+          workYears={workYears}
           onClose={() => {
             setShowLeaveTypeModal(false);
             setSelectedLeaveType(null);
@@ -1135,7 +1137,7 @@ const TemplateDetailsModal = ({ template, statusFilter, yearFilter, searchQuery,
   );
 };
 
-const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, isViewMode = false, existingLeaveTypes = [], onClose, onSave }) => {
+const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, isViewMode = false, existingLeaveTypes = [], workYears = [], onClose, onSave }) => {
   const dispatch = useDispatch();
   const { designationList, leaveTemplateDetailById } = useSelector((state) => state.leaveTemplate);
   const { leaveTypes: leaveTypesList } = useSelector((state) => state.leaveType);
@@ -1525,8 +1527,8 @@ const LeaveTypeModal = ({ leaveType, templateYear, templateIdYear, templateId, i
       leaveTypeName: selectedLeaveType,
       leaveCode: leaveCode,
       idYear: templateIdYear,
-      effectiveFrom: new Date().toISOString(),
-      effectiveTo: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+      effectiveFrom: (() => { const wy = workYears.find((y) => y.idWorkYear === templateIdYear); return wy?.workDateFrom ? new Date(wy.workDateFrom).toISOString() : new Date().toISOString(); })(),
+      effectiveTo: (() => { const wy = workYears.find((y) => y.idWorkYear === templateIdYear); return wy?.workDateTo ? new Date(wy.workDateTo).toISOString() : new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(); })(),
       applicableGender: applicableGender,
       isPaid: isPaid === "Yes",
       salaryDeductionPercent: isPaid === "No" ? parseFloat(salaryDeduction) || 0 : 0,

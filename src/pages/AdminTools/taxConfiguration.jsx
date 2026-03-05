@@ -116,18 +116,23 @@ function TaxConfiguration() {
     CommonService.getAllFinancialYears()
       .then(res => {
         setFinancialYears(res.data);
-        setIdFinancialYear(res.data[0].idFinancialYear);
+        const today = moment();
+        const currentFY = res.data.find(year =>
+          today.isSameOrAfter(moment(year.financialYearFrom)) &&
+          today.isSameOrBefore(moment(year.financialYearTo))
+        ) || res.data[0];
+        setIdFinancialYear(currentFY.idFinancialYear);
         setFormData((prevData) => ({
           ...prevData,
-          idFinancialYear: res.data[0].idFinancialYear
+          idFinancialYear: currentFY.idFinancialYear
         }));
         setChildFormData((prevData) => ({
           ...prevData,
-          idFinancialYear: res.data[0].idFinancialYear
+          idFinancialYear: currentFY.idFinancialYear
         }));
-        setSelectedFinancialYear(res.data[0].idFinancialYear);
-        getBaseTaxThresholds(res.data[0].idFinancialYear);
-        getChildTaxThresholds(res.data[0].idFinancialYear);
+        setSelectedFinancialYear(currentFY.idFinancialYear);
+        getBaseTaxThresholds(currentFY.idFinancialYear);
+        getChildTaxThresholds(currentFY.idFinancialYear);
         setLoading(false);
       })
       .catch(err => {
@@ -505,11 +510,10 @@ function TaxConfiguration() {
     getChildTaxThresholds(e.target.value);
   };
 
-  // Filter the financial years to only show the current year and next year
+  // Show all previous financial years, current financial year, and only next 1 financial year
   const filteredFinancialYears = financialYears.filter(year => {
     const yearFrom = moment(year.financialYearFrom);
-    const yearTo = moment(year.financialYearTo);
-    return yearFrom.year() === currentYear || yearFrom.year() === nextYear;
+    return yearFrom.year() <= nextYear;
   });
 
   return (

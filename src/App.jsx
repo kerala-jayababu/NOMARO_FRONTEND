@@ -54,6 +54,7 @@ import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 import Banks from "./pages/MasterData/banks";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
+import LeaveDashboard from "./pages/dashboard/LeaveDashboard";
 import EmployeeManagement from "./pages/MasterData/EmployeeManagement/EmployeeManagement";
 import LeaveTypes from "./pages/MasterData/leaveTypes";
 import LeaveTemplates from "./pages/MasterData/leaveTemplates";
@@ -102,6 +103,7 @@ function App() {
               <Route path="income-tax-config" element={<TaxConfiguration />} />
               <Route path="currency-conversion" element={<CurrencyConversion />} />
               <Route path="live-dashboard" element={<LiveDashboard />} />
+              <Route path="dashboard" element={<LeaveDashboard />} />
               <Route path="notification-types" element={<NotificationConfig />} />
               <Route path='bank-branches' element={<BankAndBranches />} />
               <Route path='rent-free-quarters' element={<RentFreeAllowances />} />
