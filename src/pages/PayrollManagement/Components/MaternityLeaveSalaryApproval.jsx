@@ -85,7 +85,7 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
     const content = [
       {
         entityTablePrimaryKeyID: entityId,
-        entityCode: "MATLEAVESAL", // ✅ must match your workflow entityCode
+        entityCode: "MATERNITYSAL", 
         status: "REJECTED",
         idPayrollScreen,
         rejectReason,
