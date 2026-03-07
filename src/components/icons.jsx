@@ -13,10 +13,48 @@ export const AddIcon = ({ onClick }) => (
   </button>
 );
 
+export const UpIcon = ({ onClick, disabled, title = "Move up" }) => (
+  <button 
+    className="btn btn-outline-secondary border-0 btn-sm" 
+    onClick={onClick}
+    disabled={disabled}
+    data-bs-toggle="tooltip"
+    data-bs-placement="top"
+    title={title}
+    style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+  >
+    <i className="bx bx-chevron-up"></i>
+  </button>
+);
+
+export const DownIcon = ({ onClick, disabled, title = "Move down" }) => (
+  <button 
+    className="btn btn-outline-secondary border-0 btn-sm" 
+    onClick={onClick}
+    disabled={disabled}
+    data-bs-toggle="tooltip"
+    data-bs-placement="bottom"
+    title={title}
+    style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+  >
+    <i className="bx bx-chevron-down"></i>
+  </button>
+);
+
 
 DeleteIcon.propTypes = {
     onClick: PropTypes.func.isRequired,
     };
 AddIcon.propTypes = {
     onClick: PropTypes.func.isRequired,
+    };
+UpIcon.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.bool,
+    title: PropTypes.string,
+    };
+DownIcon.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.bool,
+    title: PropTypes.string,
     };    
