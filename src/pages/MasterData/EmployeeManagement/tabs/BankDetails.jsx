@@ -9,7 +9,7 @@ import { updateEmployeeDetails } from "../../../../redux/reducers/employeeProfil
 import { getAllOptions } from "../../../../redux/reducers/getAllOptions";
 import { getBudgetCodeById } from "../../../../redux/reducers/budgetCode";
 import { getEmployeeDetailsByID } from "../../../../redux/reducers/getEmployeeDetails";
-import { DeleteIcon, AddIcon } from "../../../../components/icons";
+import { DeleteIcon, AddIcon, UpIcon, DownIcon } from "../../../../components/icons";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 import secureLocalStorage from "react-secure-storage";
@@ -164,8 +164,12 @@ const BankDetails = () => {
         bankAccountsResult.payload.data &&
         bankAccountsResult.payload.data.length > 0
       ) {
-        mappedBankAccounts = bankAccountsResult.payload.data.map(
-          (account) => ({
+        const sortedAccounts = [...bankAccountsResult.payload.data].sort(
+          (a, b) => (a.orderNumber || 0) - (b.orderNumber || 0)
+        );
+        
+        mappedBankAccounts = sortedAccounts.map(
+          (account, index) => ({
             ...account,
             selectedBank:
               account.idBank != null ? account.idBank.toString() : "",
@@ -179,6 +183,7 @@ const BankDetails = () => {
                 ? account.salaryPercentageDistributed.toString()
                 : "",
             currencyCode: account.currencyCode || "GYD",
+            orderNumber: account.orderNumber || index + 1,
           })
         );
 
@@ -212,6 +217,7 @@ const BankDetails = () => {
           accountNumber: "",
           salaryPercentageDistributed: "",
           currencyCode: "GYD",
+          orderNumber: 1,
         };
         mappedBankAccounts = [defaultBankAccount];
         setBankAccountsState([defaultBankAccount]);
@@ -364,6 +370,19 @@ const BankDetails = () => {
 
   const handleAddRow = () => {
     setBankAccountsState((prevState) => {
+      let nextOrderNumber = 1;
+      if (prevState.length > 0) {
+        const orderNumbers = prevState
+          .map(acc => acc.orderNumber)
+          .filter(num => num != null && num !== undefined && !isNaN(num));
+        
+        if (orderNumbers.length > 0) {
+          nextOrderNumber = Math.max(...orderNumbers) + 1;
+        } else {
+          nextOrderNumber = prevState.length + 1;
+        }
+      }
+      
       const newState = [
         ...prevState,
         {
@@ -373,6 +392,7 @@ const BankDetails = () => {
           accountNumber: "",
           salaryPercentageDistributed: "",
           currencyCode: "GYD",
+          orderNumber: nextOrderNumber,
         },
       ];
       
@@ -401,10 +421,16 @@ const BankDetails = () => {
             accountNumber: "",
             salaryPercentageDistributed: "",
             currencyCode: "GYD",
+            orderNumber: 1,
           },
         ];
       } else {
         newState = prevState.filter((_, i) => i !== index);
+
+        newState = newState.map((account, idx) => ({
+          ...account,
+          orderNumber: idx + 1,
+        }));
       }
       
       // Check for unsaved changes
@@ -424,6 +450,58 @@ const BankDetails = () => {
       ...prevErrors,
       salaryPercentageTotal: salaryPercentageValidation.error,
     }));
+  };
+
+  const handleMoveUp = (index) => {
+    if (index === 0) return;
+    
+    setBankAccountsState((prevState) => {
+      const newState = [...prevState];
+      const temp = newState[index];
+      newState[index] = newState[index - 1];
+      newState[index - 1] = temp;
+      
+      newState.forEach((account, idx) => {
+        account.orderNumber = idx + 1;
+      });
+      
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newState;
+    });
+  };
+
+  const handleMoveDown = (index) => {
+    setBankAccountsState((prevState) => {
+      if (index === prevState.length - 1) return prevState;
+      
+      const newState = [...prevState];
+      const temp = newState[index];
+      newState[index] = newState[index + 1];
+      newState[index + 1] = temp;
+      
+      newState.forEach((account, idx) => {
+        account.orderNumber = idx + 1;
+      });
+      
+      if (setHasUnsavedChanges && initialData) {
+        const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
+          disbursementType !== initialData.disbursementType ||
+          selectedBudgetCode !== initialData.selectedBudgetCode ||
+          childCount !== initialData.childCount ||
+          JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
+        setHasUnsavedChanges(hasChanges);
+      }
+      
+      return newState;
+    });
   };
 
   const isDuplicateDayType = (dayType, index) => {
@@ -643,7 +721,7 @@ const BankDetails = () => {
       return;
     }
 
-    const bankAccountPayload = bankAccountsState.map((account) => ({
+    const bankAccountPayload = bankAccountsState.map((account, index) => ({
       idEmployeeBankAccount: account.idEmployeeBankAccount || 0,
       idEmployee: parseInt(id),
       idBank: parseInt(account.selectedBank, 10),
@@ -655,6 +733,7 @@ const BankDetails = () => {
       ),
       disbursementType: disbursementType,
       currencyCode: account.currencyCode,
+      orderNumber: account.orderNumber || index + 1,
     }));
 
     const formData = new FormData();
@@ -774,6 +853,7 @@ const BankDetails = () => {
           accountNumber: "",
           salaryPercentageDistributed: "",
           currencyCode: "GYD",
+          orderNumber: 1,
         },
       ]);
       setOvertimeDetails([
@@ -848,9 +928,9 @@ const BankDetails = () => {
         <table className="table table-sm mb-0 border custom-table-emp-bank">
           <thead>
             <tr>
-              <th className="bank-name">Bank Name</th>
+              <th className="bank-name" style={{ width: "35%" }}>Bank Name</th>
               <th className="routing-number">Routing Number</th>
-              <th className="account-number" style={{ width: "30%" }}>
+              <th className="account-number" style={{ width: "20%" }}>
                 Account Number
               </th>
               <th className="salary-percentage">
@@ -955,8 +1035,18 @@ const BankDetails = () => {
                         <option value="USD">USD</option>
                       </select>
                     </td>
-                    <td>
-                      <div className="action-icons">
+                    <td style={{ textAlign: 'left' }}>
+                      <div className="action-icons" style={{ display: 'flex', gap: '4px', alignItems: 'center', justifyContent: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '2px' }}>
+                          <UpIcon
+                            onClick={() => handleMoveUp(index)}
+                            disabled={index === 0}
+                          />
+                          <DownIcon
+                            onClick={() => handleMoveDown(index)}
+                            disabled={index === bankAccountsState.length - 1}
+                          />
+                        </div>
                         {bankAccountsState.length > 1 && (
                           <DeleteIcon
                             className="delete-icon"
