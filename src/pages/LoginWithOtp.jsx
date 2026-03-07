@@ -109,11 +109,14 @@ function LoginWithOtp() {
                   </label>
                   <div className="input-group input-group-merge">
                     <input
-                      type={showOtp ? 'number' : 'password'}
+                      type={showOtp ? 'text' : 'password'}
                       id="password"
                       className="form-control"
                       name="password" value={otp}
-                      onChange={(e) => setOtp(e.target.value)} />
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setOtp(value);
+                      }} />
                     <span className="input-group-text cursor-pointer" onClick={() => setShowOtp(!showOtp)}>
                       {!showOtp && <i className="bx bx-hide"></i>}
                       {showOtp && <i className="bx bx-show"></i>}
