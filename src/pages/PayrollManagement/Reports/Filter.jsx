@@ -22,6 +22,10 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
   const [selectedDate, setSelectedDate] = useState(defaultDateValue);
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const defaultSelectValue = JSON.stringify({ value: "0", label: "ALL" });
+  const [selectedOption, setSelectedOption] = useState(
+    validValues ? "" : defaultSelectValue
+  );
 
   // Move API call to useEffect
   useEffect(() => {
@@ -37,7 +41,46 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
       )
         .then((response) => {
           if (response?.data) {
-            setOptions(response.data);
+            const apiOptions = response.data;
+            setOptions(apiOptions);
+
+            // Special handling: for SalaryMonth, default to previous month
+            if (conditionName === "SalaryMonth") {
+              const previousMonth = dayjs().subtract(1, "month");
+              const candidates = [
+                previousMonth.format("YYYYMM"),
+                previousMonth.format("YYYY-MM"),
+                previousMonth.format("MMYYYY"),
+                previousMonth.format("MM-YYYY"),
+                previousMonth.format("MMM-YYYY"),
+                previousMonth.format("MMM YYYY"),
+                previousMonth.format("MMM, YYYY"),
+                previousMonth.format("MMMM-YYYY"),
+                previousMonth.format("MMMM YYYY"),
+                previousMonth.format("MMMM, YYYY"),
+              ];
+
+              const defaultOption = apiOptions.find((item) => {
+                const label = String(item.displayColumn ?? "");
+                const value = String(item.valueColumn ?? "");
+                return candidates.some(
+                  (c) =>
+                    value === c ||
+                    label === c ||
+                    label.includes(c) ||
+                    value.includes(c)
+                );
+              });
+
+              if (defaultOption) {
+                const optionValue = JSON.stringify({
+                  value: defaultOption.valueColumn,
+                  label: defaultOption.displayColumn,
+                });
+                setSelectedOption(optionValue);
+                handleInputChange(conditionName, spParameterName, optionValue);
+              }
+            }
           }
           setLoading(false);
         })
@@ -106,13 +149,15 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
           <select
             key={spParameterName + report?.reportName}
             className="form-select"
+            value={selectedOption}
             onChange={(e) => {
+              setSelectedOption(e.target.value);
               handleInputChange(conditionName, spParameterName, e.target.value);
             }}
             disabled={loading}
           >
             {!validValues && (
-              <option value={JSON.stringify({ value: "0", label: "ALL" })}>
+              <option value={defaultSelectValue}>
                 Select
               </option>
             )}
