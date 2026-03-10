@@ -447,6 +447,7 @@ const Qualifications = () => {
                 className="form-control"
                 value={formData.qualificationName}
                 onChange={(e) => handleInputChange("qualificationName", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -457,6 +458,7 @@ const Qualifications = () => {
                 className="form-control"
                 value={formData.specialization}
                 onChange={(e) => handleInputChange("specialization", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -467,6 +469,7 @@ const Qualifications = () => {
                 className="form-control"
                 value={formData.institutionName}
                 onChange={(e) => handleInputChange("institutionName", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -511,6 +514,7 @@ const Qualifications = () => {
                 className="form-control"
                 value={formData.gradeOrPercentage}
                 onChange={(e) => handleInputChange("gradeOrPercentage", e.target.value)}
+                maxLength={50}
               />
             </div>
 

@@ -478,6 +478,7 @@ const Assets = () => {
                 value={formData.assetSerialNumber}
                 onChange={(e) => handleInputChange("assetSerialNumber", e.target.value)}
                 disabled
+                maxLength={50}
               />
             </div>
 
@@ -489,6 +490,7 @@ const Assets = () => {
                 value={formData.assetDetails}
                 onChange={(e) => handleInputChange("assetDetails", e.target.value)}
                 disabled
+                maxLength={50}
               />
             </div>
 
@@ -500,6 +502,7 @@ const Assets = () => {
                 value={formData.averageCost}
                 onChange={(e) => handleInputChange("averageCost", e.target.value)}
                 disabled
+                maxLength={20}
               />
             </div>
 
@@ -558,6 +561,7 @@ const Assets = () => {
                 rows="3"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange("remarks", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -680,6 +684,7 @@ const Assets = () => {
               onChange={(e) => setReturnReason(e.target.value)}
               placeholder="Enter reason for returning the asset"
               autoFocus
+              maxLength={50}
             />
           </div>
         </Modal.Body>

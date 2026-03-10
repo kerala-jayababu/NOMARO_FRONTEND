@@ -863,6 +863,7 @@ const BasicDetails = () => {
                   className={`form-control${employeeFormErrors.employeeCode ? " is-invalid" : ""}`}
                   value={employeeFormData.employeeCode}
                   onChange={(e) => handleEmployeeInputChange("employeeCode", e.target.value)}
+                  maxLength={50}
                 />
                 {employeeFormErrors.employeeCode && (
                   <div className="invalid-feedback d-block">{employeeFormErrors.employeeCode}</div>
@@ -920,6 +921,7 @@ const BasicDetails = () => {
                   className={`form-control${employeeFormErrors.firstName ? " is-invalid" : ""}`}
                   value={employeeFormData.firstName}
                   onChange={(e) => handleEmployeeInputChange("firstName", e.target.value)}
+                  maxLength={50}
                 />
                 {employeeFormErrors.firstName && (
                   <div className="invalid-feedback d-block">{employeeFormErrors.firstName}</div>
@@ -936,6 +938,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.middleName}
                   onChange={(e) => handleEmployeeInputChange("middleName", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -949,6 +952,7 @@ const BasicDetails = () => {
                   className={`form-control${employeeFormErrors.lastName ? " is-invalid" : ""}`}
                   value={employeeFormData.lastName}
                   onChange={(e) => handleEmployeeInputChange("lastName", e.target.value)}
+                  maxLength={50}
                 />
                 {employeeFormErrors.lastName && (
                   <div className="invalid-feedback d-block">{employeeFormErrors.lastName}</div>
@@ -1077,6 +1081,7 @@ const BasicDetails = () => {
                   value={employeeFormData.nationalIDNumber}
                   onChange={(e) => handleEmployeeInputChange("nationalIDNumber", e.target.value)}
                   placeholder="Enter National ID Number"
+                  maxLength={20}
                 />
               </div>
               <div className="col-md-4">
@@ -1091,6 +1096,7 @@ const BasicDetails = () => {
                   value={employeeFormData.idNumber}
                   onChange={(e) => handleEmployeeInputChange("idNumber", e.target.value)}
                   placeholder="Enter ID Number"
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1104,6 +1110,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.taxIdNumber}
                   onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
+                  maxLength={20}
                 />
               </div>
             </div>
@@ -1229,6 +1236,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.passportNumber}
                   onChange={(e) => handleEmployeeInputChange("passportNumber", e.target.value)}
+                  maxLength={15}
                 />
               </div>
             </div>
@@ -1251,6 +1259,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.phoneNumber1}
                   onChange={(e) => handleEmployeeInputChange("phoneNumber1", e.target.value)}
+                  maxLength={20}
                 />
               </div>
               <div className="col-md-4">
@@ -1264,6 +1273,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.phoneNumber2}
                   onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
+                  maxLength={20}
                 />
               </div>
               <div className="col-md-4">
@@ -1277,6 +1287,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.whatsAppNumber}
                   onChange={(e) => handleEmployeeInputChange("whatsAppNumber", e.target.value)}
+                  maxLength={20}
                 />
               </div>
             </div>
@@ -1293,6 +1304,7 @@ const BasicDetails = () => {
                   className={`form-control${employeeFormErrors.emailID ? " is-invalid" : ""}`}
                   value={employeeFormData.emailID}
                   onChange={(e) => handleEmployeeInputChange("emailID", e.target.value)}
+                  maxLength={100}
                 />
                 {employeeFormErrors.emailID && (
                   <div className="invalid-feedback d-block">{employeeFormErrors.emailID}</div>
@@ -1309,6 +1321,7 @@ const BasicDetails = () => {
                   className={`form-control${employeeFormErrors.homeEmail ? " is-invalid" : ""}`}
                   value={employeeFormData.homeEmail}
                   onChange={(e) => handleEmployeeInputChange("homeEmail", e.target.value)}
+                  maxLength={100}
                 />
                 {employeeFormErrors.homeEmail && (
                   <div className="invalid-feedback d-block">{employeeFormErrors.homeEmail}</div>
@@ -1331,6 +1344,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.emergencyContactPersonName}
                   onChange={(e) => handleEmployeeInputChange("emergencyContactPersonName", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1344,6 +1358,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.emergencyContactNumbers}
                   onChange={(e) => handleEmployeeInputChange("emergencyContactNumbers", e.target.value)}
+                  maxLength={20}
                 />
               </div>
               <div className="col-md-4">
@@ -1363,6 +1378,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.address1}
                   onChange={(e) => handleEmployeeInputChange("address1", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1376,6 +1392,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.address2}
                   onChange={(e) => handleEmployeeInputChange("address2", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1389,6 +1406,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.address3}
                   onChange={(e) => handleEmployeeInputChange("address3", e.target.value)}
+                  maxLength={50}
                 />
               </div>
             </div>
@@ -1405,6 +1423,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.city}
                   onChange={(e) => handleEmployeeInputChange("city", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1418,6 +1437,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.state}
                   onChange={(e) => handleEmployeeInputChange("state", e.target.value)}
+                  maxLength={50}
                 />
               </div>
               <div className="col-md-4">
@@ -1431,6 +1451,7 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.zipCode}
                   onChange={(e) => handleEmployeeInputChange("zipCode", e.target.value)}
+                  maxLength={10}
                 />
               </div>
             </div>

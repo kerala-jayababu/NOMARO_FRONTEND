@@ -496,6 +496,7 @@ const EmployeeDocuments = () => {
                 rows="3"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange("remarks", e.target.value)}
+                maxLength={50}
               />
             </div>
 
