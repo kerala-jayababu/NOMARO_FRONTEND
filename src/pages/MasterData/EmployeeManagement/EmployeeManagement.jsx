@@ -7,6 +7,7 @@ import Experience from "./tabs/Experience";
 import EmployeeDocuments from "./tabs/EmployeeDocuments";
 import Assets from "./tabs/Assets";
 import EmployeeActions from "./tabs/EmployeeActions";
+import Children from "./tabs/Children";
 
 // Lazy load heavy components for better performance
 const BasicDetails = lazy(() => import("./tabs/BasicDetails"));
@@ -37,6 +38,7 @@ const EmployeeManagement = () => {
     { id: "qualifications", label: "Qualifications", component: Qualifications },
     { id: "experience", label: "Experiences", component: Experience },
     { id: "documents", label: "Documents", component: EmployeeDocuments },
+    { id: "children", label: "Childrens", component: Children },
     { id: "assets", label: "Assets", component: Assets },
     // { id: "actions", label: "Employee Actions", component: EmployeeActions },
   ];

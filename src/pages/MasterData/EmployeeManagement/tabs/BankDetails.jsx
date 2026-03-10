@@ -936,7 +936,7 @@ const BankDetails = () => {
               <th className="salary-percentage">
                 {disbursementType === "PERCENTAGE" ? "% Salary" : "Amount(G$)"}
               </th>
-              <th className="currency">Currency</th>
+              <th className="currency">Bank Acc. Currency</th>
               <th style={{ width: "10%" }}></th>
             </tr>
           </thead>
@@ -984,7 +984,7 @@ const BankDetails = () => {
                         className="form-control"
                         name="accountNumber"
                         value={bank.accountNumber}
-                        maxLength="25"
+                        maxLength={25}
                         onChange={(e) =>
                           handleInputChange(e, index, "accountNumber")
                         }
@@ -1161,7 +1161,7 @@ const BankDetails = () => {
                         <input
                           type="text"
                           className="form-control"
-                          maxLength="10"
+                          maxLength={10}
                           name="hourlyRate"
                           value={detail.hourlyRate}
                           onChange={(e) => {
@@ -1175,7 +1175,7 @@ const BankDetails = () => {
                       <td className="col-md-3" style={{ padding: "2px 2px" }}>
                         <input
                           type="text"
-                          maxLength="5"
+                          maxLength={5}
                           name="appliedRate"
                           className="form-control"
                           value={detail.appliedRate}

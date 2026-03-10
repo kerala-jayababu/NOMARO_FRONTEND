@@ -397,6 +397,7 @@ const Experience = () => {
                 className="form-control"
                 value={formData.companyName}
                 onChange={(e) => handleInputChange("companyName", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -407,6 +408,7 @@ const Experience = () => {
                 className="form-control"
                 value={formData.designation}
                 onChange={(e) => handleInputChange("designation", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -417,6 +419,7 @@ const Experience = () => {
                 className="form-control"
                 value={formData.department}
                 onChange={(e) => handleInputChange("department", e.target.value)}
+                maxLength={50}
               />
             </div>
 
@@ -499,6 +502,7 @@ const Experience = () => {
                 thousandSeparator={true}
                 allowLeadingZeros={false}
                 placeholder="0.00"
+                maxLength={20}
               />
             </div>
 
@@ -509,6 +513,7 @@ const Experience = () => {
                 rows="3"
                 value={formData.reasonForLeaving}
                 onChange={(e) => handleInputChange("reasonForLeaving", e.target.value)}
+                maxLength={50}
               />
             </div>
 

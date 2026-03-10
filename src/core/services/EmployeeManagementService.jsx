@@ -494,5 +494,59 @@ export default class EmployeeManagementService {
       return handleApiError(error);
     }
   };
+
+
+  static getEmployeeChildren = async (idEmployee) => {
+    try {
+      const res = await API.get(`/api/v1/Employee/GetEmployeeChildren?idEmployee=${idEmployee}`);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static postEmployeeChild = async (payload) => {
+    try {
+      const formData = new FormData();
+      formData.append("IdEmployeeChildren", payload.idEmployeeChildren || 0);
+      formData.append("IdEmployee", payload.idEmployee);
+      formData.append("ChildName", payload.childName);
+      formData.append("DateOfBirth", payload.dateOfBirth ? moment(payload.dateOfBirth).format("YYYY-MM-DD") : "");
+      formData.append("Gender", payload.gender || "");
+      formData.append("CertificateNumber", payload.certificateNumber || "");
+      formData.append("DivisionNumber", payload.divisionNumber || "");
+
+      let res;
+      if (payload.idEmployeeChildren && payload.idEmployeeChildren > 0) {
+        res = await API.put(
+          `/api/v1/Employee/UpdateEmployeeChild?idEmployeeChildren=${payload.idEmployeeChildren}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        res = await API.post("/api/v1/Employee/AddEmployeeChild", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
+  static deleteEmployeeChild = async (idEmployeeChildren) => {
+    try {
+      const res = await API.delete(`/api/v1/Employee/DeleteEmployeeChild?idEmployeeChildren=${idEmployeeChildren}`);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 }
 
