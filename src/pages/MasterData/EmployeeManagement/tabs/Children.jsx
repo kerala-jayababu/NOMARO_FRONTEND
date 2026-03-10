@@ -203,7 +203,7 @@ const Children = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return moment(dateString).format("DD-MMM-YYYY");
+    return moment(dateString).format("MM-DD-YYYY");
   };
 
   const calculateAge = (dateOfBirth) => {
@@ -216,7 +216,7 @@ const Children = () => {
       <div className="col-lg-8">
         <div>
           <div>
-            <h6 className="mb-0">Children</h6>
+            <h6 className="mb-0">Childrens Details</h6>
           </div>
           <div className="pt-3">
             <div className="table-responsive">
@@ -295,7 +295,7 @@ const Children = () => {
               <DatePicker
                 selected={formData.dateOfBirth}
                 onChange={(date) => handleInputChange("dateOfBirth", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat="MM-dd-yyyy"
                 className="form-control"
                 showYearDropdown
                 showMonthDropdown
