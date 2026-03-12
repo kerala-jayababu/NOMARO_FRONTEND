@@ -47,7 +47,7 @@ const BankDetails = () => {
   const [overtimeOptions, setOvertimeOptions] = useState([]);
   const [disbursementType, setDisbursementType] = useState("PERCENTAGE");
   const [selectedBudgetCode, setSelectedBudgetCode] = useState("");
-  const [childCount, setChildCount] = useState(0);
+  const [childCount, setChildCount] = useState(-1);
   const [phoneNumber2, setPhoneNumber2] = useState("");
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [editFileName, setEditFileName] = useState(null);
@@ -141,10 +141,10 @@ const BankDetails = () => {
     try {
       showLoader();
       
-      // Fetch employee details for child count, budget code, and phoneNumber2
+      // Fetch employee details for budget code and phoneNumber2
       const detailsResult = await dispatch(getEmployeeDetailsByID(parseInt(id)));
       if (detailsResult.payload && detailsResult.payload.data) {
-        setChildCount(detailsResult.payload.data.childrenCount || 0);
+        // childCount is always set to -1
         if (detailsResult.payload.data.idBudgetCode) {
           setSelectedBudgetCode(detailsResult.payload.data.idBudgetCode.toString());
         }
@@ -260,7 +260,7 @@ const BankDetails = () => {
         overtimeDetails: JSON.parse(JSON.stringify(mappedOvertimeDetails)),
         disbursementType: mappedBankAccounts.length > 0 ? mappedBankAccounts[0].disbursementType : "PERCENTAGE",
         selectedBudgetCode: detailsResult.payload?.data?.idBudgetCode?.toString() || "",
-        childCount: detailsResult.payload?.data?.childrenCount || 0,
+        childCount: -1, // Always -1
         phoneNumber2: detailsResult.payload?.data?.phoneNumber2 || "",
       };
       setInitialData(initial);
@@ -739,7 +739,7 @@ const BankDetails = () => {
     const formData = new FormData();
     formData.append("EmployeeId", parseInt(id));
     formData.append("BudgetCodeId", parseInt(selectedBudgetCode, 10) || 0);
-    formData.append("ChildCount", parseInt(childCount, 10));
+    formData.append("ChildCount", -1); // Always -1
     formData.append("PhoneNumber2", phoneNumber2 || "");
     if (attachmentFile) {
       formData.append("File", attachmentFile);
@@ -864,7 +864,7 @@ const BankDetails = () => {
         },
       ]);
       setSelectedBudgetCode("");
-      setChildCount(0);
+      setChildCount(-1);
       setPhoneNumber2("");
       setBankAccountErrors({});
       setOvertimeErrors({});
@@ -1271,7 +1271,7 @@ const BankDetails = () => {
             </select>
 
             <div className="row d-flex align-items-end mt-3">
-              <div className="col-md-4">
+              {/* <div className="col-md-4">
                 <label className="form-label mb-1" htmlFor="childCount">
                   Child Count
                 </label>
@@ -1296,8 +1296,8 @@ const BankDetails = () => {
                     }
                   }}
                 />
-              </div>
-              <div className="col-md-8">
+              </div> */}
+              <div className="col-md-12">
                 <label className="form-label mb-1">Attachments</label>
                 <input
                   type="file"

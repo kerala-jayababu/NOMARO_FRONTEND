@@ -216,7 +216,7 @@ const Children = () => {
       <div className="col-lg-8">
         <div>
           <div>
-            <h6 className="mb-0">Childrens Details</h6>
+            <h6 className="mb-0">Child/ren Details</h6>
           </div>
           <div className="pt-3">
             <div className="table-responsive">
