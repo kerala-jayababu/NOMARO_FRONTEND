@@ -26,6 +26,7 @@ import overtimeApproval from "./overtimeApproval";
 import offboardingSetup from "./offboardingSetup";
 import offboardingCases from "./offboardingCases";
 import missingEntryApproval from "./missingEntryApproval";
+import forgotCardApproval from "./forgotCardApproval";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -55,6 +56,7 @@ const rootReducer = combineReducers({
   offboardingSetup: offboardingSetup,
   offboardingCases: offboardingCases,
   missingEntryApproval: missingEntryApproval,
+  forgotCardApproval: forgotCardApproval,
 });
 
 export default rootReducer;

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
 import {
   PieChart,
   Pie,
@@ -278,8 +280,29 @@ function OverviewTab({ donutData, lineData, deptChartData, leaveTypes, loading }
 
 // ── Department Tab ────────────────────────────────────────────────────────────
 
+function exportToExcel(rows, fileName) {
+  if (!rows.length) { toast.warning("No data available to export"); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Sheet1");
+  XLSX.writeFile(wb, fileName);
+  toast.success("Exported successfully");
+}
+
 function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
   if (loading) return <CenteredSpinner />;
+
+  const handleExport = () => {
+    const rows = departmentData.map((dept) => {
+      const row = { Department: dept.departmentName };
+      leaveTypes.forEach(({ typeName, leaveCode }) => {
+        row[leaveCode] = getLeaveDayForType(dept, typeName);
+      });
+      const total = (dept.leaveBreakdown || []).reduce((sum, lb) => sum + (lb.totalDays || 0), 0);
+      row["Total"] = total.toFixed(2);
+      return row;
+    });
+    exportToExcel(rows, "Department_Leave_Summary.xlsx");
+  };
 
   return (
     <>
@@ -317,7 +340,12 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
       {/* Summary Table */}
       <div className="card">
         <div className="card-body">
-          <SectionHeading text="Department Summary Table" />
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <SectionHeading text="Department Summary Table" />
+            <button className="btn btn-sm btn-primary" onClick={handleExport}>
+              <i className="bx bx-download me-1"></i>Export Excel
+            </button>
+          </div>
           <div className="table-responsive">
             <table className="table table-sm table-bordered mb-0 anual-leave-dashboard-table">
               <thead>
@@ -346,7 +374,7 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
                         {leaveTypes.map(({ typeName }) => (
                           <td key={typeName}>{getLeaveDayForType(dept, typeName)}</td>
                         ))}
-                        <td className="fw-bold text-primary">{total}</td>
+                        <td className="fw-bold text-primary">{total.toFixed(2)}</td>
                       </tr>
                     );
                   })
@@ -364,6 +392,19 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
 
 function DesignationTab({ desigChartData, leaveTypes, designationData, loading }) {
   if (loading) return <CenteredSpinner />;
+
+  const handleExport = () => {
+    const rows = designationData.map((desig) => {
+      const row = { Designation: desig.designationName };
+      leaveTypes.forEach(({ typeName, leaveCode }) => {
+        row[leaveCode] = getLeaveDayForType(desig, typeName);
+      });
+      const total = (desig.leaveBreakdown || []).reduce((sum, lb) => sum + (lb.totalDays || 0), 0);
+      row["Total"] = total.toFixed(2);
+      return row;
+    });
+    exportToExcel(rows, "Designation_Leave_Summary.xlsx");
+  };
 
   return (
     <>
@@ -401,7 +442,12 @@ function DesignationTab({ desigChartData, leaveTypes, designationData, loading }
       {/* Summary Table */}
       <div className="card">
         <div className="card-body">
-          <SectionHeading text="Designation Summary Table" />
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <SectionHeading text="Designation Summary Table" />
+            <button className="btn btn-sm btn-primary" onClick={handleExport}>
+              <i className="bx bx-download me-1"></i>Export Excel
+            </button>
+          </div>
           <div className="table-responsive">
             <table className="table table-sm table-bordered mb-0 anual-leave-dashboard-table">
               <thead>
@@ -430,7 +476,7 @@ function DesignationTab({ desigChartData, leaveTypes, designationData, loading }
                         {leaveTypes.map(({ typeName }) => (
                           <td key={typeName}>{getLeaveDayForType(desig, typeName)}</td>
                         ))}
-                        <td className="fw-bold text-primary">{total}</td>
+                        <td className="fw-bold text-primary">{total.toFixed(2)}</td>
                       </tr>
                     );
                   })
@@ -455,6 +501,22 @@ function EmployeesTab({
   onFilterChange,
   loading,
 }) {
+  const handleExport = () => {
+    const rows = employeeData.map((emp) => {
+      const row = {
+        Employee: emp.employeeName || "--",
+        Department: emp.departmentName || "--",
+        Designation: emp.designationName || "--",
+      };
+      leaveTypes.forEach(({ typeName, leaveCode }) => {
+        row[leaveCode] = getLeaveDayForType(emp, typeName);
+      });
+      row["Total"] = (emp.totalLeaveDays ?? 0).toFixed(2);
+      return row;
+    });
+    exportToExcel(rows, "Employee_Leave_Details.xlsx");
+  };
+
   return (
     <div className="card">
       <div className="card-body">
@@ -492,6 +554,9 @@ function EmployeesTab({
                 </option>
               ))}
             </select>
+            <button style={{ minWidth: 120 }} className="btn btn-sm btn-primary" onClick={handleExport}>
+              <i className="bx bx-download me-1"></i>Export Excel
+            </button>
           </div>
         </div>
 
@@ -525,7 +590,7 @@ function EmployeesTab({
                       <td key={typeName}>{getLeaveDayForType(emp, typeName)}</td>
                     ))}
                     <td className="fw-bold text-primary">
-                      {emp.totalLeaveDays ?? 0}
+                      {(emp.totalLeaveDays ?? 0).toFixed(2)}
                     </td>
                   </tr>
                 ))

@@ -424,6 +424,9 @@ function LeaveDashboard() {
                     <th style={TH_STYLE}>Employee Name</th>
                     <th style={TH_STYLE}>Department</th>
                     <th style={TH_STYLE}>Designation</th>
+                    {activeCard !== "NOTCHECKEDIN" && (
+                      <th style={TH_STYLE}>Status</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody style={{ fontSize: 13 }}>
@@ -454,6 +457,17 @@ function LeaveDashboard() {
                             ? row.designationName || "--"
                             : row.designation || "--"}
                         </td>
+                        {activeCard !== "NOTCHECKEDIN" && (
+                          <td>
+                            <span
+                              className={`badge ${
+                                STATUS_BADGE[(row.approvalStatus || "").toUpperCase()] || "bg-info"
+                              }`}
+                            >
+                              {row.approvalStatus || "--"}
+                            </span>
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}
