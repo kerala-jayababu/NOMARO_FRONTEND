@@ -82,7 +82,8 @@ const ShiftAssignment = () => {
         const key = `${dateStr}|${slot}`;
 
         if (!assignmentMap[key]) assignmentMap[key] = [];
-        assignmentMap[key].push(entry.idEmployee);
+        if (!assignmentMap[key].includes(entry.idEmployee))
+          assignmentMap[key].push(entry.idEmployee);
 
         if (!existingMap[key]) existingMap[key] = {};
         existingMap[key][entry.idEmployee] = entry.idShiftAssignment;
@@ -107,19 +108,18 @@ const ShiftAssignment = () => {
 
   const toggleEmployeeSelection = (idEmployee, e) => {
     const key = `${popupInfo.date.format("YYYY-MM-DD")}|${popupInfo.slot}`;
-    const current = assignments[key] || [];
-    const isSelected = current.includes(idEmployee);
     const isChecked = e.target.checked;
-    let updated = [];
-    if(isChecked){
-      updated = isSelected
-        ? current.filter(id => id !== idEmployee)
-        : current.length < 5 ? [...current, idEmployee] : current;
-    } else {
-      updated = current.filter(id => id !== idEmployee);
-    }
 
     setAssignments(prev => {
+      const current = prev[key] || [];
+      let updated;
+      if (isChecked) {
+        updated = current.includes(idEmployee) || current.length >= 5
+          ? current
+          : [...current, idEmployee];
+      } else {
+        updated = current.filter(id => id !== idEmployee);
+      }
       const newMap = { ...prev };
       if (updated.length > 0) {
         newMap[key] = updated;
@@ -131,17 +131,11 @@ const ShiftAssignment = () => {
 
     setExistingAssignments(prev => {
       const prevKey = prev[key] || {};
-      if (!isSelected) {
-        if(isChecked) {
-          return {
-            ...prev,
-            [key]: { ...prevKey, [idEmployee]: prevKey[idEmployee] ?? null }
-          };
-        } else {
-            return Object.fromEntries(
-              Object.entries(prev).filter(([_, empMap]) => !(idEmployee in empMap))
-            );
-        }
+      if (isChecked) {
+        return {
+          ...prev,
+          [key]: { ...prevKey, [idEmployee]: prevKey[idEmployee] ?? null }
+        };
       } else {
         const newEntry = { ...prevKey };
         delete newEntry[idEmployee];
