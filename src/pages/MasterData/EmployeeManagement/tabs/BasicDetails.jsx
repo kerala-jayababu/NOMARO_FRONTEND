@@ -538,8 +538,15 @@ const BasicDetails = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
+    // Enforce 500KB max size
+    const MAX_SIZE_BYTES = 500 * 1024; // 500KB
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error("File size above 500KB is not allowed");
+      if (e.target) {
+        e.target.value = "";
+      }
+      setEmployeePhotoFile(null);
+      setEmployeePhotoPreview(null);
       return;
     }
 
