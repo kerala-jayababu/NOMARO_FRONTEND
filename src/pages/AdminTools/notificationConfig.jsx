@@ -165,10 +165,16 @@ function NotificationConfig() {
     };
 
     const handleSubmit = () => {
-        let emailContent = formData.emailContent;
-        if (templateMode === 'htmlfile') {
-            emailContent = null;
+        // Validate HTML file is selected when htmlfile mode is selected        
+        if (templateMode === 'htmlfile' && !htmlFile ) {
+            toast.error('Please select an HTML file');
+            return;
         }
+
+        let emailContent = formData.emailContent;
+        // if (templateMode === 'htmlfile') {
+        //     emailContent = null;
+        // }
         const TemplateSelection = templateMode.toUpperCase();
         const HtmlTemplateFileName = templateMode === 'htmlfile'
             ? (htmlFile?.name || existingTemplateFileName || '')
@@ -300,6 +306,54 @@ function NotificationConfig() {
                     autocomplete="off"
                   />
                 </div>
+
+                <div class="mb-2">
+                  <label class="form-label mb-1">Email Content Template (HTML Entry)</label>
+                  <p class="form-text text-muted small mb-2">
+                    Rich text and pasted HTML from web pages use the editor below.
+                  </p>
+                  <ReactQuill
+                    ref={quillRef}
+                    key={selectedNotification?.idNotificationConfig ?? 'no-selection'}
+                    theme="snow"
+                    value={formData.emailContent}
+                    onChange={handleQuillChange}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    style={{ height: '200px', marginBottom: '50px' }}
+                  />
+                </div>
+
+                <div class="mb-2">
+                  <label class="form-label mb-1">Choose HTML File</label>
+                  <input
+                    key={selectedNotification?.idNotificationConfig ?? 'none'}
+                    ref={htmlFileInputRef}
+                    type="file"
+                    class="form-control form-control-sm"
+                    accept=".html,.htm,text/html"
+                    onChange={handleHtmlFileChange}
+                    disabled={!selectedNotification}
+                  />
+                  {existingTemplateFileName && !htmlFile && (
+                    <div class="d-flex align-items-center justify-content-between mt-1">
+                      <p class="form-text small text-muted mb-0">Current file: {existingTemplateFileName}</p>
+                      {htmlTemplateFileContent && (
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm"
+                          onClick={handleDownloadTemplate}
+                        >
+                          Download
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {htmlFile && (
+                    <p class="form-text small text-muted mb-0 mt-1">Selected: {htmlFile.name}</p>
+                  )}
+                </div>
+
                 <div class="mb-3">
                   <label class="form-label mb-1">HTML File Template</label>
                   <div class="d-flex flex-wrap gap-3">
@@ -330,73 +384,6 @@ function NotificationConfig() {
                   </div>
                 </div>
 
-                {templateMode === 'htmltext' && (
-                <div class="mb-2">
-                  <label class="form-label mb-1">Email Content Template (HTML Entry)</label>
-                  <p class="form-text text-muted small mb-2">
-                    Rich text and pasted HTML from web pages use the editor below. To load a full HTML string (tags as code), paste it in the box and click Apply HTML.
-                  </p>
-                  <ReactQuill
-                    ref={quillRef}
-                    key={selectedNotification?.idNotificationConfig ?? 'no-selection'}
-                    theme="snow"
-                    value={formData.emailContent}
-                    onChange={handleQuillChange}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    style={{ height: '200px', marginBottom: '50px' }}
-                  />
-                  <label class="form-label mb-1 mt-3">Paste raw HTML (optional)</label>
-                  <textarea
-                    class="form-control font-monospace small"
-                    rows={5}
-                    value={rawHtmlPaste}
-                    onChange={(e) => setRawHtmlPaste(e.target.value)}
-                    placeholder={'e.g. <p>Hello</p><ul><li>Item</li></ul>'}
-                    spellCheck={false}
-                  />
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm mt-2"
-                    onClick={applyRawHtmlToEditor}
-                    disabled={!selectedNotification || !rawHtmlPaste?.trim()}
-                  >
-                    Apply HTML to editor
-                  </button>
-                </div>
-                )}
-
-                {templateMode === 'htmlfile' && (
-                <div class="mb-2">
-                  <label class="form-label mb-1">Choose HTML file</label>
-                  <input
-                    key={selectedNotification?.idNotificationConfig ?? 'none'}
-                    ref={htmlFileInputRef}
-                    type="file"
-                    class="form-control form-control-sm"
-                    accept=".html,.htm,text/html"
-                    onChange={handleHtmlFileChange}
-                    disabled={!selectedNotification}
-                  />
-                  {existingTemplateFileName && !htmlFile && (
-                    <div class="d-flex align-items-center justify-content-between mt-1">
-                      <p class="form-text small text-muted mb-0">Current file: {existingTemplateFileName}</p>
-                      {htmlTemplateFileContent && (
-                        <button
-                          type="button"
-                          class="btn btn-outline-primary btn-sm"
-                          onClick={handleDownloadTemplate}
-                        >
-                          Download
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {htmlFile && (
-                    <p class="form-text small text-muted mb-0 mt-1">Selected: {htmlFile.name}</p>
-                  )}
-                </div>
-                )}
                 <div class="mb-2">
                   <label class="form-label mb-1">App Notification Text</label>
                   <input 
