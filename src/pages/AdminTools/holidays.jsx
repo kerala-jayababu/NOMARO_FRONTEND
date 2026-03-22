@@ -131,16 +131,21 @@ const Holiday = () => {
   const capitalize = (str) =>
     str?.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
+  const formatHolidayType = (str) => {
+    const map = { publicholiday: 'Public Holiday' };
+    return map[str?.toLowerCase()] || capitalize(str);
+  };
+
   useEffect(() => {
     const fetchHolidayEvents = async () => {
       try {
         const response = await CommonService.getHolidaysInAnYear(calendarYear);
         const eventData = response.data.map(item => ({
-          title: `${capitalize(item.holidayType)}: ${item.holidayDescription}`,
+          title: `${formatHolidayType(item.holidayType)}: ${item.holidayDescription}`,
           start: new Date(item.holidayDate),
           end: new Date(item.holidayDate),
           desc: item.holidayDescription,
-          holidayType: capitalize(item.holidayType),
+          holidayType: formatHolidayType(item.holidayType),
           isHoliday: true,
           id: item.idHoliday
         }));
@@ -183,11 +188,17 @@ const Holiday = () => {
       setConfirmModalVisible(true);
     };
 
+    const [typeLabel, ...rest] = event.title.split(': ');
+    const descLabel = rest.join(': ');
+
     return (
-      <div className="d-flex justify-content-between align-items-center">
-        <span>{event.title}</span>
+      <div className="d-flex justify-content-between align-items-start" style={{ overflow: 'hidden' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 'bold' }}>{typeLabel}:</div>
+          <div>{descLabel}</div>
+        </div>
         <FaTrashAlt
-          style={{ cursor: 'pointer', marginLeft: 8 }}
+          style={{ cursor: 'pointer', marginLeft: 8, flexShrink: 0, marginTop: 2 }}
           onClick={handleDelete}
           title="Delete Holiday"
         />
