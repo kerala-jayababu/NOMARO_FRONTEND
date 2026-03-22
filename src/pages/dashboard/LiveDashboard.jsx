@@ -57,6 +57,7 @@ function LiveDashboard() {
   const [selectedDetailLabel, setSelectedDetailLabel] = useState(
     "Total Employees"
   );
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const getSelectedDeptIdForApi = useCallback(() => {
     if (!selectedDepartmentId || selectedDepartmentId === "all") {
@@ -137,7 +138,7 @@ function LiveDashboard() {
     return () => {
       isMounted = false;
     };
-  }, [getSelectedDeptIdForApi]);
+  }, [getSelectedDeptIdForApi, refreshKey]);
 
   const normalizeDetailRow = useCallback((row) => {
     const getValue = (keys, fallback = "--") => {
@@ -362,6 +363,11 @@ function LiveDashboard() {
     fetchDetails(stat.detailType, stat.detailLabel || stat.label);
   };
 
+  const handleRefresh = () => {
+    setRefreshKey(k => k + 1);
+    fetchDetails(activeDetailType, selectedDetailLabel);
+  };
+
   const handleExportToExcel = () => {
     if (filteredRows.length === 0) {
       toast.warning("No data available to export", {
@@ -380,8 +386,9 @@ function LiveDashboard() {
         "Email": row.email || "--",
         "Phone": row.phone || "--",
         "Status": row.statusLabel || "--",
-        "Clock-In": row.checkIn || "--",
-        "Clock-Out": row.checkOut || "--",
+        ...(activeDetailType === "ABSENT-UNAUTHORIZED"
+          ? { "Exp.Clock-In": row.checkIn || "--" }
+          : { "Clock-In": row.checkIn || "--", "Clock-Out": row.checkOut || "--" }),
       }));
 
       // Create workbook and worksheet
@@ -396,8 +403,8 @@ function LiveDashboard() {
         { wch: 30 }, // Email
         { wch: 15 }, // Phone
         { wch: 20 }, // Status
-        { wch: 12 }, // Clock-In
-        { wch: 12 }, // Clock-Out
+        { wch: 15 }, // Clock-In / Exp.Clock-In
+        ...(activeDetailType === "ABSENT-UNAUTHORIZED" ? [] : [{ wch: 12 }]), // Clock-Out
       ];
       worksheet["!cols"] = columnWidths;
 
@@ -444,21 +451,33 @@ function LiveDashboard() {
       </div>
 
       <div className="card-box">
-        <div className="filter-box">
-          <label htmlFor="department">Department:</label>
-          <select
-            id="department"
-            className="form-select"
-            style={{ width: 200 }}
-            value={selectedDepartmentId}
-            onChange={handleDepartmentChange}
+        <div className="filter-box" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="department">Department:</label>
+            <select
+              id="department"
+              className="form-select"
+              style={{ width: 200 }}
+              value={selectedDepartmentId}
+              onChange={handleDepartmentChange}
+            >
+              {departments.map((dept) => (
+                <option key={dept.idDepartment} value={dept.idDepartment}>
+                  {dept.departmentName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={handleRefresh}
+            disabled={isStatsLoading || isDetailsLoading}
+            title="Refresh"
+            style={{ display: "flex", alignItems: "center", gap: "5px" }}
           >
-            {departments.map((dept) => (
-              <option key={dept.idDepartment} value={dept.idDepartment}>
-                {dept.departmentName}
-              </option>
-            ))}
-          </select>
+            <i className="bx bx-refresh"></i>
+            Refresh
+          </button>
         </div>
 
         <div className="summary-row mb-4">
@@ -517,7 +536,7 @@ function LiveDashboard() {
               Showing: {selectedDetailLabel}
             </span>
             <button
-              className="btn btn-sm btn-success"
+              className="btn btn-sm btn-primary"
               onClick={handleExportToExcel}
               disabled={isDetailsLoading || filteredRows.length === 0}
               title="Export to Excel"
@@ -549,20 +568,20 @@ function LiveDashboard() {
                 <th >Email</th>
                 <th >Phone</th>
                 <th >Status</th>
-                <th >Clock-In</th>
-                <th >Clock-Out</th>
+                <th>{activeDetailType === "ABSENT-UNAUTHORIZED" ? "Exp.Clock-In" : "Clock-In"}</th>
+                {activeDetailType !== "ABSENT-UNAUTHORIZED" && <th>Clock-Out</th>}
               </tr>
             </thead>
             <tbody>
               {isDetailsLoading ? (
                 <tr>
-                  <td colSpan="8" className="text-center">
+                  <td colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8} className="text-center">
                     Loading details...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="text-center text-muted">
+                  <td colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8} className="text-center text-muted">
                     No records found.
                   </td>
                 </tr>
@@ -580,7 +599,7 @@ function LiveDashboard() {
                       </span>
                     </td>
                     <td>{row.checkIn}</td>
-                    <td>{row.checkOut}</td>
+                    {activeDetailType !== "ABSENT-UNAUTHORIZED" && <td>{row.checkOut}</td>}
                   </tr>
                 ))
               )}

@@ -18,18 +18,29 @@
 }
 
 .rbc-date-cell.rbc-now {
-  background-color: #e0f7fa;
+  /* background-color: #e0f7fa; */
   font-size: 20px;
   font-weight: bold;
 }
 
-.holiday-cell {
+.holiday-cell,
+.holiday-cell.rbc-today {
   background-color: #6f1d1f !important;
   color: white !important;
   font-weight: bold;
 }
 
+.rbc-event-content {
+  font-size: 10px !important;
+}
+
 .holiday-cell .rbc-button-link {
+  color: white !important;
+}
+
+.holiday-cell .rbc-date-cell.rbc-now,
+.holiday-cell .rbc-date-cell {
+  background-color: transparent !important;
   color: white !important;
 }
 

@@ -149,48 +149,45 @@ const ShiftAssignment = () => {
     });
   };
 
-  const handleSubmit = () => {
-    if (isPastWeek) return alert("Cannot submit past week shifts.");
-
+  const handleSaveAndClose = () => {
+    const key = `${popupInfo.date.format("YYYY-MM-DD")}|${popupInfo.slot}`;
+    const employeeIds = assignments[key] || [];
+    const dateStr = popupInfo.date.format("YYYY-MM-DD");
+    const scheduleIndex = shiftTimes.findIndex(t => t === popupInfo.slot);
+    const schedule = scheduleList[scheduleIndex];
     const payload = [];
 
-    Object.entries(assignments).forEach(([key, employeeIds]) => {
-      if (!employeeIds || employeeIds.length === 0) return;
-
-      const [dateStr, slotLabel] = key.split("|");
-      const scheduleIndex = shiftTimes.findIndex(t => t === slotLabel);
-      const schedule = scheduleList[scheduleIndex];
-
-      employeeIds.forEach(empId => {
-        const employee = employeeList.find(e => e.idEmployee === empId);
-        const existingId = existingAssignments?.[key]?.[empId] ?? null;
-
-        if (employee && schedule) {
-          payload.push({
-            idShiftAssignment: existingId,
-            idEmployee: empId,
-            idShift: selectedShift?.value,
-            idShiftSchedule: schedule.idShiftSchedule,
-            startDate: dayjs(dateStr).format('YYYY-MM-DD'),
-            endDate: dayjs(dateStr).format('YYYY-MM-DD'),
-            totalDurationMinutes: schedule.endTime.diff(schedule.startTime, 'minute'),
-            totalDurationHours: parseFloat((schedule.endTime.diff(schedule.startTime, 'minute') / 60).toFixed(2)),
-            attendanceStatus: true,
-            employeeCode: employee.employeeCode,
-            employeeName: employee.employeeName,
-            shiftName: selectedShift.label,
-            department: employee.department,
-            designation: employee.designation,
-            idDepartment: employee.idDepartment,
-            idDesignation: employee.idDesignation
-          });
-        }
-      });
+    employeeIds.forEach(empId => {
+      const employee = employeeList.find(e => e.idEmployee === empId);
+      const existingId = existingAssignments?.[key]?.[empId] ?? null;
+      if (employee && schedule) {
+        payload.push({
+          idShiftAssignment: existingId,
+          idEmployee: empId,
+          idShift: selectedShift?.value,
+          idShiftSchedule: schedule.idShiftSchedule,
+          startDate: dayjs(dateStr).format('YYYY-MM-DD'),
+          endDate: dayjs(dateStr).format('YYYY-MM-DD'),
+          totalDurationMinutes: schedule.endTime.diff(schedule.startTime, 'minute'),
+          totalDurationHours: parseFloat((schedule.endTime.diff(schedule.startTime, 'minute') / 60).toFixed(2)),
+          attendanceStatus: true,
+          employeeCode: employee.employeeCode,
+          employeeName: employee.employeeName,
+          shiftName: selectedShift.label,
+          department: employee.department,
+          designation: employee.designation,
+          idDepartment: employee.idDepartment,
+          idDesignation: employee.idDesignation
+        });
+      }
     });
 
     setLoading(true);
     ShiftManagementService.saveShiftAssignments(payload)
-      .then(() => showToast("Shift assignments saved successfully.", "success"))
+      .then(() => {
+        showToast("Shift assignments saved successfully.", "success");
+        setPopupInfo(null);
+      })
       .catch(err => {
         console.error("Save failed:", err);
         showToast("Error saving shift assignments.", "error");
@@ -297,7 +294,6 @@ const ShiftAssignment = () => {
         </tbody>
       </table>
 
-      <button className="btn btn-primary mt-3" onClick={handleSubmit}>Submit</button>
 
       {popupInfo && (
         <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
@@ -307,7 +303,7 @@ const ShiftAssignment = () => {
                 <h5 className="modal-title">Assign Employees</h5>
                 <button type="button" className="btn-close" onClick={() => setPopupInfo(null)}></button>
               </div>
-              <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <div className="modal-body" style={{ maxHeight: '550px', overflowY: 'auto' }}>
                 <div className="row">
                   <ul className="list-group">
                     {employeeList.length> 0 ? (
@@ -338,9 +334,9 @@ const ShiftAssignment = () => {
                     )}
                   </ul>
                 </div>
-                <div className="text-end mt-3">
-                  <button className="btn btn-primary" onClick={() => setPopupInfo(null)}>Save & Close</button>
-                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-primary" onClick={handleSaveAndClose}>Save & Close</button>
               </div>
             </div>
           </div>
