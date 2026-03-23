@@ -117,7 +117,7 @@ const ShiftAssignment = () => {
       const current = prev[key] || [];
       let updated;
       if (isChecked) {
-        updated = current.includes(idEmployee) || current.length >= 5
+        updated = current.includes(idEmployee)
           ? current
           : [...current, idEmployee];
       } else {
