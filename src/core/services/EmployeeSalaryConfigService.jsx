@@ -32,20 +32,24 @@ export default class EmployeeSalaryConfigService {
   static saveEmployeeSalaryConfigData = async (payload) => {
     try {
       const res = await API.post("/api/v1/EmployeeSalaryConfig/AddEmployeeSalaryConfig", payload);
-      handleApiSuccessOrError(res.data, false);
+      if (res.data?.success === false) {
+        return { error: res.data.message || 'An error occurred', data: null };
+      }
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(res.data, true);
+      return { error: error.response?.data?.message || 'An error occurred', data: null };
     }
   }
 
   static updateEmployeeSalaryConfigData = async (payload) => {
     try {
       const res = await API.post("/api/v1/EmployeeSalaryConfig/UpdateEmployeeSalaryConfig", payload);
-      handleApiSuccessOrError(res.data, false);
+      if (res.data?.success === false) {
+        return { error: res.data.message || 'An error occurred', data: null };
+      }
       return { error: null, data: res };
     } catch (error) {
-      return handleApiSuccessOrError(error, true);
+      return { error: error.response?.data?.message || 'An error occurred', data: null };
     }
   }
 

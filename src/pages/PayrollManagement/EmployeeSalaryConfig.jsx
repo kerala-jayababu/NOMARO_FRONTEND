@@ -739,14 +739,19 @@ const EmployeeSalaryConfig = () => {
     EmployeeSalaryConfigService.saveEmployeeSalaryConfigData(payload)
       .then(res => {
         hideLoader();
-        if (res.data.status === 200) {
-          setShowModal(false);
-          resetForm();
-          getEmployeeSalaryConfigs();
+        const msg = res.error || res.data?.message;
+        if (res.error || res.data?.success === false) {
+          toast.error(msg || "Failed to submit salary configuration.", { position: "top-right" });
+          return;
         }
+        toast.success("Salary configuration submitted for approval successfully.", { position: "top-right" });
+        setShowModal(false);
+        resetForm();
+        getEmployeeSalaryConfigs();
       })
       .catch(err => {
         hideLoader();
+        toast.error("Failed to submit salary configuration.", { position: "top-right" });
       });
   };
 
@@ -782,14 +787,19 @@ const EmployeeSalaryConfig = () => {
     EmployeeSalaryConfigService.updateEmployeeSalaryConfigData(payload)
       .then(res => {
         hideLoader();
-        if (res.data.status === 200) {
-          setShowModal(false);
-          resetForm();
-          getEmployeeSalaryConfigs();
+        const msg = res.error || res.data?.message;
+        if (res.error || res.data?.success === false) {
+          toast.error(msg || "Failed to update salary configuration.", { position: "top-right" });
+          return;
         }
+        toast.success("Salary configuration updated successfully.", { position: "top-right" });
+        setShowModal(false);
+        resetForm();
+        getEmployeeSalaryConfigs();
       })
       .catch(err => {
         hideLoader();
+        toast.error("Failed to update salary configuration.", { position: "top-right" });
       });
   };
 
