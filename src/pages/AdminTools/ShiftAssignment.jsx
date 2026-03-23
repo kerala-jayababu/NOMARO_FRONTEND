@@ -23,6 +23,11 @@ const ShiftAssignment = () => {
   const [loading, setLoading] = useState(false);
   const today = dayjs().startOf('day');
 
+  // Copy modal state
+  const [copyModalInfo, setCopyModalInfo] = useState(null); // { sourceDate: dayjs }
+  const [copyTargetDates, setCopyTargetDates] = useState([]);
+  const [showCopyConfirm, setShowCopyConfirm] = useState(false);
+
   const weekDays = Array.from({ length: 7 }, (_, i) =>
     weekStart.add(i, 'day')
   );
@@ -44,6 +49,26 @@ const ShiftAssignment = () => {
     };
 
   const getScheduleList = (idShift) => ShiftManagementService.getScheduleListByShiftId(idShift);
+
+  const loadAssignments = async (idShift, schedules) => {
+    const res = await ShiftManagementService.getShiftAssignments(idShift);
+    const assignmentMap = {};
+    const existingMap = {};
+    (res.data.data || []).forEach(entry => {
+      const dateStr = dayjs(entry.startDate).format("YYYY-MM-DD");
+      const schedule = schedules.find(s => s.idShiftSchedule === entry.idShiftSchedule);
+      if (!schedule) return;
+      const slot = `${schedule.startTime.format("h:mm A")} to ${schedule.endTime.format("h:mm A")}`;
+      const key = `${dateStr}|${slot}`;
+      if (!assignmentMap[key]) assignmentMap[key] = [];
+      if (!assignmentMap[key].includes(entry.idEmployee))
+        assignmentMap[key].push(entry.idEmployee);
+      if (!existingMap[key]) existingMap[key] = {};
+      existingMap[key][entry.idEmployee] = entry.idShiftAssignment;
+    });
+    setAssignments(assignmentMap);
+    setExistingAssignments(existingMap);
+  };
 
   const getEmployeeList = (idShift) => {
     return ShiftManagementService.getEmployeeListByShiftId(idShift).then(res => {
@@ -68,30 +93,8 @@ const ShiftAssignment = () => {
     setShiftTimes(formattedSchedules.map(s => `${s.startTime.format("h:mm A")} to ${s.endTime.format("h:mm A")}`));
 
     await getEmployeeList(selected.value);
-
-    ShiftManagementService.getShiftAssignments(selected.value).then(res => {
-      const assignmentMap = {};
-      const existingMap = {};
-
-      (res.data.data || []).forEach(entry => {
-        const dateStr = dayjs(entry.startDate).format("YYYY-MM-DD");
-        const schedule = formattedSchedules.find(s => s.idShiftSchedule === entry.idShiftSchedule);
-        if (!schedule) return;
-
-        const slot = `${schedule.startTime.format("h:mm A")} to ${schedule.endTime.format("h:mm A")}`;
-        const key = `${dateStr}|${slot}`;
-
-        if (!assignmentMap[key]) assignmentMap[key] = [];
-        if (!assignmentMap[key].includes(entry.idEmployee))
-          assignmentMap[key].push(entry.idEmployee);
-
-        if (!existingMap[key]) existingMap[key] = {};
-        existingMap[key][entry.idEmployee] = entry.idShiftAssignment;
-      });
-
-      setAssignments(assignmentMap);
-      setExistingAssignments(existingMap);
-    }).finally(() => setLoading(false));
+    await loadAssignments(selected.value, formattedSchedules);
+    setLoading(false);
   };
 
   const handleCellClick = (date, slot) => {
@@ -147,6 +150,59 @@ const ShiftAssignment = () => {
         return { ...prev, [key]: newEntry };
       }
     });
+  };
+
+  // Check if a date column has any assignments
+  const dateHasAssignments = (day) => {
+    const dateStr = day.format('YYYY-MM-DD');
+    return Object.keys(assignments).some(key => key.startsWith(`${dateStr}|`));
+  };
+
+  const handleOpenCopyModal = (day, e) => {
+    e.stopPropagation();
+    setCopyModalInfo({ sourceDate: day });
+    setCopyTargetDates([]);
+  };
+
+  const toggleCopyTargetDate = (day) => {
+    const dateStr = day.format('YYYY-MM-DD');
+    setCopyTargetDates(prev =>
+      prev.includes(dateStr)
+        ? prev.filter(d => d !== dateStr)
+        : [...prev, dateStr]
+    );
+  };
+
+  const handleCopyAssignments = async () => {
+    if (!copyModalInfo || copyTargetDates.length === 0) return;
+    setShowCopyConfirm(false);
+    setLoading(true);
+
+    try {
+      const results = await Promise.all(
+        copyTargetDates.map(targetDate =>
+          ShiftManagementService.copyShiftAssignmentsByDate({
+            idShif: selectedShift?.value,
+            sourceDate: copyModalInfo.sourceDate.format('YYYY-MM-DDTHH:mm:ss'),
+            targetDate: dayjs(targetDate).format('YYYY-MM-DDTHH:mm:ss'),
+          })
+        )
+      );
+
+      const allSuccess = results.every(r => !r.error);
+      if (allSuccess) {
+        showToast("Shift assignments copied successfully.", "success");
+        setCopyModalInfo(null);
+        setCopyTargetDates([]);
+        await loadAssignments(selectedShift.value, scheduleList);
+      } else {
+        showToast("Failed to copy some assignments.", "error");
+      }
+    } catch {
+      showToast("Error copying shift assignments.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveAndClose = () => {
@@ -245,10 +301,20 @@ const ShiftAssignment = () => {
                 style={{
                   minWidth: '180px',
                   backgroundColor: day.isSame(today, 'day') ? '#d1e7dd' : undefined,
-                  color: day.isSame(today, 'day') ? '#0f5132' : undefined
+                  color: day.isSame(today, 'day') ? '#0f5132' : undefined,
+                  position: 'relative',
                 }}
               >
                 {day.format('DD MMM')}<br />{day.format('dddd')}
+                {selectedShift && dateHasAssignments(day) && (
+                  <span
+                    title="Copy shifts"
+                    onClick={(e) => handleOpenCopyModal(day, e)}
+                    style={{ position: 'absolute', top: 6, right: 8, cursor: 'pointer', fontSize: 14, color: '#0d6efd' }}
+                  >
+                    <i className="bx bx-copy" />
+                  </span>
+                )}
               </th>
             ))}
           </tr>
@@ -294,6 +360,106 @@ const ShiftAssignment = () => {
         </tbody>
       </table>
 
+
+      {/* Copy Shift Assignments Modal */}
+      {copyModalInfo && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 480 }}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ backgroundColor: '#0f3c54', color: '#fff', borderRadius: '8px 8px 0 0' }}>
+                <div>
+                  <h5 className="modal-title mb-0" style={{ color: '#fff' }}>Copy shift assignments</h5>
+                  <span style={{ color: '#fff', fontSize: 15, fontWeight: 500 }}>{selectedShift?.label}</span>
+                </div>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setCopyModalInfo(null)} />
+              </div>
+              <div className="modal-body">
+                {/* Copying From */}
+                <p className="fw-semibold mb-2" style={{ fontSize: 11, letterSpacing: 1 }}>COPYING FROM</p>
+                <div className="d-flex align-items-center gap-3 p-3 mb-4 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0' }}>
+                  <div className="text-center rounded p-2" style={{ backgroundColor: '#0f3c54', color: '#fff', minWidth: 48 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{copyModalInfo.sourceDate.format('MMM')}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>{copyModalInfo.sourceDate.format('DD')}</div>
+                  </div>
+                  <div>
+                    <div className="fw-semibold">{copyModalInfo.sourceDate.format('dddd, MMM D')}</div>
+                    <div style={{ fontSize: 13 }}>All shifts will be copied</div>
+                  </div>
+                </div>
+
+                {/* Copy To */}
+                <p className="fw-semibold mb-2" style={{ fontSize: 11, letterSpacing: 1 }}>COPY TO — SELECT DATES THIS WEEK</p>
+                <div className="d-flex gap-2 flex-wrap mb-2">
+                  {weekDays.map(day => {
+                    const dateStr = day.format('YYYY-MM-DD');
+                    const isSource = dateStr === copyModalInfo.sourceDate.format('YYYY-MM-DD');
+                    const isSelected = copyTargetDates.includes(dateStr);
+                    return (
+                      <button
+                        key={dateStr}
+                        onClick={() => !isSource && toggleCopyTargetDate(day)}
+                        disabled={isSource}
+                        style={{
+                          width: 54,
+                          border: isSource ? '1px solid #ccc' : isSelected ? 'none' : '1px solid #ccc',
+                          borderRadius: 8,
+                          padding: '6px 4px',
+                          backgroundColor: isSource ? '#e9ecef' : isSelected ? '#0f3c54' : '#fff',
+                          color: isSource ? '#aaa' : isSelected ? '#fff' : '#333',
+                          cursor: isSource ? 'default' : 'pointer',
+                          fontSize: 13,
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{day.format('ddd')}</div>
+                        <div style={{ fontWeight: 700 }}>{day.format('D')}</div>
+                        {isSource && <div style={{ fontSize: 9, color: '#aaa' }}>SOURCE</div>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {copyTargetDates.length > 0 && (
+                  <p className="mt-2" style={{ fontSize: 12 }}>
+                    Copying to: {copyTargetDates.map(d => dayjs(d).format('ddd MMM D')).join(', ')}
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-outline-secondary" onClick={() => setCopyModalInfo(null)}>Cancel</button>
+                <button
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#0f3c54', borderColor: '#0f3c54' }}
+                  disabled={copyTargetDates.length === 0}
+                  onClick={() => setShowCopyConfirm(true)}
+                >
+                  Copy assignments
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Confirmation Modal */}
+      {showCopyConfirm && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1080 }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Copy</h5>
+                <button type="button" className="btn-close" onClick={() => setShowCopyConfirm(false)} />
+              </div>
+              <div className="modal-body">
+                Are you sure you want to copy shift assignments to selected dates?
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-outline-secondary" onClick={() => setShowCopyConfirm(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleCopyAssignments}>Confirm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {popupInfo && (
         <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">

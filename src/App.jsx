@@ -72,6 +72,7 @@ import OrgHierarchy from "./pages/MasterData/OrgHierarchy";
 import MissingEntryApproval from "./pages/MasterData/missingEntryApproval";
 import ForgotCardApproval from "./pages/MasterData/forgotCardApproval";
 import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
+import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
 
 function App() {
   return (
@@ -142,6 +143,7 @@ function App() {
               <Route path="missing-entry-approval" element={<MissingEntryApproval/>} />
               <Route path="forgot-card-approval" element={<ForgotCardApproval/>} />
               <Route path="annual-leave-dashboard" element={<AnnualLeaveDashboard/>} />
+              <Route path="unapproval-salary-config" element={<UnapprovalSalaryConfig/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />

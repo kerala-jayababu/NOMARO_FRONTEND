@@ -76,4 +76,23 @@ export default class EmployeeSalaryConfigService {
     }
   }
 
+  static getLatestApprovedSalaryConfig = async (idEmployee) => {
+    try {
+      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetLatestApprovedEmployeeSalaryConfigByEmployeeId?idEmployee=" + idEmployee);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
+
+  static unApproveEmployeeSalaryConfig = async (payload) => {
+    try {
+      const res = await API.post("/api/v1/EmployeeSalaryConfig/UnApproveEmployeeSalaryConfig", payload);
+      handleApiSuccessOrError(res.data, false);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
+
 }

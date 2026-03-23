@@ -89,4 +89,13 @@ export default class ShiftManagementService {
       return handleApiSuccessOrError(error,true);
     }
   }
+
+  static copyShiftAssignmentsByDate = async(payload) => {
+    try {
+      const response = await API.post("/api/v1/Shift/CopyShiftAssignmentsByDateAsync", payload);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiSuccessOrError(error, true);
+    }
+  }
 }
