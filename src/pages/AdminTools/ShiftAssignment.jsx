@@ -388,9 +388,9 @@ const ShiftAssignment = () => {
                 </div>
 
                 {/* Copy To */}
-                <p className="fw-semibold mb-2" style={{ fontSize: 11, letterSpacing: 1 }}>COPY TO — SELECT DATES THIS WEEK</p>
+                <p className="fw-semibold mb-2" style={{ fontSize: 11, letterSpacing: 1 }}>COPY TO — SELECT DATES</p>
                 <div className="d-flex gap-2 flex-wrap mb-2">
-                  {weekDays.map(day => {
+                  {Array.from({ length: 12 }, (_, i) => (copyModalInfo.sourceDate.isAfter(dayjs(), 'day') ? copyModalInfo.sourceDate : dayjs()).add(i, 'day')).map(day => {
                     const dateStr = day.format('YYYY-MM-DD');
                     const isSource = dateStr === copyModalInfo.sourceDate.format('YYYY-MM-DD');
                     const isSelected = copyTargetDates.includes(dateStr);
@@ -400,7 +400,7 @@ const ShiftAssignment = () => {
                         onClick={() => !isSource && toggleCopyTargetDate(day)}
                         disabled={isSource}
                         style={{
-                          width: 54,
+                          width: 60,
                           border: isSource ? '1px solid #ccc' : isSelected ? 'none' : '1px solid #ccc',
                           borderRadius: 8,
                           padding: '6px 4px',
@@ -413,6 +413,7 @@ const ShiftAssignment = () => {
                       >
                         <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{day.format('ddd')}</div>
                         <div style={{ fontWeight: 700 }}>{day.format('D')}</div>
+                        <div style={{ fontSize: 9, textTransform: 'uppercase' }}>{day.format('MMM')}</div>
                         {isSource && <div style={{ fontSize: 9, color: '#aaa' }}>SOURCE</div>}
                       </button>
                     );
