@@ -1,4 +1,6 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom"; // Import HashRouter
+import { useSelector } from "react-redux";
+import secureLocalStorage from "react-secure-storage";
 import "./App.css";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/privateRoute";
@@ -40,6 +42,7 @@ import { LoaderProvider } from "./components/LoaderContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Holidays from "./pages/AdminTools/holidays"
 import LeavePassage from "./pages/PayrollManagement/LeavePassage";
+import LeavePassagePayroll from "./pages/PayrollManagement/LeavePassagePayroll";
 import ShiftManagement from "./pages/AdminTools/ShiftManagement"
 import ShiftAssignment from "./pages/AdminTools/ShiftAssignment"
 import Assets from "./pages/AdminTools/assets"
@@ -73,6 +76,12 @@ import MissingEntryApproval from "./pages/MasterData/missingEntryApproval";
 import ForgotCardApproval from "./pages/MasterData/forgotCardApproval";
 import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
 import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
+
+function LeavePassageRoute() {
+  const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
+  const currentAuth = secureLocalStorage.getItem("currentAuth");
+  return currentAuth === 'PAYROLL' ? <LeavePassagePayroll /> : <LeavePassage />;
+}
 
 function App() {
   return (
@@ -115,7 +124,8 @@ function App() {
               <Route path='salary-report' element={<SalaryReport />} />
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
               <Route path="holiday-config" element={< Holidays/>} />
-              <Route path="leave-passages" element={<LeavePassage/>} />
+              <Route path="leave-passages" element={<LeavePassageRoute/>} />
+              <Route path="payroll-leave-passages" element={<LeavePassagePayroll/>} />
               <Route path="shiftManagement" element={<ShiftManagement/>} />.
               <Route path="shiftAssignment" element={<ShiftAssignment/>} />
               <Route path="clock-inout" element={<ClockInClockOut/>} />

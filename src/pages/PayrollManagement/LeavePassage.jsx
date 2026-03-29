@@ -320,8 +320,8 @@ const LeavePassage = () => {
                             <p className='m-0'> {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}</p>
                           </div>
                           <div className='col-6 px-0 py-1'>
-                            <label>Amount</label>
-                            <p className='m-0'>{item.leavePassageAmount === null ? 0 : item.leavePassageAmount}</p>
+                            <label>Remarks</label>
+                            <p className='m-0'>{item.remarks || '-'}</p>
                           </div>
                           <div className='col-12 px-0 py-1 d-flex justify-content-between align-items-end'>
                             <div>
@@ -422,7 +422,7 @@ const LeavePassage = () => {
                         <thead>
                           <tr>
                             <th style={{ textAlign: 'left' }}>Month</th>
-                            <th style={{ textAlign: 'left' }}>Amount</th>
+                            <th style={{ textAlign: 'left' }}>Remarks</th>
                             <th style={{ textAlign: 'left' }}>Status</th>
                           </tr>
                         </thead>
@@ -434,7 +434,7 @@ const LeavePassage = () => {
                                   {item.salaryMonthText ? moment(item.salaryMonthText).format("MMM YYYY") : ''}
                                 </td>
                                 <td style={{ textAlign: 'left' }}>
-                                  {item.leavePassageAmount === null ? 0 : item.leavePassageAmount}
+                                  {item.remarks || '-'}
                                 </td>
                                 <td style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                   <span

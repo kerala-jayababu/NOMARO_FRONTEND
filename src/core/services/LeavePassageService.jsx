@@ -59,6 +59,15 @@ export default class LeavePassageService {
         }
     }
 
+    static getLeavePassageRequestsForHR = async (idWorkYear, requestStatus, searchText, approvalStatus) => {
+        try {
+            const res = await API.get(`/api/v1/LeavePassages/GetLeavePassageRequestsForHR?idWorkYear=${idWorkYear}&requestStatus=${requestStatus}&searchText=${searchText}&approvalStatus=${approvalStatus}`);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
     static getLeavePassagesAmountsList = async (text, financialYear) => {
         try {
             const res = await API.get("/api/v1/LeavePassages/GetLeavePassageAmountDetails?searchString=" + text + '&financialYear=' + financialYear);
@@ -71,6 +80,16 @@ export default class LeavePassageService {
     static saveLeavePassagesAmounts = async (payload) => {
         try {
             const res = await API.post("/api/v1/LeavePassages/SubmitLeavePassage", payload);
+            handleApiSuccessOrError(res.data, false);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
+    static submitLeavePassageReversal = async (payload) => {
+        try {
+            const res = await API.post("/api/v1/LeavePassages/SubmitLeavePassageReversal", payload);
             handleApiSuccessOrError(res.data, false);
             return { error: null, data: res.data };
         } catch (error) {

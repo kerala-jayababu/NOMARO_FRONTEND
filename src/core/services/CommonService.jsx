@@ -133,6 +133,15 @@ export default class CommonService {
     }
   };
 
+  static getWorkYearSalaryMonths = async (idWorkYear) => {
+    try {
+      const response = await API.get(`/api/v1/Common/GetWorkYearSalaryMonths?IdWorkYear=${idWorkYear}`);
+      return { error: null, data: response.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
 
   static getSystemParameters = async () => {
     try {

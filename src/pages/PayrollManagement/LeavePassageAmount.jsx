@@ -8,18 +8,24 @@ import Pagination from '../../components/pagination';
 import { NumericFormat } from "react-number-format";
 import LeavePassageService from '../../core/services/LeavePassageService';
 import { useLoader } from '../../components/LoaderContext';
+import secureLocalStorage from 'react-secure-storage';
 
 function LeavePassageAmount() {
     const [leavePassages, setLeavePassages] = useState([]);
     const [originalLeavePassages, setOriginalLeavePassages] = useState([]);
     const [workYearsList, setWorkYearsList] = useState([]);
+    const [salaryMonths, setSalaryMonths] = useState([]);
     const [selFinancialYear, setSelFinancialYear] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isDataChanged, setIsDataChanged] = useState(false);
+    const [showReversalModal, setShowReversalModal] = useState(false);
+    const [selectedReversalItem, setSelectedReversalItem] = useState(null);
+    const [reversalForm, setReversalForm] = useState({ reversalMonth: '', reversalAmount: '', remarks: '' });
     const rowsPerPage = 10;
     const totalPages = Math.ceil(leavePassages.length / rowsPerPage);
     const { showLoader, hideLoader } = useLoader();
+    const userData = JSON.parse(secureLocalStorage.getItem("user"));
 
     useEffect(() => {
         getWorkYears();
@@ -29,6 +35,7 @@ function LeavePassageAmount() {
         if (selFinancialYear != null) {
             setLeavePassages([]);
             getLeavePassages();
+            getSalaryMonths();
         }
     }, [selFinancialYear]);
 
@@ -38,19 +45,19 @@ function LeavePassageAmount() {
             // Filter to show: 1 past year + current year + 2 future years
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth();
-            
+
             // Determine financial year (assuming April-March or similar)
             let financialYear = currentYear;
             if (currentMonth < 3) { // January to March
                 financialYear = currentYear - 1;
             }
-            
+
             // Filter to show years from (financialYear - 1) to (financialYear + 2)
             const filteredYears = result.data.filter(year => {
                 const yearStart = parseInt(year.displayText.split('-')[0]);
                 return yearStart >= (financialYear - 1) && yearStart <= (financialYear + 2);
             });
-            
+
             setWorkYearsList(filteredYears);
             // Set default to current year if available
             if (filteredYears.length > 0 && !selFinancialYear) {
@@ -60,6 +67,15 @@ function LeavePassageAmount() {
             setWorkYearsList([]);
         }
     }
+
+    const getSalaryMonths = async () => {
+        const result = await CommonService.getWorkYearSalaryMonths(selFinancialYear);
+        if (!result.error && result.data) {
+            setSalaryMonths(result.data);
+        } else {
+            setSalaryMonths([]);
+        }
+    };
 
     const getLeavePassages = () => {
         setCurrentPage(1);
@@ -85,21 +101,35 @@ function LeavePassageAmount() {
         return leavePassages.slice(startIndex, endIndex);
     }, [leavePassages, currentPage, rowsPerPage]);
 
+    const checkDataChanged = (updatedData) => {
+        const hasChanges = updatedData.some((item, i) => {
+            const originalItem = originalLeavePassages[i];
+            const currentVal = String(item.leavePassageAmount || '');
+            const originalVal = String(originalItem?.leavePassageAmount || '');
+            const amountChanged = currentVal !== originalVal;
+            const paidMonthChanged = (item.paidIdSalaryMonth || null) !== (originalItem?.paidIdSalaryMonth || null);
+            return amountChanged || paidMonthChanged;
+        });
+        setIsDataChanged(hasChanges);
+    };
+
     const handleAmountChange = (index, value) => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const actualIndex = startIndex + index;
         const updatedLeavePassages = [...leavePassages];
         updatedLeavePassages[actualIndex].leavePassageAmount = value;
         setLeavePassages(updatedLeavePassages);
-
-        const hasChanges = updatedLeavePassages.some((item, i) => {
-            const originalItem = originalLeavePassages[i];
-            const currentVal = String(item.leavePassageAmount || '');
-            const originalVal = String(originalItem?.leavePassageAmount || '');
-            return currentVal !== originalVal;
-        });
-        setIsDataChanged(hasChanges);
+        checkDataChanged(updatedLeavePassages);
     }
+
+    const handlePaidMonthChange = (index, value) => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const actualIndex = startIndex + index;
+        const updatedLeavePassages = [...leavePassages];
+        updatedLeavePassages[actualIndex].paidIdSalaryMonth = value ? parseInt(value) : null;
+        setLeavePassages(updatedLeavePassages);
+        checkDataChanged(updatedLeavePassages);
+    };
 
     const saveLeavePassageAmounts = () => {
         const payload = leavePassages
@@ -109,14 +139,23 @@ function LeavePassageAmount() {
 
                 const currentVal = String(item.leavePassageAmount || '');
                 const originalVal = String(originalItem.leavePassageAmount || '');
+                const amountChanged = currentVal !== originalVal;
+                const paidMonthChanged = (item.paidIdSalaryMonth || null) !== (originalItem.paidIdSalaryMonth || null);
 
-                return currentVal !== originalVal;
+                return amountChanged || paidMonthChanged;
             })
             .map(item => ({
                 idLeavePassageAmount: item.idLeavePassageAmount || 0,
                 idEmployee: item.idEmployee,
                 amount: item.leavePassageAmount === '' ? null : (item.leavePassageAmount ? parseFloat(item.leavePassageAmount) : 0),
-                idFinancialYear: parseInt(selFinancialYear)
+                idFinancialYear: parseInt(selFinancialYear),
+                financialYearFrom: item.financialYearFrom,
+                financialYearTo: item.financialYearTo,
+                paidIdSalaryMonth: item.paidIdSalaryMonth || 0,
+                createdBy: userData?.idEmployee || 0,
+                createdOn: new Date().toISOString(),
+                modifiedBy: userData?.idEmployee || 0,
+                modifiedDate: new Date().toISOString()
             }));
 
         if (payload.length === 0) {
@@ -137,6 +176,43 @@ function LeavePassageAmount() {
         setLeavePassages(JSON.parse(JSON.stringify(originalLeavePassages)));
         setIsDataChanged(false);
     }
+
+    const openReversalModal = (item) => {
+        setSelectedReversalItem(item);
+        setReversalForm({ reversalMonth: '', reversalAmount: '', remarks: '' });
+        setShowReversalModal(true);
+    };
+
+    const submitReversal = () => {
+        if (!reversalForm.reversalMonth) {
+            toast.warning("Please select a reversal salary month");
+            return;
+        }
+        if (!reversalForm.reversalAmount) {
+            toast.warning("Please enter a reversal amount");
+            return;
+        }
+
+        const payload = [{
+            idLeavePassageAmount: selectedReversalItem.idLeavePassageAmount,
+            idEmployee: selectedReversalItem.idEmployee,
+            idFinancialYear: parseInt(selFinancialYear),
+            reversalMonth: parseInt(reversalForm.reversalMonth),
+            reversalAmount: parseFloat(reversalForm.reversalAmount),
+            remarks: reversalForm.remarks,
+            createdBy: userData?.idEmployee || 0,
+            createdOn: new Date().toISOString(),
+            modifiedBy: userData?.idEmployee || 0,
+            modifiedDate: new Date().toISOString()
+        }];
+
+        LeavePassageService.submitLeavePassageReversal(payload).then(res => {
+            if (res.data.success) {
+                setShowReversalModal(false);
+                getLeavePassages();
+            }
+        }).catch(err => {});
+    };
 
     return (
         <div className="container-xxl flex-grow-1 container-p-y">
@@ -200,9 +276,12 @@ function LeavePassageAmount() {
                                             <th>Emp. Code</th>
                                             <th>Employee Name</th>
                                             <th>Department</th>
-                                            <th>Designation</th>
                                             <th>Joining Date</th>
+                                            <th>Requested Month</th>
+                                            <th>Status</th>
                                             <th className="text-end">LP Amount</th>
+                                            <th>Paid Month</th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody className="table-border-bottom-0">
@@ -212,8 +291,9 @@ function LeavePassageAmount() {
                                                     <td>{item?.employeeCode}</td>
                                                     <td>{item?.employeeName}</td>
                                                     <td>{item?.departmentName}</td>
-                                                    <td>{item?.designationName}</td>
                                                     <td>{item?.joiningDate ? moment(item.joiningDate).format("MM/DD/YYYY") : 'N/A'}</td>
+                                                    <td>{item?.requestedMonthName || '-'}</td>
+                                                    <td>{item?.lpRequestApprovalStatus ? item.lpRequestApprovalStatus.charAt(0).toUpperCase() + item.lpRequestApprovalStatus.slice(1).toLowerCase() : '-'}</td>
                                                     <td className="text-end">
                                                         <NumericFormat
                                                             key={`${item.idEmployee}-${index}`}
@@ -232,18 +312,39 @@ function LeavePassageAmount() {
                                                             style={{ width: '120px' }}
                                                         />
                                                     </td>
+                                                    <td>
+                                                        <select
+                                                            className="form-select form-select-sm"
+                                                            style={{ minWidth: '150px' }}
+                                                            value={item?.paidIdSalaryMonth || ''}
+                                                            onChange={(e) => handlePaidMonthChange(index, e.target.value)}
+                                                        >
+                                                            <option value="">-- Select --</option>
+                                                            {salaryMonths.map(month => (
+                                                                <option key={month.idSalaryMonth} value={month.idSalaryMonth}>
+                                                                    {month.salaryMonthText}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        {originalLeavePassages.find(orig => orig.idEmployee === item.idEmployee)?.paidIdSalaryMonth ? (
+                                                            <button
+                                                                className="btn btn-sm btn-icon btn-outline-danger"
+                                                                title="Payment Reversal"
+                                                                onClick={() => openReversalModal(item)}
+                                                            >
+                                                                <i className="bx bx-transfer-alt"></i>
+                                                            </button>
+                                                        ) : null}
+                                                    </td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="6" className="text-center">
+                                                <td colSpan="9" className="text-center">
                                                     <div className="Nodatafound_box">
                                                         <h6><i className="bx bx-search"></i> No data available!</h6>
-                                                        {/* {selFinancialYear && (
-                                                            <p className="text-muted small mt-1">
-                                                                Try a different search term or financial year
-                                                            </p>
-                                                        )} */}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -264,6 +365,84 @@ function LeavePassageAmount() {
                     </div>
                 </div>
             </div>
+
+            {/* Reversal Salary Entry Modal */}
+            <Modal show={showReversalModal} onHide={() => setShowReversalModal(false)} centered size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Reversal Salary Entry</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {selectedReversalItem && (
+                        <>
+                            <div className="row mb-3">
+                                <div className="col-6">
+                                    <div className="p-2 rounded" style={{ backgroundColor: '#f5f5f9' }}>
+                                        <span className="fw-semibold text-primary">Emp Code:</span> {selectedReversalItem.employeeCode}
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="p-2 rounded" style={{ backgroundColor: '#f5f5f9' }}>
+                                        <span className="fw-semibold text-primary">Employee Name:</span> {selectedReversalItem.employeeName}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-6">
+                                    <div className="p-2 rounded" style={{ backgroundColor: '#f5f5f9' }}>
+                                        <span className="fw-semibold text-primary">Designation:</span> {selectedReversalItem.designationName}
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="p-2 rounded" style={{ backgroundColor: '#f5f5f9' }}>
+                                        <span className="fw-semibold text-primary">Department:</span> {selectedReversalItem.departmentName}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <Form.Label className="fw-semibold">Reversal Salary Month</Form.Label>
+                                <Form.Select
+                                    value={reversalForm.reversalMonth}
+                                    onChange={(e) => setReversalForm(prev => ({ ...prev, reversalMonth: e.target.value }))}
+                                >
+                                    <option value="">Select Month</option>
+                                    {salaryMonths.map(month => (
+                                        <option key={month.idSalaryMonth} value={month.idSalaryMonth}>
+                                            {month.salaryMonthText}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </div>
+                            <div className="mb-3">
+                                <Form.Label className="fw-semibold">Reversal Amount</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    placeholder="Enter amount"
+                                    value={reversalForm.reversalAmount}
+                                    onChange={(e) => setReversalForm(prev => ({ ...prev, reversalAmount: e.target.value }))}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <Form.Label className="fw-semibold">Remarks</Form.Label>
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    placeholder="Enter remarks"
+                                    value={reversalForm.remarks}
+                                    onChange={(e) => setReversalForm(prev => ({ ...prev, remarks: e.target.value }))}
+                                />
+                            </div>
+                        </>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <button
+                        className="btn btn-primary"
+                        onClick={submitReversal}
+                    >
+                        Submit
+                    </button>
+                </Modal.Footer>
+            </Modal>
         </div>
     )
 }
