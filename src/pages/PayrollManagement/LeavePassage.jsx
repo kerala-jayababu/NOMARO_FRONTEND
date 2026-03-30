@@ -189,13 +189,11 @@ const LeavePassage = () => {
       if (validateForm(formData, "ADD")) {
         const res = await LeavePassageService.addLeavePassage(formData);
         if (res.data.success) {
-          showToast('Leave Passage added successfully', 'success');
           setShowModal(false);
           resetValues();
         }
       }
     } catch (err) {
-      showToast("Something went wrong: " + err, 'error');
     } finally {
       setLoading(false);
     }
@@ -213,13 +211,11 @@ const LeavePassage = () => {
       if (validateForm(formData, "EDIT")) {
         const res = await LeavePassageService.updateLeavePassage(formData);
         if (res.data.success) {
-          showToast('Leave Passage updated successfully', 'success');
           setShowModal(false);
           resetValues();
         }
       }
     } catch (err) {
-      showToast("Something went wrong: " + err, 'error');
     } finally {
       setLoading(false);
     }

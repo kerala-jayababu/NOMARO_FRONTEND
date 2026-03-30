@@ -183,18 +183,40 @@ function LeavePassageAmount() {
         setShowReversalModal(true);
     };
 
+    const validReversalMonths = useMemo(() => {
+        const startOfCurrentMonth = moment().startOf('month');
+        return salaryMonths.filter(month =>
+            moment(month.salaryMonthDate).isSameOrAfter(startOfCurrentMonth)
+        );
+    }, [salaryMonths]);
+
     const submitReversal = () => {
         if (!reversalForm.reversalMonth) {
-            toast.warning("Please select a reversal salary month");
+            toast.warning("Please select a leave passage reversal salary month");
             return;
         }
+
+        const selectedMonth = salaryMonths.find(m => m.idSalaryMonth === parseInt(reversalForm.reversalMonth));
+        if (selectedMonth && moment(selectedMonth.salaryMonthDate).isBefore(moment().startOf('month'))) {
+            toast.warning("Please select a current or future salary month for reversal");
+            return;
+        }
+
         if (!reversalForm.reversalAmount) {
             toast.warning("Please enter a reversal amount");
             return;
         }
+        if (parseFloat(reversalForm.reversalAmount) > parseFloat(selectedReversalItem.leavePassageAmount)) {
+            toast.warning("Reversal amount cannot be greater than LP amount.");
+            return;
+        }
+        if (!reversalForm.remarks.trim()) {
+            toast.warning("Please enter remarks");
+            return;
+        }
 
         const payload = [{
-            idLeavePassageAmount: selectedReversalItem.idLeavePassageAmount,
+            idLeavePassageAmount: 0,
             idEmployee: selectedReversalItem.idEmployee,
             idFinancialYear: parseInt(selFinancialYear),
             reversalMonth: parseInt(reversalForm.reversalMonth),
@@ -369,7 +391,7 @@ function LeavePassageAmount() {
             {/* Reversal Salary Entry Modal */}
             <Modal show={showReversalModal} onHide={() => setShowReversalModal(false)} centered size="lg">
                 <Modal.Header closeButton>
-                    <Modal.Title>Reversal Salary Entry</Modal.Title>
+                    <Modal.Title>Leave Passage Reversal</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {selectedReversalItem && (
@@ -399,13 +421,13 @@ function LeavePassageAmount() {
                                 </div>
                             </div>
                             <div className="mb-3">
-                                <Form.Label className="fw-semibold">Reversal Salary Month</Form.Label>
+                                <Form.Label className="fw-semibold">Leave Passage Reversal Salary Month <span className="text-danger">*</span></Form.Label>
                                 <Form.Select
                                     value={reversalForm.reversalMonth}
                                     onChange={(e) => setReversalForm(prev => ({ ...prev, reversalMonth: e.target.value }))}
                                 >
                                     <option value="">Select Month</option>
-                                    {salaryMonths.map(month => (
+                                    {validReversalMonths.map(month => (
                                         <option key={month.idSalaryMonth} value={month.idSalaryMonth}>
                                             {month.salaryMonthText}
                                         </option>
@@ -413,7 +435,7 @@ function LeavePassageAmount() {
                                 </Form.Select>
                             </div>
                             <div className="mb-3">
-                                <Form.Label className="fw-semibold">Reversal Amount</Form.Label>
+                                <Form.Label className="fw-semibold">Reversal Amount <span className="text-danger">*</span></Form.Label>
                                 <Form.Control
                                     type="number"
                                     placeholder="Enter amount"
@@ -422,7 +444,7 @@ function LeavePassageAmount() {
                                 />
                             </div>
                             <div className="mb-3">
-                                <Form.Label className="fw-semibold">Remarks</Form.Label>
+                                <Form.Label className="fw-semibold">Remarks <span className="text-danger">*</span></Form.Label>
                                 <Form.Control
                                     as="textarea"
                                     rows={3}

@@ -174,7 +174,7 @@ function LeavePassagePayroll() {
                     <h5 className="m-0">Leave Passage Requests</h5>
                     <div className="list_menu flex-wrap gap-2">
                         <div className="d-flex align-items-center gap-2">
-                            <label className="mb-0 text-nowrap fw-semibold">Financial Year</label>
+                            <label className="mb-0 text-nowrap fw-semibold">Academic Year</label>
                             <select
                                 className="form-select form-select-sm"
                                 style={{ width: '130px' }}
