@@ -308,8 +308,10 @@ function LeavePassageAmount() {
                                     </thead>
                                     <tbody className="table-border-bottom-0">
                                         {paginatedData?.length > 0 ? (
-                                            paginatedData?.map((item, index) => (
-                                                <tr key={index}>
+                                            paginatedData?.map((item, index) => {
+                                                const isNegativeAmount = parseFloat(item?.leavePassageAmount) < 0;
+                                                return (
+                                                <tr key={index} style={isNegativeAmount ? { backgroundColor: '#f0f0f0' } : {}}>
                                                     <td>{item?.employeeCode}</td>
                                                     <td>{item?.employeeName}</td>
                                                     <td>{item?.departmentName}</td>
@@ -326,7 +328,7 @@ function LeavePassageAmount() {
                                                                 handleAmountChange(index, value);
                                                             }}
                                                             decimalScale={2}
-                                                            allowNegative={false}
+                                                            allowNegative={true}
                                                             thousandSeparator={true}
                                                             allowLeadingZeros={false}
                                                             placeholder="Add amount"
@@ -350,7 +352,7 @@ function LeavePassageAmount() {
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        {originalLeavePassages.find(orig => orig.idEmployee === item.idEmployee)?.paidIdSalaryMonth ? (
+                                                        {!isNegativeAmount && originalLeavePassages.find(orig => orig.idEmployee === item.idEmployee)?.paidIdSalaryMonth ? (
                                                             <button
                                                                 className="btn btn-sm btn-icon btn-outline-danger"
                                                                 title="Payment Reversal"
@@ -361,7 +363,8 @@ function LeavePassageAmount() {
                                                         ) : null}
                                                     </td>
                                                 </tr>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <tr>
                                                 <td colSpan="9" className="text-center">

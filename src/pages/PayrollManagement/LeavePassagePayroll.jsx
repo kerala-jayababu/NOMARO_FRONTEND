@@ -198,8 +198,8 @@ function LeavePassagePayroll() {
                                 value={requestStatus}
                                 onChange={e => setRequestStatus(e.target.value)}
                             >
-                                <option value="">All</option>
-                                <option value="REQUESTE">Requested</option>
+                                <option value="ALL">All</option>
+                                <option value="REQUESTED">Requested</option>
                                 <option value="NOT REQUESTED">Not Requested</option>
                             </select>
                         </div>
@@ -211,7 +211,7 @@ function LeavePassagePayroll() {
                                 value={approvalStatus}
                                 onChange={e => setApprovalStatus(e.target.value)}
                             >
-                                <option value="">All</option>
+                                <option value="ALL">All</option>
                                 <option value="SUBMITTED">Submitted</option>
                                 <option value="APPROVED">Approved</option>
                                 <option value="REJECTED">Rejected</option>
@@ -255,7 +255,7 @@ function LeavePassagePayroll() {
                                     paginatedData.map((item, i) => (
                                         <tr key={i}>
                                             <td className="text-primary">{item.employeeCode}</td>
-                                            <td><strong>{item.employeeName}</strong></td>
+                                            <td>{item.employeeName}</td>
                                             <td>{item.departmentName}</td>
                                             <td>{item.joiningDate ? moment(item.joiningDate).format('MM/DD/YYYY') : '—'}</td>
                                             <td>
