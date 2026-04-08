@@ -96,4 +96,14 @@ export default class LeavePassageService {
             return handleApiSuccessOrError(error, true);
         }
     }
+
+    static submitLeavePassageAddition = async (payload) => {
+        try {
+            const res = await API.post("/api/v1/LeavePassages/SubmitLeavePassageAddition", payload);
+            handleApiSuccessOrError(res.data, false);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
 }

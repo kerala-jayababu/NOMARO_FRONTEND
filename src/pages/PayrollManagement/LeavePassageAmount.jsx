@@ -22,6 +22,7 @@ function LeavePassageAmount() {
     const [showReversalModal, setShowReversalModal] = useState(false);
     const [selectedReversalItem, setSelectedReversalItem] = useState(null);
     const [reversalForm, setReversalForm] = useState({ reversalMonth: '', reversalAmount: '', remarks: '' });
+    const [reversalType, setReversalType] = useState('reversal');
     const rowsPerPage = 10;
     const totalPages = Math.ceil(leavePassages.length / rowsPerPage);
     const { showLoader, hideLoader } = useLoader();
@@ -180,6 +181,7 @@ function LeavePassageAmount() {
     const openReversalModal = (item) => {
         setSelectedReversalItem(item);
         setReversalForm({ reversalMonth: '', reversalAmount: '', remarks: '' });
+        setReversalType('reversal');
         setShowReversalModal(true);
     };
 
@@ -228,7 +230,11 @@ function LeavePassageAmount() {
             modifiedDate: new Date().toISOString()
         }];
 
-        LeavePassageService.submitLeavePassageReversal(payload).then(res => {
+        const apiCall = reversalType === 'addition'
+            ? LeavePassageService.submitLeavePassageAddition(payload)
+            : LeavePassageService.submitLeavePassageReversal(payload);
+
+        apiCall.then(res => {
             if (res.data.success) {
                 setShowReversalModal(false);
                 getLeavePassages();
@@ -391,10 +397,10 @@ function LeavePassageAmount() {
                 </div>
             </div>
 
-            {/* Reversal Salary Entry Modal */}
+            {/* Reversal / Addition Modal */}
             <Modal show={showReversalModal} onHide={() => setShowReversalModal(false)} centered size="lg">
                 <Modal.Header closeButton>
-                    <Modal.Title>Leave Passage Reversal</Modal.Title>
+                    <Modal.Title>Leave Passage Reversal or Addition</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {selectedReversalItem && (
@@ -423,8 +429,30 @@ function LeavePassageAmount() {
                                     </div>
                                 </div>
                             </div>
+                            <div className="mb-3 d-flex gap-4">
+                                <Form.Check
+                                    type="radio"
+                                    id="type-reversal"
+                                    label="Reversal"
+                                    name="reversalType"
+                                    value="reversal"
+                                    checked={reversalType === 'reversal'}
+                                    onChange={() => setReversalType('reversal')}
+                                />
+                                <Form.Check
+                                    type="radio"
+                                    id="type-addition"
+                                    label="Addition"
+                                    name="reversalType"
+                                    value="addition"
+                                    checked={reversalType === 'addition'}
+                                    onChange={() => setReversalType('addition')}
+                                />
+                            </div>
                             <div className="mb-3">
-                                <Form.Label className="fw-semibold">Leave Passage Reversal Salary Month <span className="text-danger">*</span></Form.Label>
+                                <Form.Label className="fw-semibold">
+                                    {reversalType === 'addition' ? 'Addition' : 'Reversal'} Salary Month <span className="text-danger">*</span>
+                                </Form.Label>
                                 <Form.Select
                                     value={reversalForm.reversalMonth}
                                     onChange={(e) => setReversalForm(prev => ({ ...prev, reversalMonth: e.target.value }))}
@@ -438,7 +466,7 @@ function LeavePassageAmount() {
                                 </Form.Select>
                             </div>
                             <div className="mb-3">
-                                <Form.Label className="fw-semibold">Reversal Amount <span className="text-danger">*</span></Form.Label>
+                                <Form.Label className="fw-semibold">{reversalType === 'addition' ? 'Addition' : 'Reversal'} Amount <span className="text-danger">*</span></Form.Label>
                                 <Form.Control
                                     type="number"
                                     placeholder="Enter amount"
