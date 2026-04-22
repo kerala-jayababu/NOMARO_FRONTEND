@@ -898,7 +898,7 @@ useEffect(() => {
                           }).format(
                             salaryGenerationList.reduce(
                               (sum, item) =>
-                                sum + (parseFloat(item.nisEmployeeContribution) || 0),
+                                sum + (parseFloat(item?.nisEmployeeContribution) || 0),
                               0
                             )
                           )}
@@ -918,7 +918,7 @@ useEffect(() => {
                           }).format(
                             salaryGenerationList.reduce(
                               (sum, item) =>
-                                sum + (parseFloat(item.nisEmployerContribution) || 0),
+                                sum + (parseFloat(item?.nisEmployerContribution) || 0),
                               0
                             )
                           )}
