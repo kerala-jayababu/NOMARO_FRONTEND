@@ -449,6 +449,21 @@ useEffect(() => {
     URL.revokeObjectURL(link.href);
   };
 
+  const formatGyd = (value) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
+
+  const sumBy = (list, key) =>
+    (list || []).reduce((sum, item) => sum + (parseFloat(item?.[key]) || 0), 0);
+
+  const totalEarnings = sumBy(salaryGenerationList, "totalEarnings");
+  const totalDeductions = sumBy(salaryGenerationList, "totalDeductions");
+  const totalNetSalary = sumBy(salaryGenerationList, "netSalary");
+  const totalNisEmployee = sumBy(salaryGenerationList, "nisEmployeeContribution");
+  const totalNisEmployer = sumBy(salaryGenerationList, "nisEmployerContribution");
+  const totalNis = totalNisEmployee + totalNisEmployer;
 
   return (
     <div class="container-xxl flex-grow-1 container-p-y">
@@ -826,104 +841,30 @@ useEffect(() => {
 
                 {/* Summary row below the table */}
                 {salaryGenerationList?.length > 0 && (
-                  <div className="p-2 mb-3 mt-3" style={{ border: "1px solid black" }}>
-                    <div className="d-flex" style={{ justifyContent: "space-between", gap: 12 }}>
-                      <div
-                        className="fw-bold fs-6"
-                        style={{ width: "20%", fontSize: "1.2rem", textAlign: "center" }}
-                      >
-                        <div>Total Earnings</div>
-                        <div>
-                          G${" "}
-                          {new Intl.NumberFormat("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(
-                            salaryGenerationList.reduce(
-                              (sum, item) => sum + (parseFloat(item.totalEarnings) || 0),
-                              0
-                            )
-                          )}
+                  <div className="mb-3 mt-3" style={{ border: "1px solid #bdbdbd" }}>
+                    <div className="d-flex" style={{ width: "100%" }}>
+                      {[
+                        { label: "Total Earnings", value: totalEarnings },
+                        { label: "Total Deductions", value: totalDeductions },
+                        { label: "Total Net Salary", value: totalNetSalary },
+                        { label: "NIS Employee", value: totalNisEmployee },
+                        { label: "NIS Employer", value: totalNisEmployer },
+                        { label: "Total NIS", value: totalNis },
+                      ].map((box, idx, arr) => (
+                        <div
+                          key={box.label}
+                          className="fw-bold"
+                          style={{
+                            width: `${100 / arr.length}%`,
+                            textAlign: "center",
+                            padding: "10px 8px",
+                            borderRight: idx === arr.length - 1 ? "none" : "1px solid #bdbdbd",
+                          }}
+                        >
+                          <div style={{ fontSize: "12px", color: "#444" }}>{box.label}</div>
+                          <div style={{ fontSize: "14px" }}>G$ {formatGyd(box.value)}</div>
                         </div>
-                      </div>
-
-                      <div
-                        className="fw-bold fs-6"
-                        style={{ width: "20%", fontSize: "1.2rem", textAlign: "center" }}
-                      >
-                        <div>Total Deductions</div>
-                        <div>
-                          G${" "}
-                          {new Intl.NumberFormat("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(
-                            salaryGenerationList.reduce(
-                              (sum, item) => sum + (parseFloat(item.totalDeductions) || 0),
-                              0
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className="fw-bold fs-6"
-                        style={{ width: "20%", fontSize: "1.2rem", textAlign: "center" }}
-                      >
-                        <div>Total Net Salary</div>
-                        <div>
-                          G${" "}
-                          {new Intl.NumberFormat("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(
-                            salaryGenerationList.reduce(
-                              (sum, item) => sum + (parseFloat(item.netSalary) || 0),
-                              0
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className="fw-bold fs-6"
-                        style={{ width: "20%", fontSize: "1.2rem", textAlign: "center" }}
-                      >
-                        <div>NIS Employee Contribution</div>
-                        <div>
-                          G${" "}
-                          {new Intl.NumberFormat("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(
-                            salaryGenerationList.reduce(
-                              (sum, item) =>
-                                sum + (parseFloat(item?.nisEmployeeContribution) || 0),
-                              0
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className="fw-bold fs-6"
-                        style={{ width: "20%", fontSize: "1.2rem", textAlign: "center" }}
-                      >
-                        <div>NIS Employer contribution</div>
-                        <div>
-                          G${" "}
-                          {new Intl.NumberFormat("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(
-                            salaryGenerationList.reduce(
-                              (sum, item) =>
-                                sum + (parseFloat(item?.nisEmployerContribution) || 0),
-                              0
-                            )
-                          )}
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}
