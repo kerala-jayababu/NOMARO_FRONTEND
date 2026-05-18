@@ -76,6 +76,7 @@ import MissingEntryApproval from "./pages/MasterData/missingEntryApproval";
 import ForgotCardApproval from "./pages/MasterData/forgotCardApproval";
 import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
 import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
+import SickLeaveSalDeduction from "./pages/PayrollManagement/SickLeaveSalDeduction";
 
 function LeavePassageRoute() {
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
@@ -154,6 +155,7 @@ function App() {
               <Route path="forgot-card-approval" element={<ForgotCardApproval/>} />
               <Route path="annual-leave-dashboard" element={<AnnualLeaveDashboard/>} />
               <Route path="unapproval-salary-config" element={<UnapprovalSalaryConfig/>} />
+              <Route path="sick-leave-sal-deduction" element={<SickLeaveSalDeduction/>} />
             </Route>
             <Route element={<PermissionGate />}>
               <Route path="/reports" element={<Reports />} />
