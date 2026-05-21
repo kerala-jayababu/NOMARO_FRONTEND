@@ -416,7 +416,7 @@ function SickLeaveSalDeduction() {
                       <th className="text-center">MC Produced?</th>
                       <th>Deduct Days</th>
                       <th>Remarks</th>
-                      <th className="text-end">Basic Pay</th>
+                      {/* <th className="text-end">Basic Pay</th> */}
                       <th className="text-end">Deducted Amount</th>
                       <th>Adjusting Month</th>
                       <th className="text-center">Salary Status</th>
@@ -496,9 +496,9 @@ function SickLeaveSalDeduction() {
                                 }
                               />
                             </td>
-                            <td className="text-end">
+                            {/* <td className="text-end">
                               {Utils.formattedNumber(row.basicPay ?? 0)}
-                            </td>
+                            </td> */}
                             <td className="text-end">
                               {Utils.formattedNumber(row.deductedAmount ?? 0)}
                             </td>
