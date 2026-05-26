@@ -12,11 +12,14 @@ function SickLeaveSalDeduction() {
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [employeesOptions, setEmployeesOptions] = useState([]);
   const [tableRows, setTableRows] = useState([]);
+  const [originalRows, setOriginalRows] = useState({});
   const [loading, setLoading] = useState(false);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState("");
-  const [filterFromDate, setFilterFromDate] = useState("");
+  const [filterFromDate, setFilterFromDate] = useState(
+    moment().subtract(1, "month").startOf("month").format("YYYY-MM-DD")
+  );
   const [filterToDate, setFilterToDate] = useState("");
   const [filterSalaryMonth, setFilterSalaryMonth] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -120,14 +123,22 @@ function SickLeaveSalDeduction() {
     SickLeaveSalDeductionService.getLeaveApplications(params)
       .then((res) => {
         const data = res.data?.data || [];
-        setTableRows(
-          data.map((item) => ({
-            ...item,
-            _medCert: item.medicalProducedYesNo ?? false,
-            _deductDays: item.salaryDeductionDays ?? "",
-            _remarks: item.salaryDeductionRemarks ?? "",
-          }))
-        );
+        const mapped = data.map((item) => ({
+          ...item,
+          _medCert: item.medicalProducedYesNo ?? false,
+          _deductDays: item.salaryDeductionDays ?? "",
+          _remarks: item.salaryDeductionRemarks ?? "",
+        }));
+        setTableRows(mapped);
+        const snapshot = {};
+        mapped.forEach((row) => {
+          snapshot[row.idLeaveApplication] = {
+            _medCert: row._medCert,
+            _deductDays: row._deductDays,
+            _remarks: row._remarks,
+          };
+        });
+        setOriginalRows(snapshot);
         setCurrentPage(1);
       })
       .catch(() => setTableRows([]))
@@ -146,6 +157,16 @@ function SickLeaveSalDeduction() {
 
   const isRowLocked = (row) => (row.idEmployeeSalary ?? 0) > 0;
 
+  const isRowDirty = (row) => {
+    const orig = originalRows[row.idLeaveApplication];
+    if (!orig) return false;
+    return (
+      row._medCert !== orig._medCert ||
+      String(row._deductDays) !== String(orig._deductDays) ||
+      row._remarks !== orig._remarks
+    );
+  };
+
   const getStatus = (row) =>
     row.adjustedStatus === null || row.adjustedStatus === undefined
       ? "PENDING"
@@ -160,9 +181,9 @@ function SickLeaveSalDeduction() {
       return;
     }
 
-    const editableRows = tableRows.filter((row) => !isRowLocked(row));
+    const editableRows = tableRows.filter((row) => !isRowLocked(row) && isRowDirty(row));
     if (editableRows.length === 0) {
-      toast.warning("No editable rows to submit.", {
+      toast.warning("No changes detected to submit.", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -414,11 +435,11 @@ function SickLeaveSalDeduction() {
                       <th>Leave Period</th>
                       <th>No. of Days</th>
                       <th className="text-center">MC Produced?</th>
-                      <th>Deduct Days</th>
+                      <th>Ded.Days</th>
                       <th>Remarks</th>
                       {/* <th className="text-end">Basic Pay</th> */}
-                      <th className="text-end">Deducted Amount</th>
-                      <th>Adjusting Month</th>
+                      <th className="text-end">Ded.Amount</th>
+                      <th>Adj.Month</th>
                       <th className="text-center">Salary Status</th>
                     </tr>
                   </thead>
@@ -436,8 +457,8 @@ function SickLeaveSalDeduction() {
                               <small className="text-muted">{row.designationName}</small>
                             </td>
                             <td className="text-center">
-                              <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div>
-                              <div className="text-muted" style={{ fontSize: "0.75rem" }}>To</div>
+                              <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div> 
+                              <span className="text-muted" style={{ fontSize: "0.75rem" }}>To</span>
                               <div>{moment(row.toDate).format("DD/MM/YYYY")}</div>
                             </td>
                             <td className="text-center">
@@ -532,7 +553,7 @@ function SickLeaveSalDeduction() {
                 </table>
               </div>
 
-              {totalPages > 1 && (
+              {tableRows.length > 0 && (
                 <div className="text-end pt-2">
                   <Pagination
                     currentPage={currentPage}
