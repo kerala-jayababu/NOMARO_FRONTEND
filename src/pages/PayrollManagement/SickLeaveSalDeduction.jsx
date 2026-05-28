@@ -458,7 +458,6 @@ function SickLeaveSalDeduction() {
                             </td>
                             <td className="text-center">
                               <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div> 
-                              <span className="text-muted" style={{ fontSize: "0.75rem" }}>To</span>
                               <div>{moment(row.toDate).format("DD/MM/YYYY")}</div>
                             </td>
                             <td className="text-center">
