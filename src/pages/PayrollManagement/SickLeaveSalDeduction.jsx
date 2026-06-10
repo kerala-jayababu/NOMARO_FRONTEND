@@ -22,6 +22,7 @@ function SickLeaveSalDeduction() {
   );
   const [filterToDate, setFilterToDate] = useState("");
   const [filterSalaryMonth, setFilterSalaryMonth] = useState("");
+  const [filterNoDays, setFilterNoDays] = useState("");
   const [searchText, setSearchText] = useState("");
 
   // Bottom action
@@ -119,6 +120,7 @@ function SickLeaveSalDeduction() {
     if (filterToDate) params.toDate = moment(filterToDate).format("YYYY-MM-DD");
     if (searchText) params.searchText = searchText;
     if (filterSalaryMonth) params.idSalaryMonth = filterSalaryMonth;
+    if (filterNoDays) params.NoDaysGreaterThan = filterNoDays;
 
     SickLeaveSalDeductionService.getLeaveApplications(params)
       .then((res) => {
@@ -401,6 +403,23 @@ function SickLeaveSalDeduction() {
 
                 <div className="list_searchbox">
                   <div>
+                    <label>No. of Days &gt;</label>
+                  </div>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="e.g. 3"
+                    value={filterNoDays}
+                    min={0}
+                    step="any"
+                    style={{ width: "100px" }}
+                    onChange={(e) => setFilterNoDays(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && fetchLeaveApplications()}
+                  />
+                </div>
+
+                <div className="list_searchbox">
+                  <div>
                     <label>Search</label>
                   </div>
                   <input
@@ -457,8 +476,15 @@ function SickLeaveSalDeduction() {
                               <small className="text-muted">{row.designationName}</small>
                             </td>
                             <td className="text-center">
-                              <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div> 
-                              <div>{moment(row.toDate).format("DD/MM/YYYY")}</div>
+                              {moment(row.fromDate).format("DD/MM/YYYY") === moment(row.toDate).format("DD/MM/YYYY") ? (
+                                <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div>
+                              ) : (
+                                <>
+                                  <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div>
+                                  <div className="text-muted" style={{ fontSize: "0.75rem" }}>To</div>
+                                  <div>{moment(row.toDate).format("DD/MM/YYYY")}</div>
+                                </>
+                              )}
                             </td>
                             <td className="text-center">
                               <span className="text-primary fw-semibold">

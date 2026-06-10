@@ -9,6 +9,7 @@ export default class SickLeaveSalDeductionService {
       if (params.toDate) query.append("toDate", params.toDate);
       if (params.searchText) query.append("searchText", params.searchText);
       if (params.idSalaryMonth) query.append("idSalaryMonth", params.idSalaryMonth);
+      if (params.NoDaysGreaterThan) query.append("NoDaysGreaterThan", params.NoDaysGreaterThan);
       const res = await API.get(
         `/api/v1/LeaveManagement/GetLeaveApplications_SickLeaveManagement?${query.toString()}`
       );
