@@ -144,7 +144,7 @@ function SalaryApproved() {
         
         const now = new Date();
         const currentYear = now.getFullYear();
-        const currentMonthIndex = now.getMonth();
+        const currentMonthValue = currentYear * 12 + now.getMonth();
   
         // Find the specific month or fallback
         const currentYearMonths = monthList.filter((m) => m.salaryMonthText.includes(currentYear.toString()));
@@ -169,12 +169,9 @@ function SalaryApproved() {
           const [monthName, yearStr] = month.salaryMonthText.split(",");
           const year = parseInt(yearStr.trim());
           const monthIndex = months.indexOf(monthName.trim());
+          const monthValue = year * 12 + monthIndex;
   
-          return (
-            (year === currentYear && monthIndex >= currentMonthIndex - 1 && monthIndex <= currentMonthIndex + 1) ||
-            (year === currentYear - 1 && monthIndex === 11 && currentMonthIndex === 0) ||
-            (year === currentYear + 1 && monthIndex === 0 && currentMonthIndex === 11)
-          );
+          return monthValue >= currentMonthValue - 2 && monthValue <= currentMonthValue + 1;
         });
   
         setSalaryMonthsList(filteredMonths);

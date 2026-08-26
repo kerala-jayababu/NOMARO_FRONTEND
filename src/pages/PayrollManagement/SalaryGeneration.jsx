@@ -194,25 +194,14 @@ function SalaryGeneration() {
 
       const filteredMonths = res.data?.filter((month) => {
         const currentDate = new Date();
-        const currentMonthIndex = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
+        const currentMonthValue =
+          currentDate.getFullYear() * 12 + currentDate.getMonth();
 
         const [monthName, year] = month.salaryMonthText.split(",");
         const monthIndex = months.indexOf(monthName);
+        const monthValue = parseInt(year.trim(), 10) * 12 + monthIndex;
 
-        if (year.trim() == currentYear) {
-          return (
-            monthIndex >= currentMonthIndex - 1 &&
-            monthIndex <= currentMonthIndex + 1
-          );
-        }
-        if (year.trim() == currentYear - 1) {
-          return monthIndex === 11 && currentMonthIndex === 0;
-        }
-        if (year.trim() == currentYear + 1) {
-          return monthIndex === 0 && currentMonthIndex === 11;
-        }
-        return false;
+        return monthValue >= currentMonthValue - 2 && monthValue <= currentMonthValue + 1;
       });
 
       setCurrentMonth({
