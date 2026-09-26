@@ -16,14 +16,16 @@ function Navbar({ view }) {
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const { changeTheme } = useTheme();
-  const [productName, setProductName] = useState(currentAuth == 'PAYROLL' ? '' : 'Employee Self Portal');
+  const [productName, setProductName] = useState(
+    currentAuth == "PAYROLL" ? "" : "Employee Self Portal",
+  );
   const [companyName, setCompanyName] = useState("");
 
   // Apply theme from local storage on initial mount
   useEffect(() => {
     const savedTheme = secureLocalStorage.getItem("ColorTheme");
     if (savedTheme) {
-      changeTheme(savedTheme === 'green' ? 'green' : 'blue');
+      changeTheme(savedTheme === "green" ? "green" : "blue");
     }
   }, [changeTheme]);
 
@@ -33,50 +35,66 @@ function Navbar({ view }) {
         setNotification(res.data);
       });
     };
-  
+
     fetchNotifications();
-  
+
     const interval = setInterval(() => {
-      fetchNotifications(); 
+      fetchNotifications();
     }, 60000);
-  
+
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     // Fetch ProductName and CompanyName from system parameters
-    CommonService.getSystemParameters().then(res => {
-      if (res.data && res.data.data) {
-        const productNameParam = res.data.data.find(item => item.parameterName === "ProductName");
-        if (productNameParam && productNameParam.parameterValue) {
-          setProductName(productNameParam.parameterValue);
-        }
+    CommonService.getSystemParameters()
+      .then((res) => {
+        if (res.data && res.data.data) {
+          const productNameParam = res.data.data.find(
+            (item) => item.parameterName === "ProductName",
+          );
+          if (productNameParam && productNameParam.parameterValue) {
+            setProductName(productNameParam.parameterValue);
+          }
 
-        const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
-        if (companyNameParam && companyNameParam.parameterValue) {
-          setCompanyName(companyNameParam.parameterValue);
-        }
+          const companyNameParam = res.data.data.find(
+            (item) => item.parameterName === "CompanyName",
+          );
+          if (companyNameParam && companyNameParam.parameterValue) {
+            setCompanyName(companyNameParam.parameterValue);
+          }
 
-        // Store ColorTheme and AddEmployeeAllowed in local storage
-        const colorThemeParam = res.data.data.find(item => item.parameterName === "ColorTheme");
-        if (colorThemeParam && colorThemeParam.parameterValue) {
-          const themeValue = colorThemeParam.parameterValue.toLowerCase();
-          secureLocalStorage.setItem("ColorTheme", themeValue);
-          // Apply theme based on ColorTheme parameter
-          changeTheme(themeValue === 'green' ? 'green' : 'blue');
-        }
+          // Store ColorTheme and AddEmployeeAllowed in local storage
+          const colorThemeParam = res.data.data.find(
+            (item) => item.parameterName === "ColorTheme",
+          );
+          if (colorThemeParam && colorThemeParam.parameterValue) {
+            const themeValue = colorThemeParam.parameterValue.toLowerCase();
+            secureLocalStorage.setItem("ColorTheme", themeValue);
+            // Apply theme based on ColorTheme parameter
+            changeTheme(themeValue === "green" ? "green" : "blue");
+          }
 
-        const addEmployeeAllowedParam = res.data.data.find(item => item.parameterName === "AddEmployeeAllowed");
-        if (addEmployeeAllowedParam && addEmployeeAllowedParam.parameterValue) {
-          secureLocalStorage.setItem("AddEmployeeAllowed", addEmployeeAllowedParam.parameterValue);
+          const addEmployeeAllowedParam = res.data.data.find(
+            (item) => item.parameterName === "AddEmployeeAllowed",
+          );
+          if (
+            addEmployeeAllowedParam &&
+            addEmployeeAllowedParam.parameterValue
+          ) {
+            secureLocalStorage.setItem(
+              "AddEmployeeAllowed",
+              addEmployeeAllowedParam.parameterValue,
+            );
+          }
         }
-      }
-    }).catch(err => {
-      // Keep default values if API fails
-      console.error("Failed to fetch system parameters:", err);
-    });
+      })
+      .catch((err) => {
+        // Keep default values if API fails
+        console.error("Failed to fetch system parameters:", err);
+      });
   }, [changeTheme]);
-  
+
   useEffect(() => {
     if (userData?.attachmentBlob) {
       setProfilePic(`data:image/jpeg;base64,${userData?.attachmentBlob}`);
@@ -86,7 +104,6 @@ function Navbar({ view }) {
       setNotification(res.data);
     });
   }, [clicked]);
-
 
   useEffect(() => {
     // Toggle menu click behavior
@@ -98,7 +115,7 @@ function Navbar({ view }) {
         "light-style",
         "layout-menu-fixed",
         "layout-menu-100vh",
-        "layout-menu-expanded"
+        "layout-menu-expanded",
       );
     };
 
@@ -119,20 +136,20 @@ function Navbar({ view }) {
   };
 
   const handleNotificationClick = async (item) => {
-    await CommonService.UpdateEmployeeNotification(item.idNotification)
-    setClicked(!clicked)
-    navigate(`/dashboard/${item.notificationLink}`)
-  }
+    await CommonService.UpdateEmployeeNotification(item.idNotification);
+    setClicked(!clicked);
+    navigate(`/dashboard/${item.notificationLink}`);
+  };
 
   const switchAuth = () => {
-    if (currentAuth == 'PAYROLL') {
-      secureLocalStorage.setItem("currentAuth", 'SELFPORTAL');
-      view('SELFPORTAL');
+    if (currentAuth == "PAYROLL") {
+      secureLocalStorage.setItem("currentAuth", "SELFPORTAL");
+      view("SELFPORTAL");
     } else {
-      secureLocalStorage.setItem("currentAuth", 'PAYROLL');
-      view('PAYROLL');
+      secureLocalStorage.setItem("currentAuth", "PAYROLL");
+      view("PAYROLL");
     }
-  }
+  };
 
   const confirmFinalize = (val) => {
     setShowConfirmation(false);
@@ -152,20 +169,23 @@ function Navbar({ view }) {
         </a>
       </div>
 
-      <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+      <div
+        className="navbar-nav-right d-flex align-items-center"
+        id="navbar-collapse"
+      >
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">{productName}</h5>
+            <h5 className="m-0 fw-bold">{companyName}</h5>
           </div>
         </div>
 
         <ul className="navbar-nav flex-row align-items-center ms-auto">
           {/* Company Name */}
-          {companyName && (
+          {/* {companyName && (
             <li className="nav-item me-3 me-xl-2">
               <span className="nav-link text-white">{companyName}</span>
             </li>
-          )}
+          )} */}
 
           {/* Notification Bell */}
           <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
@@ -181,8 +201,8 @@ function Navbar({ view }) {
                   <span
                     className="position-absolute translate start-100 0 p-1 bg-danger rounded-circle"
                     style={{
-                      width: '0.5px',
-                      height: '0.5px',
+                      width: "0.5px",
+                      height: "0.5px",
                       top: "4px",
                     }}
                   >
@@ -196,7 +216,9 @@ function Navbar({ view }) {
                 <div className="dropdown-header d-flex align-items-center py-3">
                   <h6 className="mb-0 me-auto">Notifications</h6>
                   <div className="d-flex align-items-center h6 mb-0">
-                    <span className="badge bg-label-primary me-2">{notification?.length} New</span>
+                    <span className="badge bg-label-primary me-2">
+                      {notification?.length} New
+                    </span>
                     <a
                       className="dropdown-notifications-all p-2"
                       data-bs-toggle="tooltip"
@@ -211,34 +233,45 @@ function Navbar({ view }) {
               </li>
               <li className="dropdown-notifications-list scrollable-container ps">
                 <ul className="list-group list-group-flush">
-                  {notification?.length > 0 && notification?.map((item, index) => (
-                    <li className="list-group-item list-group-item-action dropdown-notifications-item" onClick={() => handleNotificationClick(item)} key={index}>
-                      <div className="d-flex">
-                        <div className="flex-shrink-0 me-3">
-                          <div className="avatar">
-                            <span className="avatar-initial rounded-circle bg-label-danger">
-                            {item.logoText}
-                            </span>
+                  {notification?.length > 0 &&
+                    notification?.map((item, index) => (
+                      <li
+                        className="list-group-item list-group-item-action dropdown-notifications-item"
+                        onClick={() => handleNotificationClick(item)}
+                        key={index}
+                      >
+                        <div className="d-flex">
+                          <div className="flex-shrink-0 me-3">
+                            <div className="avatar">
+                              <span className="avatar-initial rounded-circle bg-label-danger">
+                                {item.logoText}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-grow-1">
+                            <h6 className="small mb-0">
+                              {" "}
+                              {item.appNotificationText}
+                            </h6>
+                            <small className="mb-1 d-block text-body">
+                              {/* <div dangerouslySetInnerHTML={{ __html: item.appNotificationText }} /> */}
+                              {/* {item.emailContent} */}
+                            </small>
+                            <small className="text-muted">
+                              {Utils.timeAgo(item.createdAt)}
+                            </small>
+                          </div>
+                          <div className="flex-shrink-0 dropdown-notifications-actions">
+                            <a className="dropdown-notifications-read">
+                              <span className="badge badge-dot"></span>
+                            </a>
+                            <a className="dropdown-notifications-archive">
+                              <span className="bx bx-x"></span>
+                            </a>
                           </div>
                         </div>
-                        <div className="flex-grow-1">
-                          <h6 className="small mb-0"> {item.appNotificationText}</h6>
-                          <small className="mb-1 d-block text-body">
-                            {/* <div dangerouslySetInnerHTML={{ __html: item.appNotificationText }} /> */}
-                            {/* {item.emailContent} */}
-                          </small>
-                          <small className="text-muted">{Utils.timeAgo(item.createdAt)}</small>
-                        </div>
-                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                          <a className="dropdown-notifications-read">
-                            <span className="badge badge-dot"></span>
-                          </a>
-                          <a className="dropdown-notifications-archive">
-                            <span className="bx bx-x"></span>
-                          </a>
-                        </div>
-                      </div>
-                    </li>))}
+                      </li>
+                    ))}
                   {/* <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
                     <div className="d-flex">
                       <div className="flex-shrink-0 me-3">
@@ -377,18 +410,20 @@ function Navbar({ view }) {
 
           {/* User Dropdown */}
           <li className="nav-item navbar-dropdown dropdown-user dropdown">
-            <a className="nav-link dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+            <a
+              className="nav-link dropdown-toggle hide-arrow"
+              data-bs-toggle="dropdown"
+            >
               <div className="avatar avatar-online">
-                <img
-                  src={profilePic}
-                  alt=""
-                  className="rounded-circle"
-                />
+                <img src={profilePic} alt="" className="rounded-circle" />
               </div>
             </a>
             <ul className="dropdown-menu dropdown-menu-end">
               <li>
-                <div className="dropdown-item" style={{ cursor: 'default', pointerEvents: 'none' }}>
+                <div
+                  className="dropdown-item"
+                  style={{ cursor: "default", pointerEvents: "none" }}
+                >
                   <div className="d-flex">
                     <div className="flex-shrink-0 me-3">
                       <div className="avatar avatar-online">
@@ -400,22 +435,31 @@ function Navbar({ view }) {
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <span className="fw-semibold d-block">{userData?.name}</span>
+                      <span className="fw-semibold d-block">
+                        {userData?.name}
+                      </span>
                       <small className="text-muted">{userData?.role}</small>
                     </div>
                   </div>
                 </div>
               </li>
-              <li><div className="dropdown-divider"></div></li>
-              {
-                authorizedModules?.length > 1 &&
+              <li>
+                <div className="dropdown-divider"></div>
+              </li>
+              {authorizedModules?.length > 1 && (
                 <li>
-                  <a className="dropdown-item cursor" onClick={() => setShowConfirmation(true)}>
+                  <a
+                    className="dropdown-item cursor"
+                    onClick={() => setShowConfirmation(true)}
+                  >
                     <i className="bx bx-power-off me-2"></i>
-                    <span className="align-middle">Switch to {currentAuth == 'PAYROLL' ? 'Self Portal' : 'Payroll'}</span>
+                    <span className="align-middle">
+                      Switch to{" "}
+                      {currentAuth == "PAYROLL" ? "Self Portal" : "Payroll"}
+                    </span>
                   </a>
                 </li>
-              }
+              )}
               <li>
                 <a className="dropdown-item cursor" onClick={logout}>
                   <i className="bx bx-power-off me-2"></i>
@@ -426,16 +470,19 @@ function Navbar({ view }) {
           </li>
         </ul>
       </div>
-      {
-        showConfirmation &&
+      {showConfirmation && (
         <ConfirmationModal
           modalShow={true}
-          messageText={currentAuth == 'PAYROLL' ? 'Are you sure to switch to Self Portal?' : 'Are you sure to switch to Payroll Portal?'}
+          messageText={
+            currentAuth == "PAYROLL"
+              ? "Are you sure to switch to Self Portal?"
+              : "Are you sure to switch to Payroll Portal?"
+          }
           callbackModal={confirmFinalize}
           confirmBtn={"Confirm"}
           CancelBtn={"Cancel"}
         />
-      }
+      )}
     </nav>
   );
 }

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getSalaryGenerations, getSalarySlipDetails } from "../../redux/reducers/salaryGeneration";
+import {
+  getSalaryGenerations,
+  getSalarySlipDetails,
+} from "../../redux/reducers/salaryGeneration";
 import { fetchDepartments } from "../../redux/reducers/department";
 import { fetchDesignations } from "../../redux/reducers/designation";
 import CommonService from "../../core/services/CommonService";
@@ -22,53 +25,63 @@ const statusColor = [
   { status: "draft", color: "bg-label-warning" },
   { status: "not generated", color: "bg-dark" },
   { status: "rejected", color: "bg-danger" },
-   { status: "fm approved", color: "bg-info" },
-  { status: "hr approved", color: "bg-info" }
+  { status: "fm approved", color: "bg-info" },
+  { status: "hr approved", color: "bg-info" },
 ];
 
 const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 // CSS styles for salary slip modal
 const salarySlipStyles = {
   sectionTitle: {
-    fontWeight: 'bold',
-    margin: '10px 0 5px 0',
-    fontSize: '16px',
-    color: '#333'
+    fontWeight: "bold",
+    margin: "10px 0 5px 0",
+    fontSize: "16px",
+    color: "#333",
   },
   totalRow: {
-    backgroundColor: '#fff3cd',
-    fontWeight: 'bold'
+    backgroundColor: "#fff3cd",
+    fontWeight: "bold",
   },
   netPay: {
-    backgroundColor: '#e9ecef',
-    fontWeight: 'bold',
-    fontSize: '18px',
-    textAlign: 'center',
-    padding: '15px',
-    borderRadius: '5px',
-    border: '1px solid #dee2e6'
+    backgroundColor: "#e9ecef",
+    fontWeight: "bold",
+    fontSize: "18px",
+    textAlign: "center",
+    padding: "15px",
+    borderRadius: "5px",
+    border: "1px solid #dee2e6",
   },
   headerInfo: {
-    fontSize: '16px',
-    padding: '10px',
-    borderRadius: '5px',
-    marginBottom: '5px'
+    fontSize: "16px",
+    padding: "10px",
+    borderRadius: "5px",
+    marginBottom: "5px",
   },
   tableHeader: {
-    backgroundColor: '#f8f9fa',
-    fontWeight: 'bold'
+    backgroundColor: "#f8f9fa",
+    fontWeight: "bold",
   },
-  
+
   modalContent: {
-    fontFamily: 'Poppins, sans-serif',
-    padding: '0px 15px 15px 15px',
-    fontSize: '13px',
-    minHeight: '90vh'
-  }
+    fontFamily: "Poppins, sans-serif",
+    padding: "0px 15px 15px 15px",
+    fontSize: "13px",
+    minHeight: "90vh",
+  },
 };
 
 function SalaryApproved() {
@@ -82,13 +95,20 @@ function SalaryApproved() {
   const [filter, setFilter] = useState("");
   const [option, setOption] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
-  const [statusFilter, setStatusFilter] = useState({ value: "All", label: "Select Status" });
+  const [statusFilter, setStatusFilter] = useState({
+    value: "All",
+    label: "Select Status",
+  });
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedCard, setSelectedCard] = useState("All");
   const [allSalaryList, setAllSalaryList] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState({ type: "", title: "", message: "" });
+  const [confirmAction, setConfirmAction] = useState({
+    type: "",
+    title: "",
+    message: "",
+  });
   const [initialApprovalStatus, setInitialApprovalStatus] = useState(null);
   const [showSalarySlipModal, setShowSalarySlipModal] = useState(false);
   const [salarySlipData, setSalarySlipData] = useState(null);
@@ -97,65 +117,77 @@ function SalaryApproved() {
   const statusRef = useRef();
   const filterRef = useRef();
 
-  const { salaryGenerationList } = useSelector((state) => state.salaryGeneration);
+  const { salaryGenerationList } = useSelector(
+    (state) => state.salaryGeneration,
+  );
   const { departments } = useSelector((state) => state.department);
   const { designation } = useSelector((state) => state.designation);
-   const { options } = useSelector((state) => state.budgetCode);
+  const { options } = useSelector((state) => state.budgetCode);
   const { idPayrollScreen } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const initialize = async () => {
       try {
         setShowOverlay(true);
-  
+
         const storedUser = secureLocalStorage.getItem("user");
         const token = storedUser ? JSON.parse(storedUser)?.token : null;
-  
+
         if (!token) {
           toast.error("Token not found");
           return;
         }
-  
+
         // 1. Fetch status options
-        const statusResponse = await API.get(`${BASE_URL}/api/v1/Common/GetSalaryOptions`);
-        
+        const statusResponse = await API.get(
+          `${BASE_URL}/api/v1/Common/GetSalaryOptions`,
+        );
+
         const statusData = statusResponse?.data || [];
         const formattedStatus = statusData.map((item) => ({
           value: item.value,
           label: item.label,
         }));
-        const fullStatusOptions = [{ value: "All", label: "All Status" }, ...formattedStatus];
+        const fullStatusOptions = [
+          { value: "All", label: "All Status" },
+          ...formattedStatus,
+        ];
         setStatusOptions(fullStatusOptions);
-  
+
         // 2. Get current approval status
-        const approvalRes = await API.post(`${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`);
+        const approvalRes = await API.post(
+          `${BASE_URL}/api/v1/SalaryGeneration/GetSalaryapprovalValue`,
+        );
         const approvalData = approvalRes?.data?.data;
         const approvalStatus = approvalData?.approvalStatus;
         setInitialApprovalStatus(approvalStatus);
-  
+
         const matchedStatus = fullStatusOptions.find(
-          (opt) => opt.value.toLowerCase() === approvalStatus?.toLowerCase()
+          (opt) => opt.value.toLowerCase() === approvalStatus?.toLowerCase(),
         );
         setStatusFilter(matchedStatus || { value: "All", label: "All Status" });
-  
+
         // 3. Get salary months list
         const monthsData = await CommonService.getAllSalaryMonths();
         const monthList = monthsData?.data || [];
-        
+
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonthValue = currentYear * 12 + now.getMonth();
-  
+
         // Find the specific month or fallback
-        const currentYearMonths = monthList.filter((m) => m.salaryMonthText.includes(currentYear.toString()));
-        let currentMonthObject = currentYearMonths.find(
-          (m) => m.idSalaryMonth === approvalData?.maxSalaryMonth
+        const currentYearMonths = monthList.filter((m) =>
+          m.salaryMonthText.includes(currentYear.toString()),
         );
-  
+        let currentMonthObject = currentYearMonths.find(
+          (m) => m.idSalaryMonth === approvalData?.maxSalaryMonth,
+        );
+
         if (!currentMonthObject) {
-          currentMonthObject = currentYearMonths.length > 0 ? currentYearMonths[0] : monthList[0];
+          currentMonthObject =
+            currentYearMonths.length > 0 ? currentYearMonths[0] : monthList[0];
         }
-  
+
         // Safe assignment
         if (currentMonthObject) {
           setCurrentMonth({
@@ -163,19 +195,21 @@ function SalaryApproved() {
             label: currentMonthObject.salaryMonthText,
           });
         }
-  
+
         // 4. Filter logic for the dropdown list
         const filteredMonths = monthList.filter((month) => {
           const [monthName, yearStr] = month.salaryMonthText.split(",");
           const year = parseInt(yearStr.trim());
           const monthIndex = months.indexOf(monthName.trim());
           const monthValue = year * 12 + monthIndex;
-  
-          return monthValue >= currentMonthValue - 2 && monthValue <= currentMonthValue + 1;
+
+          return (
+            monthValue >= currentMonthValue - 2 &&
+            monthValue <= currentMonthValue + 1
+          );
         });
-  
+
         setSalaryMonthsList(filteredMonths);
-  
       } catch (error) {
         console.error("Initialization error:", error);
         toast.error("Initialization failed");
@@ -183,45 +217,45 @@ function SalaryApproved() {
         setShowOverlay(false);
       }
     };
-  
+
     initialize();
   }, []); // Ensure 'months' and 'API' are stable or included here if they change
 
-useEffect(() => {
-  if (!currentMonth) return;
+  useEffect(() => {
+    if (!currentMonth) return;
 
-  const fetchSalaryData = async () => {
-    try {
-      // setShowOverlay(true);
-      const params = {
-        idSalaryMonth: currentMonth.value,
-        status: "All",
-      };
+    const fetchSalaryData = async () => {
+      try {
+        // setShowOverlay(true);
+        const params = {
+          idSalaryMonth: currentMonth.value,
+          status: "All",
+        };
 
-      const { payload } = await dispatch(getSalaryGenerations(params));
-      const allData = payload?.data || [];
-      setAllSalaryList(allData);
+        const { payload } = await dispatch(getSalaryGenerations(params));
+        const allData = payload?.data || [];
+        setAllSalaryList(allData);
 
-      const filteredData =
-        statusFilter.value === "All"
-          ? allData
-          : allData.filter(
-              (item) =>
-                statusFilter.value.toLowerCase().includes(item.approvalStatus.toLowerCase())
-            );
+        const filteredData =
+          statusFilter.value === "All"
+            ? allData
+            : allData.filter((item) =>
+                statusFilter.value
+                  .toLowerCase()
+                  .includes(item.approvalStatus.toLowerCase()),
+              );
 
-      dispatch({
-        type: "salaryGeneration/getSalaryGenerations/fulfilled",
-        payload: { data: filteredData },
-      });
-    } catch (err) {
-      console.error("Error fetching salary data:", err);
-    } 
-  };
+        dispatch({
+          type: "salaryGeneration/getSalaryGenerations/fulfilled",
+          payload: { data: filteredData },
+        });
+      } catch (err) {
+        console.error("Error fetching salary data:", err);
+      }
+    };
 
-  fetchSalaryData();
-}, [dispatch, currentMonth, statusFilter]);
-
+    fetchSalaryData();
+  }, [dispatch, currentMonth, statusFilter]);
 
   const handleStatusChange = (status) => {
     if (!status) return;
@@ -240,9 +274,9 @@ useEffect(() => {
     if (option.value === "designation") {
       await dispatch(fetchDesignations());
     } else if (option.value === "budget") {
-            const result = await dispatch(fetchBudgetCode());
-            console.log("Fetched budget codes:", result?.payload?.data);
-          }else {
+      const result = await dispatch(fetchBudgetCode());
+      console.log("Fetched budget codes:", result?.payload?.data);
+    } else {
       await dispatch(fetchDepartments());
     }
     setOption(option.value);
@@ -275,7 +309,9 @@ useEffect(() => {
   };
 
   const uncheckCheckBox = () => {
-    document.querySelectorAll(".form-check-input").forEach((item) => (item.checked = false));
+    document
+      .querySelectorAll(".form-check-input")
+      .forEach((item) => (item.checked = false));
   };
 
   const handleEmployeeCodeClick = async (item) => {
@@ -283,10 +319,12 @@ useEffect(() => {
     if (item.approvalStatus.toLowerCase() === "not generated") {
       return;
     }
-    
+
     try {
       setShowOverlay(true);
-      const response = await dispatch(getSalarySlipDetails(item.idEmployeeSalary));
+      const response = await dispatch(
+        getSalarySlipDetails(item.idEmployeeSalary),
+      );
       console.log("response", response);
       if (response.payload && response.payload.success) {
         setSalarySlipData(response.payload.data);
@@ -321,18 +359,21 @@ useEffect(() => {
       toast.success("Approved successfully");
       uncheckCheckBox();
       setSalaryDraft([]);
-      dispatch(getSalaryGenerations({ idSalaryMonth: currentMonth?.value, status: "All" }))
-        .then(({ payload }) => setAllSalaryList(payload.data));
+      dispatch(
+        getSalaryGenerations({
+          idSalaryMonth: currentMonth?.value,
+          status: "All",
+        }),
+      ).then(({ payload }) => setAllSalaryList(payload.data));
       clearAllFilter();
     }
   };
 
-  const handleRejectWorkflow = async () => {   
+  const handleRejectWorkflow = async () => {
     if (!rejectReason.trim()) {
       toast.error("Please enter a rejection reason");
       return;
     }
-    
 
     const content = salaryDraft.map((item) => ({
       entityTablePrimaryKeyID: item.idEmployeeSalary,
@@ -354,8 +395,12 @@ useEffect(() => {
       uncheckCheckBox();
       setSalaryDraft([]);
       setRejectReason("");
-      dispatch(getSalaryGenerations({ idSalaryMonth: currentMonth?.value, status: "All" }))
-        .then(({ payload }) => setAllSalaryList(payload.data));
+      dispatch(
+        getSalaryGenerations({
+          idSalaryMonth: currentMonth?.value,
+          status: "All",
+        }),
+      ).then(({ payload }) => setAllSalaryList(payload.data));
       clearAllFilter();
     }
   };
@@ -382,14 +427,13 @@ useEffect(() => {
   };
 
   const handleSelectAll = (e) => {
-    
     const checked = e.target.checked;
-      const filtered = salaryGenerationList.filter((x) => x.approvalEnabled);
-        setSalaryDraft(checked ? filtered : []);
+    const filtered = salaryGenerationList.filter((x) => x.approvalEnabled);
+    setSalaryDraft(checked ? filtered : []);
     // const filtered = salaryGenerationList.filter((x) =>
     //   statusFilter.value.toLowerCase().includes(x.approvalStatus.toLowerCase())
     // );
-   // setSalaryDraft(checked ? filtered : []);
+    // setSalaryDraft(checked ? filtered : []);
     handelCheckboxCheck(checked);
   };
 
@@ -398,7 +442,7 @@ useEffect(() => {
     setShowOverlay(true);
     const response = await SalaryGenerationService.exportSalaryApproved(
       employeeIds,
-      currentMonth.value
+      currentMonth.value,
     );
     setShowOverlay(false);
     if (response.error) {
@@ -410,32 +454,36 @@ useEffect(() => {
     setSalaryDraft([]);
   };
   const exportSalaryALLRecord = async () => {
-  const employeeIds = salaryGenerationList.map((item) => item.idEmployee).join(",");
-  if (!employeeIds) {
-    toast.error("No employee records found to export.");
-    return;
-  }
+    const employeeIds = salaryGenerationList
+      .map((item) => item.idEmployee)
+      .join(",");
+    if (!employeeIds) {
+      toast.error("No employee records found to export.");
+      return;
+    }
 
-  setShowOverlay(true);
-  const response = await SalaryGenerationService.exportSalaryApproved(
-    employeeIds,
-    currentMonth.value
-  );
-  setShowOverlay(false);
+    setShowOverlay(true);
+    const response = await SalaryGenerationService.exportSalaryApproved(
+      employeeIds,
+      currentMonth.value,
+    );
+    setShowOverlay(false);
 
-  if (response.error) {
-    toast.error(response.error);
-  } else {
-    downloadFile(response.data);
-    toast.success("Exported all records successfully.");
-  }
+    if (response.error) {
+      toast.error(response.error);
+    } else {
+      downloadFile(response.data);
+      toast.success("Exported all records successfully.");
+    }
 
-  uncheckCheckBox();
-  setSalaryDraft([]);
-};
+    uncheckCheckBox();
+    setSalaryDraft([]);
+  };
 
   const downloadFile = (item) => {
-    const byteArray = Uint8Array.from(atob(item.fileContent), (c) => c.charCodeAt(0));
+    const byteArray = Uint8Array.from(atob(item.fileContent), (c) =>
+      c.charCodeAt(0),
+    );
     const blob = new Blob([byteArray], { type: item.fileType });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -458,8 +506,14 @@ useEffect(() => {
   const totalEarnings = sumBy(salaryGenerationList, "totalEarnings");
   const totalDeductions = sumBy(salaryGenerationList, "totalDeductions");
   const totalNetSalary = sumBy(salaryGenerationList, "netSalary");
-  const totalNisEmployee = sumBy(salaryGenerationList, "nisEmployeeContribution");
-  const totalNisEmployer = sumBy(salaryGenerationList, "nisEmployerContribution");
+  const totalNisEmployee = sumBy(
+    salaryGenerationList,
+    "nisEmployeeContribution",
+  );
+  const totalNisEmployer = sumBy(
+    salaryGenerationList,
+    "nisEmployerContribution",
+  );
   const totalNis = totalNisEmployee + totalNisEmployer;
 
   return (
@@ -529,7 +583,8 @@ useEffect(() => {
                         <h5>Approved</h5>
                         <div class="count text-success">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "approved"
+                            (x) =>
+                              x.approvalStatus.toLowerCase() === "approved",
                           )?.length || 0}
                         </div>
                       </div>
@@ -556,7 +611,7 @@ useEffect(() => {
                         <div className="count bs-bg-warning">
                           {allSalaryList?.filter(
                             (x) =>
-                              x.approvalStatus.toLowerCase() === "submitted"
+                              x.approvalStatus.toLowerCase() === "submitted",
                           )?.length || 0}
                         </div>
                       </div>
@@ -582,7 +637,7 @@ useEffect(() => {
                         <h5>Draft Generated</h5>
                         <div class="count text-secondary">
                           {allSalaryList?.filter(
-                            (x) => x.approvalStatus.toLowerCase() === "draft"
+                            (x) => x.approvalStatus.toLowerCase() === "draft",
                           )?.length || 0}
                         </div>
                       </div>
@@ -609,7 +664,8 @@ useEffect(() => {
                         <div class="count text-dark">
                           {allSalaryList?.filter(
                             (x) =>
-                              x.approvalStatus.toLowerCase() === "not generated"
+                              x.approvalStatus.toLowerCase() ===
+                              "not generated",
                           )?.length || 0}
                         </div>
                       </div>
@@ -629,7 +685,7 @@ useEffect(() => {
                         label: "Filter Designation Based",
                       },
                       { value: "department", label: "Filter Department Based" },
-                       { value: "budget", label: "Filter Budget Based" },
+                      { value: "budget", label: "Filter Budget Based" },
                     ]}
                     defaultValue={{ value: "all", label: "All Employees" }}
                     onChange={(option) => {
@@ -657,24 +713,24 @@ useEffect(() => {
                       className="textSize"
                     />
                   ) : option === "budget" ? (
-                                      <Select
-                                        ref={optionsRef}
-                                        options={[
-                                          { value: "", label: "All Budget Codes" },
-                                          ...(options?.data?.map((budget) => ({
-                                            value: budget.budgetCode,
-                                            label: budget.budgetCode,
-                                          })) || []),
-                                        ]}
-                                        isSearchable
-                                        onChange={(option) => {
-                                          if (statusRef.current) statusRef.current.value = "All";
-                                          setFilter(option?.value || "");
-                                        }}
-                                        placeholder={"Select Budget Code"}
-                                        className="textSize"
-                                      />
-                                    ) : (
+                    <Select
+                      ref={optionsRef}
+                      options={[
+                        { value: "", label: "All Budget Codes" },
+                        ...(options?.data?.map((budget) => ({
+                          value: budget.budgetCode,
+                          label: budget.budgetCode,
+                        })) || []),
+                      ]}
+                      isSearchable
+                      onChange={(option) => {
+                        if (statusRef.current) statusRef.current.value = "All";
+                        setFilter(option?.value || "");
+                      }}
+                      placeholder={"Select Budget Code"}
+                      className="textSize"
+                    />
+                  ) : (
                     <Select
                       ref={optionsRef}
                       options={[
@@ -698,7 +754,9 @@ useEffect(() => {
                   <Select
                     ref={statusRef}
                     className="textSize"
-                    options={statusOptions.sort((a,b) => a.label.localeCompare(b.label))}
+                    options={statusOptions.sort((a, b) =>
+                      a.label.localeCompare(b.label),
+                    )}
                     onChange={(option) => handleStatusChange(option)}
                     value={statusFilter}
                     isSearchable
@@ -709,24 +767,27 @@ useEffect(() => {
                 <table class="table table-sm">
                   <thead>
                     <tr>
-                                  <th>
-                       
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                           checked={
-  salaryGenerationList?.filter((item) => item.approvalEnabled).length > 0 &&
-  salaryDraft.length === salaryGenerationList?.filter((item) => item.approvalEnabled).length
-}
-                            onChange={handleSelectAll}
-                          />
-                        
+                      <th>
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          checked={
+                            salaryGenerationList?.filter(
+                              (item) => item.approvalEnabled,
+                            ).length > 0 &&
+                            salaryDraft.length ===
+                              salaryGenerationList?.filter(
+                                (item) => item.approvalEnabled,
+                              ).length
+                          }
+                          onChange={handleSelectAll}
+                        />
                       </th>
                       <th>Emp. Code</th>
                       <th>Employee Name</th>
                       <th>Department</th>
                       <th>Designation</th>
-                       <th>Budget Code</th>
+                      <th>Budget Code</th>
                       <th class="text-end">Total Earnings</th>
                       <th class="text-end">Total Deductions</th>
                       <th class="text-end">Net Salary</th>
@@ -735,7 +796,7 @@ useEffect(() => {
                   </thead>
                   <tbody>
                     {salaryGenerationList
-                        ?.filter((x) => {
+                      ?.filter((x) => {
                         if (!filter) return true;
 
                         if (option === "department")
@@ -761,31 +822,44 @@ useEffect(() => {
                       ?.map((item, index) => (
                         <tr key={index}>
                           <td>
-                                          <input
-                type="checkbox"
-                className="form-check-input cursor-pointer data-checkbox"
-                value={item.approvalStatus}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSalaryDraft((prev) => [...prev, item]);
-                  } else {
-                    setSalaryDraft((prev) =>
-                      prev.filter((x) => x.employeeCode !== item.employeeCode)
-                    );
-                  }
-                }}
-                disabled={!item.approvalEnabled}
-              />
+                            <input
+                              type="checkbox"
+                              className="form-check-input cursor-pointer data-checkbox"
+                              value={item.approvalStatus}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSalaryDraft((prev) => [...prev, item]);
+                                } else {
+                                  setSalaryDraft((prev) =>
+                                    prev.filter(
+                                      (x) =>
+                                        x.employeeCode !== item.employeeCode,
+                                    ),
+                                  );
+                                }
+                              }}
+                              disabled={!item.approvalEnabled}
+                            />
                           </td>
                           <td>
-                            {item.approvalStatus.toLowerCase() === "not generated" ? (
-                              <span style={{ color: "#6c757d", cursor: "not-allowed" }}>
+                            {item.approvalStatus.toLowerCase() ===
+                            "not generated" ? (
+                              <span
+                                style={{
+                                  color: "#6c757d",
+                                  cursor: "not-allowed",
+                                }}
+                              >
                                 {item.employeeCode}
                               </span>
                             ) : (
                               <a
                                 href="#"
-                                style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }}
+                                style={{
+                                  color: "var(--link-color)",
+                                  cursor: "pointer",
+                                  textDecoration: "none",
+                                }}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleEmployeeCodeClick(item);
@@ -799,7 +873,7 @@ useEffect(() => {
                           <td>{item.employeeName}</td>
                           <td>{item.departmentName}</td>
                           <td>{item.designationName}</td>
-                             <td>{item.budgetCode}</td>
+                          <td>{item.budgetCode}</td>
                           <td className="text-end">
                             {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
@@ -824,7 +898,7 @@ useEffect(() => {
                                 statusColor.find(
                                   (x) =>
                                     x.status ===
-                                    item.approvalStatus.toLowerCase()
+                                    item.approvalStatus.toLowerCase(),
                                 )?.color
                               }`}
                             >
@@ -838,7 +912,10 @@ useEffect(() => {
 
                 {/* Summary row below the table */}
                 {salaryGenerationList?.length > 0 && (
-                  <div className="mb-3 mt-3" style={{ border: "1px solid #bdbdbd" }}>
+                  <div
+                    className="mb-3 mt-3"
+                    style={{ border: "1px solid #bdbdbd" }}
+                  >
                     <div className="d-flex" style={{ width: "100%" }}>
                       {[
                         { label: "Total Earnings", value: totalEarnings },
@@ -855,11 +932,18 @@ useEffect(() => {
                             width: `${100 / arr.length}%`,
                             textAlign: "center",
                             padding: "10px 8px",
-                            borderRight: idx === arr.length - 1 ? "none" : "1px solid #bdbdbd",
+                            borderRight:
+                              idx === arr.length - 1
+                                ? "none"
+                                : "1px solid #bdbdbd",
                           }}
                         >
-                          <div style={{ fontSize: "12px", color: "#444" }}>{box.label}</div>
-                          <div style={{ fontSize: "14px" }}>₹ {formatGyd(box.value)}</div>
+                          <div style={{ fontSize: "12px", color: "#444" }}>
+                            {box.label}
+                          </div>
+                          <div style={{ fontSize: "14px" }}>
+                            ₹ {formatGyd(box.value)}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -867,8 +951,7 @@ useEffect(() => {
                 )}
 
                 <div class="text-center pt-3">
-
-                    <button
+                  <button
                     type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={exportSalaryApproved}
@@ -876,18 +959,20 @@ useEffect(() => {
                   >
                     Export to Excel for Detailed Review
                   </button>
-                   <button
+                  <button
                     type="button"
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={exportSalaryALLRecord}
-                    
                   >
-                    Export  ALL RECORD
+                    Export ALL RECORD
                   </button>
-                
+
                   <button
                     type="button"
-                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() === "approved"}
+                    disabled={
+                      salaryDraft.length === 0 ||
+                      statusFilter.value.toLowerCase() === "approved"
+                    }
                     class="btn btn-primary btn-sm py-2 px-4 me-2"
                     onClick={() => setShowRejectModal(true)}
                   >
@@ -895,7 +980,10 @@ useEffect(() => {
                   </button>
                   <button
                     type="button"
-                    disabled={salaryDraft.length === 0 || statusFilter.value.toLowerCase() === "approved"}
+                    disabled={
+                      salaryDraft.length === 0 ||
+                      statusFilter.value.toLowerCase() === "approved"
+                    }
                     class="btn btn-info btn-sm py-2 px-4 me-2"
                     onClick={() => showConfirmationModal("approve")}
                   >
@@ -999,32 +1087,41 @@ useEffect(() => {
       {showSalarySlipModal && salarySlipData && (
         <div
           className="modal d-block"
-           id="salarySlipModal"
+          id="salarySlipModal"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <div className="modal-dialog modal-xl" style={{ maxWidth: '75%' }}>
+          <div className="modal-dialog modal-xl" style={{ maxWidth: "75%" }}>
             <div className="modal-content">
               <div className="modal-header">
-               
-                <div className="row col-md-12" style={salarySlipStyles.headerInfo} >
-                     <div className="col-md-6">
-                       <div className="row g-2">
-                         <div className="col-12">
-                           <strong>{salarySlipData.employeeCode}, {salarySlipData.employeeName}</strong>
-                         </div>
-                         <div className="col-12">
-                          {salarySlipData.position}, {salarySlipData.department}
-                         </div>
-                       </div>
-                     </div>
-                     <div className="col-md-6">
-                       <div className="row g-2">
-                         <div className="col-12 text-end">
-                          <strong> {selectedStatus ? selectedStatus : "Draft"} - {salarySlipData.period}</strong> 
-                         </div>
-                       </div>
-                     </div>
-                   </div>
+                <div
+                  className="row col-md-12"
+                  style={salarySlipStyles.headerInfo}
+                >
+                  <div className="col-md-6">
+                    <div className="row g-2">
+                      <div className="col-12">
+                        <strong>
+                          {salarySlipData.employeeCode},{" "}
+                          {salarySlipData.employeeName}
+                        </strong>
+                      </div>
+                      <div className="col-12">
+                        {salarySlipData.position}, {salarySlipData.department}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="row g-2">
+                      <div className="col-12 text-end">
+                        <strong>
+                          {" "}
+                          {selectedStatus ? selectedStatus : "Draft"} -{" "}
+                          {salarySlipData.period}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <button
                   type="button"
                   className="btn-close"
@@ -1033,208 +1130,438 @@ useEffect(() => {
               </div>
               <div className="modal-body" style={salarySlipStyles.modalContent}>
                 <div className="salary-slip-container">
-                           
-
                   {/* Earnings Section */}
-                  <div className="section-title mt-1" style={salarySlipStyles.sectionTitle}>
+                  <div
+                    className="section-title mt-1"
+                    style={salarySlipStyles.sectionTitle}
+                  >
                     <strong>Earnings</strong>
                   </div>
                   <div className="table-responsive">
                     <table className="table table-bordered table-sm">
-                                             <thead>
-                         <tr>
-                           <th style={salarySlipStyles.tableHeader}>Salary Head</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(₹)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(₹)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {salarySlipData.earnings && salarySlipData.earnings.length > 0 ? (
-                           salarySlipData.earnings.map((earning, index) => (
-                             <tr key={index}>
-                               <td>{earning.description}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountUS)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountUSD)}</td>
-                             </tr>
-                           ))
-                         ) : (
-                           <tr>
-                             <td colSpan="5" className="text-center">No earnings data available</td>
-                           </tr>
-                         )}
-                         <tr style={salarySlipStyles.totalRow}>
-                           <td><strong>Total</strong></td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountUS || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountG || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountUSD || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                         </tr>
-                       </tbody>
+                      <thead>
+                        <tr>
+                          <th style={salarySlipStyles.tableHeader}>
+                            Salary Head
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            Amount(₹)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            Amount(US$)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            YTD Amount(₹)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            YTD Amount(US$)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salarySlipData.earnings &&
+                        salarySlipData.earnings.length > 0 ? (
+                          salarySlipData.earnings.map((earning, index) => (
+                            <tr key={index}>
+                              <td>{earning.description}</td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(earning.amountG)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(earning.amountUS)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(earning.ytdAmountG)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(earning.ytdAmountUSD)}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="5" className="text-center">
+                              No earnings data available
+                            </td>
+                          </tr>
+                        )}
+                        <tr style={salarySlipStyles.totalRow}>
+                          <td>
+                            <strong>Total</strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.earnings
+                                  ? salarySlipData.earnings.reduce(
+                                      (sum, earning) =>
+                                        sum + (earning.amountG || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.earnings
+                                  ? salarySlipData.earnings.reduce(
+                                      (sum, earning) =>
+                                        sum + (earning.amountUS || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.earnings
+                                  ? salarySlipData.earnings.reduce(
+                                      (sum, earning) =>
+                                        sum + (earning.ytdAmountG || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.earnings
+                                  ? salarySlipData.earnings.reduce(
+                                      (sum, earning) =>
+                                        sum + (earning.ytdAmountUSD || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                        </tr>
+                      </tbody>
                     </table>
                   </div>
 
                   {/* Deductions Section */}
-                  <div className="section-title  mb-2" style={salarySlipStyles.sectionTitle}>
+                  <div
+                    className="section-title  mb-2"
+                    style={salarySlipStyles.sectionTitle}
+                  >
                     <strong>Deductions</strong>
                   </div>
 
-
                   <div className="table-responsive">
                     <table className="table table-bordered table-sm">
-                                             <thead>
-                         <tr>
-                           <th style={salarySlipStyles.tableHeader}>Salary Head</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(₹)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(₹)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {salarySlipData.deductions && salarySlipData.deductions.length > 0 ? (
-                           salarySlipData.deductions.map((deduction, index) => (
-                             <tr key={index}>
-                               <td>{deduction.description}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountUS)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountUSD)}</td>
-                           </tr>
-                           ))
-                         ) : (
-                           <tr>
-                             <td colSpan="5" className="text-center">No deductions data available</td>
-                           </tr>
-                         )}
-                         <tr style={salarySlipStyles.totalRow}>
-                           <td><strong>Total</strong></td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountUS || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountG || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                           <td className="text-end">
-                             <strong>
-                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                                 salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountUSD || 0), 0) : 0
-                               )}
-                             </strong>
-                           </td>
-                         </tr>
-                       </tbody>
+                      <thead>
+                        <tr>
+                          <th style={salarySlipStyles.tableHeader}>
+                            Salary Head
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            Amount(₹)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            Amount(US$)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            YTD Amount(₹)
+                          </th>
+                          <th
+                            className="text-end"
+                            style={salarySlipStyles.tableHeader}
+                          >
+                            YTD Amount(US$)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salarySlipData.deductions &&
+                        salarySlipData.deductions.length > 0 ? (
+                          salarySlipData.deductions.map((deduction, index) => (
+                            <tr key={index}>
+                              <td>{deduction.description}</td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(deduction.amountG)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(deduction.amountUS)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(deduction.ytdAmountG)}
+                              </td>
+                              <td className="text-end">
+                                {new Intl.NumberFormat("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(deduction.ytdAmountUSD)}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="5" className="text-center">
+                              No deductions data available
+                            </td>
+                          </tr>
+                        )}
+                        <tr style={salarySlipStyles.totalRow}>
+                          <td>
+                            <strong>Total</strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.deductions
+                                  ? salarySlipData.deductions.reduce(
+                                      (sum, deduction) =>
+                                        sum + (deduction.amountG || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.deductions
+                                  ? salarySlipData.deductions.reduce(
+                                      (sum, deduction) =>
+                                        sum + (deduction.amountUS || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.deductions
+                                  ? salarySlipData.deductions.reduce(
+                                      (sum, deduction) =>
+                                        sum + (deduction.ytdAmountG || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(
+                                salarySlipData.deductions
+                                  ? salarySlipData.deductions.reduce(
+                                      (sum, deduction) =>
+                                        sum + (deduction.ytdAmountUSD || 0),
+                                      0,
+                                    )
+                                  : 0,
+                              )}
+                            </strong>
+                          </td>
+                        </tr>
+                      </tbody>
                     </table>
                   </div>
 
-                      {/* Net Pay */}
-                      <div className="text-center " style={salarySlipStyles.netPay}>
+                  {/* Net Pay */}
+                  <div className="text-center " style={salarySlipStyles.netPay}>
                     <h5 className="mb-0">
-                      Net Pay: ₹ {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                        (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
-                        (salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0)
+                      Net Pay: ₹{" "}
+                      {new Intl.NumberFormat("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(
+                        (salarySlipData.earnings
+                          ? salarySlipData.earnings.reduce(
+                              (sum, earning) => sum + (earning.amountG || 0),
+                              0,
+                            )
+                          : 0) -
+                          (salarySlipData.deductions
+                            ? salarySlipData.deductions.reduce(
+                                (sum, deduction) =>
+                                  sum + (deduction.amountG || 0),
+                                0,
+                              )
+                            : 0),
                       )}
                     </h5>
                   </div>
 
-{/* Bank Remittance Section */}
-{salarySlipData.bankRemittance && salarySlipData.bankRemittance.length > 0 && (
-  <div className="mt-3">
-    <div className="section-title" style={salarySlipStyles.sectionTitle}>
-      <strong>Bank Remittance</strong>
-    </div>
-    <div className="table-responsive">
-      <table className="table table-bordered table-sm">
-        <thead>
-          <tr>
-            <th style={{ width: "25%" }}>Bank Name</th>
-            <th style={{ width: "20%" }}>Account Number</th>
-            <th  style={{ width: "20%" }}>ABA Routing Number</th>
-            <th className="text-end" style={{ width: "17.5%" }}>Amount (₹)</th>
-            <th className="text-end" style={{ width: "17.5%" }}>Amount (US$)</th>
-          </tr>
-        </thead> 
-        <tbody>
-          {salarySlipData.bankRemittance.map((bank, idx) => (
-            <tr key={idx}>
-              <td>{bank.bankName}</td>
-              <td>{bank.accountNumber}</td>
-              <td>{bank.abaRoutingNumber}</td>
-              <td className="text-end" >
-                {bank.amountGTD ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
-              </td>
-              <td className="text-end" >
-                {bank.amountUSD ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountUSD) : ""}
-              </td>
-            </tr>
-          ))}
-          {/* Total Row */}
-          <tr style={salarySlipStyles.totalRow}>
-            <td colSpan={3}><strong>TOTAL</strong></td>
-            <td className="text-end" style={{ width: "80px" }}>
-              <strong>
-                {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountGTD || 0), 0)
-                )}
-              </strong>
-            </td>
-            <td className="text-end" style={{ width: "80px" }}>
-              <strong>
-                {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-                  salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountUSD || 0), 0)
-                )}
-              </strong>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
-              
+                  {/* Bank Remittance Section */}
+                  {salarySlipData.bankRemittance &&
+                    salarySlipData.bankRemittance.length > 0 && (
+                      <div className="mt-3">
+                        <div
+                          className="section-title"
+                          style={salarySlipStyles.sectionTitle}
+                        >
+                          <strong>Bank Remittance</strong>
+                        </div>
+                        <div className="table-responsive">
+                          <table className="table table-bordered table-sm">
+                            <thead>
+                              <tr>
+                                <th style={{ width: "25%" }}>Bank Name</th>
+                                <th style={{ width: "20%" }}>Account Number</th>
+                                <th style={{ width: "20%" }}>IFSC Code</th>
+                                <th
+                                  className="text-end"
+                                  style={{ width: "17.5%" }}
+                                >
+                                  Amount (₹)
+                                </th>
+                                <th
+                                  className="text-end"
+                                  style={{ width: "17.5%" }}
+                                >
+                                  Amount (US$)
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {salarySlipData.bankRemittance.map(
+                                (bank, idx) => (
+                                  <tr key={idx}>
+                                    <td>{bank.bankName}</td>
+                                    <td>{bank.accountNumber}</td>
+                                    <td>{bank.abaRoutingNumber}</td>
+                                    <td className="text-end">
+                                      {bank.amountGTD
+                                        ? new Intl.NumberFormat("en-IN", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          }).format(bank.amountGTD)
+                                        : ""}
+                                    </td>
+                                    <td className="text-end">
+                                      {bank.amountUSD
+                                        ? new Intl.NumberFormat("en-IN", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          }).format(bank.amountUSD)
+                                        : ""}
+                                    </td>
+                                  </tr>
+                                ),
+                              )}
+                              {/* Total Row */}
+                              <tr style={salarySlipStyles.totalRow}>
+                                <td colSpan={3}>
+                                  <strong>TOTAL</strong>
+                                </td>
+                                <td
+                                  className="text-end"
+                                  style={{ width: "80px" }}
+                                >
+                                  <strong>
+                                    {new Intl.NumberFormat("en-IN", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }).format(
+                                      salarySlipData.bankRemittance.reduce(
+                                        (sum, bank) =>
+                                          sum + (bank.amountGTD || 0),
+                                        0,
+                                      ),
+                                    )}
+                                  </strong>
+                                </td>
+                                <td
+                                  className="text-end"
+                                  style={{ width: "80px" }}
+                                >
+                                  <strong>
+                                    {new Intl.NumberFormat("en-IN", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }).format(
+                                      salarySlipData.bankRemittance.reduce(
+                                        (sum, bank) =>
+                                          sum + (bank.amountUSD || 0),
+                                        0,
+                                      ),
+                                    )}
+                                  </strong>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
               <div className="modal-footer">

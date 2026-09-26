@@ -17,29 +17,39 @@ function Navbar() {
     }
 
     // Fetch logo, ProductName, and CompanyName from system parameters
-    CommonService.getSystemParameters().then(res => {
-      if (res.data && res.data.data) {
-        const productLogo = res.data.data.find(item => item.parameterName === "ProductLogo");
-        if (productLogo && productLogo.parameterBinaryValue) {
-          setLogo(`data:image/png;base64,${productLogo.parameterBinaryValue}`);
-        }
+    CommonService.getSystemParameters()
+      .then((res) => {
+        if (res.data && res.data.data) {
+          const productLogo = res.data.data.find(
+            (item) => item.parameterName === "ProductLogo",
+          );
+          if (productLogo && productLogo.parameterBinaryValue) {
+            setLogo(
+              `data:image/png;base64,${productLogo.parameterBinaryValue}`,
+            );
+          }
 
-        const productNameParam = res.data.data.find(item => item.parameterName === "ProductName");
-        if (productNameParam && productNameParam.parameterValue) {
-          setProductName(productNameParam.parameterValue);
-        }
+          const productNameParam = res.data.data.find(
+            (item) => item.parameterName === "ProductName",
+          );
+          if (productNameParam && productNameParam.parameterValue) {
+            setProductName(productNameParam.parameterValue);
+          }
 
-        const companyNameParam = res.data.data.find(item => item.parameterName === "CompanyName");
-        if (companyNameParam && companyNameParam.parameterValue) {
-          setCompanyName(companyNameParam.parameterValue);
+          const companyNameParam = res.data.data.find(
+            (item) => item.parameterName === "CompanyName",
+          );
+          if (companyNameParam && companyNameParam.parameterValue) {
+            setCompanyName(companyNameParam.parameterValue);
+          }
         }
-      }
-    }).catch(err => {
-      // Keep logo blank if API fails
-      console.error("Failed to fetch system parameters:", err);
-    });
+      })
+      .catch((err) => {
+        // Keep logo blank if API fails
+        console.error("Failed to fetch system parameters:", err);
+      });
   }, []);
-  
+
   const logout = () => {
     secureLocalStorage.clear();
     navigate("/login");
@@ -68,27 +78,23 @@ function Navbar() {
       >
         <div className="navbar-nav align-items-center">
           <div className="nav-item d-flex align-items-center">
-            <h5 className="m-0 fw-bold">{productName}</h5>
+            <h5 className="m-0 fw-bold">{companyName}</h5>
           </div>
         </div>
         <ul className="navbar-nav flex-row align-items-center ms-auto">
           {/* Company Name */}
-          {companyName && (
+          {/* {companyName && (
             <li className="nav-item me-3 me-xl-2">
               <span className="nav-link text-white">{companyName}</span>
             </li>
-          )}
+          )} */}
           <li className="nav-item navbar-dropdown dropdown-user dropdown">
             <a
               className="nav-link dropdown-toggle hide-arrow"
               data-bs-toggle="dropdown"
             >
               <div className="avatar avatar-online">
-                <img
-                  src={profilePic}
-                  alt=""
-                  className="rounded-circle"
-                />
+                <img src={profilePic} alt="" className="rounded-circle" />
               </div>
             </a>
             <ul className="dropdown-menu dropdown-menu-end">

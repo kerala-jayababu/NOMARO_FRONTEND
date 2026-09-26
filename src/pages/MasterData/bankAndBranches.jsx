@@ -146,7 +146,7 @@ function BankAndBranches() {
                                                 <th>Branch Name</th>
                                                 <th>Bank Address</th>
                                                 <th>Phone Number</th>
-                                                <th className='w-25'>ABA Routing Number</th>
+                                                <th className='w-25'>IFSC Code</th>
                                                 <th className='w-auto'></th>
                                             </tr>
                                         </thead>
