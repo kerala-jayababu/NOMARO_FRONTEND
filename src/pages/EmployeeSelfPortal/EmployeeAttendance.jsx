@@ -33,7 +33,7 @@ function EmployeeAttendance() {
 
     const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(getInitialEndDate());
-    const today = moment().format('MM-DD-YYYY');
+    const today = moment().format('DD-MM-YYYY');
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
@@ -233,12 +233,12 @@ function EmployeeAttendance() {
                                 <h5 className="m-0">List of Attendance details</h5>
                                 <div className="list_menu">
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                                             selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                             showYearDropdown dropdownMode="select" maxDate={today} />
                                     </div>
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                                             selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                             maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                                     </div>
@@ -263,7 +263,7 @@ function EmployeeAttendance() {
                                                     <tr key={index}>
                                                         <td>{moment(item.attendanceDate).format('dddd')}</td>
                                                         <td>
-                                                            <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.attendanceDate).format('MM-DD-YYYY')}</a>
+                                                            <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.attendanceDate).format('DD-MM-YYYY')}</a>
                                                         </td>
                                                         {
                                                             item.statusType == 'INOUTMISS' &&
@@ -321,12 +321,12 @@ function EmployeeAttendance() {
                         <h5 className='pt-2 pb-1'>List of Attendance details</h5>
                         <div className="list_menu">
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                     showYearDropdown dropdownMode="select" maxDate={today} />
                             </div>
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                                     selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                     maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                             </div>
@@ -345,7 +345,7 @@ function EmployeeAttendance() {
                                             </div>
                                             <div className='col-8 px-0 py-1'>
                                                 <label>Date</label>
-                                                <p><a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.clockDate).format('MM-DD-YYYY')}</a></p>
+                                                <p><a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.clockDate).format('DD-MM-YYYY')}</a></p>
                                             </div>
 
                                             {
@@ -413,8 +413,8 @@ function EmployeeAttendance() {
                     <div className="accountDetail_card">
                         <div className="row m-0">
                             <div className="col-md-12 p-2">
-                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</b></label>
-                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
 
                             <div className="col-md-12 p-2">
@@ -457,7 +457,7 @@ function EmployeeAttendance() {
                                 </tr>
                                 <tr>
                                     <td><b>Attendance Date</b></td>
-                                    <td colSpan={2}>{(selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid()) ? moment(selectedData?.attendanceDate).format('MM-DD-YYYY') : (selectedData?.clockDate && moment(selectedData?.clockDate).isValid() ? moment(selectedData?.clockDate).format('MM-DD-YYYY') : 'NA')}</td>
+                                    <td colSpan={2}>{(selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid()) ? moment(selectedData?.attendanceDate).format('DD-MM-YYYY') : (selectedData?.clockDate && moment(selectedData?.clockDate).isValid() ? moment(selectedData?.clockDate).format('DD-MM-YYYY') : 'NA')}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>

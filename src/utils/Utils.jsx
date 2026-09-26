@@ -6,8 +6,6 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 export default class Utils {
-
-  
   static encodeBase64(string) {
     return btoa(string);
   }
@@ -46,15 +44,47 @@ export default class Utils {
     }
   }
 
+  static NUMBER_LOCALE = "en-IN";
+  static DATE_LOCALE = "en-IN";
+  static DATE_DISPLAY_FORMAT = "DD-MM-YYYY";
+  static DATE_PICKER_FORMAT = "dd-MM-yyyy";
+  static CURRENCY_SYMBOL = "₹";
+
   static formattedNumber = (val) => {
-    if (val !== undefined && val !== null) {
-      return val.toLocaleString(undefined, {
+    if (val !== undefined && val !== null && val !== "") {
+      const num = Number(val);
+      if (Number.isNaN(num)) return "";
+      return num.toLocaleString("en-IN", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-      // return val.toLocaleString('en-US');
     }
     return "";
+  };
+
+  static formatINR = (val) => {
+    const formatted = Utils.formattedNumber(val);
+    return formatted ? `₹ ${formatted}` : "";
+  };
+
+  static formatDisplayDate = (date) => {
+    if (!date) return "";
+    const dateOnly =
+      typeof date === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    const d =
+      date instanceof Date
+        ? date
+        : dateOnly
+          ? new Date(
+              Number(dateOnly[1]),
+              Number(dateOnly[2]) - 1,
+              Number(dateOnly[3]),
+            )
+          : new Date(date);
+    if (Number.isNaN(d.getTime())) return "";
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    return `${day}-${month}-${d.getFullYear()}`;
   };
 
   // Function to convert an image to a base64 string
@@ -112,7 +142,7 @@ export default class Utils {
   static toTitleCase(str) {
     return str.replace(
       /\w\S*/g,
-      (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+      (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase(),
     );
   }
 
@@ -183,7 +213,8 @@ export default class Utils {
     Object.keys(filter).map((item) => {
       filterText =
         filterText +
-        `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        `${item}: ${
+          filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` +
         "   ";
     });
@@ -254,7 +285,7 @@ export default class Utils {
     headerRequired,
     filter,
     reportColumns,
-    companyName
+    companyName,
   ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
@@ -264,7 +295,8 @@ export default class Utils {
     let filterText = "";
     Object.keys(filter).map((item) => {
       filterText +=
-        `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+        `${item}: ${
+          filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
         }` + "   ";
     });
 
@@ -328,7 +360,7 @@ export default class Utils {
       const values = rows.map((row) => row[col]);
       const number = values.find(
         (value) =>
-          `${value}`.length > 0 && !isNaN(`${value}`.replaceAll(",", ""))
+          `${value}`.length > 0 && !isNaN(`${value}`.replaceAll(",", "")),
       );
       return {
         index: index + 1,
@@ -343,7 +375,7 @@ export default class Utils {
     const boldColumnIndex = columns.map((col, index) => {
       if (
         ["totalearnings", "netsalary", "totaldeductions"].includes(
-          col.toLowerCase()
+          col.toLowerCase(),
         )
       ) {
         return index + 1;
@@ -397,7 +429,7 @@ export default class Utils {
         };
 
         const columnInfo = numericColumnIndexes.find(
-          (col) => col.index === colNumber
+          (col) => col.index === colNumber,
         );
 
         if (boldColumnIndex.includes(colNumber)) {
@@ -431,7 +463,7 @@ export default class Utils {
     columns.forEach((col, index) => {
       const colIndex = index + 1;
       const isNumericColumn = numericColumnIndexes.find(
-        (c) => c.index === colIndex
+        (c) => c.index === colIndex,
       )?.isNumeric;
 
       let maxLength = col.length * 1.2;
@@ -467,7 +499,7 @@ export default class Utils {
       const maxWidth = 40;
       const columnWidth = Math.max(
         minWidth,
-        Math.min(maxLength + padding, maxWidth)
+        Math.min(maxLength + padding, maxWidth),
       );
 
       worksheet.getColumn(colIndex).width = columnWidth;
@@ -484,14 +516,22 @@ export default class Utils {
       saveAs(blob, `${reportName}.xlsx`);
     });
   }
-  static exportToTxt(rows, reportName, headerRequired, filter, reportColumns,companyName) {
+  static exportToTxt(
+    rows,
+    reportName,
+    headerRequired,
+    filter,
+    reportColumns,
+    companyName,
+  ) {
     const columns = Object.keys(rows[0]).filter((x) => x !== "id");
 
     // Prepare the filter text row
     let filterText = "";
     Object.keys(filter).forEach((item) => {
-      filterText += `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
-        }   `;
+      filterText += `${item}: ${
+        filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+      }   `;
     });
 
     // Table header
@@ -550,8 +590,15 @@ export default class Utils {
     URL.revokeObjectURL(url);
   }
 
-  static exportToPdf(rows, reportName, orientation, filter, reportColumns,companyName) {
-        try {
+  static exportToPdf(
+    rows,
+    reportName,
+    orientation,
+    filter,
+    reportColumns,
+    companyName,
+  ) {
+    try {
       const doc = new jsPDF({
         orientation: orientation,
       });
@@ -561,7 +608,8 @@ export default class Utils {
       Object.keys(filter).map((item) => {
         filterText =
           filterText +
-          `${item}: ${filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
+          `${item}: ${
+            filter[item] == "0" || filter[item] == "1" ? "ALL" : filter[item]
           }` +
           "   ";
       });
@@ -582,7 +630,7 @@ export default class Utils {
       tableHeaders.forEach((header, index) => {
         // Find the report column that matches the header
         const reportColumn = reportColumns.find(
-          (col) => col.columnName === header
+          (col) => col.columnName === header,
         );
 
         if (reportColumn && reportColumn.alignment) {
@@ -620,7 +668,7 @@ export default class Utils {
             "Printed on: " + Utils.formatDateTime(new Date()),
             orientation === "landscape" ? 283 : 196,
             pageHeight - 10,
-            { align: "right" }
+            { align: "right" },
           );
         },
       });
@@ -630,11 +678,12 @@ export default class Utils {
         doc.setFontSize(10);
         const pageHeight = doc.internal.pageSize.getHeight();
         doc.text(
-          `Page ${i == 0 ? doc.getNumberOfPages() : i
+          `Page ${
+            i == 0 ? doc.getNumberOfPages() : i
           } of ${doc.getNumberOfPages()}`,
           14,
           pageHeight - 10,
-          { align: "left" }
+          { align: "left" },
         );
       }
       doc.save(`${reportName}.pdf`);
@@ -644,24 +693,23 @@ export default class Utils {
   }
 
   static formatDateTime(date) {
-    const formatter = new Intl.DateTimeFormat("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-    return formatter.format(date).replace("pm", "PM").replace("am", "AM");
+    const time = date
+      .toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(/\b(am|pm)\b/i, (period) => period.toUpperCase());
+    return `${Utils.formatDisplayDate(date)} ${time}`;
   }
 
   static getLastDayFor = (date) => {
     let d = new Date(date);
     const lastday = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     return lastday.getDate();
-  }
+  };
 
   static generateRandomId = () => {
-    return Math.floor(Math.random() * 1000000) * 1; 
+    return Math.floor(Math.random() * 1000000) * 1;
   };
 }

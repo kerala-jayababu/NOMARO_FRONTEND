@@ -654,7 +654,7 @@ const BankDetails = () => {
       }
       if (!["GYD", "USD"].includes(account.currencyCode)) {
         isValid = false;
-        errors[`currencyCode_${index}`] = "Currency must be 'GYD' or 'USD'.";
+        errors[`currencyCode_${index}`] = "Currency must be 'INR' or 'USD'.";
       }
     });
     setBankAccountErrors(errors);
@@ -934,7 +934,7 @@ const BankDetails = () => {
                 Account Number
               </th>
               <th className="salary-percentage">
-                {disbursementType === "PERCENTAGE" ? "% Salary" : "Amount(G$)"}
+                {disbursementType === "PERCENTAGE" ? "% Salary" : "Amount(₹)"}
               </th>
               <th className="currency">Bank Acc. Currency</th>
               <th style={{ width: "10%" }}></th>
@@ -1031,7 +1031,7 @@ const BankDetails = () => {
                         }
                       >
                         <option value="">Select</option>
-                        <option value="GYD">GYD</option>
+                        <option value="GYD">INR</option>
                         <option value="USD">USD</option>
                       </select>
                     </td>

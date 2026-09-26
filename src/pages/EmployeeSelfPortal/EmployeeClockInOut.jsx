@@ -21,7 +21,7 @@ function EmployeeClockInOut() {
     const totalPages = Math.ceil(clockInDetails.length / rowsPerPage);
     const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(moment().endOf('month').format('YYYY-MM-DD'));
-    const today = moment().format('MM-DD-YYYY');
+    const today = moment().format('DD-MM-YYYY');
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
@@ -260,12 +260,12 @@ function EmployeeClockInOut() {
                                 <h5 className="m-0">List of Clock In-Clock Out details</h5>
                                 <div className="list_menu">
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                                             selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                             showYearDropdown dropdownMode="select" maxDate={today} />
                                     </div>
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                                             selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                             maxDate={today} showYearDropdown dropdownMode="select" />
                                     </div>
@@ -290,7 +290,7 @@ function EmployeeClockInOut() {
                                                 paginatedData?.map((item, index) => (
                                                     <tr key={index}>
                                                         <td>{moment(item.clockDate).format('dddd')}</td>
-                                                        <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
+                                                        <td>{moment(item.clockDate).format('DD-MM-YYYY')}</td>
                                                         {
                                                             (item.clockType == 'LEAVE' || item.clockType == 'UNAUTH') &&
                                                             <td colSpan={3} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
@@ -373,12 +373,12 @@ function EmployeeClockInOut() {
                         <h5 className='pt-2 pb-1'>List of Clock In-Clock Out details </h5>
                         <div className="list_menu">
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                     showYearDropdown dropdownMode="select" maxDate={today} />
                             </div>
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                                     selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                     maxDate={today} showYearDropdown dropdownMode="select" />
                             </div>
@@ -398,7 +398,7 @@ function EmployeeClockInOut() {
                                                 </div>
                                                 <div className='col-8 px-0 py-1' >
                                                     <label>Date</label>
-                                                    <p className='m-0'>{moment(item.clockDate).format('MM-DD-YYYY')}</p>
+                                                    <p className='m-0'>{moment(item.clockDate).format('DD-MM-YYYY')}</p>
                                                 </div>
                                                 {
                                                     (item.clockType == 'LEAVE' || item.clockType == 'UNAUTH') &&
@@ -525,8 +525,8 @@ function EmployeeClockInOut() {
                     <div className="accountDetail_card">
                         <div className="row m-0">
                             <div className="col-md-12 p-2">
-                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</b></label>
-                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
 
                             <div className="col-md-12 p-2">
@@ -595,7 +595,7 @@ function EmployeeClockInOut() {
                             <p className="mb-2">Are you sure you want to toggle this entry?</p>
                             {itemToSwap && (
                                 <div className="text-start">
-                                    <p className="mb-1"><strong>Date:</strong> {moment(itemToSwap.clockDate).format('MM-DD-YYYY')}</p>
+                                    <p className="mb-1"><strong>Date:</strong> {moment(itemToSwap.clockDate).format('DD-MM-YYYY')}</p>
                                 </div>
                             )}
                         </div>

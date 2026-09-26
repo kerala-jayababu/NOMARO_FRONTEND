@@ -13,12 +13,19 @@ import {
   fetchLeaveApplicationDocuments,
 } from "../../redux/reducers/leaveApproval";
 import CommonService from "../../core/services/CommonService";
+import Utils from "../../utils/Utils";
 
 const LeaveApproval = () => {
   const dispatch = useDispatch();
-  const { leaveApplications, loading, error, leaveDashboard, leaveDashboardLoading, leaveDocuments, leaveDocumentsLoading } = useSelector(
-    (state) => state.leaveApproval
-  );
+  const {
+    leaveApplications,
+    loading,
+    error,
+    leaveDashboard,
+    leaveDashboardLoading,
+    leaveDocuments,
+    leaveDocumentsLoading,
+  } = useSelector((state) => state.leaveApproval);
 
   const handleDownloadDocument = (doc) => {
     try {
@@ -39,7 +46,8 @@ const LeaveApproval = () => {
         XLSX: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       };
 
-      const mimeType = mimeTypes[doc.fileType?.toUpperCase()] || "application/octet-stream";
+      const mimeType =
+        mimeTypes[doc.fileType?.toUpperCase()] || "application/octet-stream";
       const byteCharacters = atob(doc.fileBinary);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -88,7 +96,8 @@ const LeaveApproval = () => {
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
-        const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+        const financialYearStart =
+          currentMonth >= 7 ? currentYear : currentYear - 1;
 
         const currentWorkYear = result.data.find((year) => {
           if (!year.displayText) return false;
@@ -108,14 +117,15 @@ const LeaveApproval = () => {
 
   // Fetch leave applications on component mount and when filters change
   useEffect(() => {
-    const approvalStatus = statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter;
+    const approvalStatus =
+      statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter;
     dispatch(
       fetchLeaveApplicationsForApproval({
         approvalStatus,
         searchText: searchQuery,
         fromDate: dateFrom || "",
         toDate: "",
-      })
+      }),
     );
   }, [dispatch, statusFilter, searchQuery, dateFrom]);
 
@@ -210,7 +220,9 @@ const LeaveApproval = () => {
   // Handle approve selected
   const handleApproveSelected = async () => {
     // Filter out already processed IDs
-    const unprocessedIds = selectedItems.filter(id => !processedIdsRef.current.has(id));
+    const unprocessedIds = selectedItems.filter(
+      (id) => !processedIdsRef.current.has(id),
+    );
     if (unprocessedIds.length === 0) return;
 
     try {
@@ -218,30 +230,33 @@ const LeaveApproval = () => {
         bulkApproveLeaveApplications({
           idLeaveApplications: unprocessedIds,
           remarks: bulkRemarks,
-        })
+        }),
       );
 
       if (bulkApproveLeaveApplications.fulfilled.match(resultAction)) {
         if (resultAction.payload && resultAction.payload.success) {
           // Mark all as processed immediately to prevent duplicate actions
-          unprocessedIds.forEach(id => processedIdsRef.current.add(id));
+          unprocessedIds.forEach((id) => processedIdsRef.current.add(id));
           toast.success(
             `${unprocessedIds.length} application(s) approved successfully!`,
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
           setSelectedItems([]);
           setBulkRemarks("");
           // Refresh the list
           dispatch(
             fetchLeaveApplicationsForApproval({
-              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              approvalStatus:
+                statusFilter === "ALL" || statusFilter === ""
+                  ? ""
+                  : statusFilter,
               searchText: searchQuery,
               fromDate: "",
               toDate: "",
-            })
+            }),
           );
         } else {
           toast.error(
@@ -249,7 +264,7 @@ const LeaveApproval = () => {
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
         }
       }
@@ -273,7 +288,7 @@ const LeaveApproval = () => {
         approveLeaveApplication({
           idLeaveApplication: id,
           remarks: remarks[id] || "",
-        })
+        }),
       );
 
       if (approveLeaveApplication.fulfilled.match(resultAction)) {
@@ -285,16 +300,19 @@ const LeaveApproval = () => {
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
           // Refresh the list
           dispatch(
             fetchLeaveApplicationsForApproval({
-              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              approvalStatus:
+                statusFilter === "ALL" || statusFilter === ""
+                  ? ""
+                  : statusFilter,
               searchText: searchQuery,
               fromDate: "",
               toDate: "",
-            })
+            }),
           );
         } else {
           toast.error(
@@ -302,7 +320,7 @@ const LeaveApproval = () => {
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
         }
       }
@@ -339,7 +357,7 @@ const LeaveApproval = () => {
         rejectLeaveApplication({
           idLeaveApplication: id,
           remarks: remark,
-        })
+        }),
       );
 
       if (rejectLeaveApplication.fulfilled.match(resultAction)) {
@@ -355,11 +373,14 @@ const LeaveApproval = () => {
           // Refresh the list
           dispatch(
             fetchLeaveApplicationsForApproval({
-              approvalStatus: statusFilter === "ALL" || statusFilter === "" ? "" : statusFilter,
+              approvalStatus:
+                statusFilter === "ALL" || statusFilter === ""
+                  ? ""
+                  : statusFilter,
               searchText: searchQuery,
               fromDate: "",
               toDate: "",
-            })
+            }),
           );
         } else {
           toast.error(
@@ -367,7 +388,7 @@ const LeaveApproval = () => {
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
         }
       }
@@ -410,7 +431,12 @@ const LeaveApproval = () => {
     setShowViewModal(true);
     // Fetch leave dashboard for the employee using current financial year
     if (app.idEmployee && currentFinancialYearId) {
-      dispatch(fetchLeaveDashboardEmployee({ idEmployee: app.idEmployee, idYear: currentFinancialYearId }));
+      dispatch(
+        fetchLeaveDashboardEmployee({
+          idEmployee: app.idEmployee,
+          idYear: currentFinancialYearId,
+        }),
+      );
     }
   };
 
@@ -479,8 +505,8 @@ const LeaveApproval = () => {
                       checked={
                         selectedItems.length > 0 &&
                         selectedItems.length ===
-                          filteredApplications.filter(
-                            (app) => canTakeAction(app)
+                          filteredApplications.filter((app) =>
+                            canTakeAction(app),
                           ).length
                       }
                       onChange={handleSelectAll}
@@ -512,7 +538,7 @@ const LeaveApproval = () => {
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
                     selected={dateFrom}
                     onChange={(date) => {
@@ -552,7 +578,10 @@ const LeaveApproval = () => {
               </div>
 
               {/* Leave Approval Cards */}
-              <div className="row" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
+              <div
+                className="row"
+                style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+              >
                 {loading ? (
                   <div className="col-12 text-center py-4">
                     <div className="spinner-border text-primary" role="status">
@@ -582,12 +611,12 @@ const LeaveApproval = () => {
                                 type="checkbox"
                                 className="form-check-input me-3 mt-1"
                                 checked={selectedItems.includes(
-                                  app.idLeaveApplication
+                                  app.idLeaveApplication,
                                 )}
                                 onChange={(e) =>
                                   handleCheckbox(
                                     app.idLeaveApplication,
-                                    e.target.checked
+                                    e.target.checked,
                                   )
                                 }
                                 disabled={!canTakeAction(app)}
@@ -630,8 +659,8 @@ const LeaveApproval = () => {
                             <div className="d-flex justify-content-between mb-2">
                               <small className="text-muted">Period</small>
                               <span className="fw-medium text-end">
-                                {new Date(app.fromDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} to{" "}
-                                {new Date(app.toDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                                {Utils.formatDisplayDate(app.fromDate)} to{" "}
+                                {Utils.formatDisplayDate(app.toDate)}
                               </span>
                             </div>
                             <div className="d-flex justify-content-between mb-2">
@@ -642,7 +671,7 @@ const LeaveApproval = () => {
                               <small className="text-muted">Status</small>
                               <span
                                 className={`badge ${getStatusBadgeClass(
-                                  app.status
+                                  app.status,
                                 )}`}
                               >
                                 {app.status}
@@ -650,13 +679,14 @@ const LeaveApproval = () => {
                             </div>
                             <div className="d-flex justify-content-between mb-2">
                               <small className="text-muted">Reason</small>
-                              <span className="fw-medium text-end" style={{ maxWidth: "60%" }}>
+                              <span
+                                className="fw-medium text-end"
+                                style={{ maxWidth: "60%" }}
+                              >
                                 {app.reason}
                               </span>
                             </div>
                           </div>
-
-                          
 
                           {/* Remarks Field */}
                           <div className="mb-3 mt-auto">
@@ -671,7 +701,7 @@ const LeaveApproval = () => {
                               onChange={(e) =>
                                 handleRemarksChange(
                                   app.idLeaveApplication,
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               disabled={!canTakeAction(app)}
@@ -685,25 +715,25 @@ const LeaveApproval = () => {
 
                           {/* Action Buttons */}
                           {canTakeAction(app) && (
-                              <div className="d-flex gap-2">
-                                <Button
-                                  className="btn btn-primary btn-sm flex-fill px-3 py-2"
-                                  onClick={() =>
-                                    handleApprove(app.idLeaveApplication)
-                                  }
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  className="btn btn-danger btn-sm flex-fill px-3 py-2"
-                                  onClick={() =>
-                                    handleReject(app.idLeaveApplication)
-                                  }
-                                >
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
+                            <div className="d-flex gap-2">
+                              <Button
+                                className="btn btn-primary btn-sm flex-fill px-3 py-2"
+                                onClick={() =>
+                                  handleApprove(app.idLeaveApplication)
+                                }
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                className="btn btn-danger btn-sm flex-fill px-3 py-2"
+                                onClick={() =>
+                                  handleReject(app.idLeaveApplication)
+                                }
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -766,7 +796,7 @@ const LeaveApproval = () => {
                       <strong>Status :</strong>{" "}
                       <span
                         className={`badge ${getStatusBadgeClass(
-                          selectedApplication.status
+                          selectedApplication.status,
                         )}`}
                       >
                         {selectedApplication.status}
@@ -782,7 +812,10 @@ const LeaveApproval = () => {
                   </h6>
                   {leaveDashboardLoading ? (
                     <div className="text-center py-3">
-                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <div
+                        className="spinner-border spinner-border-sm text-primary"
+                        role="status"
+                      >
                         <span className="visually-hidden">Loading...</span>
                       </div>
                     </div>
@@ -803,11 +836,21 @@ const LeaveApproval = () => {
                           {leaveDashboard.map((leave, index) => (
                             <tr key={index}>
                               <td>{leave.leaveTypeName}</td>
-                              <td className="text-center">{leave.totalAllocated}</td>
-                              <td className="text-center">{leave.totalTaken}</td>
-                              <td className="text-center">{leave.totalApproved}</td>
-                              <td className="text-center">{leave.totalRejected}</td>
-                              <td className="text-center">{leave.totalBalance}</td>
+                              <td className="text-center">
+                                {leave.totalAllocated}
+                              </td>
+                              <td className="text-center">
+                                {leave.totalTaken}
+                              </td>
+                              <td className="text-center">
+                                {leave.totalApproved}
+                              </td>
+                              <td className="text-center">
+                                {leave.totalRejected}
+                              </td>
+                              <td className="text-center">
+                                {leave.totalBalance}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -826,13 +869,8 @@ const LeaveApproval = () => {
                   <div className="row">
                     <div className="col-md-6 mb-2">
                       <strong>Period :</strong>{" "}
-                      {new Date(
-                        selectedApplication.fromDate
-                      ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}{" "}
-                      -{" "}
-                      {new Date(
-                        selectedApplication.toDate
-                      ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
+                      {Utils.formatDisplayDate(selectedApplication.fromDate)} -{" "}
+                      {Utils.formatDisplayDate(selectedApplication.toDate)}
                     </div>
                     <div className="col-md-6 mb-2">
                       <strong>Total Days :</strong>{" "}
@@ -873,31 +911,33 @@ const LeaveApproval = () => {
                         <tbody>
                           {(() => {
                             try {
-                              const histories = JSON.parse(selectedApplication.leaveApprovalHistories);
+                              const histories = JSON.parse(
+                                selectedApplication.leaveApprovalHistories,
+                              );
                               return histories.map((history, index) => (
                                 <tr key={index}>
                                   <td>{history.name || "-"}</td>
                                   <td>{history.level || "-"}</td>
                                   <td>
-                                    <span className={`badge ${
-                                      history.status === "APPROVED" ? "bg-label-success" :
-                                      history.status === "REJECTED" ? "bg-label-danger" :
-                                      history.status === "PENDING" ? "bg-label-warning" :
-                                      "bg-label-secondary"
-                                    }`}>
+                                    <span
+                                      className={`badge ${
+                                        history.status === "APPROVED"
+                                          ? "bg-label-success"
+                                          : history.status === "REJECTED"
+                                            ? "bg-label-danger"
+                                            : history.status === "PENDING"
+                                              ? "bg-label-warning"
+                                              : "bg-label-secondary"
+                                      }`}
+                                    >
                                       {history.status || "-"}
                                     </span>
                                   </td>
                                   <td>
                                     {history.statusDate
-                                      ? new Date(history.statusDate).toLocaleString("en-US", {
-                                          month: "2-digit",
-                                          day: "2-digit",
-                                          year: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                          hour12: true,
-                                        })
+                                      ? Utils.formatDateTime(
+                                          new Date(history.statusDate),
+                                        )
                                       : "-"}
                                   </td>
                                 </tr>
@@ -905,7 +945,10 @@ const LeaveApproval = () => {
                             } catch (e) {
                               return (
                                 <tr>
-                                  <td colSpan="4" className="text-center text-muted">
+                                  <td
+                                    colSpan="4"
+                                    className="text-center text-muted"
+                                  >
                                     No approval history available
                                   </td>
                                 </tr>
@@ -922,19 +965,19 @@ const LeaveApproval = () => {
                 <div className="mb-3">
                   <label className="form-label">
                     Remarks{" "}
-                    <span className="text-muted">
-                      (Required for rejection)
-                    </span>
+                    <span className="text-muted">(Required for rejection)</span>
                   </label>
                   <textarea
                     className="form-control"
                     rows="2"
                     placeholder="Enter remarks..."
-                    value={remarks[selectedApplication.idLeaveApplication] || ""}
+                    value={
+                      remarks[selectedApplication.idLeaveApplication] || ""
+                    }
                     onChange={(e) =>
                       handleRemarksChange(
                         selectedApplication.idLeaveApplication,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     disabled={!canTakeAction(selectedApplication)}
@@ -948,21 +991,21 @@ const LeaveApproval = () => {
               </div>
               <div className="modal-footer">
                 {canTakeAction(selectedApplication) && (
-                    <>
-                      <Button
-                        className="btn btn-primary"
-                        onClick={handleApproveFromModal}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        className="btn btn-danger"
-                        onClick={handleRejectFromModal}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
+                  <>
+                    <Button
+                      className="btn btn-primary"
+                      onClick={handleApproveFromModal}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      className="btn btn-danger"
+                      onClick={handleRejectFromModal}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
                 <Button
                   className="btn btn-outline-secondary"
                   onClick={closeModals}
@@ -1010,7 +1053,9 @@ const LeaveApproval = () => {
                           <th>File Type</th>
                           <th>File Name</th>
                           <th>Uploaded Date</th>
-                          <th style={{ width: "80px", textAlign: "center" }}>Download</th>
+                          <th style={{ width: "80px", textAlign: "center" }}>
+                            Download
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1018,20 +1063,22 @@ const LeaveApproval = () => {
                           <tr key={doc.idLeaveApplicationDocument}>
                             <td>{doc.fileType}</td>
                             <td>{doc.fileName}</td>
-                            <td>
-                              {new Date(
-                                doc.uploadedAt
-                              ).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
-                            </td>
+                            <td>{Utils.formatDisplayDate(doc.uploadedAt)}</td>
                             <td style={{ textAlign: "center" }}>
                               <button
                                 className="btn btn-sm btn-outline-primary"
                                 title="Download"
                                 onClick={() => handleDownloadDocument(doc)}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  fill="currentColor"
+                                  viewBox="0 0 16 16"
+                                >
+                                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
                                 </svg>
                               </button>
                             </td>

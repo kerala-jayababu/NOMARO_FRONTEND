@@ -49,7 +49,7 @@ export const getReportDataAction =
       var reportData = data.map((item, index) => {
         Object.keys(item).forEach((key) => {
           if (typeof item[key] === "number") {
-            item[key] = new Intl.NumberFormat("en-US", {
+            item[key] = new Intl.NumberFormat("en-IN", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(item[key]);
@@ -70,7 +70,7 @@ export const getReportDataAction =
               (item[key] ? parseFloat(`${item[key]}`.replaceAll(",", "")) : 0),
             0
           );
-          grandTotal[key] = new Intl.NumberFormat("en-US", {
+          grandTotal[key] = new Intl.NumberFormat("en-IN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(total);

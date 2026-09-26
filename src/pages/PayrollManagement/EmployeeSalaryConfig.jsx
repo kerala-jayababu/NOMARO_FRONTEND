@@ -49,7 +49,7 @@ const EmployeeSalaryConfig = () => {
   const [validFrom, setValidFrom] = useState(() => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    return moment(firstDay).format("MM-DD-YYYY");
+    return moment(firstDay).format("DD-MM-YYYY");
   });
   const [status, setStatus] = useState('');
   const [withoutConfigList, setWithoutConfigList] = useState([]);
@@ -585,7 +585,7 @@ const EmployeeSalaryConfig = () => {
         percentageOf: detail.percentageOfIdSalaryHead,
         calculatedValue: detail.salaryAmount,
       }));
-      setValidFrom(moment(data.validFrom).format("MM-DD-YYYY"));
+      setValidFrom(moment(data.validFrom).format("DD-MM-YYYY"));
       setRows(mappedRows);
       const selected = employeesListOption.find(option => option.value === data.idEmployee);
       setSelectedEmployee(selected);
@@ -627,7 +627,7 @@ const EmployeeSalaryConfig = () => {
 
       const now = new Date();
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+      setValidFrom(moment(firstDay).format("DD-MM-YYYY"));
 
       calculateValues(mappedRows);
     }
@@ -665,7 +665,7 @@ const EmployeeSalaryConfig = () => {
 
       const now = new Date();
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+      setValidFrom(moment(firstDay).format("DD-MM-YYYY"));
 
       calculateValues(mappedRows);
     }
@@ -706,7 +706,7 @@ const EmployeeSalaryConfig = () => {
 
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    setValidFrom(moment(firstDay).format("MM-DD-YYYY"));
+    setValidFrom(moment(firstDay).format("DD-MM-YYYY"));
   };
 
   const handleSave = (e) => {
@@ -724,7 +724,7 @@ const EmployeeSalaryConfig = () => {
       totalDeductions: totalDeductions,
       netSalary: netSalary,
       activeStatus: true,
-      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "DD-MM-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idSalaryHead: row.selectedSalaryHead.idSalaryHead,
         calculationMethod: row.calculationMethod,
@@ -770,7 +770,7 @@ const EmployeeSalaryConfig = () => {
       netSalary: netSalary,
       approvalStatus: "SUBMITTED",
       activeStatus: true,
-      validFrom: validFrom ? moment(validFrom, "MM-DD-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+      validFrom: validFrom ? moment(validFrom, "DD-MM-YYYY").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
       employeeSalaryConfigDetails: rows.map(row => ({
         idEmployeeSalaryConfig: dataToEdit.idEmployeeSalaryConfig,
         idEmployeeSalaryConfigDetail: row.idEmployeeSalaryConfigDetail,
@@ -928,8 +928,8 @@ const EmployeeSalaryConfig = () => {
                           </td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName != null ? (item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)) : 'NA'}</td>
-                          <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("MM/DD/YYYY") : 'NA'}</td>
-                          <td>{item?.validFrom != null ? moment(item?.validFrom).format("MM/DD/YYYY") : 'NA'}</td>
+                          <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("DD-MM-YYYY") : 'NA'}</td>
+                          <td>{item?.validFrom != null ? moment(item?.validFrom).format("DD-MM-YYYY") : 'NA'}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
@@ -1067,7 +1067,7 @@ const EmployeeSalaryConfig = () => {
                     <DatePicker className="form-control" selected={validFrom}
                       onChange={(date) => setValidFrom(date)}
                       required wrapperClassName="datePicker"
-                      dateFormat="MM/dd/yyyy"
+                      dateFormat="dd-MM-yyyy"
                       placeholderText='Select Date' showMonthDropdown
                       showYearDropdown dropdownMode="select" />
                   </div>
@@ -1263,7 +1263,7 @@ const EmployeeSalaryConfig = () => {
             </Modal.Header>
 
             <Modal.Body>
-              <h6>{employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode}) &nbsp; | &nbsp; Valid from: {moment(employeeSalaryDetails?.validFrom).format("MM-DD-YYYY")}</h6>
+              <h6>{employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode}) &nbsp; | &nbsp; Valid from: {moment(employeeSalaryDetails?.validFrom).format("DD-MM-YYYY")}</h6>
               <div className="px-2">
                 <table className="table table-sm">
                   <thead>
@@ -1271,7 +1271,7 @@ const EmployeeSalaryConfig = () => {
                       <th>Salary Head Name</th>
                       <th>Type</th>
                       <th>Calculation Details</th>
-                      <th>Amount(G$)</th>
+                      <th>Amount(₹)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1379,7 +1379,7 @@ const EmployeeSalaryConfig = () => {
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
                           <td>{item?.departmentName.length < 25 ? item?.departmentName : (`${item?.departmentName.substring(0, 25)}...`)}</td>
-                          <td>{item?.joiningDate ? moment(item?.joiningDate).format("MM/DD/YYYY") : ''}</td>
+                          <td>{item?.joiningDate ? moment(item?.joiningDate).format("DD-MM-YYYY") : ''}</td>
                           <td>{item?.status}</td>
                         </tr>
                       ))

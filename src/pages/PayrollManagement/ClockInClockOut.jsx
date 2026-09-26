@@ -22,11 +22,11 @@ function ClockInClockOut() {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filteredData, setFilteredData] = useState(clockInDetails);
   const totalPages = Math.ceil(clockInDetails.length / rowsPerPage);
-  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
   // let endingDay = Utils.getLastDayFor(moment(startDate).format('YYYY-MM-DD'));
   // const [endDate, setEndDate] = useState(moment(new Date()).format(`DD-${endingDay}-YYYY`));
-  const [endDate, setEndDate] = useState(moment(new Date()).format('MM-DD-YYYY'));
-  const today = moment(new Date()).format('MM-DD-YYYY');
+  const [endDate, setEndDate] = useState(moment(new Date()).format('DD-MM-YYYY'));
+  const today = moment(new Date()).format('DD-MM-YYYY');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const filteredEmployees = [
@@ -299,7 +299,7 @@ function ClockInClockOut() {
           ? moment(item.clockDate).format('dddd') 
           : '',
         "Date": item.clockDate && moment(item.clockDate).isValid() 
-          ? moment(item.clockDate).format('MM-DD-YYYY') 
+          ? moment(item.clockDate).format('DD-MM-YYYY') 
           : '',
         "IN": inTime,
         "OUT": outTime,
@@ -339,7 +339,7 @@ function ClockInClockOut() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clock In-Out Details");
 
     // Generate filename with date range
-    const fileName = `Clock_In_Out_Details_${moment(startDate).format('MM-DD-YYYY')}_to_${moment(endDate).format('MM-DD-YYYY')}.xlsx`;
+    const fileName = `Clock_In_Out_Details_${moment(startDate).format('DD-MM-YYYY')}_to_${moment(endDate).format('DD-MM-YYYY')}.xlsx`;
 
     // Write file
     XLSX.writeFile(workbook, fileName);
@@ -371,12 +371,12 @@ function ClockInClockOut() {
               </div>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
                     showYearDropdown dropdownMode="select" maxDate={today} />
                 </div>
                 <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                     selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
                     maxDate={today} showYearDropdown dropdownMode="select" />
                 </div>
@@ -443,7 +443,7 @@ function ClockInClockOut() {
                           <td>{item.employeeCode}</td>
                           <td>{item.employeeName}</td>
                           <td>{moment(item.clockDate).format('dddd')}</td>
-                          <td>{moment(item.clockDate).format('MM-DD-YYYY')}</td>
+                          <td>{moment(item.clockDate).format('DD-MM-YYYY')}</td>
                           {
                             (item.clockType == 'LEAVE' || item.clockType == 'UNAUTH') &&
                             <td colSpan={3} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
@@ -527,8 +527,8 @@ function ClockInClockOut() {
           <div className="accountDetail_card">
             <div className="row m-0">
               <div className="col-md-12 p-2">
-                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</b></label>
-                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
               </div>
 
               <div className="col-md-12 p-2">

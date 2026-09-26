@@ -476,12 +476,12 @@ function SickLeaveSalDeduction() {
                               <small className="text-muted">{row.designationName}</small>
                             </td>
                             <td className="text-center">
-                              {moment(row.fromDate).format("DD/MM/YYYY") === moment(row.toDate).format("DD/MM/YYYY") ? (
-                                <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div>
+                              {moment(row.fromDate).format("DD-MM-YYYY") === moment(row.toDate).format("DD-MM-YYYY") ? (
+                                <div>{moment(row.fromDate).format("DD-MM-YYYY")}</div>
                               ) : (
                                 <>
-                                  <div>{moment(row.fromDate).format("DD/MM/YYYY")}</div>
-                                  <div>{moment(row.toDate).format("DD/MM/YYYY")}</div>
+                                  <div>{moment(row.fromDate).format("DD-MM-YYYY")}</div>
+                                  <div>{moment(row.toDate).format("DD-MM-YYYY")}</div>
                                 </>
                               )}
                             </td>

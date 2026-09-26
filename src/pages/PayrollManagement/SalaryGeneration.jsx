@@ -1026,19 +1026,19 @@ function SalaryGeneration() {
                           <td>{item.designationName}</td>
                           <td>{item.budgetCode}</td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.totalEarnings)}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.totalDeductions)}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.netSalary)}
@@ -1066,19 +1066,19 @@ function SalaryGeneration() {
                   <div className="p-2 mb-3 mt-3" style={{border:"1px solid black"}}>
                     <div className="d-flex justify-between" style={{justifyContent:"center"}}>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                        Total Earnings: {"  "}G$ {new Intl.NumberFormat("en-US", {
+                        Total Earnings: {"  "}₹ {new Intl.NumberFormat("en-IN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalEarnings) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                        Total Deductions: {"  "}G$ {new Intl.NumberFormat("en-US", {
+                        Total Deductions: {"  "}₹ {new Intl.NumberFormat("en-IN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.totalDeductions) || 0), 0))}
                       </div>
                       <div className="fw-bold fs-6" style={{ width: '25%', fontSize: '1.2rem' }}>
-                      Total Net Salary: {"  "}G$  {new Intl.NumberFormat("en-US", {
+                      Total Net Salary: {"  "}₹  {new Intl.NumberFormat("en-IN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(salaryGenerationList.reduce((sum, item) => sum + (parseFloat(item.netSalary) || 0), 0))}
@@ -1276,9 +1276,9 @@ function SalaryGeneration() {
                                              <thead>
                          <tr>
                            <th style={salarySlipStyles.tableHeader}>Salary Head</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(₹)</th>
                            <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(₹)</th>
                            <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
                          </tr>
                        </thead>
@@ -1287,10 +1287,10 @@ function SalaryGeneration() {
                            salarySlipData.earnings.map((earning, index) => (
                              <tr key={index}>
                                <td>{earning.description}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountUS)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountUSD)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.amountUS)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(earning.ytdAmountUSD)}</td>
                              </tr>
                            ))
                          ) : (
@@ -1302,28 +1302,28 @@ function SalaryGeneration() {
                            <td><strong>Total</strong></td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountUS || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountG || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.ytdAmountUSD || 0), 0) : 0
                                )}
                              </strong>
@@ -1344,9 +1344,9 @@ function SalaryGeneration() {
                                              <thead>
                          <tr>
                            <th style={salarySlipStyles.tableHeader}>Salary Head</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(₹)</th>
                            <th className="text-end" style={salarySlipStyles.tableHeader}>Amount(US$)</th>
-                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(G$)</th>
+                           <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(₹)</th>
                            <th className="text-end" style={salarySlipStyles.tableHeader}>YTD Amount(US$)</th>
                          </tr>
                        </thead>
@@ -1355,10 +1355,10 @@ function SalaryGeneration() {
                            salarySlipData.deductions.map((deduction, index) => (
                              <tr key={index}>
                                <td>{deduction.description}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountUS)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountG)}</td>
-                               <td className="text-end">{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountUSD)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.amountUS)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountG)}</td>
+                               <td className="text-end">{new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(deduction.ytdAmountUSD)}</td>
                            </tr>
                            ))
                          ) : (
@@ -1370,28 +1370,28 @@ function SalaryGeneration() {
                            <td><strong>Total</strong></td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountUS || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountG || 0), 0) : 0
                                )}
                              </strong>
                            </td>
                            <td className="text-end">
                              <strong>
-                               {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                               {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                                  salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.ytdAmountUSD || 0), 0) : 0
                                )}
                              </strong>
@@ -1404,7 +1404,7 @@ function SalaryGeneration() {
                       {/* Net Pay */}
                       <div className="text-center " style={salarySlipStyles.netPay}>
                     <h5 className="mb-0">
-                      Net Pay: G$ {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                      Net Pay: ₹ {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                         (salarySlipData.earnings ? salarySlipData.earnings.reduce((sum, earning) => sum + (earning.amountG || 0), 0) : 0) -
                         (salarySlipData.deductions ? salarySlipData.deductions.reduce((sum, deduction) => sum + (deduction.amountG || 0), 0) : 0)
                       )}
@@ -1424,7 +1424,7 @@ function SalaryGeneration() {
             <th style={{ width: "25%" }}>Bank Name</th>
             <th  style={{ width: "20%" }}>Account Number</th>
             <th  style={{ width: "20%" }}>ABA Routing Number</th>
-            <th  className="text-end" style={{ width: "17.5%" }}>Amount (G$)</th>
+            <th  className="text-end" style={{ width: "17.5%" }}>Amount (₹)</th>
             <th className="text-end" style={{ width: "17.5%" }}>Amount (US$)</th>
           </tr>
         </thead> 
@@ -1435,10 +1435,10 @@ function SalaryGeneration() {
               <td>{bank.accountNumber}</td>
               <td >{bank.abaRoutingNumber}</td>
               <td className="text-end" >
-                {bank.amountGTD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
+                {bank.amountGTD ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountGTD) : ""}
               </td>
               <td className="text-end" >
-                {bank.amountUSD ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountUSD) : ""}
+                {bank.amountUSD ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bank.amountUSD) : ""}
               </td>
             </tr>
           ))}
@@ -1447,14 +1447,14 @@ function SalaryGeneration() {
             <td colSpan={3}><strong>TOTAL</strong></td>
             <td className="text-end" style={{ width: "80px" }}>
               <strong>
-                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                   salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountGTD || 0), 0)
                 )}
               </strong>
             </td>
             <td className="text-end" style={{ width: "80px" }}>
               <strong>
-                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+                {new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                   salarySlipData.bankRemittance.reduce((sum, bank) => sum + (bank.amountUSD || 0), 0)
                 )}
               </strong>

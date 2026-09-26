@@ -7,11 +7,12 @@ import {
   clearExitClearanceDetails,
   submitExitCaseDepartmentClearanceLines,
 } from "../../redux/reducers/offboardingCases";
+import Utils from "../../utils/Utils";
 
 const OffboardingClearances = () => {
   const dispatch = useDispatch();
   const { departmentQueue, loading, error } = useSelector(
-    (state) => state.offboardingCases
+    (state) => state.offboardingCases,
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,21 +46,22 @@ const OffboardingClearances = () => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return Utils.formatDisplayDate(dateString);
   };
 
   // Get badge class based on status
   const getStatusBadgeClass = (status) => {
     if (!status) return "bg-label-secondary";
     const statusLower = status.toLowerCase();
-    if (statusLower === "cleared" || statusLower === "done" || statusLower === "completed") return "bg-label-success";
+    if (
+      statusLower === "cleared" ||
+      statusLower === "done" ||
+      statusLower === "completed"
+    )
+      return "bg-label-success";
     if (statusLower === "pending") return "bg-label-warning";
-    if (statusLower === "in_progress" || statusLower === "inprogress") return "bg-label-info";
+    if (statusLower === "in_progress" || statusLower === "inprogress")
+      return "bg-label-info";
     return "bg-label-secondary";
   };
 
@@ -212,7 +214,7 @@ const OffboardingClearances = () => {
                         <td>
                           <span
                             className={`badge ${getStatusBadgeClass(
-                              caseItem.currentStatus
+                              caseItem.currentStatus,
                             )}`}
                           >
                             {caseItem.currentStatus}
@@ -259,7 +261,7 @@ const ClearanceChecklistModal = ({
 }) => {
   const dispatch = useDispatch();
   const { exitClearanceDetails, clearanceLoading, actionLoading } = useSelector(
-    (state) => state.offboardingCases
+    (state) => state.offboardingCases,
   );
 
   // Form state
@@ -283,11 +285,12 @@ const ClearanceChecklistModal = ({
       setFormData({
         deptClearanceStatus: dept.header?.deptClearanceStatus || "PENDING",
         dueAmount: dept.header?.dueAmount || 0,
-        checklist: dept.checklist?.map((item) => ({
-          ...item,
-          deptClearanceStatus: item.deptClearanceStatus || "PENDING",
-          remarks: item.remarks || "",
-        })) || [],
+        checklist:
+          dept.checklist?.map((item) => ({
+            ...item,
+            deptClearanceStatus: item.deptClearanceStatus || "PENDING",
+            remarks: item.remarks || "",
+          })) || [],
       });
     }
   }, [exitClearanceDetails]);
@@ -343,7 +346,9 @@ const ClearanceChecklistModal = ({
   const handleSave = async () => {
     // Check if all items have been marked (either CLEARED or NOTREQUIRED)
     const allItemsMarked = formData.checklist.every(
-      (item) => item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "NOTREQUIRED"
+      (item) =>
+        item.deptClearanceStatus === "CLEARED" ||
+        item.deptClearanceStatus === "NOTREQUIRED",
     );
 
     const payload = {
@@ -354,15 +359,20 @@ const ClearanceChecklistModal = ({
       deptClearanceStatus: allItemsMarked ? "CLEARED" : "PENDING",
       markDepartmentCleared: allItemsMarked,
       clearanceLineUpdates: formData.checklist.map((item) => ({
-        idExitCaseDepartmentClearanceLine: item.idExitCaseDepartmentClearanceLine,
-        isCompleted: item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "NOTREQUIRED",
+        idExitCaseDepartmentClearanceLine:
+          item.idExitCaseDepartmentClearanceLine,
+        isCompleted:
+          item.deptClearanceStatus === "CLEARED" ||
+          item.deptClearanceStatus === "NOTREQUIRED",
         clearanceStatus: item.deptClearanceStatus,
         remarks: item.remarks || "",
       })),
     };
 
     try {
-      const result = await dispatch(submitExitCaseDepartmentClearanceLines(payload)).unwrap();
+      const result = await dispatch(
+        submitExitCaseDepartmentClearanceLines(payload),
+      ).unwrap();
       if (result?.success !== false) {
         toast.success("Clearance submitted successfully");
         dispatch(fetchExitClearanceForDepartmentUser());
@@ -410,7 +420,9 @@ const ClearanceChecklistModal = ({
               <>
                 {/* Employee Info */}
                 <div className="mb-3">
-                  <label className="form-label text-muted small mb-1">Employee</label>
+                  <label className="form-label text-muted small mb-1">
+                    Employee
+                  </label>
                   <input
                     type="text"
                     className="form-control"
@@ -455,18 +467,28 @@ const ClearanceChecklistModal = ({
                       <thead>
                         <tr className="border-bottom">
                           <th style={{ minWidth: "250px" }}>Item</th>
-                          <th style={{ minWidth: "100px", whiteSpace: "nowrap" }}>Status</th>
+                          <th
+                            style={{ minWidth: "100px", whiteSpace: "nowrap" }}
+                          >
+                            Status
+                          </th>
                           <th style={{ minWidth: "250px" }}>Remarks</th>
                         </tr>
                       </thead>
                       <tbody>
                         {formData.checklist.length > 0 ? (
                           formData.checklist.map((item, index) => (
-                            <tr key={item.idExitCaseDepartmentClearanceLine} className="border-bottom">
+                            <tr
+                              key={item.idExitCaseDepartmentClearanceLine}
+                              className="border-bottom"
+                            >
                               <td className="align-middle">
                                 {item.checkListItem}
                               </td>
-                              <td className="align-middle" style={{ whiteSpace: "nowrap" }}>
+                              <td
+                                className="align-middle"
+                                style={{ whiteSpace: "nowrap" }}
+                              >
                                 <div className="d-flex gap-3">
                                   <div className="form-check">
                                     <input
@@ -474,8 +496,14 @@ const ClearanceChecklistModal = ({
                                       className="form-check-input"
                                       name={`status-${item.idExitCaseDepartmentClearanceLine}`}
                                       id={`cleared-${item.idExitCaseDepartmentClearanceLine}`}
-                                      checked={item.deptClearanceStatus === "CLEARED" || item.deptClearanceStatus === "Cleared"}
-                                      onChange={() => handleStatusChange(index, "CLEARED")}
+                                      checked={
+                                        item.deptClearanceStatus ===
+                                          "CLEARED" ||
+                                        item.deptClearanceStatus === "Cleared"
+                                      }
+                                      onChange={() =>
+                                        handleStatusChange(index, "CLEARED")
+                                      }
                                       disabled={!department?.canEditChecklist}
                                     />
                                     <label
@@ -491,8 +519,15 @@ const ClearanceChecklistModal = ({
                                       className="form-check-input"
                                       name={`status-${item.idExitCaseDepartmentClearanceLine}`}
                                       id={`notrequired-${item.idExitCaseDepartmentClearanceLine}`}
-                                      checked={item.deptClearanceStatus === "NOTREQUIRED" || item.deptClearanceStatus === "NotRequired"}
-                                      onChange={() => handleStatusChange(index, "NOTREQUIRED")}
+                                      checked={
+                                        item.deptClearanceStatus ===
+                                          "NOTREQUIRED" ||
+                                        item.deptClearanceStatus ===
+                                          "NotRequired"
+                                      }
+                                      onChange={() =>
+                                        handleStatusChange(index, "NOTREQUIRED")
+                                      }
                                       disabled={!department?.canEditChecklist}
                                     />
                                     <label
@@ -509,7 +544,9 @@ const ClearanceChecklistModal = ({
                                   type="text"
                                   className="form-control form-control-sm"
                                   value={item.remarks}
-                                  onChange={(e) => handleRemarksChange(index, e.target.value)}
+                                  onChange={(e) =>
+                                    handleRemarksChange(index, e.target.value)
+                                  }
                                   disabled={!department?.canEditChecklist}
                                   placeholder="Enter remarks"
                                 />
@@ -518,7 +555,10 @@ const ClearanceChecklistModal = ({
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={3} className="text-center text-muted py-3">
+                            <td
+                              colSpan={3}
+                              className="text-center text-muted py-3"
+                            >
                               No checklist items
                             </td>
                           </tr>

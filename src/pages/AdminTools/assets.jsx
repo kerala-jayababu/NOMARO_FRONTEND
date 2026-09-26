@@ -450,7 +450,7 @@ function Assets() {
                                   <td>{asset.assetTypeName || 'N/A'}</td>
                                   <td>{asset.assetDetails}</td>
                                   <td className="text-end">
-                                    {new Intl.NumberFormat("en-US", {
+                                    {new Intl.NumberFormat("en-IN", {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
                                     }).format(asset.averageCost || 0)}

@@ -30,14 +30,14 @@ function AttendanceDetails() {
         const yesterday = moment().subtract(1, 'days');
         // If today is the 1st of the month, endDate should be the same as startDate
         if (moment().date() === 1) {
-            return startOfMonth.format('MM-DD-YYYY');
+            return startOfMonth.format('DD-MM-YYYY');
         }
-        return yesterday.format('MM-DD-YYYY');
+        return yesterday.format('DD-MM-YYYY');
     };
 
-    const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
+    const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
     const [endDate, setEndDate] = useState(getInitialEndDate());
-    const today = moment(new Date()).format('MM-DD-YYYY')
+    const today = moment(new Date()).format('DD-MM-YYYY')
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const filteredEmployees = [
@@ -349,7 +349,7 @@ function AttendanceDetails() {
                 "Emp Code": item.employeeCode || '',
                 "Emp Name": item.employeeName || '',
                 "Date": item.attendanceDate && moment(item.attendanceDate).isValid() 
-                    ? moment(item.attendanceDate).format('MM-DD-YYYY') 
+                    ? moment(item.attendanceDate).format('DD-MM-YYYY') 
                     : '',
                 "First In": (!isSpecialStatus && item.firstInDateTime && moment(item.firstInDateTime).isValid()) 
                     ? moment(item.firstInDateTime).format('hh:mm A') 
@@ -396,7 +396,7 @@ function AttendanceDetails() {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Details");
 
         // Generate filename with date range
-        const fileName = `Attendance_Details_${moment(startDate).format('MM-DD-YYYY')}_to_${moment(endDate).format('MM-DD-YYYY')}.xlsx`;
+        const fileName = `Attendance_Details_${moment(startDate).format('DD-MM-YYYY')}_to_${moment(endDate).format('DD-MM-YYYY')}.xlsx`;
 
         // Write file
         XLSX.writeFile(workbook, fileName);
@@ -427,12 +427,12 @@ function AttendanceDetails() {
                             </div>
                             <div className="list_menu">
                                 <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'From Date'}
+                                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
                                         showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'To Date'}
+                                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
                                         selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
                                         maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                                 </div>
@@ -538,7 +538,7 @@ function AttendanceDetails() {
                                                     <td>{item.employeeCode}</td>
                                                     <td>{item.employeeName}</td>
                                                     <td>
-                                                        <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{item.attendanceDate && moment(item.attendanceDate).isValid() ? moment(item.attendanceDate).format('MM-DD-YYYY') : ''}</a>
+                                                        <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{item.attendanceDate && moment(item.attendanceDate).isValid() ? moment(item.attendanceDate).format('DD-MM-YYYY') : ''}</a>
                                                     </td>
                                                     {
                                                         item.statusType == 'INOUTMISS' &&
@@ -633,11 +633,11 @@ function AttendanceDetails() {
                         <div className="row m-0">
                             <div className="col-md-12 p-2">
                                 <label className="form-label mb-1">Employee Name: <b>{selectedData?.employeeName}</b></label>
-                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
                             <div className="col-md-12 p-2">
-                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</b></label>
-                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('MM-DD-YYYY')}</label> */}
+                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                                {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
 
                             <div className="col-md-12 p-2">
@@ -680,7 +680,7 @@ function AttendanceDetails() {
                                 </tr>
                                 <tr>
                                     <td><b>Attendance Date</b></td>
-                                    <td colSpan={2}>{selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid() ? moment(selectedData?.attendanceDate).format('MM-DD-YYYY') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid() ? moment(selectedData?.attendanceDate).format('DD-MM-YYYY') : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>

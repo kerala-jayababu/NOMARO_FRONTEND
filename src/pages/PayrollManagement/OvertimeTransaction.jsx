@@ -14,7 +14,7 @@ import Utils from "../../utils/Utils";
 
 function OvertimeTransaction() {
 
-  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
   const [overtimeTransactions, setOvertimeTransactions] = useState([]);
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const [overtimeTypes, setOvertimeTypes] = useState([]);
@@ -193,9 +193,9 @@ function OvertimeTransaction() {
       idEmployee: item.idEmployee,
       // idOvertimeType: item.idOvertimeType,
       overtimeTypeName: '',
-      startDate: moment(item.firstInDateTime).format('MM-DD-YYYY'),
+      startDate: moment(item.firstInDateTime).format('DD-MM-YYYY'),
       startTime: null,
-      endDate: moment(item.lastOutDateTime).format('MM-DD-YYYY'),
+      endDate: moment(item.lastOutDateTime).format('DD-MM-YYYY'),
       endTime: null,
       durationInHours: 0,
       reasonForOvertime: '',
@@ -408,7 +408,7 @@ function OvertimeTransaction() {
                 </div>
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                     showYearDropdown dropdownMode="select" />
                 </div>
@@ -463,13 +463,13 @@ function OvertimeTransaction() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           {/* <td>{item?.overtimeTypeName}</td> */}
-                          <td>{moment(item?.startDate).format("MM/DD/YYYY")}</td>
+                          <td>{moment(item?.startDate).format("DD-MM-YYYY")}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td>{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td className="text-center">{item.durationInHours} Hr</td>
                           <td className="white-space-nowrap">
                             {item.salaryMonthText && item.salaryAccountedAmount
-                              ? `${item.salaryMonthText} GYD ${parseFloat(item.salaryAccountedAmount).toFixed(2)}`
+                              ? `${item.salaryMonthText} ₹ ${parseFloat(item.salaryAccountedAmount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                               : '-'}
                           </td>
                           {/* <td>{item.reasonForOvertime}</td> */}
@@ -565,7 +565,7 @@ function OvertimeTransaction() {
                             <DatePicker className="form-control" selected={newData.startDate}
                               onChange={(date) => setNewData({ ...newData, startDate: date })}
                               required
-                              dateFormat="MM/dd/yyyy"
+                              dateFormat="dd-MM-yyyy"
                               placeholderText='Select Date' showMonthDropdown
                               showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>
@@ -583,7 +583,7 @@ function OvertimeTransaction() {
                             <DatePicker className="form-control" selected={newData.endDate}
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
-                              dateFormat="MM/dd/yyyy"
+                              dateFormat="dd-MM-yyyy"
                               placeholderText='Select Date' minDate={newData.startDate} showMonthDropdown
                               showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>

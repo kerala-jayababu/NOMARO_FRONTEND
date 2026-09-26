@@ -278,7 +278,7 @@ const VacationMode = () => {
             const day = String(newDate.getDate()).padStart(2, "0"); // Get day, ensure 2 digits
             const year = newDate.getFullYear(); // Get year
 
-            return `${month}/${day}/${year}`; // Format as MM/DD/YYYY
+            return `${day}-${month}-${year}`;
           };
 
           return {

@@ -16,20 +16,28 @@ import {
   fetchEmployeesLeaveConfigStatus,
   applyLeaveTemplateToMultipleEmployees,
 } from "../../redux/reducers/employeeLeaveConfig";
-import { fetchLeaveTemplates, fetchLeaveTemplateById, fetchDesignationList } from "../../redux/reducers/leaveTemplate";
+import {
+  fetchLeaveTemplates,
+  fetchLeaveTemplateById,
+  fetchDesignationList,
+} from "../../redux/reducers/leaveTemplate";
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails";
 import CommonService from "../../core/services/CommonService";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import Select from "react-select";
+import Utils from "../../utils/Utils";
 
 const EmployeeLeaveConfig = () => {
   const dispatch = useDispatch();
-  const { employeeLeaveSetupList, employeeLeaveSetup, loading, error } = useSelector(
-    (state) => state.employeeLeaveConfig
+  const { employeeLeaveSetupList, employeeLeaveSetup, loading, error } =
+    useSelector((state) => state.employeeLeaveConfig);
+  const { leaveTemplates, designationList } = useSelector(
+    (state) => state.leaveTemplate,
   );
-  const { leaveTemplates, designationList } = useSelector((state) => state.leaveTemplate);
-  const { options: employeeList } = useSelector((state) => state.getAllEmployeeDetails);
+  const { options: employeeList } = useSelector(
+    (state) => state.getAllEmployeeDetails,
+  );
 
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
@@ -67,7 +75,8 @@ const EmployeeLeaveConfig = () => {
           // Financial year starts on July 1
           // If current month is July (7) or later, financial year starts with current year
           // If current month is before July (1-6), financial year started last year
-          const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+          const financialYearStart =
+            currentMonth >= 7 ? currentYear : currentYear - 1;
 
           const currentWorkYear = result.data.find((year) => {
             if (!year.displayText) return false;
@@ -96,12 +105,13 @@ const EmployeeLeaveConfig = () => {
     // Financial year starts on July 1
     // If current month is July (7) or later, financial year starts with current year
     // If current month is before July (1-6), financial year started last year
-    const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+    const financialYearStart =
+      currentMonth >= 7 ? currentYear : currentYear - 1;
 
     return [
       financialYearStart - 1, // Previous year
-      financialYearStart,     // Current year
-      financialYearStart + 1  // Next year
+      financialYearStart, // Current year
+      financialYearStart + 1, // Next year
     ];
   }, []);
 
@@ -125,7 +135,9 @@ const EmployeeLeaveConfig = () => {
   // Fetch initial data on component mount
   useEffect(() => {
     // Only fetch APPROVED templates for the dropdown
-    dispatch(fetchLeaveTemplates({ status: "APPROVED", idYear: "", searchText: "" }));
+    dispatch(
+      fetchLeaveTemplates({ status: "APPROVED", idYear: "", searchText: "" }),
+    );
     dispatch(getAllEmployeeDetails());
     dispatch(fetchDesignationList());
   }, [dispatch]);
@@ -156,7 +168,13 @@ const EmployeeLeaveConfig = () => {
       const idYear = parseInt(yearFilter);
       if (!isNaN(idYear)) {
         const approvalStatus = statusFilter === "ALL" ? "" : statusFilter;
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear, approvalStatus }));
+        dispatch(
+          fetchEmployeeLeaveSetup({
+            searchText: searchQuery,
+            idYear,
+            approvalStatus,
+          }),
+        );
       }
     }
   }, [dispatch, searchQuery, yearFilter, statusFilter]);
@@ -186,14 +204,14 @@ const EmployeeLeaveConfig = () => {
     return [{ value: "", label: "Select Template" }];
   }, [leaveTemplates]);
 
-  // Helper function to format date as MM/DD/YYYY with leading zeros
+  // Helper function to format date as DD-MM-YYYY with leading zeros
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${day}-${month}-${year}`;
   };
 
   // Get employee leave setup data from API response
@@ -202,10 +220,15 @@ const EmployeeLeaveConfig = () => {
 
     let data = employeeLeaveSetupList.data.map((setup) => {
       // Look up employee code from employeeList using idEmployee
-      const employee = employeeList?.find((emp) => emp.idEmployee === setup.idEmployee);
-      const employeeCode = setup.employeeCode || setup.empCode || employee?.employeeCode || "";
-      const designationName = setup.designationName || employee?.designationName || "";
-      const idDesignation = setup.idDesignation || employee?.idDesignation || null;
+      const employee = employeeList?.find(
+        (emp) => emp.idEmployee === setup.idEmployee,
+      );
+      const employeeCode =
+        setup.employeeCode || setup.empCode || employee?.employeeCode || "";
+      const designationName =
+        setup.designationName || employee?.designationName || "";
+      const idDesignation =
+        setup.idDesignation || employee?.idDesignation || null;
 
       return {
         idEmployeeLeaveConfig: setup.idEmployeeLeaveConfig,
@@ -227,7 +250,9 @@ const EmployeeLeaveConfig = () => {
 
     // Apply designation filter
     if (designationFilter) {
-      data = data.filter((item) => String(item.idDesignation) === designationFilter);
+      data = data.filter(
+        (item) => String(item.idDesignation) === designationFilter,
+      );
     }
 
     return data;
@@ -277,7 +302,9 @@ const EmployeeLeaveConfig = () => {
       label: "",
       render: (_value, row) => (
         <div className="text-end">
-          {["SUBMITTED", "REJECTED"].includes((row.approvalStatus || "").toUpperCase()) ? (
+          {["SUBMITTED", "REJECTED"].includes(
+            (row.approvalStatus || "").toUpperCase(),
+          ) ? (
             <button
               type="button"
               className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
@@ -319,24 +346,36 @@ const EmployeeLeaveConfig = () => {
         const detailResult = await dispatch(
           fetchLeaveSetupOfAnEmployee({
             IdEmployee: setup.idEmployee,
-            idYear: parseInt(yearFilter)
-          })
+            idYear: parseInt(yearFilter),
+          }),
         );
 
         if (detailResult.payload && detailResult.payload.data) {
           const detailedSetup = detailResult.payload.data;
           // Find the matching config by idEmployeeLeaveConfig - check multiple possible field names
-          const configDetails = detailedSetup.details || detailedSetup.employeeLeaveConfigDetails || detailedSetup.employeeLeaveConfigDetail || [];
+          const configDetails =
+            detailedSetup.details ||
+            detailedSetup.employeeLeaveConfigDetails ||
+            detailedSetup.employeeLeaveConfigDetail ||
+            [];
 
           if (configDetails.length > 0) {
             const allocations = configDetails.map((detail) => {
               return {
-                idEmployeeLeaveConfigDetails: detail.idEmployeeLeaveConfigDetails || detail.idEmployeeLeaveConfigDetail || detail.id || 0,
+                idEmployeeLeaveConfigDetails:
+                  detail.idEmployeeLeaveConfigDetails ||
+                  detail.idEmployeeLeaveConfigDetail ||
+                  detail.id ||
+                  0,
                 idEmployeeLeaveConfig: setup.idEmployeeLeaveConfig,
-                idLeaveTemplateDetail: detail.idLeaveTemplateDetail || detail.idLeaveTemplateDetails || 0,
+                idLeaveTemplateDetail:
+                  detail.idLeaveTemplateDetail ||
+                  detail.idLeaveTemplateDetails ||
+                  0,
                 idLeaveType: detail.idLeaveType || 0,
                 leaveTypeName: detail.leaveTypeName,
-                allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+                allocatedDays:
+                  detail.allocatedDays || detail.allocatedDaysInYear || 0,
                 carriedForwardDays: 0,
               };
             });
@@ -351,12 +390,18 @@ const EmployeeLeaveConfig = () => {
       // Fallback: Use details from list API or fetch from template
       if (setup.details && setup.details.length > 0) {
         const allocations = setup.details.map((detail) => ({
-          idEmployeeLeaveConfigDetails: detail.idEmployeeLeaveConfigDetails || detail.idEmployeeLeaveConfigDetail || detail.id || 0,
+          idEmployeeLeaveConfigDetails:
+            detail.idEmployeeLeaveConfigDetails ||
+            detail.idEmployeeLeaveConfigDetail ||
+            detail.id ||
+            0,
           idEmployeeLeaveConfig: setup.idEmployeeLeaveConfig,
-          idLeaveTemplateDetail: detail.idLeaveTemplateDetail || detail.idLeaveTemplateDetails || 0,
+          idLeaveTemplateDetail:
+            detail.idLeaveTemplateDetail || detail.idLeaveTemplateDetails || 0,
           idLeaveType: detail.idLeaveType || 0,
           leaveTypeName: detail.leaveTypeName,
-          allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+          allocatedDays:
+            detail.allocatedDays || detail.allocatedDaysInYear || 0,
           carriedForwardDays: 0,
         }));
         setTemplateAllocations(allocations);
@@ -364,11 +409,12 @@ const EmployeeLeaveConfig = () => {
         // If no details, fetch from template
         try {
           const templateResult = await dispatch(
-            fetchLeaveTemplateById(setup.idLeaveTemplate)
+            fetchLeaveTemplateById(setup.idLeaveTemplate),
           );
 
           if (templateResult.payload && templateResult.payload.data) {
-            const templateDetails = templateResult.payload.data.leaveTemplateDetails || [];
+            const templateDetails =
+              templateResult.payload.data.leaveTemplateDetails || [];
 
             const allocations = templateDetails.map((detail) => ({
               idEmployeeLeaveConfigDetails: 0,
@@ -401,7 +447,7 @@ const EmployeeLeaveConfig = () => {
           fetchLeaveSetupOfAnEmployee({
             IdEmployee: setup.idEmployee,
             idYear: parseInt(yearFilter),
-          })
+          }),
         );
 
         if (detailResult.payload && detailResult.payload.data) {
@@ -415,7 +461,8 @@ const EmployeeLeaveConfig = () => {
           if (configDetails.length > 0) {
             viewInfo.allocations = configDetails.map((detail) => ({
               leaveTypeName: detail.leaveTypeName,
-              allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+              allocatedDays:
+                detail.allocatedDays || detail.allocatedDaysInYear || 0,
               carriedForwardDays: 0,
             }));
           }
@@ -425,10 +472,15 @@ const EmployeeLeaveConfig = () => {
       }
 
       // Fallback to details from list API
-      if (viewInfo.allocations.length === 0 && setup.details && setup.details.length > 0) {
+      if (
+        viewInfo.allocations.length === 0 &&
+        setup.details &&
+        setup.details.length > 0
+      ) {
         viewInfo.allocations = setup.details.map((detail) => ({
           leaveTypeName: detail.leaveTypeName,
-          allocatedDays: detail.allocatedDays || detail.allocatedDaysInYear || 0,
+          allocatedDays:
+            detail.allocatedDays || detail.allocatedDaysInYear || 0,
           carriedForwardDays: 0,
         }));
       }
@@ -446,7 +498,13 @@ const EmployeeLeaveConfig = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     // Refresh the list first to set loading state and clear any error
-    dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+    dispatch(
+      fetchEmployeeLeaveSetup({
+        searchText: searchQuery,
+        idYear: parseInt(yearFilter),
+        approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+      }),
+    );
     // Reset form state without dispatching resetEmployeeLeaveSetup (to avoid showing error)
     setSelectedEmployee("");
     setSelectedTemplate("");
@@ -469,11 +527,12 @@ const EmployeeLeaveConfig = () => {
       if (selectedTemplate) {
         try {
           const resultAction = await dispatch(
-            fetchLeaveTemplateById(parseInt(selectedTemplate))
+            fetchLeaveTemplateById(parseInt(selectedTemplate)),
           );
 
           if (resultAction.payload && resultAction.payload.data) {
-            const templateDetails = resultAction.payload.data.leaveTemplateDetails || [];
+            const templateDetails =
+              resultAction.payload.data.leaveTemplateDetails || [];
 
             // Map template details to allocation format with IDs for API
             const allocations = templateDetails.map((detail) => ({
@@ -558,7 +617,8 @@ const EmployeeLeaveConfig = () => {
       effectiveFrom: toLocalISOString(effectiveFromDate),
       effectiveTo: toLocalISOString(effectiveToDate),
       details: templateAllocations.map((allocation) => ({
-        idEmployeeLeaveConfigDetails: allocation.idEmployeeLeaveConfigDetails || 0,
+        idEmployeeLeaveConfigDetails:
+          allocation.idEmployeeLeaveConfigDetails || 0,
         idEmployeeLeaveConfig: isEditing ? editingConfigId : 0,
         idLeaveTemplateDetail: allocation.idLeaveTemplateDetail || 0,
         idLeaveType: allocation.idLeaveType || 0,
@@ -568,22 +628,30 @@ const EmployeeLeaveConfig = () => {
 
     try {
       setIsSubmitting(true);
-      const resultAction = await dispatch(addUpdateEmployeeLeaveConfigWithDetails(configData));
+      const resultAction = await dispatch(
+        addUpdateEmployeeLeaveConfigWithDetails(configData),
+      );
 
       if (resultAction.payload && resultAction.payload.success) {
         // Submit for approval using the returned config ID
         const configId = resultAction.payload.data;
         if (configId) {
-          const submitResult = await dispatch(submitEmployeeLeaveConfigForApproval(configId));
+          const submitResult = await dispatch(
+            submitEmployeeLeaveConfigForApproval(configId),
+          );
           if (submitResult.payload && submitResult.payload.success) {
-            toast.success("Employee leave config submitted for approval successfully!", {
-              position: "top-right",
-              autoClose: 4000,
-            });
+            toast.success(
+              "Employee leave config submitted for approval successfully!",
+              {
+                position: "top-right",
+                autoClose: 4000,
+              },
+            );
           } else {
             toast.warning(
-              submitResult.payload?.message || "Config saved but failed to submit for approval",
-              { position: "top-right", autoClose: 4000 }
+              submitResult.payload?.message ||
+                "Config saved but failed to submit for approval",
+              { position: "top-right", autoClose: 4000 },
             );
           }
         } else {
@@ -591,23 +659,36 @@ const EmployeeLeaveConfig = () => {
             isEditing
               ? "Employee leave config updated successfully!"
               : "Employee leave config added successfully!",
-            { position: "top-right", autoClose: 4000 }
+            { position: "top-right", autoClose: 4000 },
           );
         }
         setShowModal(false);
         handleReset();
         // Refresh the list
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+        dispatch(
+          fetchEmployeeLeaveSetup({
+            searchText: searchQuery,
+            idYear: parseInt(yearFilter),
+            approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+          }),
+        );
       } else {
         toast.error(
-          resultAction.payload?.message || "Failed to save employee leave config",
+          resultAction.payload?.message ||
+            "Failed to save employee leave config",
           {
             position: "top-right",
             autoClose: 4000,
-          }
+          },
         );
         // Refresh the list to clear error state and show selected year data
-        dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+        dispatch(
+          fetchEmployeeLeaveSetup({
+            searchText: searchQuery,
+            idYear: parseInt(yearFilter),
+            approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+          }),
+        );
       }
     } catch (error) {
       console.error("Error saving employee leave config:", error);
@@ -616,7 +697,13 @@ const EmployeeLeaveConfig = () => {
         autoClose: 4000,
       });
       // Refresh the list to clear error state and show selected year data
-      dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+      dispatch(
+        fetchEmployeeLeaveSetup({
+          searchText: searchQuery,
+          idYear: parseInt(yearFilter),
+          approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+        }),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -670,8 +757,14 @@ const EmployeeLeaveConfig = () => {
                     options={designationFilterOptions}
                     isSearchable
                     isClearable
-                    onChange={(selected) => setDesignationFilter(selected ? selected.value : "")}
-                    value={designationFilterOptions.find((opt) => opt.value === designationFilter) || null}
+                    onChange={(selected) =>
+                      setDesignationFilter(selected ? selected.value : "")
+                    }
+                    value={
+                      designationFilterOptions.find(
+                        (opt) => opt.value === designationFilter,
+                      ) || null
+                    }
                     placeholder="All Designations"
                     styles={{
                       control: (base) => ({ ...base, minHeight: "38px" }),
@@ -759,7 +852,13 @@ const EmployeeLeaveConfig = () => {
           onClose={() => {
             setShowBulkModal(false);
             if (yearFilter) {
-              dispatch(fetchEmployeeLeaveSetup({ searchText: searchQuery, idYear: parseInt(yearFilter), approvalStatus: statusFilter === "ALL" ? "" : statusFilter }));
+              dispatch(
+                fetchEmployeeLeaveSetup({
+                  searchText: searchQuery,
+                  idYear: parseInt(yearFilter),
+                  approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
+                }),
+              );
             }
           }}
         />
@@ -833,7 +932,8 @@ const EmployeeLeaveSetupModal = ({
       // Financial year starts on July 1
       // If current month is July (7) or later, financial year starts with current year
       // If current month is before July (1-6), financial year started last year
-      const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+      const financialYearStart =
+        currentMonth >= 7 ? currentYear : currentYear - 1;
 
       const currentWorkYear = workYears.find((year) => {
         if (!year.displayText) return false;
@@ -851,7 +951,9 @@ const EmployeeLeaveSetupModal = ({
 
         // Fetch employees not configured for leave for default year
         dispatch(
-          fetchEmployeesNotConfiguredLeave({ idWorkYear: currentWorkYear.idWorkYear })
+          fetchEmployeesNotConfiguredLeave({
+            idWorkYear: currentWorkYear.idWorkYear,
+          }),
         ).then((result) => {
           if (result.payload && result.payload.data) {
             const options = result.payload.data.map((emp) => ({
@@ -874,12 +976,13 @@ const EmployeeLeaveSetupModal = ({
     // Financial year starts on July 1
     // If current month is July (7) or later, financial year starts with current year
     // If current month is before July (1-6), financial year started last year
-    const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+    const financialYearStart =
+      currentMonth >= 7 ? currentYear : currentYear - 1;
 
     return [
       financialYearStart - 1, // Previous year
-      financialYearStart,     // Current year
-      financialYearStart + 1  // Next year
+      financialYearStart, // Current year
+      financialYearStart + 1, // Next year
     ];
   }, []);
 
@@ -908,7 +1011,9 @@ const EmployeeLeaveSetupModal = ({
   // Compute min/max date range from selected work year
   const yearDateRange = useMemo(() => {
     if (selectedYear) {
-      const yearData = workYears.find((y) => String(y.idWorkYear) === selectedYear);
+      const yearData = workYears.find(
+        (y) => String(y.idWorkYear) === selectedYear,
+      );
       if (yearData) {
         return {
           minDate: new Date(yearData.workDateFrom),
@@ -946,7 +1051,7 @@ const EmployeeLeaveSetupModal = ({
     // Auto-populate dates for both Add and Update modes
     if (yearId) {
       const selectedYearData = workYears.find(
-        (year) => String(year.idWorkYear) === yearId
+        (year) => String(year.idWorkYear) === yearId,
       );
       if (selectedYearData) {
         const workDateFrom = new Date(selectedYearData.workDateFrom);
@@ -958,7 +1063,7 @@ const EmployeeLeaveSetupModal = ({
       // Fetch employees not configured for leave for this year
       try {
         const result = await dispatch(
-          fetchEmployeesNotConfiguredLeave({ idWorkYear: parseInt(yearId) })
+          fetchEmployeesNotConfiguredLeave({ idWorkYear: parseInt(yearId) }),
         );
         if (result.payload && result.payload.data) {
           const options = result.payload.data.map((emp) => ({
@@ -983,7 +1088,10 @@ const EmployeeLeaveSetupModal = ({
       const matchingYear = workYears.find((year) => {
         const workDateFrom = normalizeDate(new Date(year.workDateFrom));
         const workDateTo = normalizeDate(new Date(year.workDateTo));
-        return normalizedValidFrom >= workDateFrom && normalizedValidFrom <= workDateTo;
+        return (
+          normalizedValidFrom >= workDateFrom &&
+          normalizedValidFrom <= workDateTo
+        );
       });
       if (matchingYear) {
         setSelectedYear(String(matchingYear.idWorkYear));
@@ -1001,17 +1109,26 @@ const EmployeeLeaveSetupModal = ({
     if (employeeId) {
       try {
         const result = await CommonService.getEmployeeProfileById(employeeId);
-        if (!result.error && result.data && result.data.data && result.data.data.length > 0) {
+        if (
+          !result.error &&
+          result.data &&
+          result.data.data &&
+          result.data.data.length > 0
+        ) {
           const joiningDate = result.data.data[0]?.joiningDate;
           if (joiningDate) {
             const joiningDateObj = new Date(joiningDate);
             setEmployeeJoiningDate(joiningDateObj);
 
             // Validate existing Valid From against joining date
-            if (validFrom && isValidFromBeforeJoiningDate(validFrom, joiningDateObj)) {
-              const formattedJoiningDate = joiningDateObj.toLocaleDateString();
+            if (
+              validFrom &&
+              isValidFromBeforeJoiningDate(validFrom, joiningDateObj)
+            ) {
+              const formattedJoiningDate =
+                Utils.formatDisplayDate(joiningDateObj);
               setFormError(
-                `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+                `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`,
               );
             }
           }
@@ -1027,10 +1144,14 @@ const EmployeeLeaveSetupModal = ({
     setValidFrom(date);
     setFormError("");
 
-    if (date && employeeJoiningDate && isValidFromBeforeJoiningDate(date, employeeJoiningDate)) {
-      const formattedJoiningDate = employeeJoiningDate.toLocaleDateString();
+    if (
+      date &&
+      employeeJoiningDate &&
+      isValidFromBeforeJoiningDate(date, employeeJoiningDate)
+    ) {
+      const formattedJoiningDate = Utils.formatDisplayDate(employeeJoiningDate);
       setFormError(
-        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`,
       );
     }
   };
@@ -1058,10 +1179,14 @@ const EmployeeLeaveSetupModal = ({
     setFormError("");
 
     // Validate Valid From against joining date
-    if (validFrom && employeeJoiningDate && isValidFromBeforeJoiningDate(validFrom, employeeJoiningDate)) {
-      const formattedJoiningDate = employeeJoiningDate.toLocaleDateString();
+    if (
+      validFrom &&
+      employeeJoiningDate &&
+      isValidFromBeforeJoiningDate(validFrom, employeeJoiningDate)
+    ) {
+      const formattedJoiningDate = Utils.formatDisplayDate(employeeJoiningDate);
       setFormError(
-        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+        `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`,
       );
       return;
     }
@@ -1073,7 +1198,7 @@ const EmployeeLeaveSetupModal = ({
 
       if (totalAllocatedDays > daysBetween) {
         setFormError(
-          `Total Allocated Days (${totalAllocatedDays}) cannot exceed the number of days between Valid From and Valid To (${daysBetween} days).`
+          `Total Allocated Days (${totalAllocatedDays}) cannot exceed the number of days between Valid From and Valid To (${daysBetween} days).`,
         );
         return;
       }
@@ -1122,18 +1247,28 @@ const EmployeeLeaveSetupModal = ({
     const fetchJoiningDate = async () => {
       if (selectedEmployee && !employeeJoiningDate) {
         try {
-          const result = await CommonService.getEmployeeProfileById(selectedEmployee);
-          if (!result.error && result.data && result.data.data && result.data.data.length > 0) {
+          const result =
+            await CommonService.getEmployeeProfileById(selectedEmployee);
+          if (
+            !result.error &&
+            result.data &&
+            result.data.data &&
+            result.data.data.length > 0
+          ) {
             const joiningDate = result.data.data[0]?.joiningDate;
             if (joiningDate) {
               const joiningDateObj = new Date(joiningDate);
               setEmployeeJoiningDate(joiningDateObj);
 
               // Validate existing Valid From against joining date
-              if (validFrom && isValidFromBeforeJoiningDate(validFrom, joiningDateObj)) {
-                const formattedJoiningDate = joiningDateObj.toLocaleDateString();
+              if (
+                validFrom &&
+                isValidFromBeforeJoiningDate(validFrom, joiningDateObj)
+              ) {
+                const formattedJoiningDate =
+                  Utils.formatDisplayDate(joiningDateObj);
                 setFormError(
-                  `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`
+                  `Valid From date cannot be before employee's joining date (${formattedJoiningDate}).`,
                 );
               }
             }
@@ -1151,7 +1286,7 @@ const EmployeeLeaveSetupModal = ({
     const parsedValue = parseInt(newValue) || 0;
 
     const updatedAllocations = templateAllocations.map((item, i) =>
-      i === index ? { ...item, allocatedDays: parsedValue } : item
+      i === index ? { ...item, allocatedDays: parsedValue } : item,
     );
     setTemplateAllocations(updatedAllocations);
   };
@@ -1165,11 +1300,16 @@ const EmployeeLeaveSetupModal = ({
       data-bs-backdrop="static"
       data-bs-keyboard="false"
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered" style={{ transform: "none" }}>
+      <div
+        className="modal-dialog modal-lg modal-dialog-centered"
+        style={{ transform: "none" }}
+      >
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
-              {isEditing ? "Update Employee Leave Configuration" : "Add Employee Leave Configuration"}
+              {isEditing
+                ? "Update Employee Leave Configuration"
+                : "Add Employee Leave Configuration"}
             </h5>
             <button
               type="button"
@@ -1178,7 +1318,10 @@ const EmployeeLeaveSetupModal = ({
               aria-label="Close"
             ></button>
           </div>
-          <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <div
+            className="modal-body"
+            style={{ maxHeight: "70vh", overflowY: "auto" }}
+          >
             <div className="row mb-3">
               <div className="col-md-4">
                 <label className="form-label mb-1">Year</label>
@@ -1205,18 +1348,17 @@ const EmployeeLeaveSetupModal = ({
                   onChange={handleEmployeeChange}
                   value={
                     (isEditing ? employeeOptions : modalEmployeeOptions)?.find(
-                      (opt) => opt.value === selectedEmployee
+                      (opt) => opt.value === selectedEmployee,
                     ) || null
                   }
                   placeholder="Select Employee"
                   menuPosition="fixed"
                   menuPlacement="bottom"
                   menuShouldScrollIntoView={false}
-
                   styles={{
-                    container: (base) => ({...base, marginTop: "7px"}),
+                    container: (base) => ({ ...base, marginTop: "7px" }),
                     control: (base) => ({ ...base, minHeight: "38px" }),
-                    menu: (base) => ({ ...base, zIndex: 9999}),
+                    menu: (base) => ({ ...base, zIndex: 9999 }),
                   }}
                 />
               </div>
@@ -1236,7 +1378,7 @@ const EmployeeLeaveSetupModal = ({
                 <br />
                 <DatePicker
                   className="form-control"
-                  dateFormat="MM/dd/yyyy"
+                  dateFormat="dd-MM-yyyy"
                   placeholderText="Valid From"
                   selected={validFrom}
                   onChange={handleValidFromChange}
@@ -1251,7 +1393,7 @@ const EmployeeLeaveSetupModal = ({
                 <br />
                 <DatePicker
                   className="form-control"
-                  dateFormat="MM/dd/yyyy"
+                  dateFormat="dd-MM-yyyy"
                   placeholderText="Valid To"
                   selected={validTo}
                   onChange={(date) => setValidTo(date)}
@@ -1291,15 +1433,15 @@ const EmployeeLeaveSetupModal = ({
                               type="number"
                               className="form-control form-control-sm"
                               value={allocation.allocatedDays || 0}
-                              onChange={(e) => handleAllocationChange(index, e.target.value)}
+                              onChange={(e) =>
+                                handleAllocationChange(index, e.target.value)
+                              }
                               min="0"
                               style={{ width: "80px" }}
                             />
                           </td>
                           <td>0</td>
-                          <td>
-                            {allocation.allocatedDays || 0}
-                          </td>
+                          <td>{allocation.allocatedDays || 0}</td>
                         </tr>
                       ))
                     ) : (
@@ -1340,7 +1482,13 @@ const EmployeeLeaveSetupModal = ({
 };
 
 // Bulk Configure Modal Component
-const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dispatch, onClose }) => {
+const BulkConfigureModal = ({
+  workYears,
+  yearFilterOptions,
+  templateOptions,
+  dispatch,
+  onClose,
+}) => {
   const modalRef = useRef(null);
   const onCloseRef = useRef(onClose);
   const [selectedYear, setSelectedYear] = useState("");
@@ -1361,7 +1509,8 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
       const today = new Date();
       const currentMonth = today.getMonth() + 1;
       const currentYear = today.getFullYear();
-      const financialYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+      const financialYearStart =
+        currentMonth >= 7 ? currentYear : currentYear - 1;
 
       const currentWorkYear = workYears.find((year) => {
         if (!year.displayText) return false;
@@ -1411,17 +1560,21 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
     const fetchDropdowns = async () => {
       const deptResult = await CommonService.getDepartmentsList();
       if (!deptResult.error && deptResult.data?.data) {
-        setDepartments(deptResult.data.data.map((d) => ({
-          value: String(d.idDepartment),
-          label: d.departmentName,
-        })));
+        setDepartments(
+          deptResult.data.data.map((d) => ({
+            value: String(d.idDepartment),
+            label: d.departmentName,
+          })),
+        );
       }
       const desigResult = await CommonService.getDesignationsList();
       if (!desigResult.error && desigResult.data?.data) {
-        setDesignations(desigResult.data.data.map((d) => ({
-          value: String(d.idDesignation),
-          label: d.designationName,
-        })));
+        setDesignations(
+          desigResult.data.data.map((d) => ({
+            value: String(d.idDesignation),
+            label: d.designationName,
+          })),
+        );
       }
     };
     fetchDropdowns();
@@ -1441,9 +1594,13 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
         const result = await dispatch(
           fetchEmployeesLeaveConfigStatus({
             idYear: parseInt(selectedYear),
-            idDepartment: selectedDepartment ? parseInt(selectedDepartment) : null,
-            idDesignation: selectedDesignation ? parseInt(selectedDesignation) : null,
-          })
+            idDepartment: selectedDepartment
+              ? parseInt(selectedDepartment)
+              : null,
+            idDesignation: selectedDesignation
+              ? parseInt(selectedDesignation)
+              : null,
+          }),
         );
         if (result.payload?.data) {
           setEmployeeList(result.payload.data);
@@ -1483,8 +1640,12 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
   const filteredEmployeeList = showOnlyNotConfigured
     ? employeeList.filter((emp) => !emp.isConfigured)
     : employeeList;
-  const allUnconfigured = filteredEmployeeList.filter((emp) => !emp.isConfigured);
-  const allChecked = allUnconfigured.length > 0 && selectedEmployees.length === allUnconfigured.length;
+  const allUnconfigured = filteredEmployeeList.filter(
+    (emp) => !emp.isConfigured,
+  );
+  const allChecked =
+    allUnconfigured.length > 0 &&
+    selectedEmployees.length === allUnconfigured.length;
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -1492,20 +1653,29 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${day}-${month}-${year}`;
   };
 
   const handleSubmitForApproval = async () => {
     if (!selectedYear) {
-      toast.error("Please select a year.", { position: "top-right", autoClose: 4000 });
+      toast.error("Please select a year.", {
+        position: "top-right",
+        autoClose: 4000,
+      });
       return;
     }
     if (!selectedTemplate) {
-      toast.error("Please select a template.", { position: "top-right", autoClose: 4000 });
+      toast.error("Please select a template.", {
+        position: "top-right",
+        autoClose: 4000,
+      });
       return;
     }
     if (selectedEmployees.length === 0) {
-      toast.error("Please select at least one employee.", { position: "top-right", autoClose: 4000 });
+      toast.error("Please select at least one employee.", {
+        position: "top-right",
+        autoClose: 4000,
+      });
       return;
     }
 
@@ -1516,22 +1686,31 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
           idEmployees: selectedEmployees,
           idLeaveTemplate: parseInt(selectedTemplate),
           idYear: parseInt(selectedYear),
-        })
+        }),
       );
       if (result.payload?.success) {
-        toast.success(result.payload.message || "Leave template applied successfully!", {
-          position: "top-right",
-          autoClose: 4000,
-        });
+        toast.success(
+          result.payload.message || "Leave template applied successfully!",
+          {
+            position: "top-right",
+            autoClose: 4000,
+          },
+        );
         if (modalRef.current) modalRef.current.hide();
       } else {
-        toast.error(result.payload?.message || "Failed to apply leave template.", {
-          position: "top-right",
-          autoClose: 4000,
-        });
+        toast.error(
+          result.payload?.message || "Failed to apply leave template.",
+          {
+            position: "top-right",
+            autoClose: 4000,
+          },
+        );
       }
     } catch {
-      toast.error("Failed to apply leave template.", { position: "top-right", autoClose: 4000 });
+      toast.error("Failed to apply leave template.", {
+        position: "top-right",
+        autoClose: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -1546,7 +1725,10 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
       data-bs-backdrop="static"
       data-bs-keyboard="false"
     >
-      <div className="modal-dialog modal-xl modal-dialog-centered" style={{ transform: "none" }}>
+      <div
+        className="modal-dialog modal-xl modal-dialog-centered"
+        style={{ transform: "none" }}
+      >
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Bulk Configure Employee Leave</h5>
@@ -1557,7 +1739,10 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
               aria-label="Close"
             ></button>
           </div>
-          <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <div
+            className="modal-body"
+            style={{ maxHeight: "70vh", overflowY: "auto" }}
+          >
             <div className="row mb-3">
               <div className="col-md-3">
                 <label className="form-label mb-1">Year</label>
@@ -1598,8 +1783,14 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                   options={departments}
                   isSearchable
                   isClearable
-                  onChange={(selected) => setSelectedDepartment(selected ? selected.value : "")}
-                  value={departments.find((opt) => opt.value === selectedDepartment) || null}
+                  onChange={(selected) =>
+                    setSelectedDepartment(selected ? selected.value : "")
+                  }
+                  value={
+                    departments.find(
+                      (opt) => opt.value === selectedDepartment,
+                    ) || null
+                  }
                   placeholder="Select Department"
                   styles={{
                     control: (base) => ({ ...base, minHeight: "38px" }),
@@ -1614,8 +1805,14 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                   options={designations}
                   isSearchable
                   isClearable
-                  onChange={(selected) => setSelectedDesignation(selected ? selected.value : "")}
-                  value={designations.find((opt) => opt.value === selectedDesignation) || null}
+                  onChange={(selected) =>
+                    setSelectedDesignation(selected ? selected.value : "")
+                  }
+                  value={
+                    designations.find(
+                      (opt) => opt.value === selectedDesignation,
+                    ) || null
+                  }
                   placeholder="Select Designation"
                   styles={{
                     control: (base) => ({ ...base, minHeight: "38px" }),
@@ -1635,7 +1832,10 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                     checked={showOnlyNotConfigured}
                     onChange={(e) => setShowOnlyNotConfigured(e.target.checked)}
                   />
-                  <label className="form-check-label" htmlFor="showNotConfigured">
+                  <label
+                    className="form-check-label"
+                    htmlFor="showNotConfigured"
+                  >
                     Show only Not Configured
                   </label>
                 </div>
@@ -1674,7 +1874,12 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                             type="checkbox"
                             className="form-check-input"
                             checked={selectedEmployees.includes(emp.idEmployee)}
-                            onChange={(e) => handleCheckboxChange(emp.idEmployee, e.target.checked)}
+                            onChange={(e) =>
+                              handleCheckboxChange(
+                                emp.idEmployee,
+                                e.target.checked,
+                              )
+                            }
                             disabled={emp.isConfigured}
                           />
                         </td>
@@ -1684,7 +1889,9 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                         <td>{emp.departmentName}</td>
                         <td>{formatDate(emp.joiningDate)}</td>
                         <td>
-                          <span className={`badge ${emp.isConfigured ? "bg-label-success" : "bg-label-warning"}`}>
+                          <span
+                            className={`badge ${emp.isConfigured ? "bg-label-success" : "bg-label-warning"}`}
+                          >
                             {emp.isConfigured ? "Yes" : "No"}
                           </span>
                         </td>
@@ -1694,7 +1901,9 @@ const BulkConfigureModal = ({ workYears, yearFilterOptions, templateOptions, dis
                 </table>
               </div>
             ) : selectedYear ? (
-              <div className="text-center text-muted py-4">No employees found.</div>
+              <div className="text-center text-muted py-4">
+                No employees found.
+              </div>
             ) : (
               <div className="text-center text-muted py-4">
                 Select a Year to view employees.
@@ -1773,7 +1982,9 @@ const ViewEmployeeLeaveModal = ({ data, getStatusBadgeClass, onClose }) => {
       <div className="modal-dialog modal-lg modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Employee Leave Configuration Details</h5>
+            <h5 className="modal-title">
+              Employee Leave Configuration Details
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -1781,7 +1992,10 @@ const ViewEmployeeLeaveModal = ({ data, getStatusBadgeClass, onClose }) => {
               aria-label="Close"
             ></button>
           </div>
-          <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <div
+            className="modal-body"
+            style={{ maxHeight: "70vh", overflowY: "auto" }}
+          >
             <div className="row mb-3">
               <div className="col-md-6">
                 <label className="form-label fw-bold mb-1">Employee Code</label>
@@ -1814,7 +2028,9 @@ const ViewEmployeeLeaveModal = ({ data, getStatusBadgeClass, onClose }) => {
               <div className="col-md-4">
                 <label className="form-label fw-bold mb-1">Status</label>
                 <p className="mb-0">
-                  <span className={`badge ${getStatusBadgeClass(data.approvalStatus)}`}>
+                  <span
+                    className={`badge ${getStatusBadgeClass(data.approvalStatus)}`}
+                  >
                     {data.approvalStatus || "-"}
                   </span>
                 </p>
@@ -1841,7 +2057,8 @@ const ViewEmployeeLeaveModal = ({ data, getStatusBadgeClass, onClose }) => {
                           <td>{allocation.allocatedDays || 0}</td>
                           <td>{allocation.carriedForwardDays || 0}</td>
                           <td>
-                            {(allocation.allocatedDays || 0) + (allocation.carriedForwardDays || 0)}
+                            {(allocation.allocatedDays || 0) +
+                              (allocation.carriedForwardDays || 0)}
                           </td>
                         </tr>
                       ))

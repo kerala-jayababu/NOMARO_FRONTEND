@@ -361,13 +361,13 @@ function RentFreeQuarters() {
                           <td>{moment(item.validFrom).format('MMM, yyyy')}</td>
                           <td>{item.periodText}</td>
                           <td class="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.totalAnnualRent)}
                           </td>
                           <td class="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format((item.totalAnnualRent * ((item.taxRate) / 100)))}

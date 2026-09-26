@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../../utils/Utils";
 
 function SalaryTemplateApproval({
   entityId,
@@ -16,7 +17,7 @@ function SalaryTemplateApproval({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const dispatch = useDispatch();
-  
+
   // Get logged-in employee ID
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const loggedInEmployeeId = userData?.idEmployee;
@@ -82,16 +83,16 @@ function SalaryTemplateApproval({
   };
 
   function getDetails(item) {
-    if (item.calculationMethod.toLowerCase() === 'percentage') { 
+    if (item.calculationMethod.toLowerCase() === "percentage") {
       return `${item.percentageValue}% of ${item.percentageOfIdSalaryHeadValue}`;
     }
 
-   if (item.calculationMethod.toLowerCase() === 'fixedamount') { 
+    if (item.calculationMethod.toLowerCase() === "fixedamount") {
       return "FIXED AMOUNT";
     }
 
-     if (item.calculationMethod.toLowerCase() === 'formula') { 
-      return 'Formula - ' + item.customFormula;
+    if (item.calculationMethod.toLowerCase() === "formula") {
+      return "Formula - " + item.customFormula;
     }
   }
 
@@ -105,10 +106,12 @@ function SalaryTemplateApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Salary Template Approval
-              {selectedRow.currentStatus?.toLowerCase() === "approved" ?
-                " (Already Approved)":''}
-                {selectedRow.currentStatus?.toLowerCase() === "rejected" ?
-                " (Rejected)":''}
+              {selectedRow.currentStatus?.toLowerCase() === "approved"
+                ? " (Already Approved)"
+                : ""}
+              {selectedRow.currentStatus?.toLowerCase() === "rejected"
+                ? " (Rejected)"
+                : ""}
             </h5>
             <button
               type="button"
@@ -128,16 +131,7 @@ function SalaryTemplateApproval({
               <tbody>
                 <tr>
                   <td>{salaryTemplate.createdByValue}</td>
-                  <td>
-                    {new Date(salaryTemplate.createdOn).toLocaleString(
-                      "en-US",
-                      {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
-                  </td>
+                  <td>{Utils.formatDisplayDate(salaryTemplate.createdOn)}</td>
                 </tr>
               </tbody>
             </table>
@@ -174,7 +168,9 @@ function SalaryTemplateApproval({
                     <td>{item.salaryHeadName}</td>
                     <td>{item.headType}</td>
                     <td>{getDetails(item)}</td>
-                    <td className="text-end">{Number(item.finalSalaryAmount).toFixed(2)}</td>
+                    <td className="text-end">
+                      {Number(item.finalSalaryAmount).toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -190,34 +186,42 @@ function SalaryTemplateApproval({
               </thead>
               <tbody>
                 <tr>
-                  <td className="text-center">{Number(salaryTemplate.totalEarnings).toFixed(2)}</td>
-                  <td className="text-center">{Number(salaryTemplate.totalDeductions).toFixed(2)}</td>
-                  <td className="text-center">{Number(salaryTemplate.netSalary).toFixed(2)}</td>
+                  <td className="text-center">
+                    {Number(salaryTemplate.totalEarnings).toFixed(2)}
+                  </td>
+                  <td className="text-center">
+                    {Number(salaryTemplate.totalDeductions).toFixed(2)}
+                  </td>
+                  <td className="text-center">
+                    {Number(salaryTemplate.netSalary).toFixed(2)}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          { 
-            loggedInEmployeeId && 
-            selectedRow.targetIdEmployee && 
-            selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
+          {loggedInEmployeeId &&
+            selectedRow.targetIdEmployee &&
+            selectedRow.targetIdEmployee
+              .split(",")
+              .map((id) => parseInt(id.trim()))
+              .includes(loggedInEmployeeId) &&
             selectedRow.actionStatus === null && (
-            <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => handleApproveWorkflow()}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={() => setShowRejectModal(true)}
-              >
-                Reject
-              </button>
-            </div>
-          )}
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleApproveWorkflow()}
+                >
+                  Approve
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => setShowRejectModal(true)}
+                >
+                  Reject
+                </button>
+              </div>
+            )}
         </div>
       </div>
       {showRejectModal && (

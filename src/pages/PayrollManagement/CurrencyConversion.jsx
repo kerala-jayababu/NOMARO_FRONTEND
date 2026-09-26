@@ -1,24 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react'
-import CurrConversionService from '../../core/services/CurrConversionService'
-import { toast } from 'react-toastify';
-import moment from 'moment';
-import DatePicker from 'react-datepicker';
-import { NumericFormat } from 'react-number-format';
-import { Form } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from "react";
+import CurrConversionService from "../../core/services/CurrConversionService";
+import { toast } from "react-toastify";
+import moment from "moment";
+import DatePicker from "react-datepicker";
+import { NumericFormat } from "react-number-format";
+import { Form } from "react-bootstrap";
 
 function CurrencyConversion() {
   const currencies = ["GYD", "USD"];
+  const displayCurrency = (currency) =>
+    currency === "GYD" ? "INR (₹)" : currency;
 
   const initialFormState = {
     idCurrencyConversion: 0,
     fromCurrency: "USD",
     toCurrency: "GYD",
     rateDate: moment().format("YYYY-MM-DD"),
-    conversionRate: ''
+    conversionRate: "",
   };
 
   const [currencyConversions, setCurrencyConversions] = React.useState([]);
-  const [currencyConversionsMain, setCurrencyConversionsMain] = React.useState([]);
+  const [currencyConversionsMain, setCurrencyConversionsMain] = React.useState(
+    [],
+  );
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [formData, setFormData] = React.useState(initialFormState);
@@ -34,17 +38,19 @@ function CurrencyConversion() {
   const getCurrencyConversions = () => {
     setLoading(true);
     CurrConversionService.getAllCurrencyConversions()
-      .then(res => {
+      .then((res) => {
         let filteredData = res.data.data;
-        if(fromDate) {
-          filteredData = res.data.data.filter(item => moment(item.rateDate).isSameOrAfter(fromDate));
+        if (fromDate) {
+          filteredData = res.data.data.filter((item) =>
+            moment(item.rateDate).isSameOrAfter(fromDate),
+          );
         }
         setCurrencyConversions(filteredData);
         setCurrencyConversionsMain(res.data.data);
         setLoading(false);
       })
-      .catch(err => {
-        setError('Failed to load currency conversions');
+      .catch((err) => {
+        setError("Failed to load currency conversions");
         setLoading(false);
         // toast.error('Something went wrong!', {
         //   position: 'top-right',
@@ -54,34 +60,36 @@ function CurrencyConversion() {
   };
 
   const filterByDate = (date) => {
-    console.log('date',date)
+    console.log("date", date);
     setFromDate(date);
 
     let filteredData = currencyConversionsMain;
-    if(date) {
-      filteredData = currencyConversionsMain.filter(item => moment(item.rateDate).isSameOrAfter(date));
+    if (date) {
+      filteredData = currencyConversionsMain.filter((item) =>
+        moment(item.rateDate).isSameOrAfter(date),
+      );
     }
     setCurrencyConversions(filteredData);
-  }
-
+  };
 
   const handleInputChange = (value, field) => {
     let newValue;
 
     // If the value is an object (e.g., from a date picker or custom select), extract the 'value' property
-    if (value && value.hasOwnProperty('value')) {
+    if (value && value.hasOwnProperty("value")) {
       value = value.value;
     }
 
     // If the value is a string representing a number, convert it to a float
-    if (typeof value === 'string' && !isNaN(value)) {
+    if (typeof value === "string" && !isNaN(value)) {
       value = parseFloat(value); // Convert to number if it's a string representing a number
     }
 
     // Handle the 'rateDate' field to ensure it's a valid Date object
-    if (field === 'rateDate') {
-      newValue = value instanceof Date && !isNaN(value.getTime()) ? value : null;
-    } else if (typeof value === 'number') {
+    if (field === "rateDate") {
+      newValue =
+        value instanceof Date && !isNaN(value.getTime()) ? value : null;
+    } else if (typeof value === "number") {
       // If the value is a number, just use it as is
       newValue = value;
     } else {
@@ -94,10 +102,9 @@ function CurrencyConversion() {
       [field]: newValue,
     }));
 
-
     setError((prevErrors) => ({
       ...prevErrors,
-      [field]: '',
+      [field]: "",
     }));
   };
 
@@ -105,34 +112,39 @@ function CurrencyConversion() {
     if (formData.fromCurrency === formData.toCurrency) {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        toCurrency: currencies.find(currency => currency !== formData.fromCurrency),
+        toCurrency: currencies.find(
+          (currency) => currency !== formData.fromCurrency,
+        ),
       }));
     }
   }, [formData.fromCurrency]);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.conversionRate === '') {
+    if (formData.conversionRate === "") {
       setValidated(true);
       return;
     }
 
     // Check for duplicate entry
-    const isDuplicate = currencyConversionsMain.some(conversion =>
-      conversion.fromCurrency === formData.fromCurrency &&
-      conversion.toCurrency === formData.toCurrency &&
-      moment(conversion.rateDate).format('YYYY-MM-DD') === moment(formData.rateDate).format('YYYY-MM-DD') &&
-      conversion.idCurrencyConversion !== formData.idCurrencyConversion // Exclude current record when editing
+    const isDuplicate = currencyConversionsMain.some(
+      (conversion) =>
+        conversion.fromCurrency === formData.fromCurrency &&
+        conversion.toCurrency === formData.toCurrency &&
+        moment(conversion.rateDate).format("YYYY-MM-DD") ===
+          moment(formData.rateDate).format("YYYY-MM-DD") &&
+        conversion.idCurrencyConversion !== formData.idCurrencyConversion, // Exclude current record when editing
     );
 
-
     if (isDuplicate) {
-      toast.error('A conversion rate for this currency pair and date already exists!', {
-        position: 'top-right',
-        autoClose: 4000
-      });
+      toast.error(
+        "A conversion rate for this currency pair and date already exists!",
+        {
+          position: "top-right",
+          autoClose: 4000,
+        },
+      );
       return;
     }
 
@@ -141,12 +153,13 @@ function CurrencyConversion() {
       fromCurrency: formData.fromCurrency,
       toCurrency: formData.toCurrency,
       conversionRate: parseFloat(formData.conversionRate),
-        rateDate: moment(formData.rateDate).format("YYYY-MM-DD")
-    };    
+      rateDate: moment(formData.rateDate).format("YYYY-MM-DD"),
+    };
     setLoading(true);
-    const service = (formData.idCurrencyConversion !== 0)
-      ? CurrConversionService.updateCurrencyConversion
-      : CurrConversionService.addCurrencyConversion;
+    const service =
+      formData.idCurrencyConversion !== 0
+        ? CurrConversionService.updateCurrencyConversion
+        : CurrConversionService.addCurrencyConversion;
 
     try {
       const response = await service(payload);
@@ -165,7 +178,7 @@ function CurrencyConversion() {
   const handleEdit = (conversion) => {
     setFormData({
       ...conversion,
-      rateDate: moment(conversion.rateDate).format("YYYY-MM-DD")
+      rateDate: moment(conversion.rateDate).format("YYYY-MM-DD"),
     });
     setIsEditing(true);
   };
@@ -192,10 +205,10 @@ function CurrencyConversion() {
               <h5 className="m-0">List of Currency Conversion</h5>
               <div className="custom-date-picker-wrapper">
                 <div>
-                  <label className='p-2'>From Date</label>
+                  <label className="p-2">From Date</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="From Date"
                     selected={fromDate}
                     onChange={(date) => filterByDate(date)}
@@ -208,53 +221,58 @@ function CurrencyConversion() {
                 </div>
                 {/* <button className="btn btn-primary btn-sm px-4" onClick={handleButtonClick}>Add New</button> */}
               </div>
-
-
             </div>
             <div className="card-body">
-  <div className="custom-table-wrapper">
-    <table className="table table-sm">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>From Currency</th>
-          <th>To Currency</th>
-          <th className="text-end">Rate</th>
-          <th className="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody className="table-border-bottom-0">
-        {currencyConversions && currencyConversions.map((conversion) => (
-          <tr key={conversion.idCurrencyConversion}>
-            <td>{moment(conversion.rateDate).format("MM/DD/YYYY")}</td>
-            <td>{conversion.fromCurrency}</td>
-            <td>{conversion.toCurrency}</td>
-            <td className="text-end">{Number(conversion.conversionRate).toFixed(4)}</td>
-            <td className="text-end">
-              <button
-                type="button"
-                className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                onClick={() => handleEdit(conversion)}
-              >
-                <span className="tf-icons bx bx-pencil"></span>
-              </button>
-            </td>
-          </tr>
-        ))}
-        {currencyConversions.length === 0 && (
-          <tr>
-            <td colSpan="5" className="text-center">
-              <div className="Nodatafound_box">
-                <h6><i className="bx bx-search"></i> No data available!</h6>
+              <div className="custom-table-wrapper">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>From Currency</th>
+                      <th>To Currency</th>
+                      <th className="text-end">Rate</th>
+                      <th className="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-border-bottom-0">
+                    {currencyConversions &&
+                      currencyConversions.map((conversion) => (
+                        <tr key={conversion.idCurrencyConversion}>
+                          <td>
+                            {moment(conversion.rateDate).format("DD-MM-YYYY")}
+                          </td>
+                          <td>{displayCurrency(conversion.fromCurrency)}</td>
+                          <td>{displayCurrency(conversion.toCurrency)}</td>
+                          <td className="text-end">
+                            {Number(conversion.conversionRate).toFixed(4)}
+                          </td>
+                          <td className="text-end">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                              onClick={() => handleEdit(conversion)}
+                            >
+                              <span className="tf-icons bx bx-pencil"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    {currencyConversions.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="text-center">
+                          <div className="Nodatafound_box">
+                            <h6>
+                              <i className="bx bx-search"></i> No data
+                              available!
+                            </h6>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
-
+            </div>
           </div>
         </div>
 
@@ -271,10 +289,10 @@ function CurrencyConversion() {
                   <DatePicker
                     ref={datePickerRef}
                     className="form-control w-100"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
                     selected={formData.rateDate}
-                    onChange={(date) => handleInputChange(date, 'rateDate')}
+                    onChange={(date) => handleInputChange(date, "rateDate")}
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
@@ -289,12 +307,14 @@ function CurrencyConversion() {
                       className="form-select"
                       name="fromCurrency"
                       value={formData.fromCurrency}
-                      onChange={(e) => handleInputChange(e.target.value, 'fromCurrency')}
+                      onChange={(e) =>
+                        handleInputChange(e.target.value, "fromCurrency")
+                      }
                       required
                     >
                       {currencies.map((currency) => (
                         <option key={currency} value={currency}>
-                          {currency}
+                          {displayCurrency(currency)}
                         </option>
                       ))}
                     </select>
@@ -306,14 +326,18 @@ function CurrencyConversion() {
                       className="form-select"
                       name="toCurrency"
                       value={formData.toCurrency}
-                      onChange={(e) => handleInputChange(e.target.value, 'toCurrency')}
+                      onChange={(e) =>
+                        handleInputChange(e.target.value, "toCurrency")
+                      }
                       required
                     >
                       {currencies
-                        .filter((currency) => currency !== formData.fromCurrency) // Filter out the selected 'fromCurrency'
+                        .filter(
+                          (currency) => currency !== formData.fromCurrency,
+                        ) // Filter out the selected 'fromCurrency'
                         .map((currency) => (
                           <option key={currency} value={currency}>
-                            {currency}
+                            {displayCurrency(currency)}
                           </option>
                         ))}
                     </select>
@@ -326,7 +350,7 @@ function CurrencyConversion() {
                     className="form-control"
                     value={formData.conversionRate}
                     onValueChange={(values) => {
-                      handleInputChange(values, 'conversionRate');
+                      handleInputChange(values, "conversionRate");
                     }}
                     decimalScale={4}
                     allowNegative={false}
@@ -343,7 +367,7 @@ function CurrencyConversion() {
                     className="btn btn-primary px-4 me-2"
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : 'Submit'}
+                    {loading ? "Processing..." : "Submit"}
                   </button>
                   <button
                     type="button"
@@ -359,7 +383,7 @@ function CurrencyConversion() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default CurrencyConversion
+export default CurrencyConversion;

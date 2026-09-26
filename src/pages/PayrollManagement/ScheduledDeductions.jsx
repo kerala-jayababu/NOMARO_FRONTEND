@@ -18,7 +18,7 @@ function ScheduledDeductions() {
   const [salaryHeadList, setSalaryHeadList] = useState([]);
   const [salaryMonthsList, setSalaryMonthsList] = useState([]);
   const [filteredMonthsList, setFilteredMonthsList] = useState([]);
-  const [startDate, setStartDate] = useState(moment(new Date()).format('MM-01-YYYY'));
+  const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
   const [searchText, setSearchText] = useState('');
   const [newData, setNewData] = useState({
     idScheduledSalaryDeduction: 0,
@@ -584,7 +584,7 @@ function ScheduledDeductions() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
-                  <DatePicker className="form-control" dateFormat="MM/dd/yyyy" placeholderText={'Start Date'}
+                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                     showYearDropdown dropdownMode="select" />
                 </div>

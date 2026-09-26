@@ -536,7 +536,7 @@ function TaxConfiguration() {
                     <option value="">Select Financial Year</option>
                     {filteredFinancialYears.map((year) => (
                       <option key={year.idFinancialYear} value={year.idFinancialYear}>
-                        {`${moment(year.financialYearFrom).format('DD/MM/YYYY')} - ${moment(year.financialYearTo).format('DD/MM/YYYY')}`}
+                        {`${moment(year.financialYearFrom).format('DD-MM-YYYY')} - ${moment(year.financialYearTo).format('DD-MM-YYYY')}`}
                       </option>
                     ))}
                   </select>
@@ -575,19 +575,19 @@ function TaxConfiguration() {
                       {baseTaxThresholds && baseTaxThresholds.map((threshold) => (
                         <tr key={threshold.idTaxSlab}>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(threshold.minAmount)}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(threshold.maxAmount)}
                           </td>
                           <td>{threshold.taxRate}%</td>
-                          <td>{moment(threshold.financialYearFrom).format("MM/DD/YYYY")}</td>
+                          <td>{moment(threshold.financialYearFrom).format("DD-MM-YYYY")}</td>
                           <td className="text-end">
                             <button
                               type="button"
@@ -631,12 +631,12 @@ function TaxConfiguration() {
                       <tr key={threshold.idChildTaxThreshold}>
                         <td>{threshold.childrenCount}</td>
                         <td className="text-end">
-                          {new Intl.NumberFormat("en-US", {
+                          {new Intl.NumberFormat("en-IN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           }).format(threshold.taxThresholdAmount)}
                         </td>
-                        <td>{moment(threshold.financialYearFrom).format("MM/DD/YYYY")}</td>
+                        <td>{moment(threshold.financialYearFrom).format("DD-MM-YYYY")}</td>
                         <td className="text-end">
                           <button
                             type="button"
@@ -740,7 +740,7 @@ function TaxConfiguration() {
                     <br />
                     <DatePicker
                       className="form-control w-100"
-                      dateFormat="MM/dd/yyyy"
+                      dateFormat="dd-MM-yyyy"
                       placeholderText="Start Date"
                       selected={formData.financialYearFrom}
                       onChange={(date) => handleInputChange(date, 'financialYearFrom')}
@@ -826,7 +826,7 @@ function TaxConfiguration() {
                   <br />
                   <DatePicker
                     className="form-control w-100"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Select date"
                     selected={moment(childFormData.financialYearFrom).toDate()}
                     onChange={(date) => handleChildInputChange(date, 'financialYearFrom')}

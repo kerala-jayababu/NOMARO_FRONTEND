@@ -8,10 +8,10 @@ import CustomToolbar from '../../core/services/CustomCalenderToolBar';
 import { FaTrashAlt } from 'react-icons/fa';
 import './Holiday.css';
 import { useTranslation } from "react-i18next";
-import 'moment/locale/en-gb';
+import 'moment/locale/en-in';
 
-moment.updateLocale('en-gb', { week: { dow: 1 } });
-moment.locale('en-gb');
+moment.updateLocale('en-in', { week: { dow: 1 } });
+moment.locale('en-in');
 const localizer = momentLocalizer(moment);
 
 const Holiday = () => {

@@ -11,40 +11,40 @@ import OvertimeTransactionApproval from "./Components/OvertimeTransactionApprova
 import DatePicker from "react-datepicker";
 import { API } from "../../redux/api/utils";
 import secureLocalStorage from "react-secure-storage";
-
+import Utils from "../../utils/Utils";
 
 const statusColor = [
-    {
-        status:"approved",
-        class:"bg-success"
-    },
-    {
-        status: "submitted",
-        class: "bg-warning"
-    },
-    {
-        status: "interim approved",
-        class: "bg-secondary"
-    },
-     {
-        status: "hr approved",
-        class: "bg-secondary"
-    },
-    {
-        status: "rejected",
-        class: "bg-danger"
-    }
-]
+  {
+    status: "approved",
+    class: "bg-success",
+  },
+  {
+    status: "submitted",
+    class: "bg-warning",
+  },
+  {
+    status: "interim approved",
+    class: "bg-secondary",
+  },
+  {
+    status: "hr approved",
+    class: "bg-secondary",
+  },
+  {
+    status: "rejected",
+    class: "bg-danger",
+  },
+];
 
 function ConfigApproval() {
   const dispatch = useDispatch();
   const { configApprovalList } = useSelector((state) => state.configApproval);
   const { idPayrollScreen } = useSelector((state) => state.auth);
-const [dateFrom, setDateFrom] = React.useState(() => {
-  const date = new Date();
-  date.setDate(date.getDate() - 14);
-  return date.toISOString().split("T")[0];
-});
+  const [dateFrom, setDateFrom] = React.useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 14);
+    return date.toISOString().split("T")[0];
+  });
   const [entityType, setEntityType] = React.useState("");
   const [entityName, setEntityName] = React.useState("");
   const [entityId, setEntityId] = useState(0);
@@ -62,7 +62,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [entityTypes, setEntityTypes] = useState([]);
   const [statusOptions, setStatusOptions] = useState([]);
-  
+
   // Get logged-in employee ID
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const loggedInEmployeeId = userData?.idEmployee;
@@ -74,13 +74,15 @@ const [dateFrom, setDateFrom] = React.useState(() => {
       status,
     };
     dispatch(getConfigApprovals(params));
-    setSelectedItems([])
-    handelCheckboxCheck(false)
+    setSelectedItems([]);
+    handelCheckboxCheck(false);
     getEntityTypes();
   }, [dateFrom, entityType, status, refresh]);
 
   async function getEntityTypes() {
-    const res = await API.get("/api/v1/PayRollManagement/GetWorkflowConfigList");
+    const res = await API.get(
+      "/api/v1/PayRollManagement/GetWorkflowConfigList",
+    );
     const filteredData = res.data.data.filter((item) => {
       // Hide entities that have their own separate approval screens
       if (item.entityName === "Leave Template") return false;
@@ -93,9 +95,11 @@ const [dateFrom, setDateFrom] = React.useState(() => {
   }
 
   async function getStatusOptions(entityTypeId) {
-    try {      
-      const res = await API.get(`/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=${entityTypeId}`);
-      console.log('fetched data',res)
+    try {
+      const res = await API.get(
+        `/api/v1/PayRollManagement/GetWorkflowConfigList1?entityId=${entityTypeId}`,
+      );
+      console.log("fetched data", res);
       setStatusOptions(res.data.data || []);
     } catch (error) {
       console.error("Error fetching status options:", error);
@@ -107,10 +111,12 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     const selectedValue = e.target.value;
     setEntityType(selectedValue);
     setStatus(""); // Reset status when entity type changes
-    
+
     if (selectedValue) {
       // Find the selected entity type to get its ID
-      const selectedEntity = entityTypes.find(item => item.entityCode === selectedValue);      
+      const selectedEntity = entityTypes.find(
+        (item) => item.entityCode === selectedValue,
+      );
       if (selectedEntity) {
         getStatusOptions(selectedEntity.idWorkFlowConfig);
       }
@@ -121,19 +127,24 @@ const [dateFrom, setDateFrom] = React.useState(() => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked && configApprovalList) {
-      const selectableItems = configApprovalList.filter(item => {
-        return item.currentStatus?.toLowerCase() !== "approved" &&
-               item.currentStatus?.toLowerCase() !== "rejected" &&           
-               loggedInEmployeeId &&
-               item.targetIdEmployee &&
-               item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
-               item.actionStatus === null;
+      const selectableItems = configApprovalList.filter((item) => {
+        return (
+          item.currentStatus?.toLowerCase() !== "approved" &&
+          item.currentStatus?.toLowerCase() !== "rejected" &&
+          loggedInEmployeeId &&
+          item.targetIdEmployee &&
+          item.targetIdEmployee
+            .split(",")
+            .map((id) => parseInt(id.trim()))
+            .includes(loggedInEmployeeId) &&
+          item.actionStatus === null
+        );
       });
       setSelectedItems(selectableItems.map((item) => item.idApprovalWorkFlow));
     } else {
       setSelectedItems([]);
     }
-    handelCheckboxCheck(e.target.checked)
+    handelCheckboxCheck(e.target.checked);
   };
 
   const handelCheckboxCheck = (checked) => {
@@ -144,10 +155,10 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     });
   };
 
-  const handleApproveWorkflow = async () => {    
+  const handleApproveWorkflow = async () => {
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
-        (item) => item.idApprovalWorkFlow === id
+        (item) => item.idApprovalWorkFlow === id,
       );
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
@@ -180,7 +191,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
 
     const content = selectedItems.map((id) => {
       const item = configApprovalList.find(
-        (item) => item.idApprovalWorkFlow === id
+        (item) => item.idApprovalWorkFlow === id,
       );
       return {
         entityTablePrimaryKeyID: item.entityTablePrimaryKeyID,
@@ -243,7 +254,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
     setShowConfirmModal(true);
   };
 
-  const handleSelectEmployee = (item) => {    
+  const handleSelectEmployee = (item) => {
     setEntityName(item.entityName);
     setEntityId(item.entityTablePrimaryKeyID);
     setSelectedRow(item);
@@ -269,7 +280,9 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     onChange={handleEntityTypeChange}
                   >
                     <option value={""}>Select</option>
-                    {entityTypes?.map(item => <option value={item.entityCode}>{item.entityName}</option>)}
+                    {entityTypes?.map((item) => (
+                      <option value={item.entityCode}>{item.entityName}</option>
+                    ))}
                   </select>
                 </div>
                 <div class="col-md-3 p-2">
@@ -280,28 +293,31 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     onChange={(e) => setStatus(e.target.value)}
                     disabled={!entityType}
                   >
-                    <option value={""}>Select Status</option>                   
+                    <option value={""}>Select Status</option>
                     {statusOptions.map((statusOption, index) => (
-                      <option key={index} value={statusOption.approvalStatusName}>
+                      <option
+                        key={index}
+                        value={statusOption.approvalStatusName}
+                      >
                         {statusOption.approvalStatusName}
                       </option>
-                    ))}                   
+                    ))}
                   </select>
                 </div>
                 <div class="col-md-3 p-2">
                   <label>Date From</label>
-                  <br/>
+                  <br />
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
-                    selected={dateFrom} 
+                    selected={dateFrom}
                     onChange={(date) => {
-                      setDateFrom(date.toISOString().slice(0,10))
+                      setDateFrom(date.toISOString().slice(0, 10));
                     }}
                     showYearDropdown
                     maxDate={new Date()}
-                    />
+                  />
                   {/* <input
                     type="date"
                     class="form-control form-control-sm"
@@ -315,22 +331,32 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                   <thead>
                     <tr>
                       <th>
-                        {<input
+                        {
+                          <input
                             type="checkbox"
                             class="form-check-input"
                             checked={
-                              selectedItems.length > 0 && 
-                              selectedItems.length === configApprovalList?.filter(item => {
-                                return item.currentStatus?.toLowerCase() !== "approved" &&
-                                       item.currentStatus?.toLowerCase() !== "rejected" &&
-                                       loggedInEmployeeId &&
-                                       item.targetIdEmployee &&
-                                       item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) &&
-                                       item.actionStatus === null;
-                              }).length
+                              selectedItems.length > 0 &&
+                              selectedItems.length ===
+                                configApprovalList?.filter((item) => {
+                                  return (
+                                    item.currentStatus?.toLowerCase() !==
+                                      "approved" &&
+                                    item.currentStatus?.toLowerCase() !==
+                                      "rejected" &&
+                                    loggedInEmployeeId &&
+                                    item.targetIdEmployee &&
+                                    item.targetIdEmployee
+                                      .split(",")
+                                      .map((id) => parseInt(id.trim()))
+                                      .includes(loggedInEmployeeId) &&
+                                    item.actionStatus === null
+                                  );
+                                }).length
                             }
                             onChange={handleSelectAll}
-                          />}
+                          />
+                        }
                       </th>
                       <th>Entity Type</th>
                       <th>Details</th>
@@ -343,15 +369,20 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                     {configApprovalList?.map((item) => (
                       <tr key={item.idApprovalWorkFlow}>
                         <td>
-                                                     <input
-                             disabled={
-                               item.currentStatus?.toLowerCase() === "approved" ||
-                               item.currentStatus?.toLowerCase() === "rejected" ||
-                               !loggedInEmployeeId ||
-                               !item.targetIdEmployee ||
-                               !item.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) ||
-                               item.actionStatus !== null
-                             }
+                          <input
+                            disabled={
+                              item.currentStatus?.toLowerCase() ===
+                                "approved" ||
+                              item.currentStatus?.toLowerCase() ===
+                                "rejected" ||
+                              !loggedInEmployeeId ||
+                              !item.targetIdEmployee ||
+                              !item.targetIdEmployee
+                                .split(",")
+                                .map((id) => parseInt(id.trim()))
+                                .includes(loggedInEmployeeId) ||
+                              item.actionStatus !== null
+                            }
                             type="checkbox"
                             class="form-check-input data-checkbox"
                             onChange={(e) => {
@@ -363,8 +394,8 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                               } else {
                                 setSelectedItems((prev) =>
                                   prev.filter(
-                                    (x) => x !== item.idApprovalWorkFlow
-                                  )
+                                    (x) => x !== item.idApprovalWorkFlow,
+                                  ),
                                 );
                               }
                             }}
@@ -374,7 +405,11 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                           <a
                             href="#"
                             class="cursor"
-                            style={{ color: "var(--link-color)", cursor: "pointer", textDecoration: "none" }}
+                            style={{
+                              color: "var(--link-color)",
+                              cursor: "pointer",
+                              textDecoration: "none",
+                            }}
                             onClick={(e) => {
                               e.preventDefault();
                               handleSelectEmployee(item);
@@ -386,22 +421,21 @@ const [dateFrom, setDateFrom] = React.useState(() => {
                         <td>{item.details}</td>
                         <td>
                           {item.createdBy || "user"} <br />
-                          {new Date(item.sentDate).toLocaleString("en-US", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
+                          {Utils.formatDateTime(new Date(item.sentDate))}
                         </td>
-                        <td > 
-                          <p className={`badge ${
-  statusColor.find(x => x.status === item?.currentStatus?.trim().toLowerCase())?.class ?? ''
-}`}>
-  {item?.currentStatus}
-</p>
-                          </td>
+                        <td>
+                          <p
+                            className={`badge ${
+                              statusColor.find(
+                                (x) =>
+                                  x.status ===
+                                  item?.currentStatus?.trim().toLowerCase(),
+                              )?.class ?? ""
+                            }`}
+                          >
+                            {item?.currentStatus}
+                          </p>
+                        </td>
                         <td>{item.rejectionRemarks}</td>
                       </tr>
                     ))}
@@ -537,14 +571,14 @@ const [dateFrom, setDateFrom] = React.useState(() => {
           selectedRow={selectedRow}
         />
       )}
-{entityName === "Maternity Leave Sal Config" && (
-  <MaternityLeaveSalaryApproval
-    setEntityType={setEntityName}
-    entityId={entityId}
-    setRefresh={setRefresh}
-    selectedRow={selectedRow}
-  />
-)}
+      {entityName === "Maternity Leave Sal Config" && (
+        <MaternityLeaveSalaryApproval
+          setEntityType={setEntityName}
+          entityId={entityId}
+          setRefresh={setRefresh}
+          selectedRow={selectedRow}
+        />
+      )}
       {entityName === "Salary Template" && (
         <SalaryTemplateApproval
           setEntityType={setEntityName}
@@ -554,7 +588,7 @@ const [dateFrom, setDateFrom] = React.useState(() => {
         />
       )}
 
-         {entityName === "Leave Passage" && (
+      {entityName === "Leave Passage" && (
         <LeavePassageApproval
           setEntityType={setEntityName}
           entityId={entityId}

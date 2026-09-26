@@ -10,7 +10,8 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 
 const Assets = () => {
-  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } =
+    useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [assets, setAssets] = useState([]);
@@ -21,12 +22,13 @@ const Assets = () => {
   const [editingAssignmentId, setEditingAssignmentId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState(null);
-  const [selectedAssetAssignmentId, setSelectedAssetAssignmentId] = useState(null);
+  const [selectedAssetAssignmentId, setSelectedAssetAssignmentId] =
+    useState(null);
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [hoveredAssetId, setHoveredAssetId] = useState(null);
   const [returnReason, setReturnReason] = useState("");
   const [initialFormData, setInitialFormData] = useState(null);
-  
+
   const assetTypesLoadedRef = useRef(false);
   const availableAssetsLoadedRef = useRef(false);
   const employeeAssetsLoadedRef = useRef(null);
@@ -48,7 +50,7 @@ const Assets = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     if (!assetTypesLoadedRef.current && isMounted) {
       assetTypesLoadedRef.current = true;
       loadAssetTypes();
@@ -57,7 +59,7 @@ const Assets = () => {
       availableAssetsLoadedRef.current = true;
       loadAvailableAssets();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -65,7 +67,7 @@ const Assets = () => {
 
   useEffect(() => {
     if (!id) return;
-    
+
     if (employeeAssetsLoadedRef.current !== id) {
       employeeAssetsLoadedRef.current = id;
       loadEmployeeAssets();
@@ -87,7 +89,7 @@ const Assets = () => {
         setHasUnsavedChanges(false);
       }
     }
-    
+
     return () => {
       employeeAssetsLoadedRef.current = null;
     };
@@ -97,7 +99,10 @@ const Assets = () => {
     if (!id) return;
     try {
       showLoader();
-      const result = await EmployeeManagementService.getEmployeeAssetAssignments(parseInt(id));
+      const result =
+        await EmployeeManagementService.getEmployeeAssetAssignments(
+          parseInt(id),
+        );
       hideLoader();
       if (result.error) {
         toast.error(result.error);
@@ -125,12 +130,18 @@ const Assets = () => {
 
   const loadAvailableAssets = async () => {
     try {
-      const result = await EmployeeManagementService.getAssets(null, null, null);
+      const result = await EmployeeManagementService.getAssets(
+        null,
+        null,
+        null,
+      );
       if (result.error) {
         console.error(result.error);
       } else {
         // Filter assets that are not allocated
-        const available = (result.data?.data || []).filter((asset) => !asset.isAllocated);
+        const available = (result.data?.data || []).filter(
+          (asset) => !asset.isAllocated,
+        );
         setAvailableAssets(available);
       }
     } catch (error) {
@@ -153,23 +164,33 @@ const Assets = () => {
         ...prev,
         [field]: value,
       };
-      
+
       // Check for unsaved changes
       if (setHasUnsavedChanges && initialFormData) {
         const currentForComparison = {
           ...newData,
-          assignedFrom: newData.assignedFrom ? moment(newData.assignedFrom).format("YYYY-MM-DD") : null,
-          assignedTill: newData.assignedTill ? moment(newData.assignedTill).format("YYYY-MM-DD") : null,
+          assignedFrom: newData.assignedFrom
+            ? moment(newData.assignedFrom).format("YYYY-MM-DD")
+            : null,
+          assignedTill: newData.assignedTill
+            ? moment(newData.assignedTill).format("YYYY-MM-DD")
+            : null,
         };
         const initialForComparison = {
           ...initialFormData,
-          assignedFrom: initialFormData.assignedFrom ? moment(initialFormData.assignedFrom).format("YYYY-MM-DD") : null,
-          assignedTill: initialFormData.assignedTill ? moment(initialFormData.assignedTill).format("YYYY-MM-DD") : null,
+          assignedFrom: initialFormData.assignedFrom
+            ? moment(initialFormData.assignedFrom).format("YYYY-MM-DD")
+            : null,
+          assignedTill: initialFormData.assignedTill
+            ? moment(initialFormData.assignedTill).format("YYYY-MM-DD")
+            : null,
         };
-        const hasChanges = JSON.stringify(currentForComparison) !== JSON.stringify(initialForComparison);
+        const hasChanges =
+          JSON.stringify(currentForComparison) !==
+          JSON.stringify(initialForComparison);
         setHasUnsavedChanges(hasChanges);
       }
-      
+
       return newData;
     });
   };
@@ -180,8 +201,10 @@ const Assets = () => {
       return;
     }
 
-    const selectedAsset = availableAssets.find((asset) => asset.idAsset === parseInt(assetId));
-    
+    const selectedAsset = availableAssets.find(
+      (asset) => asset.idAsset === parseInt(assetId),
+    );
+
     if (selectedAsset) {
       setFormData((prev) => {
         const newData = {
@@ -193,15 +216,16 @@ const Assets = () => {
           averageCost: selectedAsset.averageCost?.toString() || "",
           assetWorkingStatus: selectedAsset.assetWorkingStatus || "Working",
         };
-        
+
         // Check for unsaved changes
         if (setHasUnsavedChanges && initialFormData) {
-          const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+          const hasChanges =
+            JSON.stringify(newData) !== JSON.stringify(initialFormData);
           setHasUnsavedChanges(hasChanges);
         } else if (setHasUnsavedChanges) {
           setHasUnsavedChanges(true);
         }
-        
+
         return newData;
       });
       setShowAssetModal(false);
@@ -215,7 +239,9 @@ const Assets = () => {
     }
 
     if (!formData.idAsset || !formData.assignedFrom || !formData.assignedTill) {
-      toast.error("Please select asset, assigned from date, and assigned till date");
+      toast.error(
+        "Please select asset, assigned from date, and assigned till date",
+      );
       return;
     }
 
@@ -225,13 +251,18 @@ const Assets = () => {
         idAssetAssignment: editingAssignmentId || 0,
         idAsset: parseInt(formData.idAsset),
         idEmployee: parseInt(id),
-        assignedDate: formData.assignedFrom ? moment(formData.assignedFrom).format("YYYY-MM-DD") : new Date(),
-        assignedTillDate: formData.assignedTill ? moment(formData.assignedTill).format("YYYY-MM-DD") : null,
+        assignedDate: formData.assignedFrom
+          ? moment(formData.assignedFrom).format("YYYY-MM-DD")
+          : new Date(),
+        assignedTillDate: formData.assignedTill
+          ? moment(formData.assignedTill).format("YYYY-MM-DD")
+          : null,
         remarks: formData.remarks || "",
         assignedBy: getCurrentUserId(),
       };
 
-      const result = await EmployeeManagementService.assignAssetToEmployee(payload);
+      const result =
+        await EmployeeManagementService.assignAssetToEmployee(payload);
       setLoading(false);
 
       if (result.error) {
@@ -246,7 +277,7 @@ const Assets = () => {
         loadAvailableAssets();
         // Scroll to top
         if (topRef.current) {
-          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
     } catch (error) {
@@ -258,7 +289,7 @@ const Assets = () => {
   const handleEdit = (asset) => {
     setEditingId(asset.idAsset);
     setEditingAssignmentId(asset.idAssetAssignment);
-    
+
     const editData = {
       idAsset: asset.idAsset?.toString() || "",
       idAssetType: asset.idAssetType?.toString() || "",
@@ -266,8 +297,12 @@ const Assets = () => {
       assetDetails: asset.assetDetails || "",
       averageCost: asset.averageCost?.toString() || "",
       assetWorkingStatus: asset.assetWorkingStatus || "Working",
-      assignedFrom: asset.assignedDate ? moment(asset.assignedDate).toDate() : null,
-      assignedTill: asset.assignedTillDate ? moment(asset.assignedTillDate).toDate() : null,
+      assignedFrom: asset.assignedDate
+        ? moment(asset.assignedDate).toDate()
+        : null,
+      assignedTill: asset.assignedTillDate
+        ? moment(asset.assignedTillDate).toDate()
+        : null,
       remarks: asset.remarks || "",
     };
     setFormData(editData);
@@ -304,14 +339,19 @@ const Assets = () => {
         remarks: returnReason.trim(),
         idUser: getCurrentUserId(),
       };
-      const result = await EmployeeManagementService.returnAssetFromEmployee(payload);
+      const result =
+        await EmployeeManagementService.returnAssetFromEmployee(payload);
       hideLoader();
 
       if (result.error) {
         // Check if error message contains "Asset Assignment Not Found"
-        if (result.error.toLowerCase().includes("asset assignment not found") || 
-            result.error.toLowerCase().includes("not found")) {
-          toast.error("Asset assignment not found. The asset may have already been returned.");
+        if (
+          result.error.toLowerCase().includes("asset assignment not found") ||
+          result.error.toLowerCase().includes("not found")
+        ) {
+          toast.error(
+            "Asset assignment not found. The asset may have already been returned.",
+          );
         } else {
           toast.error(result.error);
         }
@@ -321,7 +361,7 @@ const Assets = () => {
         loadAvailableAssets();
         // Scroll to top
         if (topRef.current) {
-          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
       setShowConfirmModal(false);
@@ -426,7 +466,10 @@ const Assets = () => {
       </div>
 
       <div className="col-lg-4">
-        <div className="card" style={{boxShadow: '0 0px 2px 0 rgba(67, 89, 113, 1.12)'}}>
+        <div
+          className="card"
+          style={{ boxShadow: "0 0px 2px 0 rgba(67, 89, 113, 1.12)" }}
+        >
           <div className="card-header">
             <h6 className="mb-0">Assign Asset</h6>
           </div>
@@ -443,10 +486,17 @@ const Assets = () => {
               {formData.idAsset && (
                 <div className="mt-2">
                   <small className="text-muted">
-                    Selected: {formData.assetDetails || 
-                      assets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetDetails || 
-                      assets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetTypeName ||
-                      availableAssets.find(a => a.idAsset === parseInt(formData.idAsset))?.assetDetails || 
+                    Selected:{" "}
+                    {formData.assetDetails ||
+                      assets.find(
+                        (a) => a.idAsset === parseInt(formData.idAsset),
+                      )?.assetDetails ||
+                      assets.find(
+                        (a) => a.idAsset === parseInt(formData.idAsset),
+                      )?.assetTypeName ||
+                      availableAssets.find(
+                        (a) => a.idAsset === parseInt(formData.idAsset),
+                      )?.assetDetails ||
                       "Asset"}
                   </small>
                 </div>
@@ -458,7 +508,9 @@ const Assets = () => {
               <select
                 className="form-select"
                 value={formData.idAssetType}
-                onChange={(e) => handleInputChange("idAssetType", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("idAssetType", e.target.value)
+                }
                 disabled
               >
                 <option value="">Select Asset Type</option>
@@ -476,7 +528,9 @@ const Assets = () => {
                 type="text"
                 className="form-control"
                 value={formData.assetSerialNumber}
-                onChange={(e) => handleInputChange("assetSerialNumber", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("assetSerialNumber", e.target.value)
+                }
                 disabled
                 maxLength={50}
               />
@@ -488,7 +542,9 @@ const Assets = () => {
                 type="text"
                 className="form-control"
                 value={formData.assetDetails}
-                onChange={(e) => handleInputChange("assetDetails", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("assetDetails", e.target.value)
+                }
                 disabled
                 maxLength={50}
               />
@@ -500,7 +556,9 @@ const Assets = () => {
                 type="text"
                 className="form-control"
                 value={formData.averageCost}
-                onChange={(e) => handleInputChange("averageCost", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("averageCost", e.target.value)
+                }
                 disabled
                 maxLength={20}
               />
@@ -511,7 +569,9 @@ const Assets = () => {
               <select
                 className="form-select"
                 value={formData.assetWorkingStatus}
-                onChange={(e) => handleInputChange("assetWorkingStatus", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("assetWorkingStatus", e.target.value)
+                }
                 disabled
               >
                 {assetStatuses.map((status) => (
@@ -566,10 +626,18 @@ const Assets = () => {
             </div>
 
             <div className="d-flex gap-2">
-              <button className="btn btn-primary" onClick={handleAssign} disabled={loading}>
-              {loading ? "Saving..." : editingId ? "Update" : "Save"}
+              <button
+                className="btn btn-primary"
+                onClick={handleAssign}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
-              <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
+              <button
+                className="btn btn-outline-secondary"
+                onClick={handleReset}
+                disabled={loading}
+              >
                 Reset
               </button>
             </div>
@@ -597,7 +665,7 @@ const Assets = () => {
                     <th>Asset Type</th>
                     <th>Serial Number</th>
                     <th>Details</th>
-                    <th>Cost (G$)</th>
+                    <th>Cost (₹)</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -605,7 +673,7 @@ const Assets = () => {
                 <tbody>
                   {availableAssets.map((asset) => {
                     const assetType = assetTypes.find(
-                      (type) => type.idAssetType === asset.idAssetType
+                      (type) => type.idAssetType === asset.idAssetType,
                     );
                     return (
                       <tr
@@ -614,12 +682,20 @@ const Assets = () => {
                         onMouseLeave={() => setHoveredAssetId(null)}
                         style={{ cursor: "pointer" }}
                       >
-                        <td>{assetType?.assetTypeName || asset.idAssetType || "-"}</td>
+                        <td>
+                          {assetType?.assetTypeName || asset.idAssetType || "-"}
+                        </td>
                         <td>{asset.assetSerialNumber || "-"}</td>
                         <td>{asset.assetDetails || "-"}</td>
                         <td>
                           {asset.averageCost
-                            ? `${parseInt(asset.averageCost).toLocaleString("en-US")}`
+                            ? Number(asset.averageCost).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )
                             : "-"}
                         </td>
                         <td>{asset.assetWorkingStatus || "-"}</td>
@@ -627,7 +703,9 @@ const Assets = () => {
                           {hoveredAssetId === asset.idAsset && (
                             <button
                               className="btn btn-sm btn-primary"
-                              onClick={() => handleAssetSelect(asset.idAsset.toString())}
+                              onClick={() =>
+                                handleAssetSelect(asset.idAsset.toString())
+                              }
                             >
                               Add
                             </button>
@@ -671,8 +749,7 @@ const Assets = () => {
         backdrop="static"
         keyboard={false}
       >
-        <Modal.Header className="border-0" closeButton>
-        </Modal.Header>
+        <Modal.Header className="border-0" closeButton></Modal.Header>
         <Modal.Body>
           <div className="mb-3">
             <p className="mb-2">Are you sure you want to return this asset?</p>

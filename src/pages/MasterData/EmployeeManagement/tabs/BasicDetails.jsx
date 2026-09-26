@@ -1038,7 +1038,7 @@ const BasicDetails = () => {
                 <DatePicker
                   selected={employeeFormData.joiningDate}
                   onChange={(date) => handleEmployeeInputChange("joiningDate", date)}
-                  dateFormat="MM/dd/yyyy"
+                  dateFormat="dd-MM-yyyy"
                   className={`form-control${employeeFormErrors.joiningDate ? " is-invalid" : ""}`}
                   minDate={employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).toDate() : undefined}
                   maxDate={moment().add(3, 'months').toDate()}
@@ -1158,7 +1158,7 @@ const BasicDetails = () => {
                 <DatePicker
                   selected={employeeFormData.dateOfBirth}
                   onChange={(date) => handleEmployeeInputChange("dateOfBirth", date)}
-                  dateFormat="MM/dd/yyyy"
+                  dateFormat="dd-MM-yyyy"
                   className={`form-control${employeeFormErrors.dateOfBirth ? " is-invalid" : ""}`}
                   minDate={new Date(1950, 0, 1)}
                   maxDate={new Date(2010, 11, 31)}

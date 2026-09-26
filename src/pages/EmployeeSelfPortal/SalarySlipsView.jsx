@@ -176,7 +176,7 @@ function SalarySlipsView() {
                       <h6 className="mb-2">{slip?.salaryHeadName}</h6>
                       <div className="EarningsBox_innerDt">
                         <div className="EarningsBox_innerDt_01">
-                          <label>Amount (G$)</label>
+                          <label>Amount (₹)</label>
                           <p>{Utils.formattedNumber(slip?.amountGYD)}</p>
                         </div>
                         <div className="EarningsBox_innerDt_01">
@@ -184,7 +184,7 @@ function SalarySlipsView() {
                           <p>{Utils.formattedNumber(slip?.amountUSD)}</p>
                         </div>
                         <div className="EarningsBox_innerDt_01">
-                          <label>YTD Amount (G$)</label>
+                          <label>YTD Amount (₹)</label>
                           <p>{Utils.formattedNumber(slip?.ytdAmount)}</p>
                         </div>
                       </div>
@@ -194,7 +194,7 @@ function SalarySlipsView() {
                     <h6 className="mb-2">Earning Total</h6>
                     <div className="TotalEarningsBox_innerDt">
                       <div className="TotalEarningsBox_innerDt_01">
-                        <label>Amount (G$)</label>
+                        <label>Amount (₹)</label>
                         <p>
                           {Utils.formattedNumber(totalValues?.gyd?.earnings)}
                         </p>
@@ -206,7 +206,7 @@ function SalarySlipsView() {
                         </p>
                       </div>
                       <div className="TotalEarningsBox_innerDt_01">
-                        <label>YTD Amount (G$)</label>
+                        <label>YTD Amount (₹)</label>
                         <p>
                           {Utils.formattedNumber(totalValues?.ytd?.earnings)}
                         </p>
@@ -234,7 +234,7 @@ function SalarySlipsView() {
                       <h6 className="mb-2">{slip?.salaryHeadName}</h6>
                       <div className="DeductionsBx_innerDt">
                         <div className="DeductionsBx_innerDt_01">
-                          <label>Amount(G$)</label>
+                          <label>Amount(₹)</label>
                           <p>{Utils.formattedNumber(slip?.amountGYD)}</p>
                         </div>
                         <div className="DeductionsBx_innerDt_01">
@@ -242,7 +242,7 @@ function SalarySlipsView() {
                           <p>{Utils.formattedNumber(slip?.amountUSD)}</p>
                         </div>
                         <div className="DeductionsBx_innerDt_01">
-                          <label>YTD Amt(G$)</label>
+                          <label>YTD Amt(₹)</label>
                           <p>{Utils.formattedNumber(slip?.ytdAmount)}</p>
                         </div>
                       </div>
@@ -252,7 +252,7 @@ function SalarySlipsView() {
                     <h6 className="mb-2">Deduction Total</h6>
                     <div className="TotalDeductionsBox_innerDt">
                       <div className="TotalDeductionsBox_innerDt_01">
-                        <label>Amount(G$)</label>
+                        <label>Amount(₹)</label>
                         <p>
                           {Utils.formattedNumber(totalValues?.gyd?.deductions)}
                         </p>
@@ -264,7 +264,7 @@ function SalarySlipsView() {
                         </p>
                       </div>
                       <div className="TotalDeductionsBox_innerDt_01">
-                        <label>YTD Amt(G$)</label>
+                        <label>YTD Amt(₹)</label>
                         <p>
                           {Utils.formattedNumber(totalValues?.ytd?.deductions)}
                         </p>
@@ -289,7 +289,7 @@ function SalarySlipsView() {
           <div>
             <h6 className="fw-bold">
               {" "}
-              Net Pay G$ {Utils.formattedNumber(totalValues?.gyd?.net)}
+              Net Pay ₹ {Utils.formattedNumber(totalValues?.gyd?.net)}
             </h6>
             <p>Payslip generated on : 01/01/2025</p>
           </div>
@@ -353,9 +353,9 @@ function SalarySlipsView() {
                     <thead>
                       <tr>
                         <th>Earnings</th>
-                        <th className="text-end">Amount(G$)</th>
+                        <th className="text-end">Amount(₹)</th>
                         <th className="text-end">Amount(US$)</th>
-                        <th className="text-end">YTD Amt(G$)</th>
+                        <th className="text-end">YTD Amt(₹)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -419,9 +419,9 @@ function SalarySlipsView() {
                     <thead>
                       <tr>
                         <th>Deductions</th>
-                        <th className="text-end">Amount(G$)</th>
+                        <th className="text-end">Amount(₹)</th>
                         <th className="text-end">Amount(US$)</th>
-                        <th className="text-end">YTD Amt(G$)</th>
+                        <th className="text-end">YTD Amt(₹)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -483,13 +483,13 @@ function SalarySlipsView() {
                 <div className="text-end fw-bold p-2 mt-2">
                   <h5 className="fw-bold">
                     {" "}
-                    Net Pay G$ {Utils.formattedNumber(totalValues?.gyd?.net)}
+                    Net Pay ₹ {Utils.formattedNumber(totalValues?.gyd?.net)}
                   </h5>
                 </div>
                 <div className="Payslip_geneBox">
                   <p>
                     Payslip generated on :{" "}
-                    {moment(salarySlipData?.approvedDate).format("MM/DD/YYYY")}
+                    {moment(salarySlipData?.approvedDate).format("DD-MM-YYYY")}
                   </p>
                   <button
                     className="btn btn-primary"

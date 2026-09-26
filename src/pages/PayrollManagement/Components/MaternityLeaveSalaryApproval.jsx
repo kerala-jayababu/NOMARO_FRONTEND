@@ -3,11 +3,17 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../../utils/Utils";
 
 // ✅ create this redux action (step 2 below)
 import { getMaternityLeaveSalaryById } from "../../../redux/reducers/ConfigApprovals";
 
-function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, selectedRow }) {
+function MaternityLeaveSalaryApproval({
+  entityId,
+  setEntityType,
+  setRefresh,
+  selectedRow,
+}) {
   const dispatch = useDispatch();
   const { maternityLeaveSalary } = useSelector((state) => state.configApproval);
   const { idPayrollScreen } = useSelector((state) => state.auth);
@@ -18,9 +24,9 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const loggedInEmployeeId = userData?.idEmployee;
 
- useEffect(() => {
-  dispatch(getMaternityLeaveSalaryById(entityId));
-}, [entityId]);
+  useEffect(() => {
+    dispatch(getMaternityLeaveSalaryById(entityId));
+  }, [entityId]);
 
   const handleApproveWorkflow = async () => {
     const content = [
@@ -45,36 +51,35 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
     }
   };
   const downloadFile = (item) => {
-  if (!item?.attachmentBlob) return;
+    if (!item?.attachmentBlob) return;
 
-  const base64Data = item.attachmentBlob;
-  const fileName = item.documentFilePath || "MaternityLeave.pdf";
+    const base64Data = item.attachmentBlob;
+    const fileName = item.documentFilePath || "MaternityLeave.pdf";
 
-  const byteCharacters = atob(base64Data);
-  const byteNumbers = new Array(byteCharacters.length);
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
 
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
 
-  const byteArray = new Uint8Array(byteNumbers);
+    const byteArray = new Uint8Array(byteNumbers);
 
-  // ✅ Set correct mime type for PDF
-  const blob = new Blob([byteArray], { type: "application/pdf" });
+    // ✅ Set correct mime type for PDF
+    const blob = new Blob([byteArray], { type: "application/pdf" });
 
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-  link.href = url;
-  link.setAttribute("download", fileName);
+    link.href = url;
+    link.setAttribute("download", fileName);
 
-  document.body.appendChild(link);
-  link.click();
+    document.body.appendChild(link);
+    link.click();
 
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-};
-
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   const handleRejectWorkflow = async () => {
     if (!rejectReason.trim()) {
@@ -85,7 +90,7 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
     const content = [
       {
         entityTablePrimaryKeyID: entityId,
-        entityCode: "MATERNITYSAL", 
+        entityCode: "MATERNITYSAL",
         status: "REJECTED",
         idPayrollScreen,
         rejectReason,
@@ -119,16 +124,27 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
     selectedRow?.currentStatus?.toLowerCase() !== "rejected";
 
   return (
-    <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div
+      className="modal d-block"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+    >
       <div className="modal-dialog modal-xl">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
               Maternity Leave Salary Approval{" "}
-              {selectedRow?.currentStatus?.toLowerCase() === "approved" ? " (Already Approved)" : ""}
-              {selectedRow?.currentStatus?.toLowerCase() === "rejected" ? " (Rejected)" : ""}
+              {selectedRow?.currentStatus?.toLowerCase() === "approved"
+                ? " (Already Approved)"
+                : ""}
+              {selectedRow?.currentStatus?.toLowerCase() === "rejected"
+                ? " (Rejected)"
+                : ""}
             </h5>
-            <button type="button" className="btn-close" onClick={() => setEntityType("")}></button>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setEntityType("")}
+            ></button>
           </div>
 
           <div className="modal-body">
@@ -166,25 +182,29 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
                 <tr>
                   <td>
                     {maternityLeaveSalary?.maternityLeaveFrom
-                      ? new Date(maternityLeaveSalary.maternityLeaveFrom).toLocaleDateString("en-US")
+                      ? Utils.formatDisplayDate(
+                          maternityLeaveSalary.maternityLeaveFrom,
+                        )
                       : ""}
                   </td>
                   <td>
                     {maternityLeaveSalary?.maternityLeaveTo
-                      ? new Date(maternityLeaveSalary.maternityLeaveTo).toLocaleDateString("en-US")
+                      ? Utils.formatDisplayDate(
+                          maternityLeaveSalary.maternityLeaveTo,
+                        )
                       : ""}
-                                    </td>
-                                    <td className="text-center">
+                  </td>
+                  <td className="text-center">
                     {maternityLeaveSalary?.attachmentBlob ? (
-                        <i
+                      <i
                         className="bx bx-paperclip cursor"
                         style={{ fontSize: "18px" }}
                         onClick={() => downloadFile(maternityLeaveSalary)}
-                        ></i>
+                      ></i>
                     ) : (
-                        "N/A"
+                      "N/A"
                     )}
-                    </td>
+                  </td>
                   <td>{maternityLeaveSalary?.approvalStatus ?? "-"}</td>
                 </tr>
               </tbody>
@@ -201,14 +221,20 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
                 </tr>
               </thead>
               <tbody>
-                {maternityLeaveSalary?.maternityLeaveSalaryDetailDto?.map((d, idx) => (
-                  <tr key={idx}>
-                    <td>{d.salaryHeadName}</td>
-                    <td>{d.salaryHeadType}</td>
-                    <td className="text-end">{Number(d.amount ?? 0).toFixed(2)}</td>
-                    <td className="text-end">{Number(d.amountInUSD ?? 0).toFixed(2)}</td>
-                  </tr>
-                ))}
+                {maternityLeaveSalary?.maternityLeaveSalaryDetailDto?.map(
+                  (d, idx) => (
+                    <tr key={idx}>
+                      <td>{d.salaryHeadName}</td>
+                      <td>{d.salaryHeadType}</td>
+                      <td className="text-end">
+                        {Number(d.amount ?? 0).toFixed(2)}
+                      </td>
+                      <td className="text-end">
+                        {Number(d.amountInUSD ?? 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ),
+                )}
               </tbody>
             </table>
 
@@ -223,10 +249,20 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
               </thead>
               <tbody>
                 <tr>
-                  <td className="text-center">{Number(maternityLeaveSalary?.totalEarnings ?? 0).toFixed(2)}</td>
-                  <td className="text-center">{Number(maternityLeaveSalary?.totalDeductions ?? 0).toFixed(2)}</td>
                   <td className="text-center">
-                    {Number(maternityLeaveSalary?.maternityLeaveNetSalary ?? 0).toFixed(2)}
+                    {Number(maternityLeaveSalary?.totalEarnings ?? 0).toFixed(
+                      2,
+                    )}
+                  </td>
+                  <td className="text-center">
+                    {Number(maternityLeaveSalary?.totalDeductions ?? 0).toFixed(
+                      2,
+                    )}
+                  </td>
+                  <td className="text-center">
+                    {Number(
+                      maternityLeaveSalary?.maternityLeaveNetSalary ?? 0,
+                    ).toFixed(2)}
                   </td>
                 </tr>
               </tbody>
@@ -235,10 +271,16 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
 
           {canTakeAction && (
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={handleApproveWorkflow}>
+              <button
+                className="btn btn-primary"
+                onClick={handleApproveWorkflow}
+              >
                 Approve
               </button>
-              <button className="btn btn-danger" onClick={() => setShowRejectModal(true)}>
+              <button
+                className="btn btn-danger"
+                onClick={() => setShowRejectModal(true)}
+              >
                 Reject
               </button>
             </div>
@@ -248,12 +290,19 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
 
       {/* Reject modal */}
       {showRejectModal && (
-        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Reject Records</h5>
-                <button type="button" className="btn-close" onClick={() => setShowRejectModal(false)}></button>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowRejectModal(false)}
+                ></button>
               </div>
               <div className="modal-body">
                 <label className="form-label">Rejection Reason</label>
@@ -266,10 +315,18 @@ function MaternityLeaveSalaryApproval({ entityId, setEntityType, setRefresh, sel
                 />
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-danger" onClick={handleRejectWorkflow}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleRejectWorkflow}
+                >
                   Reject
                 </button>
-                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowRejectModal(false)}>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowRejectModal(false)}
+                >
                   Cancel
                 </button>
               </div>

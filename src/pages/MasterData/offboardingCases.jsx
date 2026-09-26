@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../utils/Utils";
 import {
   fetchExitCasesForListing,
   fetchResignationRequests,
@@ -66,8 +67,12 @@ const OffboardingCases = () => {
 
   // Calculate status counts from current data
   const statusCounts = {
-    pending: exitCasesForListing.filter(r => r.pendingWith === roleType || r.pendingWith === "HROFFICER").length,
-    approved: exitCasesForListing.filter(r => r.exitStatus?.includes("Approved")).length,
+    pending: exitCasesForListing.filter(
+      (r) => r.pendingWith === roleType || r.pendingWith === "HROFFICER",
+    ).length,
+    approved: exitCasesForListing.filter((r) =>
+      r.exitStatus?.includes("Approved"),
+    ).length,
     total: exitCasesForListing.length,
   };
 
@@ -86,12 +91,14 @@ const OffboardingCases = () => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString();
+    return Utils.formatDisplayDate(dateString);
   };
 
   // Open view modal - fetch details via GetResignationRequests API
   const handleView = (exitCase) => {
-    dispatch(fetchResignationRequests({ roleType, idEmployee: exitCase.idEmployee }));
+    dispatch(
+      fetchResignationRequests({ roleType, idEmployee: exitCase.idEmployee }),
+    );
     setShowViewModal(true);
   };
 
@@ -191,35 +198,101 @@ const OffboardingCases = () => {
           </div>
 
           {/* Table */}
-          <div className="table-responsive text-nowrap" style={{ maxHeight: "450px", overflowY: "auto" }}>
+          <div
+            className="table-responsive text-nowrap"
+            style={{ maxHeight: "450px", overflowY: "auto" }}
+          >
             <table className="table table-sm">
               <thead>
                 <tr>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Case No
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Emp Code
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Employee Name
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Department
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Exit Type
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Proposed LWD
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Status
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Pending With
                   </th>
-                  <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white",
+                      zIndex: 1,
+                    }}
+                  >
                     Action
                   </th>
                 </tr>
@@ -228,7 +301,10 @@ const OffboardingCases = () => {
                 {loading ? (
                   <tr>
                     <td colSpan={9} className="text-center py-4">
-                      <div className="spinner-border text-primary" role="status">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      >
                         <span className="visually-hidden">Loading...</span>
                       </div>
                     </td>
@@ -249,7 +325,9 @@ const OffboardingCases = () => {
                       <td>{exitCase.exitTypeName}</td>
                       <td>{formatDate(exitCase.proposedLWD)}</td>
                       <td>
-                        <span className={`badge ${getStatusBadgeClass(exitCase.exitStatus)}`}>
+                        <span
+                          className={`badge ${getStatusBadgeClass(exitCase.exitStatus)}`}
+                        >
                           {exitCase.exitStatus}
                         </span>
                       </td>
@@ -304,7 +382,8 @@ const ViewExitCaseModal = ({
 
   const [handOverNotes, setHandOverNotes] = useState("");
   const [approvedLWD, setApprovedLWD] = useState("");
-  const [selectedClearanceTemplate, setSelectedClearanceTemplate] = useState("");
+  const [selectedClearanceTemplate, setSelectedClearanceTemplate] =
+    useState("");
   const [selectedAssignees, setSelectedAssignees] = useState({});
 
   // HR Executive specific fields
@@ -324,16 +403,19 @@ const ViewExitCaseModal = ({
         exitCase.approvedLWD
           ? new Date(exitCase.approvedLWD).toISOString().split("T")[0]
           : exitCase.proposedLWD
-          ? new Date(exitCase.proposedLWD).toISOString().split("T")[0]
-          : ""
+            ? new Date(exitCase.proposedLWD).toISOString().split("T")[0]
+            : "",
       );
       setSelectedClearanceTemplate(exitCase.idClearanceTemplate || "");
       // Pre-populate assignees from existing clearanceAssignments
       if (exitCase.clearanceAssignments?.length > 0) {
-        const assignees = exitCase.clearanceAssignments.reduce((acc, assignment) => {
-          acc[assignment.idDepartment] = assignment.idAssigneeUser;
-          return acc;
-        }, {});
+        const assignees = exitCase.clearanceAssignments.reduce(
+          (acc, assignment) => {
+            acc[assignment.idDepartment] = assignment.idAssigneeUser;
+            return acc;
+          },
+          {},
+        );
         setSelectedAssignees(assignees);
       } else {
         setSelectedAssignees({});
@@ -341,7 +423,7 @@ const ViewExitCaseModal = ({
       setExitInterviewDate(
         exitCase.exitInterviewDate
           ? new Date(exitCase.exitInterviewDate).toISOString().split("T")[0]
-          : ""
+          : "",
       );
       setContactAfterExit(exitCase.contactAfterExit || "");
       setExitInterviewDetails(exitCase.exitInterviewDetails || "");
@@ -387,43 +469,48 @@ const ViewExitCaseModal = ({
   };
 
   // Group clearance departments by idDepartment and count checklist items
-  const groupedDepartments = clearanceTemplateDepartments.reduce((acc, item) => {
-    const deptId = item.idDepartment;
-    if (!acc[deptId]) {
-      acc[deptId] = {
-        idDepartment: deptId,
-        departmentName: item.departmentName,
-        deptEmployees: item.deptEmployees || [],
-        checklistItems: [],
-        count: 0,
-      };
-    }
-    acc[deptId].checklistItems.push(item);
-    acc[deptId].count += 1;
-    // Merge deptEmployees from all items (in case they differ)
-    if (item.deptEmployees?.length > 0) {
-      const existingIds = new Set(acc[deptId].deptEmployees.map(e => e.idEmployee));
-      item.deptEmployees.forEach(emp => {
-        if (!existingIds.has(emp.idEmployee)) {
-          acc[deptId].deptEmployees.push(emp);
-        }
-      });
-    }
-    return acc;
-  }, {});
+  const groupedDepartments = clearanceTemplateDepartments.reduce(
+    (acc, item) => {
+      const deptId = item.idDepartment;
+      if (!acc[deptId]) {
+        acc[deptId] = {
+          idDepartment: deptId,
+          departmentName: item.departmentName,
+          deptEmployees: item.deptEmployees || [],
+          checklistItems: [],
+          count: 0,
+        };
+      }
+      acc[deptId].checklistItems.push(item);
+      acc[deptId].count += 1;
+      // Merge deptEmployees from all items (in case they differ)
+      if (item.deptEmployees?.length > 0) {
+        const existingIds = new Set(
+          acc[deptId].deptEmployees.map((e) => e.idEmployee),
+        );
+        item.deptEmployees.forEach((emp) => {
+          if (!existingIds.has(emp.idEmployee)) {
+            acc[deptId].deptEmployees.push(emp);
+          }
+        });
+      }
+      return acc;
+    },
+    {},
+  );
 
   // Handle assignee change for a department
   const handleAssigneeChange = (deptId, employeeId) => {
-    setSelectedAssignees(prev => ({
+    setSelectedAssignees((prev) => ({
       ...prev,
-      [deptId]: employeeId
+      [deptId]: employeeId,
     }));
   };
 
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString();
+    return Utils.formatDisplayDate(dateString);
   };
 
   // Get badge class based on status
@@ -480,7 +567,7 @@ const ViewExitCaseModal = ({
             contactAfterExit: contactAfterExit || null,
             idClearanceTemplate: parseInt(selectedClearanceTemplate),
             clearanceAssignments: clearanceAssignments,
-          })
+          }),
         );
       } else {
         // Call Reporting Officer API for other roles
@@ -491,12 +578,14 @@ const ViewExitCaseModal = ({
             approvedLWD: new Date(approvedLWD).toISOString(),
             handOverNotes: handOverNotes,
             action: "Approved",
-          })
+          }),
         );
       }
 
       if (result.payload?.success) {
-        toast.success(result.payload?.message || "Exit case approved successfully!");
+        toast.success(
+          result.payload?.message || "Exit case approved successfully!",
+        );
         onRefresh();
         onClose();
       } else {
@@ -523,12 +612,14 @@ const ViewExitCaseModal = ({
           submitHROfficerAction({
             idExitCase: exitCase.idExitCase,
             idEmployee: exitCase.idEmployee,
-            approvedLWD: approvedLWD ? new Date(approvedLWD).toISOString() : null,
+            approvedLWD: approvedLWD
+              ? new Date(approvedLWD).toISOString()
+              : null,
             exitInterviewDate: null,
             contactAfterExit: null,
             idClearanceTemplate: 0,
             clearanceAssignments: [],
-          })
+          }),
         );
       } else {
         // Call Reporting Officer API for other roles
@@ -536,10 +627,12 @@ const ViewExitCaseModal = ({
           submitReportingOfficerAction({
             idExitCase: exitCase.idExitCase,
             idEmployee: exitCase.idEmployee,
-            approvedLWD: approvedLWD ? new Date(approvedLWD).toISOString() : null,
+            approvedLWD: approvedLWD
+              ? new Date(approvedLWD).toISOString()
+              : null,
             handOverNotes: handOverNotes,
             action: "Reject",
-          })
+          }),
         );
       }
 
@@ -569,11 +662,14 @@ const ViewExitCaseModal = ({
           idEmployee: exitCase.idEmployee,
           exitInterviewDate: new Date(exitInterviewDate).toISOString(),
           exitInterviewDetails: exitInterviewDetails || "",
-        })
+        }),
       );
 
       if (result.payload?.success) {
-        toast.success(result.payload?.message || "Exit case approved by HR Head successfully!");
+        toast.success(
+          result.payload?.message ||
+            "Exit case approved by HR Head successfully!",
+        );
         onRefresh();
         onClose();
       } else {
@@ -587,7 +683,9 @@ const ViewExitCaseModal = ({
   // Handle HR Head Reject Action
   const handleHRHeadReject = async () => {
     if (!exitInterviewDetails.trim()) {
-      toast.error("Please provide exit interview details/remarks for rejection");
+      toast.error(
+        "Please provide exit interview details/remarks for rejection",
+      );
       return;
     }
 
@@ -600,11 +698,13 @@ const ViewExitCaseModal = ({
             ? new Date(exitInterviewDate).toISOString()
             : null,
           exitInterviewDetails: exitInterviewDetails,
-        })
+        }),
       );
 
       if (result.payload?.success) {
-        toast.success(result.payload?.message || "Exit case rejected by HR Head!");
+        toast.success(
+          result.payload?.message || "Exit case rejected by HR Head!",
+        );
         onRefresh();
         onClose();
       } else {
@@ -617,8 +717,10 @@ const ViewExitCaseModal = ({
 
   // Check if actions should be shown based on role type and pending status
   const canTakeAction = () => {
-    if (roleType === "REPOFFICER" && exitCase.pendingWith === "REPOFFICER") return true;
-    if (roleType === "HREXECUTIVE" && exitCase.pendingWith === "HROFFICER") return true;
+    if (roleType === "REPOFFICER" && exitCase.pendingWith === "REPOFFICER")
+      return true;
+    if (roleType === "HREXECUTIVE" && exitCase.pendingWith === "HROFFICER")
+      return true;
     // HRHEAD can take action when pendingWith is HRHEAD or HRMANAGER, or when status is ReadyForClosure/Pending HR Head Approval
     if (roleType === "HRHEAD") {
       const pendingWith = exitCase.pendingWith?.toUpperCase();
@@ -670,365 +772,489 @@ const ViewExitCaseModal = ({
               </div>
             )}
             {exitCase && (
-            <>
-            {/* Employee Details */}
-            <div className="mb-4">
-              <h6 className="fw-bold border-bottom pb-2 mb-3">
-                Employee Details
-              </h6>
-              <div className="row">
-                <div className="col-md-4 mb-2">
-                  <strong>Employee Code:</strong> {exitCase.employeeCode}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Employee Name:</strong> {exitCase.employeeName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Department:</strong> {exitCase.employeeDepartmentName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Designation:</strong> {exitCase.employeeDesignationName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Reporting Officer:</strong> {exitCase.reportingOfficerName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Rep. Officer Dept:</strong> {exitCase.reportingOfficerDepartmentName}
-                </div>
-              </div>
-            </div>
-
-            {/* Exit Details */}
-            <div className="mb-4">
-              <h6 className="fw-bold border-bottom pb-2 mb-3">
-                Exit Details
-              </h6>
-              <div className="row">
-                <div className="col-md-4 mb-2">
-                  <strong>Exit Type:</strong> {exitCase.exitTypeName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Exit Reason:</strong> {exitCase.exitReasonName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Initiation Date:</strong> {formatDate(exitCase.initiationDate)}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Proposed LWD:</strong> {formatDate(exitCase.proposedLWD)}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Approved LWD:</strong> {formatDate(exitCase.approvedLWD)}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Status:</strong>{" "}
-                  <span className={`badge ${getStatusBadgeClass(exitCase.exitStatus)}`}>
-                    {exitCase.exitStatus}
-                  </span>
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Pending With:</strong> {exitCase.pendingWith}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Exit Interview Date:</strong> {formatDate(exitCase.exitInterviewDate)}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Contact After Exit:</strong> {exitCase.contactAfterExit || "-"}
-                </div>
-              </div>
-            </div>
-
-            {/* Notice Period Details */}
-            <div className="mb-4">
-              <h6 className="fw-bold border-bottom pb-2 mb-3">
-                Notice Period Details
-              </h6>
-              <div className="row">
-                <div className="col-md-4 mb-2">
-                  <strong>Notice Policy:</strong> {exitCase.noticePolicyName}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Policy Notice Days:</strong> {exitCase.policyNoticeDays}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Effective Notice Days:</strong> {exitCase.effectiveNoticeDays}
-                </div>
-                <div className="col-md-4 mb-2">
-                  <strong>Notice Overridden:</strong> {exitCase.isNoticeOverridden ? "Yes" : "No"}
-                </div>
-              </div>
-            </div>
-
-            {/* Employee's Reason */}
-            <div className="mb-4">
-              <h6 className="fw-bold border-bottom pb-2 mb-3">
-                Employee's Reason for Exit
-              </h6>
-              <textarea
-                className="form-control"
-                rows="3"
-                value={exitCase.employeeReasonDetails || ""}
-                readOnly
-              ></textarea>
-            </div>
-
-            {/* Clearance Details (if available) */}
-            {exitCase.clearanceTemplateName && (
-              <div className="mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  Clearance Details
-                </h6>
-                <div className="row">
-                  <div className="col-md-6 mb-2">
-                    <strong>Clearance Template:</strong> {exitCase.clearanceTemplateName}
-                  </div>
-                  <div className="col-md-6 mb-2">
-                    <strong>Clearance Initiated On:</strong> {formatDate(exitCase.clearanceInitiatedOn)}
-                  </div>
-                </div>
-                {exitCase.clearanceTemplateDescription && (
+              <>
+                {/* Employee Details */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Employee Details
+                  </h6>
                   <div className="row">
-                    <div className="col-12 mb-2">
-                      <strong>Description:</strong> {exitCase.clearanceTemplateDescription}
+                    <div className="col-md-4 mb-2">
+                      <strong>Employee Code:</strong> {exitCase.employeeCode}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Employee Name:</strong> {exitCase.employeeName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Department:</strong>{" "}
+                      {exitCase.employeeDepartmentName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Designation:</strong>{" "}
+                      {exitCase.employeeDesignationName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Reporting Officer:</strong>{" "}
+                      {exitCase.reportingOfficerName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Rep. Officer Dept:</strong>{" "}
+                      {exitCase.reportingOfficerDepartmentName}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
 
-            {/* Clearance Setup Section - Only show for HREXECUTIVE when not INITIATED/REPOFFICER and not COMPLETED */}
-            {roleType === "HREXECUTIVE" && !(exitCase.exitStatus === "INITIATED" && exitCase.pendingWith === "REPOFFICER") && exitCase.exitStatus?.toLowerCase() !== "completed" && (
-              <div className="mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  Clearance Setup (HR)
-                </h6>
-                <div className="row mb-3">
-                  <div className="col-12">
-                    <label className="form-label text-muted">Clearance Template</label>
-                    <select
-                      className="form-select"
-                      value={selectedClearanceTemplate}
-                      onChange={handleClearanceTemplateChange}
-                      disabled={exitCase.exitStatus === "InClearance"}
-                    >
-                      <option value="">Select Clearance Template</option>
-                      {offboardingClearanceTemplates.map((template) => (
-                        <option key={template.idClearanceTemplate} value={template.idClearanceTemplate}>
-                          {template.templateName}
-                        </option>
-                      ))}
-                    </select>
+                {/* Exit Details */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Exit Details
+                  </h6>
+                  <div className="row">
+                    <div className="col-md-4 mb-2">
+                      <strong>Exit Type:</strong> {exitCase.exitTypeName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Exit Reason:</strong> {exitCase.exitReasonName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Initiation Date:</strong>{" "}
+                      {formatDate(exitCase.initiationDate)}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Proposed LWD:</strong>{" "}
+                      {formatDate(exitCase.proposedLWD)}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Approved LWD:</strong>{" "}
+                      {formatDate(exitCase.approvedLWD)}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Status:</strong>{" "}
+                      <span
+                        className={`badge ${getStatusBadgeClass(exitCase.exitStatus)}`}
+                      >
+                        {exitCase.exitStatus}
+                      </span>
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Pending With:</strong> {exitCase.pendingWith}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Exit Interview Date:</strong>{" "}
+                      {formatDate(exitCase.exitInterviewDate)}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Contact After Exit:</strong>{" "}
+                      {exitCase.contactAfterExit || "-"}
+                    </div>
                   </div>
                 </div>
 
-                {/* Display Clearance Departments grouped by department */}
-                {selectedClearanceTemplate && (
-                  <>
-                    {templateLoading ? (
-                      <div className="text-center py-3">
-                        <div className="spinner-border spinner-border-sm text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
+                {/* Notice Period Details */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Notice Period Details
+                  </h6>
+                  <div className="row">
+                    <div className="col-md-4 mb-2">
+                      <strong>Notice Policy:</strong>{" "}
+                      {exitCase.noticePolicyName}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Policy Notice Days:</strong>{" "}
+                      {exitCase.policyNoticeDays}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Effective Notice Days:</strong>{" "}
+                      {exitCase.effectiveNoticeDays}
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <strong>Notice Overridden:</strong>{" "}
+                      {exitCase.isNoticeOverridden ? "Yes" : "No"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employee's Reason */}
+                <div className="mb-4">
+                  <h6 className="fw-bold border-bottom pb-2 mb-3">
+                    Employee's Reason for Exit
+                  </h6>
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    value={exitCase.employeeReasonDetails || ""}
+                    readOnly
+                  ></textarea>
+                </div>
+
+                {/* Clearance Details (if available) */}
+                {exitCase.clearanceTemplateName && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      Clearance Details
+                    </h6>
+                    <div className="row">
+                      <div className="col-md-6 mb-2">
+                        <strong>Clearance Template:</strong>{" "}
+                        {exitCase.clearanceTemplateName}
+                      </div>
+                      <div className="col-md-6 mb-2">
+                        <strong>Clearance Initiated On:</strong>{" "}
+                        {formatDate(exitCase.clearanceInitiatedOn)}
+                      </div>
+                    </div>
+                    {exitCase.clearanceTemplateDescription && (
+                      <div className="row">
+                        <div className="col-12 mb-2">
+                          <strong>Description:</strong>{" "}
+                          {exitCase.clearanceTemplateDescription}
                         </div>
                       </div>
-                    ) : Object.keys(groupedDepartments).length > 0 ? (
-                      <div className="table-responsive">
-                        <table className="table table-sm">
+                    )}
+                  </div>
+                )}
+
+                {/* Clearance Setup Section - Only show for HREXECUTIVE when not INITIATED/REPOFFICER and not COMPLETED */}
+                {roleType === "HREXECUTIVE" &&
+                  !(
+                    exitCase.exitStatus === "INITIATED" &&
+                    exitCase.pendingWith === "REPOFFICER"
+                  ) &&
+                  exitCase.exitStatus?.toLowerCase() !== "completed" && (
+                    <div className="mb-4">
+                      <h6 className="fw-bold border-bottom pb-2 mb-3">
+                        Clearance Setup (HR)
+                      </h6>
+                      <div className="row mb-3">
+                        <div className="col-12">
+                          <label className="form-label text-muted">
+                            Clearance Template
+                          </label>
+                          <select
+                            className="form-select"
+                            value={selectedClearanceTemplate}
+                            onChange={handleClearanceTemplateChange}
+                            disabled={exitCase.exitStatus === "InClearance"}
+                          >
+                            <option value="">Select Clearance Template</option>
+                            {offboardingClearanceTemplates.map((template) => (
+                              <option
+                                key={template.idClearanceTemplate}
+                                value={template.idClearanceTemplate}
+                              >
+                                {template.templateName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Display Clearance Departments grouped by department */}
+                      {selectedClearanceTemplate && (
+                        <>
+                          {templateLoading ? (
+                            <div className="text-center py-3">
+                              <div
+                                className="spinner-border spinner-border-sm text-primary"
+                                role="status"
+                              >
+                                <span className="visually-hidden">
+                                  Loading...
+                                </span>
+                              </div>
+                            </div>
+                          ) : Object.keys(groupedDepartments).length > 0 ? (
+                            <div className="table-responsive">
+                              <table className="table table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>Department</th>
+                                    <th>Checklist Items</th>
+                                    <th>Assignee</th>
+                                    <th>Dept Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {Object.values(groupedDepartments).map(
+                                    (dept) => (
+                                      <tr key={dept.idDepartment}>
+                                        <td>{dept.departmentName}</td>
+                                        <td>{dept.count}</td>
+                                        <td>
+                                          <select
+                                            className="form-select form-select-sm"
+                                            value={
+                                              selectedAssignees[
+                                                dept.idDepartment
+                                              ] || ""
+                                            }
+                                            onChange={(e) =>
+                                              handleAssigneeChange(
+                                                dept.idDepartment,
+                                                e.target.value,
+                                              )
+                                            }
+                                            style={{ minWidth: "150px" }}
+                                            disabled={
+                                              exitCase.exitStatus ===
+                                              "InClearance"
+                                            }
+                                          >
+                                            <option value="">
+                                              Select Assignee
+                                            </option>
+                                            {dept.deptEmployees.map((emp) => (
+                                              <option
+                                                key={emp.idEmployee}
+                                                value={emp.idEmployee}
+                                              >
+                                                {emp.employeeName}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </td>
+                                        <td>
+                                          <span className="badge bg-label-secondary">
+                                            Not Started
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    ),
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-muted text-center py-2">
+                              No departments found for this template
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                {/* Clearance Items Table - Show for HRHEAD or when status is Completed */}
+                {(roleType === "HRHEAD" ||
+                  exitCase.exitStatus?.toLowerCase() === "completed") && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      Clearance Status
+                    </h6>
+                    {exitCase.departmentClearanceLines &&
+                    exitCase.departmentClearanceLines.length > 0 ? (
+                      <div
+                        className="table-responsive"
+                        style={{ maxHeight: "300px", overflowY: "auto" }}
+                      >
+                        <table className="table table-sm table-bordered">
                           <thead>
                             <tr>
-                              <th>Department</th>
-                              <th>Checklist Items</th>
-                              <th>Assignee</th>
-                              <th>Dept Status</th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: 0,
+                                  backgroundColor: "white",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Department
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: 0,
+                                  backgroundColor: "white",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Cleared By
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: 0,
+                                  backgroundColor: "white",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Checklist Item
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: 0,
+                                  backgroundColor: "white",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Status
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: 0,
+                                  backgroundColor: "white",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Remarks
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
-                            {Object.values(groupedDepartments).map((dept) => (
-                              <tr key={dept.idDepartment}>
-                                <td>{dept.departmentName}</td>
-                                <td>{dept.count}</td>
-                                <td>
-                                  <select
-                                    className="form-select form-select-sm"
-                                    value={selectedAssignees[dept.idDepartment] || ""}
-                                    onChange={(e) => handleAssigneeChange(dept.idDepartment, e.target.value)}
-                                    style={{ minWidth: "150px" }}
-                                    disabled={exitCase.exitStatus === "InClearance"}
-                                  >
-                                    <option value="">Select Assignee</option>
-                                    {dept.deptEmployees.map((emp) => (
-                                      <option key={emp.idEmployee} value={emp.idEmployee}>
-                                        {emp.employeeName}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td>
-                                  <span className="badge bg-label-secondary">Not Started</span>
-                                </td>
-                              </tr>
-                            ))}
+                            {exitCase.departmentClearanceLines.map(
+                              (item, index) => (
+                                <tr key={index}>
+                                  <td>{item.departmentName || "-"}</td>
+                                  <td>{item.clearedByEmployee || "-"}</td>
+                                  <td>{item.checkListItem || "-"}</td>
+                                  <td>
+                                    <span
+                                      className={`badge ${
+                                        item.deptClearanceStatus?.toLowerCase() ===
+                                        "cleared"
+                                          ? "bg-label-success"
+                                          : item.deptClearanceStatus?.toLowerCase() ===
+                                              "not required"
+                                            ? "bg-label-secondary"
+                                            : item.deptClearanceStatus?.toLowerCase() ===
+                                                "pending"
+                                              ? "bg-label-warning"
+                                              : "bg-label-info"
+                                      }`}
+                                    >
+                                      {item.deptClearanceStatus || "Pending"}
+                                    </span>
+                                  </td>
+                                  <td>{item.deptRemarks || "-"}</td>
+                                </tr>
+                              ),
+                            )}
                           </tbody>
                         </table>
                       </div>
                     ) : (
-                      <p className="text-muted text-center py-2">No departments found for this template</p>
+                      <p className="text-muted text-center py-3">
+                        No clearance items available
+                      </p>
                     )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Clearance Items Table - Show for HRHEAD or when status is Completed */}
-            {(roleType === "HRHEAD" || exitCase.exitStatus?.toLowerCase() === "completed") && (
-              <div className="mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  Clearance Status
-                </h6>
-                {exitCase.departmentClearanceLines && exitCase.departmentClearanceLines.length > 0 ? (
-                  <div className="table-responsive" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    <table className="table table-sm table-bordered">
-                      <thead>
-                        <tr>
-                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Department</th>
-                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Cleared By</th>
-                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Checklist Item</th>
-                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Status</th>
-                          <th style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 1 }}>Remarks</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {exitCase.departmentClearanceLines.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.departmentName || "-"}</td>
-                            <td>{item.clearedByEmployee || "-"}</td>
-                            <td>{item.checkListItem || "-"}</td>
-                            <td>
-                              <span className={`badge ${
-                                item.deptClearanceStatus?.toLowerCase() === "cleared"
-                                  ? "bg-label-success"
-                                  : item.deptClearanceStatus?.toLowerCase() === "not required"
-                                  ? "bg-label-secondary"
-                                  : item.deptClearanceStatus?.toLowerCase() === "pending"
-                                  ? "bg-label-warning"
-                                  : "bg-label-info"
-                              }`}>
-                                {item.deptClearanceStatus || "Pending"}
-                              </span>
-                            </td>
-                            <td>{item.deptRemarks || "-"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
                   </div>
-                ) : (
-                  <p className="text-muted text-center py-3">No clearance items available</p>
                 )}
-              </div>
-            )}
 
-            {/* Action Section - Only show if user can take action */}
-            {canTakeAction() && roleType !== "HRHEAD" && (
-              <div className="mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  Take Action
-                </h6>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">
-                      Approved LWD <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={approvedLWD}
-                      onChange={(e) => setApprovedLWD(e.target.value)}
-                    />
-                  </div>
-                  {/* HR Executive specific fields */}
-                  {roleType === "HREXECUTIVE" && (
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        Exit Interview Date
-                      </label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={exitInterviewDate}
-                        onChange={(e) => setExitInterviewDate(e.target.value)}
-                      />
+                {/* Action Section - Only show if user can take action */}
+                {canTakeAction() && roleType !== "HRHEAD" && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      Take Action
+                    </h6>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">
+                          Approved LWD <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={approvedLWD}
+                          onChange={(e) => setApprovedLWD(e.target.value)}
+                        />
+                      </div>
+                      {/* HR Executive specific fields */}
+                      {roleType === "HREXECUTIVE" && (
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">
+                            Exit Interview Date
+                          </label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={exitInterviewDate}
+                            onChange={(e) =>
+                              setExitInterviewDate(e.target.value)
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                {roleType === "HREXECUTIVE" && (
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        Contact After Exit
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Enter email or phone number..."
-                        value={contactAfterExit}
-                        onChange={(e) => setContactAfterExit(e.target.value)}
-                      />
+                    {roleType === "HREXECUTIVE" && (
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">
+                            Contact After Exit
+                          </label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Enter email or phone number..."
+                            value={contactAfterExit}
+                            onChange={(e) =>
+                              setContactAfterExit(e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="row">
+                      <div className="col-12 mb-3">
+                        <label className="form-label">
+                          Handover Notes / Remarks{" "}
+                          <span className="text-muted">
+                            (Required for rejection)
+                          </span>
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="3"
+                          placeholder="Enter handover notes or remarks..."
+                          value={handOverNotes}
+                          onChange={(e) => setHandOverNotes(e.target.value)}
+                        ></textarea>
+                      </div>
                     </div>
                   </div>
                 )}
-                <div className="row">
-                  <div className="col-12 mb-3">
-                    <label className="form-label">
-                      Handover Notes / Remarks{" "}
-                      <span className="text-muted">(Required for rejection)</span>
-                    </label>
-                    <textarea
-                      className="form-control"
-                      rows="3"
-                      placeholder="Enter handover notes or remarks..."
-                      value={handOverNotes}
-                      onChange={(e) => setHandOverNotes(e.target.value)}
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* HR Head Action Section - Final Approval */}
-            {canTakeAction() && roleType === "HRHEAD" && (
-              <div className="mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  HR Head Final Action
-                </h6>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">
-                      Exit Interview Date <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={exitInterviewDate}
-                      onChange={(e) => setExitInterviewDate(e.target.value)}
-                    />
+                {/* HR Head Action Section - Final Approval */}
+                {canTakeAction() && roleType === "HRHEAD" && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold border-bottom pb-2 mb-3">
+                      HR Head Final Action
+                    </h6>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">
+                          Exit Interview Date{" "}
+                          <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={exitInterviewDate}
+                          onChange={(e) => setExitInterviewDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="row">
+                      <div className="col-12 mb-3">
+                        <label className="form-label">
+                          Exit Interview Details / Remarks
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="4"
+                          placeholder="Enter exit interview remarks and observations..."
+                          value={exitInterviewDetails}
+                          onChange={(e) =>
+                            setExitInterviewDetails(e.target.value)
+                          }
+                        ></textarea>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="row">
-                  <div className="col-12 mb-3">
-                    <label className="form-label">
-                      Exit Interview Details / Remarks
-                    </label>
-                    <textarea
-                      className="form-control"
-                      rows="4"
-                      placeholder="Enter exit interview remarks and observations..."
-                      value={exitInterviewDetails}
-                      onChange={(e) => setExitInterviewDetails(e.target.value)}
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-            )}
-            </>
+                )}
+              </>
             )}
           </div>
           <div className="modal-footer">
@@ -1042,7 +1268,10 @@ const ViewExitCaseModal = ({
                 >
                   {actionLoading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-1"
+                        role="status"
+                      ></span>
                       Processing...
                     </>
                   ) : (
@@ -1057,7 +1286,10 @@ const ViewExitCaseModal = ({
                 >
                   {actionLoading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-1"
+                        role="status"
+                      ></span>
                       Processing...
                     </>
                   ) : (
@@ -1076,7 +1308,10 @@ const ViewExitCaseModal = ({
                 >
                   {actionLoading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-1"
+                        role="status"
+                      ></span>
                       Processing...
                     </>
                   ) : (
@@ -1091,7 +1326,10 @@ const ViewExitCaseModal = ({
                 >
                   {actionLoading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-1"
+                        role="status"
+                      ></span>
                       Processing...
                     </>
                   ) : (

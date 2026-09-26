@@ -5,6 +5,7 @@ import CommonService from "../../core/services/CommonService";
 import LiveDashboardService from "../../core/services/LiveDashboardService";
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
+import Utils from "../../utils/Utils";
 
 const defaultStats = {
   totalEmployees: 0,
@@ -19,15 +20,7 @@ const defaultStats = {
 };
 
 const formatTimestamp = () => {
-  const options = {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  };
-  return new Intl.DateTimeFormat("en-US", options).format(new Date());
+  return `${moment().format("dddd")}, ${Utils.formatDateTime(new Date())}`;
 };
 
 const formatTimeDisplay = (value) => {
@@ -52,11 +45,10 @@ function LiveDashboard() {
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [activeDetailType, setActiveDetailType] = useState("TOTALEMPLOYEES");
   const [activeDetailKey, setActiveDetailKey] = useState(
-    "TOTALEMPLOYEES|Total Employees"
+    "TOTALEMPLOYEES|Total Employees",
   );
-  const [selectedDetailLabel, setSelectedDetailLabel] = useState(
-    "Total Employees"
-  );
+  const [selectedDetailLabel, setSelectedDetailLabel] =
+    useState("Total Employees");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const getSelectedDeptIdForApi = useCallback(() => {
@@ -104,19 +96,18 @@ function LiveDashboard() {
         const deptId = getSelectedDeptIdForApi();
         const res = await LiveDashboardService.getAttendanceSummary(
           new Date(),
-          deptId
+          deptId,
         );
         if (isMounted && res?.data?.data) {
           const apiData = res.data.data;
           setStats({
-            totalEmployees: apiData.totalEmployees ?? apiData.TotalEmployees ?? 0,
+            totalEmployees:
+              apiData.totalEmployees ?? apiData.TotalEmployees ?? 0,
             clockedInTotal:
               apiData.clockedInTotal ?? apiData.ClockedInTotal ?? 0,
-            ontimeClockIn:
-              apiData.ontimeClockIn ?? apiData.OntimeClockIn ?? 0,
+            ontimeClockIn: apiData.ontimeClockIn ?? apiData.OntimeClockIn ?? 0,
             lateClockIn: apiData.lateClockIn ?? apiData.LateClockIn ?? 0,
-            presentOnSite:
-              apiData.presentOnSite ?? apiData.PresentOnSite ?? 0,
+            presentOnSite: apiData.presentOnSite ?? apiData.PresentOnSite ?? 0,
             presentOffSite:
               apiData.presentOffSite ?? apiData.PresentOffSite ?? 0,
             absentTotal: apiData.absentTotal ?? apiData.AbsentTotal ?? 0,
@@ -152,11 +143,16 @@ function LiveDashboard() {
 
     const statusLabel = getValue(
       ["empStatus", "EmpStatus", "status", "Status"],
-      "--"
+      "--",
     );
     const normalizedStatus = String(statusLabel).toLowerCase();
     let tone = "secondary";
-    if (normalizedStatus.includes("unauthorized") || normalizedStatus.includes("not")||normalizedStatus.includes("off")||normalizedStatus.includes("late")) {
+    if (
+      normalizedStatus.includes("unauthorized") ||
+      normalizedStatus.includes("not") ||
+      normalizedStatus.includes("off") ||
+      normalizedStatus.includes("late")
+    ) {
       tone = "danger";
     } else if (normalizedStatus.includes("absent")) {
       tone = "warning";
@@ -187,15 +183,15 @@ function LiveDashboard() {
       statusLabel,
       statusTone: tone,
       checkIn: formatTimeDisplay(
-        getValue(["firstCheckInTime", "CheckIn", "clockInTime", "ClockInTime"])
+        getValue(["firstCheckInTime", "CheckIn", "clockInTime", "ClockInTime"]),
       ),
       checkOut: formatTimeDisplay(
         getValue([
-        "lastCheckOutTime",
-        "CheckOut",
-        "clockOutTime",
-        "ClockOutTime",
-        ])
+          "lastCheckOutTime",
+          "CheckOut",
+          "clockOutTime",
+          "ClockOutTime",
+        ]),
       ),
     };
   }, []);
@@ -214,11 +210,11 @@ function LiveDashboard() {
         const res = await LiveDashboardService.getAttendanceDetails(
           new Date(),
           detailType,
-          deptId
+          deptId,
         );
         if (res?.data?.data) {
           const normalized = res.data.data.map((row) =>
-            normalizeDetailRow(row)
+            normalizeDetailRow(row),
           );
           setDetailRows(normalized);
         } else {
@@ -231,7 +227,7 @@ function LiveDashboard() {
         setIsDetailsLoading(false);
       }
     },
-    [normalizeDetailRow, getSelectedDeptIdForApi]
+    [normalizeDetailRow, getSelectedDeptIdForApi],
   );
 
   useEffect(() => {
@@ -296,7 +292,7 @@ function LiveDashboard() {
             label: "Off-Site",
             value: stats.presentOffSite,
             valueClass: "text-danger",
-              detailType: "PRESENT-OFFSITE",
+            detailType: "PRESENT-OFFSITE",
             detailLabel: "Present - Off Site",
           },
         ],
@@ -329,7 +325,7 @@ function LiveDashboard() {
         ],
       },
     ],
-    [stats]
+    [stats],
   );
 
   const selectedDepartmentName = useMemo(() => {
@@ -338,7 +334,7 @@ function LiveDashboard() {
     }
     return (
       departments.find(
-        (dept) => String(dept.idDepartment) === String(selectedDepartmentId)
+        (dept) => String(dept.idDepartment) === String(selectedDepartmentId),
       )?.departmentName || "All Departments"
     );
   }, [selectedDepartmentId, departments]);
@@ -348,7 +344,7 @@ function LiveDashboard() {
       return detailRows;
     }
     return detailRows.filter(
-      (row) => row.department === selectedDepartmentName
+      (row) => row.department === selectedDepartmentName,
     );
   }, [selectedDepartmentName, detailRows]);
 
@@ -364,7 +360,7 @@ function LiveDashboard() {
   };
 
   const handleRefresh = () => {
-    setRefreshKey(k => k + 1);
+    setRefreshKey((k) => k + 1);
     fetchDetails(activeDetailType, selectedDetailLabel);
   };
 
@@ -381,14 +377,17 @@ function LiveDashboard() {
       // Prepare data for Excel export
       const excelData = filteredRows.map((row) => ({
         "Emp Code": row.code || "--",
-        "Employee": row.employee || "--",
-        "Department": row.department || "--",
-        "Email": row.email || "--",
-        "Phone": row.phone || "--",
-        "Status": row.statusLabel || "--",
+        Employee: row.employee || "--",
+        Department: row.department || "--",
+        Email: row.email || "--",
+        Phone: row.phone || "--",
+        Status: row.statusLabel || "--",
         ...(activeDetailType === "ABSENT-UNAUTHORIZED"
           ? { "Exp.Clock-In": row.checkIn || "--" }
-          : { "Clock-In": row.checkIn || "--", "Clock-Out": row.checkOut || "--" }),
+          : {
+              "Clock-In": row.checkIn || "--",
+              "Clock-Out": row.checkOut || "--",
+            }),
       }));
 
       // Create workbook and worksheet
@@ -425,7 +424,7 @@ function LiveDashboard() {
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
       // Generate filename with current date and detail label
-      const currentDate = moment().format("MM-DD-YYYY");
+      const currentDate = moment().format("DD-MM-YYYY");
       const fileName = `Live_Dashboard_${sheetName}_${currentDate}.xlsx`;
 
       // Write file
@@ -446,12 +445,17 @@ function LiveDashboard() {
 
   return (
     <div className="container-fluid p-2 live-dashboard">
-      <div className="page-header">
-        Live Dashboard... {formatTimestamp()}
-      </div>
+      <div className="page-header">Live Dashboard... {formatTimestamp()}</div>
 
       <div className="card-box">
-        <div className="filter-box" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          className="filter-box"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label htmlFor="department">Department:</label>
             <select
@@ -529,10 +533,7 @@ function LiveDashboard() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="fw-bold mb-0">Live Attendance Status</h5>
           <div className="d-flex align-items-center gap-3">
-            <span
-              className="fw-bold "
-              style={{ fontSize: "14px" }}
-            >
+            <span className="fw-bold " style={{ fontSize: "14px" }}>
               Showing: {selectedDetailLabel}
             </span>
             <button
@@ -561,27 +562,39 @@ function LiveDashboard() {
                 fontWeight: 700,
               }}
             >
-              <tr> 
-                <th >Emp Code</th>
-                <th >Employee</th>
-                <th >Department</th>
-                <th >Email</th>
-                <th >Phone</th>
-                <th >Status</th>
-                <th>{activeDetailType === "ABSENT-UNAUTHORIZED" ? "Exp.Clock-In" : "Clock-In"}</th>
-                {activeDetailType !== "ABSENT-UNAUTHORIZED" && <th>Clock-Out</th>}
+              <tr>
+                <th>Emp Code</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>
+                  {activeDetailType === "ABSENT-UNAUTHORIZED"
+                    ? "Exp.Clock-In"
+                    : "Clock-In"}
+                </th>
+                {activeDetailType !== "ABSENT-UNAUTHORIZED" && (
+                  <th>Clock-Out</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {isDetailsLoading ? (
                 <tr>
-                  <td colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8} className="text-center">
+                  <td
+                    colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8}
+                    className="text-center"
+                  >
                     Loading details...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8} className="text-center text-muted">
+                  <td
+                    colSpan={activeDetailType === "ABSENT-UNAUTHORIZED" ? 7 : 8}
+                    className="text-center text-muted"
+                  >
                     No records found.
                   </td>
                 </tr>
@@ -599,7 +612,9 @@ function LiveDashboard() {
                       </span>
                     </td>
                     <td>{row.checkIn}</td>
-                    {activeDetailType !== "ABSENT-UNAUTHORIZED" && <td>{row.checkOut}</td>}
+                    {activeDetailType !== "ABSENT-UNAUTHORIZED" && (
+                      <td>{row.checkOut}</td>
+                    )}
                   </tr>
                 ))
               )}
@@ -612,4 +627,3 @@ function LiveDashboard() {
 }
 
 export default LiveDashboard;
-

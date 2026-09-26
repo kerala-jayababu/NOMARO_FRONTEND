@@ -8,11 +8,12 @@ import {
   fetchMissingEntryDetailsForApproval,
   handleMissingEntryApprovalWorkflow,
 } from "../../redux/reducers/missingEntryApproval";
+import Utils from "../../utils/Utils";
 
 const MissingEntryApproval = () => {
   const dispatch = useDispatch();
   const { missingEntries, loading, error } = useSelector(
-    (state) => state.missingEntryApproval
+    (state) => state.missingEntryApproval,
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,7 +43,7 @@ const MissingEntryApproval = () => {
       fetchMissingEntryDetailsForApproval({
         dateFrom: dateFrom || "",
         approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
-      })
+      }),
     );
   }, [dispatch, dateFrom, statusFilter]);
 
@@ -134,7 +135,7 @@ const MissingEntryApproval = () => {
     try {
       setIsProcessing(true);
       const resultAction = await dispatch(
-        handleMissingEntryApprovalWorkflow(payload)
+        handleMissingEntryApprovalWorkflow(payload),
       );
 
       if (handleMissingEntryApprovalWorkflow.fulfilled.match(resultAction)) {
@@ -143,25 +144,25 @@ const MissingEntryApproval = () => {
             `${selectedItems.length} missing entry(s) ${
               confirmAction === "APPROVED" ? "approved" : "rejected"
             } successfully!`,
-            { position: "top-right", autoClose: 3000 }
+            { position: "top-right", autoClose: 3000 },
           );
           setSelectedItems([]);
           dispatch(
             fetchMissingEntryDetailsForApproval({
               dateFrom: dateFrom || "",
               approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
-            })
+            }),
           );
         } else {
           toast.error(
             resultAction.payload?.message || "Failed to process approval",
-            { position: "top-right", autoClose: 4000 }
+            { position: "top-right", autoClose: 4000 },
           );
         }
       } else {
         toast.error(
           resultAction.payload?.message || "Failed to process approval",
-          { position: "top-right", autoClose: 4000 }
+          { position: "top-right", autoClose: 4000 },
         );
       }
     } catch (error) {
@@ -189,12 +190,8 @@ const MissingEntryApproval = () => {
   const formatDateTime = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
-    const datePart = d.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
-    const timePart = d.toLocaleTimeString("en-US", {
+    const datePart = Utils.formatDisplayDate(d);
+    const timePart = d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -204,11 +201,7 @@ const MissingEntryApproval = () => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
+    return Utils.formatDisplayDate(dateStr);
   };
 
   return (
@@ -244,7 +237,7 @@ const MissingEntryApproval = () => {
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
                     selected={dateFrom}
                     onChange={(date) => {
@@ -295,7 +288,10 @@ const MissingEntryApproval = () => {
               ) : (
                 <div
                   className="table-responsive"
-                  style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+                  style={{
+                    maxHeight: "calc(100vh - 300px)",
+                    overflowY: "auto",
+                  }}
                 >
                   <table className="table table-striped table-bordered">
                     <thead
@@ -303,10 +299,7 @@ const MissingEntryApproval = () => {
                       style={{ position: "sticky", top: 0, zIndex: 1 }}
                     >
                       <tr>
-                        <th
-                          className="text-center"
-                          style={{ width: "40px" }}
-                        >
+                        <th className="text-center" style={{ width: "40px" }}>
                           <input
                             type="checkbox"
                             className="form-check-input"
@@ -368,7 +361,7 @@ const MissingEntryApproval = () => {
                             <td>
                               <span
                                 className={`badge ${getStatusBadgeClass(
-                                  item.approvalStatus
+                                  item.approvalStatus,
                                 )}`}
                               >
                                 {item.approvalStatus}
@@ -470,8 +463,8 @@ const MissingEntryApproval = () => {
                   {isProcessing
                     ? "Processing..."
                     : confirmAction === "APPROVED"
-                    ? "Approve"
-                    : "Reject"}
+                      ? "Approve"
+                      : "Reject"}
                 </Button>
               </div>
             </div>

@@ -11,6 +11,7 @@ import {
   fetchAllSalaryMonths,
   handleApprovalWorkflow,
 } from "../../redux/reducers/overtimeApproval";
+import Utils from "../../utils/Utils";
 
 const OvertimeApproval = () => {
   const dispatch = useDispatch();
@@ -48,7 +49,12 @@ const OvertimeApproval = () => {
   // Fetch main listing + salary months on mount and when dateFrom changes
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
-    dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
+    dispatch(
+      fetchOvertimeTransactionsFullDetails({
+        dateFrom: dateFrom || "",
+        dateTo: today,
+      }),
+    );
     dispatch(fetchAllSalaryMonths());
   }, [dispatch, dateFrom]);
 
@@ -57,9 +63,7 @@ const OvertimeApproval = () => {
     const data = overtimeTransactions?.data;
     if (!data || data.length === 0) return;
 
-    const uniqueEmployeeIds = [
-      ...new Set(data.map((item) => item.idEmployee)),
-    ];
+    const uniqueEmployeeIds = [...new Set(data.map((item) => item.idEmployee))];
 
     uniqueEmployeeIds.forEach((empId) => {
       if (!fetchedEmployeeIds.current.has(empId)) {
@@ -90,9 +94,11 @@ const OvertimeApproval = () => {
   const getOvertimeConfig = (idEmployee, dayType) => {
     const configs = employeeOvertimeConfigs[idEmployee];
     if (!configs || configs.length === 0) return null;
-    return configs.find(
-      (c) => c.dayType?.toUpperCase() === dayType?.toUpperCase()
-    ) || null;
+    return (
+      configs.find(
+        (c) => c.dayType?.toUpperCase() === dayType?.toUpperCase(),
+      ) || null
+    );
   };
 
   // Map API response to table-friendly structure
@@ -113,11 +119,13 @@ const OvertimeApproval = () => {
       let salaryStatus = "Yet to Account in Salary";
       if (item.idSalaryMonthAccounted != null) {
         const monthText =
-          salaryMonthMap[item.idSalaryMonthAccounted] || item.idSalaryMonthAccounted;
+          salaryMonthMap[item.idSalaryMonthAccounted] ||
+          item.idSalaryMonthAccounted;
         const amount = item.salaryAccountedAmount;
-        salaryStatus = amount != null
-          ? `Accounted on ${monthText} Salary (GYD ${amount.toLocaleString()})`
-          : `Accounted on ${monthText} Salary`;
+        salaryStatus =
+          amount != null
+            ? `Accounted on ${monthText} Salary (₹ ${Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+            : `Accounted on ${monthText} Salary`;
       }
 
       return {
@@ -148,7 +156,8 @@ const OvertimeApproval = () => {
             statusLabel: cycle.approvalStatusName || "",
             status: cycle.approvalStatus || "Pending",
             actionDate: cycle.actionDate,
-            approvalAuthorityIdEmployees: cycle.approvalAuthorityIdEmployees || "",
+            approvalAuthorityIdEmployees:
+              cycle.approvalAuthorityIdEmployees || "",
           })),
       };
     });
@@ -163,9 +172,11 @@ const OvertimeApproval = () => {
         item.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
 
       const statusKeyword =
-        statusFilter === "APPROVED" ? "APPROV" :
-        statusFilter === "REJECTED" ? "REJECT" :
-        statusFilter;
+        statusFilter === "APPROVED"
+          ? "APPROV"
+          : statusFilter === "REJECTED"
+            ? "REJECT"
+            : statusFilter;
 
       // Find the logged-in user's cycle status
       const userIdStr = String(loggedInEmployeeId);
@@ -175,11 +186,12 @@ const OvertimeApproval = () => {
           .map((id) => id.trim());
         return authorityIds.includes(userIdStr);
       });
-      const userCycleStatus = userCycle ? (userCycle.status || "").toUpperCase() : "";
+      const userCycleStatus = userCycle
+        ? (userCycle.status || "").toUpperCase()
+        : "";
 
       const matchesStatus =
-        statusFilter === "ALL" ||
-        userCycleStatus.includes(statusKeyword);
+        statusFilter === "ALL" || userCycleStatus.includes(statusKeyword);
 
       return matchesSearch && matchesStatus;
     });
@@ -226,8 +238,7 @@ const OvertimeApproval = () => {
     // Previous level Pending or Rejected — disable
     if (prevStatus === "pending" || prevStatus === "rejected") return false;
 
-    
-    if (userStatus === "pending" ) return true;
+    if (userStatus === "pending") return true;
 
     return false;
   };
@@ -291,23 +302,34 @@ const OvertimeApproval = () => {
         if (resultAction.payload?.success !== false) {
           toast.success(
             `${selectedItems.length} OT transaction(s) ${confirmAction === "APPROVED" ? "approved" : "rejected"} successfully!`,
-            { position: "top-right", autoClose: 3000 }
+            { position: "top-right", autoClose: 3000 },
           );
           setSelectedItems([]);
           fetchedEmployeeIds.current.clear();
           const today = new Date().toISOString().split("T")[0];
-          dispatch(fetchOvertimeTransactionsFullDetails({ dateFrom: dateFrom || "", dateTo: today }));
+          dispatch(
+            fetchOvertimeTransactionsFullDetails({
+              dateFrom: dateFrom || "",
+              dateTo: today,
+            }),
+          );
         } else {
-          toast.error(resultAction.payload?.message || "Failed to process approval", {
-            position: "top-right",
-            autoClose: 4000,
-          });
+          toast.error(
+            resultAction.payload?.message || "Failed to process approval",
+            {
+              position: "top-right",
+              autoClose: 4000,
+            },
+          );
         }
       } else {
-        toast.error(resultAction.payload?.message || "Failed to process approval", {
-          position: "top-right",
-          autoClose: 4000,
-        });
+        toast.error(
+          resultAction.payload?.message || "Failed to process approval",
+          {
+            position: "top-right",
+            autoClose: 4000,
+          },
+        );
       }
     } catch (error) {
       toast.error("Failed to process approval", {
@@ -350,11 +372,7 @@ const OvertimeApproval = () => {
   const formatDateTimeCombined = (dateStr, timeStr) => {
     if (!dateStr) return "-";
     const date = new Date(dateStr);
-    const datePart = date.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
+    const datePart = Utils.formatDisplayDate(date);
     if (!timeStr) return datePart;
     const [hours, minutes] = timeStr.split(":");
     const h = parseInt(hours, 10);
@@ -367,12 +385,8 @@ const OvertimeApproval = () => {
   const formatDateTime = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
-    const datePart = d.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
-    const timePart = d.toLocaleTimeString("en-US", {
+    const datePart = Utils.formatDisplayDate(d);
+    const timePart = d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -383,11 +397,7 @@ const OvertimeApproval = () => {
   // Format date only
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
+    return Utils.formatDisplayDate(dateStr);
   };
 
   return (
@@ -423,7 +433,7 @@ const OvertimeApproval = () => {
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
                     selected={dateFrom}
                     onChange={(date) => {
@@ -472,9 +482,23 @@ const OvertimeApproval = () => {
               ) : error ? (
                 <div className="text-center py-4 text-danger">{error}</div>
               ) : (
-                <div className="table-responsive" style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
+                <div
+                  className="table-responsive"
+                  style={{
+                    maxHeight: "calc(100vh - 300px)",
+                    overflowY: "auto",
+                  }}
+                >
                   <table className="table table-striped table-bordered">
-                    <thead className="table-light" style={{ position: "sticky", top: 0, zIndex: 1, background: "#f8f9fa" }}>
+                    <thead
+                      className="table-light"
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 1,
+                        background: "#f8f9fa",
+                      }}
+                    >
                       <tr>
                         <th className="text-center" style={{ width: "40px" }}>
                           <input
@@ -521,19 +545,44 @@ const OvertimeApproval = () => {
 
                             {/* Employee — stacked info */}
                             <td>
-                              <div className="fw-medium">{item.employeeCode}</div>
+                              <div className="fw-medium">
+                                {item.employeeCode}
+                              </div>
                               <div>{item.employeeName}</div>
-                              <div className="text-muted small">{item.designation}</div>
-                              <div className="text-muted small">{item.department}</div>
+                              <div className="text-muted small">
+                                {item.designation}
+                              </div>
+                              <div className="text-muted small">
+                                {item.department}
+                              </div>
                             </td>
 
                             {/* Overtime Period — stacked */}
                             <td>
-                              <div>Start : {formatDateTimeCombined(item.startDate, item.startTime)}</div>
-                              <div>Finish : {formatDateTimeCombined(item.endDate, item.endTime)}</div>
-                              <div className="mt-1">Duration : {item.durationInHours} Hr{item.durationInHours !== 1 ? "s" : ""}</div>
+                              <div>
+                                Start :{" "}
+                                {formatDateTimeCombined(
+                                  item.startDate,
+                                  item.startTime,
+                                )}
+                              </div>
+                              <div>
+                                Finish :{" "}
+                                {formatDateTimeCombined(
+                                  item.endDate,
+                                  item.endTime,
+                                )}
+                              </div>
+                              <div className="mt-1">
+                                Duration : {item.durationInHours} Hr
+                                {item.durationInHours !== 1 ? "s" : ""}
+                              </div>
                               <div>Day : {formatDayType(item.dayType)}</div>
-                              {item.reason ? <div className="mt-1 text-muted small">Reason : {item.reason}</div> : null}
+                              {item.reason ? (
+                                <div className="mt-1 text-muted small">
+                                  Reason : {item.reason}
+                                </div>
+                              ) : null}
                             </td>
 
                             {/* Approver & Payment Details */}
@@ -553,11 +602,17 @@ const OvertimeApproval = () => {
                                       <td>{cycle.name}</td>
                                       <td>{cycle.level}</td>
                                       <td>
-                                        <span className={`badge ${getStatusBadgeClass(cycle.status)}`}>
-                                          { cycle.status}
+                                        <span
+                                          className={`badge ${getStatusBadgeClass(cycle.status)}`}
+                                        >
+                                          {cycle.status}
                                         </span>
                                       </td>
-                                      <td>{cycle.actionDate ? formatDateTime(cycle.actionDate) : "-"}</td>
+                                      <td>
+                                        {cycle.actionDate
+                                          ? formatDateTime(cycle.actionDate)
+                                          : "-"}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -565,12 +620,35 @@ const OvertimeApproval = () => {
                               <div className="px-3 py-2">
                                 {item.hourlyRate != null ? (
                                   <>
-                                    <div className="fw-bold mb-1">Payment Details</div>
-                                    <div>Hourly Rate : GYD {item.hourlyRate.toLocaleString()} | Multiplier : {item.multiplier} | Total Amount : {item.totalAmount != null ? item.totalAmount.toLocaleString() : "-"}</div>
-                                    <div className="mt-1 small text-muted">{item.salaryStatus}</div>
+                                    <div className="fw-bold mb-1">
+                                      Payment Details
+                                    </div>
+                                    <div>
+                                      Hourly Rate : ₹{" "}
+                                      {item.hourlyRate.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}{" "}
+                                      | Multiplier : {item.multiplier} | Total
+                                      Amount :{" "}
+                                      {item.totalAmount != null
+                                        ? `₹ ${item.totalAmount.toLocaleString(
+                                            "en-IN",
+                                            {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                            },
+                                          )}`
+                                        : "-"}
+                                    </div>
+                                    <div className="mt-1 small text-muted">
+                                      {item.salaryStatus}
+                                    </div>
                                   </>
                                 ) : (
-                                  <div className="small text-muted">{item.salaryStatus}</div>
+                                  <div className="small text-muted">
+                                    {item.salaryStatus}
+                                  </div>
                                 )}
                               </div>
                             </td>
@@ -599,7 +677,8 @@ const OvertimeApproval = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
-                  Confirm {confirmAction === "APPROVED" ? "Approval" : "Rejection"}
+                  Confirm{" "}
+                  {confirmAction === "APPROVED" ? "Approval" : "Rejection"}
                 </h5>
                 <button
                   type="button"
@@ -615,13 +694,16 @@ const OvertimeApproval = () => {
               </div>
               <div className="modal-body">
                 <p className="mb-0">
-                  Are you sure you want to {confirmAction === "APPROVED" ? "Approve" : "Reject"} all the{" "}
-                  <strong>{selectedItems.length}</strong> OT Transaction{selectedItems.length !== 1 ? "s" : ""}?
+                  Are you sure you want to{" "}
+                  {confirmAction === "APPROVED" ? "Approve" : "Reject"} all the{" "}
+                  <strong>{selectedItems.length}</strong> OT Transaction
+                  {selectedItems.length !== 1 ? "s" : ""}?
                 </p>
                 {confirmAction === "REJECTED" && (
                   <div className="mt-3">
                     <label className="form-label mb-1 fw-medium">
-                      Reason for Rejection <span className="text-danger">*</span>
+                      Reason for Rejection{" "}
+                      <span className="text-danger">*</span>
                     </label>
                     <textarea
                       className={`form-control ${rejectReasonError ? "is-invalid" : ""}`}
@@ -635,7 +717,9 @@ const OvertimeApproval = () => {
                       disabled={isProcessing}
                     ></textarea>
                     {rejectReasonError && (
-                      <div className="invalid-feedback">{rejectReasonError}</div>
+                      <div className="invalid-feedback">
+                        {rejectReasonError}
+                      </div>
                     )}
                   </div>
                 )}
@@ -661,8 +745,8 @@ const OvertimeApproval = () => {
                   {isProcessing
                     ? "Processing..."
                     : confirmAction === "APPROVED"
-                    ? "Approve"
-                    : "Reject"}
+                      ? "Approve"
+                      : "Reject"}
                 </Button>
               </div>
             </div>

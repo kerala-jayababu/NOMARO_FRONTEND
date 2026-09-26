@@ -148,14 +148,14 @@ const EmpLeaveConfigApproval = () => {
     }
   }, [dispatch, searchQuery, yearFilter, statusFilter]);
 
-  // Helper function to format date as MM/DD/YYYY
+  // Helper function to format date as DD-MM-YYYY
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${day}-${month}-${year}`;
   };
 
   // Get employee leave setup data from API response with status filtering

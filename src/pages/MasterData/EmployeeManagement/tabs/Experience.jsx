@@ -11,7 +11,8 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 
 const Experience = () => {
-  const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
+  const { employeeId, setHasUnsavedChanges } =
+    useContext(EmployeeContext) || {};
   const id = employeeId;
   const { showLoader, hideLoader } = useLoader();
   const [experiences, setExperiences] = useState([]);
@@ -21,7 +22,7 @@ const Experience = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedExpId, setSelectedExpId] = useState(null);
   const [initialFormData, setInitialFormData] = useState(null);
-  
+
   const countriesLoadedRef = useRef(false);
   const experiencesLoadedRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -45,12 +46,12 @@ const Experience = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     if (!countriesLoadedRef.current && isMounted) {
       countriesLoadedRef.current = true;
       loadCountries();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -58,7 +59,7 @@ const Experience = () => {
 
   useEffect(() => {
     if (!id) return;
-    
+
     if (experiencesLoadedRef.current !== id) {
       experiencesLoadedRef.current = id;
       loadExperiences();
@@ -82,7 +83,7 @@ const Experience = () => {
         setHasUnsavedChanges(false);
       }
     }
-    
+
     return () => {
       experiencesLoadedRef.current = null;
     };
@@ -92,7 +93,9 @@ const Experience = () => {
     if (!id) return;
     try {
       showLoader();
-      const result = await EmployeeManagementService.getEmployeeExperiences(parseInt(id));
+      const result = await EmployeeManagementService.getEmployeeExperiences(
+        parseInt(id),
+      );
       hideLoader();
       if (result.error) {
         toast.error(result.error);
@@ -133,23 +136,33 @@ const Experience = () => {
         ...prev,
         [field]: value,
       };
-      
+
       // Check for unsaved changes
       if (setHasUnsavedChanges && initialFormData) {
         const currentForComparison = {
           ...newData,
-          fromDate: newData.fromDate ? moment(newData.fromDate).format("YYYY-MM-DD") : null,
-          toDate: newData.toDate ? moment(newData.toDate).format("YYYY-MM-DD") : null,
+          fromDate: newData.fromDate
+            ? moment(newData.fromDate).format("YYYY-MM-DD")
+            : null,
+          toDate: newData.toDate
+            ? moment(newData.toDate).format("YYYY-MM-DD")
+            : null,
         };
         const initialForComparison = {
           ...initialFormData,
-          fromDate: initialFormData.fromDate ? moment(initialFormData.fromDate).format("YYYY-MM-DD") : null,
-          toDate: initialFormData.toDate ? moment(initialFormData.toDate).format("YYYY-MM-DD") : null,
+          fromDate: initialFormData.fromDate
+            ? moment(initialFormData.fromDate).format("YYYY-MM-DD")
+            : null,
+          toDate: initialFormData.toDate
+            ? moment(initialFormData.toDate).format("YYYY-MM-DD")
+            : null,
         };
-        const hasChanges = JSON.stringify(currentForComparison) !== JSON.stringify(initialForComparison);
+        const hasChanges =
+          JSON.stringify(currentForComparison) !==
+          JSON.stringify(initialForComparison);
         setHasUnsavedChanges(hasChanges);
       }
-      
+
       return newData;
     });
   };
@@ -162,21 +175,25 @@ const Experience = () => {
           ...prev,
           experienceCertificate: file,
         };
-        
+
         // Check for unsaved changes
         if (setHasUnsavedChanges && initialFormData) {
-          const hasChanges = JSON.stringify({
-            ...newData,
-            experienceCertificate: file ? 'changed' : null
-          }) !== JSON.stringify({
-            ...initialFormData,
-            experienceCertificate: initialFormData.experienceCertificate ? 'original' : null
-          });
+          const hasChanges =
+            JSON.stringify({
+              ...newData,
+              experienceCertificate: file ? "changed" : null,
+            }) !==
+            JSON.stringify({
+              ...initialFormData,
+              experienceCertificate: initialFormData.experienceCertificate
+                ? "original"
+                : null,
+            });
           setHasUnsavedChanges(hasChanges);
         } else if (setHasUnsavedChanges) {
           setHasUnsavedChanges(true);
         }
-        
+
         return newData;
       });
     }
@@ -188,15 +205,24 @@ const Experience = () => {
       return;
     }
 
-    if (!formData.companyName || !formData.designation || !formData.fromDate || !formData.toDate) {
+    if (
+      !formData.companyName ||
+      !formData.designation ||
+      !formData.fromDate ||
+      !formData.toDate
+    ) {
       toast.error("Please fill all required fields including To Date");
       return;
     }
 
     try {
       setLoading(true);
-      const selectedCountry = countries.find((c) => c.idCountry === parseInt(formData.idCountry));
-      const countryId = selectedCountry ? selectedCountry.idCountry : formData.idCountry;
+      const selectedCountry = countries.find(
+        (c) => c.idCountry === parseInt(formData.idCountry),
+      );
+      const countryId = selectedCountry
+        ? selectedCountry.idCountry
+        : formData.idCountry;
 
       const payload = {
         idEmployeeExperience: editingId || 0,
@@ -209,19 +235,26 @@ const Experience = () => {
         employmentType: formData.employmentType,
         fromDate: formData.fromDate,
         toDate: formData.toDate,
-        lastDrawnSalary: formData.lastDrawnSalary ? parseFloat(formData.lastDrawnSalary) : null,
+        lastDrawnSalary: formData.lastDrawnSalary
+          ? parseFloat(formData.lastDrawnSalary)
+          : null,
         reasonForLeaving: formData.reasonForLeaving || "",
         experienceCertificateFile: formData.experienceCertificate,
         idUser: getCurrentUserId(),
       };
 
-      const result = await EmployeeManagementService.postEmployeeExperience(payload);
+      const result =
+        await EmployeeManagementService.postEmployeeExperience(payload);
       setLoading(false);
 
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success(editingId ? "Experience updated successfully" : "Experience added successfully");
+        toast.success(
+          editingId
+            ? "Experience updated successfully"
+            : "Experience added successfully",
+        );
         if (setHasUnsavedChanges) {
           setHasUnsavedChanges(false);
         }
@@ -229,7 +262,7 @@ const Experience = () => {
         loadExperiences();
         // Scroll to top
         if (topRef.current) {
-          topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
     } catch (error) {
@@ -270,7 +303,10 @@ const Experience = () => {
 
     try {
       showLoader();
-      const result = await EmployeeManagementService.deleteEmployeeExperience(selectedExpId, getCurrentUserId());
+      const result = await EmployeeManagementService.deleteEmployeeExperience(
+        selectedExpId,
+        getCurrentUserId(),
+      );
       hideLoader();
 
       if (result.error) {
@@ -336,7 +372,7 @@ const Experience = () => {
                     <th>Company</th>
                     <th>Designation</th>
                     <th>Period</th>
-                    <th>Last Salary (G$)</th>
+                    <th>Last Salary (₹)</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -349,7 +385,13 @@ const Experience = () => {
                         <td>{formatPeriod(exp.fromDate, exp.toDate)}</td>
                         <td>
                           {exp.lastDrawnSalary
-                            ? `${parseInt(exp.lastDrawnSalary).toLocaleString("en-US")}`
+                            ? Number(exp.lastDrawnSalary).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )
                             : "-"}
                         </td>
                         <td>
@@ -362,7 +404,9 @@ const Experience = () => {
                           </button>
                           <button
                             className="btn btn-outline-danger btn-sm border-0"
-                            onClick={() => handleDelete(exp.idEmployeeExperience)}
+                            onClick={() =>
+                              handleDelete(exp.idEmployeeExperience)
+                            }
                             title="Delete"
                           >
                             <i className="bx bx-trash"></i>
@@ -385,7 +429,10 @@ const Experience = () => {
       </div>
 
       <div className="col-lg-4">
-        <div className="card" style={{boxShadow: '0 0px 2px 0 rgba(67, 89, 113, 1.12)'}}>
+        <div
+          className="card"
+          style={{ boxShadow: "0 0px 2px 0 rgba(67, 89, 113, 1.12)" }}
+        >
           <div className="card-header">
             <h6 className="mb-0">Add / Update Experience</h6>
           </div>
@@ -396,7 +443,9 @@ const Experience = () => {
                 type="text"
                 className="form-control"
                 value={formData.companyName}
-                onChange={(e) => handleInputChange("companyName", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("companyName", e.target.value)
+                }
                 maxLength={50}
               />
             </div>
@@ -407,7 +456,9 @@ const Experience = () => {
                 type="text"
                 className="form-control"
                 value={formData.designation}
-                onChange={(e) => handleInputChange("designation", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("designation", e.target.value)
+                }
                 maxLength={50}
               />
             </div>
@@ -418,7 +469,9 @@ const Experience = () => {
                 type="text"
                 className="form-control"
                 value={formData.department}
-                onChange={(e) => handleInputChange("department", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("department", e.target.value)
+                }
                 maxLength={50}
               />
             </div>
@@ -444,7 +497,9 @@ const Experience = () => {
               <select
                 className="form-select"
                 value={formData.employmentType}
-                onChange={(e) => handleInputChange("employmentType", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("employmentType", e.target.value)
+                }
               >
                 {employmentTypes.map((type) => (
                   <option key={type} value={type}>
@@ -484,12 +539,14 @@ const Experience = () => {
                 maxDate={new Date()}
               />
               {!formData.toDate && formData.fromDate && (
-                <div className="invalid-feedback d-block">To Date is required</div>
+                <div className="invalid-feedback d-block">
+                  To Date is required
+                </div>
               )}
             </div>
 
             <div className="mb-3">
-              <label className="form-label mb-1">Last Drawn Salary (G$)</label>
+              <label className="form-label mb-1">Last Drawn Salary (₹)</label>
               <NumericFormat
                 className="form-control"
                 value={formData.lastDrawnSalary}
@@ -512,7 +569,9 @@ const Experience = () => {
                 className="form-control"
                 rows="3"
                 value={formData.reasonForLeaving}
-                onChange={(e) => handleInputChange("reasonForLeaving", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("reasonForLeaving", e.target.value)
+                }
                 maxLength={50}
               />
             </div>
@@ -529,10 +588,18 @@ const Experience = () => {
             </div>
 
             <div className="d-flex gap-2">
-              <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
-              {loading ? "Saving..." : editingId ? "Update" : "Save"}
+              <button
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : editingId ? "Update" : "Save"}
               </button>
-              <button className="btn btn-outline-secondary" onClick={handleReset} disabled={loading}>
+              <button
+                className="btn btn-outline-secondary"
+                onClick={handleReset}
+                disabled={loading}
+              >
                 Reset
               </button>
             </div>
@@ -552,8 +619,7 @@ const Experience = () => {
         backdrop="static"
         keyboard={false}
       >
-        <Modal.Header className="border-0" closeButton>
-        </Modal.Header>
+        <Modal.Header className="border-0" closeButton></Modal.Header>
         <Modal.Body>
           <div className="d-flex align-items-center justify-content-center shortDataHeight">
             Are you sure you want to delete this experience?

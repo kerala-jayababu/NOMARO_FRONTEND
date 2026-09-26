@@ -8,11 +8,12 @@ import {
   fetchForgotCardEntryDetailsForApproval,
   handleForgotCardApprovalWorkflow,
 } from "../../redux/reducers/forgotCardApproval";
+import Utils from "../../utils/Utils";
 
 const ForgotCardApproval = () => {
   const dispatch = useDispatch();
   const { forgotCardEntries, loading, error } = useSelector(
-    (state) => state.forgotCardApproval
+    (state) => state.forgotCardApproval,
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +42,7 @@ const ForgotCardApproval = () => {
       fetchForgotCardEntryDetailsForApproval({
         dateFrom: dateFrom || "",
         approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
-      })
+      }),
     );
   }, [dispatch, dateFrom, statusFilter]);
 
@@ -130,7 +131,7 @@ const ForgotCardApproval = () => {
     try {
       setIsProcessing(true);
       const resultAction = await dispatch(
-        handleForgotCardApprovalWorkflow(payload)
+        handleForgotCardApprovalWorkflow(payload),
       );
 
       if (handleForgotCardApprovalWorkflow.fulfilled.match(resultAction)) {
@@ -139,25 +140,25 @@ const ForgotCardApproval = () => {
             `${selectedItems.length} forgot card entry(s) ${
               confirmAction === "APPROVED" ? "approved" : "rejected"
             } successfully!`,
-            { position: "top-right", autoClose: 3000 }
+            { position: "top-right", autoClose: 3000 },
           );
           setSelectedItems([]);
           dispatch(
             fetchForgotCardEntryDetailsForApproval({
               dateFrom: dateFrom || "",
               approvalStatus: statusFilter === "ALL" ? "" : statusFilter,
-            })
+            }),
           );
         } else {
           toast.error(
             resultAction.payload?.message || "Failed to process approval",
-            { position: "top-right", autoClose: 4000 }
+            { position: "top-right", autoClose: 4000 },
           );
         }
       } else {
         toast.error(
           resultAction.payload?.message || "Failed to process approval",
-          { position: "top-right", autoClose: 4000 }
+          { position: "top-right", autoClose: 4000 },
         );
       }
     } catch (error) {
@@ -185,12 +186,8 @@ const ForgotCardApproval = () => {
   const formatDateTime = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
-    const datePart = d.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
-    const timePart = d.toLocaleTimeString("en-US", {
+    const datePart = Utils.formatDisplayDate(d);
+    const timePart = d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -200,11 +197,7 @@ const ForgotCardApproval = () => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
+    return Utils.formatDisplayDate(dateStr);
   };
 
   return (
@@ -240,7 +233,7 @@ const ForgotCardApproval = () => {
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="MM/dd/yyyy"
+                    dateFormat="dd-MM-yyyy"
                     placeholderText="Date"
                     selected={dateFrom}
                     onChange={(date) => {
@@ -291,7 +284,10 @@ const ForgotCardApproval = () => {
               ) : (
                 <div
                   className="table-responsive"
-                  style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+                  style={{
+                    maxHeight: "calc(100vh - 300px)",
+                    overflowY: "auto",
+                  }}
                 >
                   <table className="table table-striped table-bordered">
                     <thead
@@ -299,10 +295,7 @@ const ForgotCardApproval = () => {
                       style={{ position: "sticky", top: 0, zIndex: 1 }}
                     >
                       <tr>
-                        <th
-                          className="text-center"
-                          style={{ width: "40px" }}
-                        >
+                        <th className="text-center" style={{ width: "40px" }}>
                           <input
                             type="checkbox"
                             className="form-check-input"
@@ -356,7 +349,7 @@ const ForgotCardApproval = () => {
                             <td>
                               <span
                                 className={`badge ${getStatusBadgeClass(
-                                  item.approvalStatus
+                                  item.approvalStatus,
                                 )}`}
                               >
                                 {item.approvalStatus}
@@ -458,8 +451,8 @@ const ForgotCardApproval = () => {
                   {isProcessing
                     ? "Processing..."
                     : confirmAction === "APPROVED"
-                    ? "Approve"
-                    : "Reject"}
+                      ? "Approve"
+                      : "Reject"}
                 </Button>
               </div>
             </div>

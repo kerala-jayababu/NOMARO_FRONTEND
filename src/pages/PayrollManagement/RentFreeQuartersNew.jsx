@@ -356,31 +356,31 @@ function RentFreeAllowances() {
                           <td>{item.departmentName}</td>
                           <td>{item?.designationName != null ? (item?.designationName.length < 20 ? item?.designationName : (`${item?.designationName.substring(0, 20)}...`)) : 'NA'}</td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.annualRFQAllowance || item.totalAnnualRent)}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.taxFreeAllowance || (item.totalAnnualRent / 3))}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.taxableAmount || (item.totalAnnualRent * 2 / 3))}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.taxAmount || (item.totalAnnualRent * 2 / 3 * (item.taxRate / 100)))}
                           </td>
                           <td className="text-end">
-                            {new Intl.NumberFormat("en-US", {
+                            {new Intl.NumberFormat("en-IN", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(item.netRFQAllowance || (item.totalAnnualRent - (item.totalAnnualRent * 2 / 3 * (item.taxRate / 100))))}

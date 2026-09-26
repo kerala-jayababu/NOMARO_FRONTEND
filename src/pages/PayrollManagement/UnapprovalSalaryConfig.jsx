@@ -8,7 +8,7 @@ import { useLoader } from "../../components/LoaderContext";
 import moment from "moment";
 
 const formatAmount = (val) =>
-  Number(val || 0).toLocaleString("en-US", {
+  Number(val || 0).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -190,7 +190,7 @@ const UnapprovalSalaryConfig = () => {
                     configData.designationName,
                     configData.departmentName,
                     configData.joiningDate
-                      ? `Joined ${moment(configData.joiningDate).format("DD/MM/YYYY")}`
+                      ? `Joined ${moment(configData.joiningDate).format("DD-MM-YYYY")}`
                       : null,
                   ]
                     .filter(Boolean)
@@ -207,7 +207,7 @@ const UnapprovalSalaryConfig = () => {
               {
                 label: "Valid from",
                 value: configData.validFrom
-                  ? moment(configData.validFrom).format("MM/DD/YYYY")
+                  ? moment(configData.validFrom).format("DD-MM-YYYY")
                   : "--",
               },
               {

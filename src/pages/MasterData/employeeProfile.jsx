@@ -28,6 +28,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLoader } from "../../components/LoaderContext";
 import { useNavigate } from "react-router-dom";
+import Utils from "../../utils/Utils";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
@@ -39,21 +40,21 @@ const EmployeeProfile = () => {
     error,
   } = useSelector((state) => state.getAllEmployeeDetails);
   const { options: employeeDetails } = useSelector(
-    (state) => state.getEmployeeDetails
+    (state) => state.getEmployeeDetails,
   );
   const { options: bankAccounts } = useSelector(
-    (state) => state.employeeProfiles
+    (state) => state.employeeProfiles,
   );
 
   const { options: overtimeConfigs } = useSelector(
-    (state) => state.employeeProfiles
+    (state) => state.employeeProfiles,
   );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const { banks, bankBranches, budgetCode, overTimesTypes } = useSelector(
-    (state) => state.getAllOptions
+    (state) => state.getAllOptions,
   );
   const [bankAccountsState, setBankAccountsState] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -125,7 +126,7 @@ const EmployeeProfile = () => {
         value: bank.value,
         label: bank.displayName,
       })),
-    [banks]
+    [banks],
   );
 
   const branchOptions = useMemo(
@@ -134,7 +135,7 @@ const EmployeeProfile = () => {
         value: branch.value,
         label: branch.displayName,
       })),
-    [bankBranches]
+    [bankBranches],
   );
 
   const budgetCodeOptions = useMemo(
@@ -143,7 +144,7 @@ const EmployeeProfile = () => {
         value: code.value.toString(),
         label: code.displayName,
       })),
-    [budgetCode]
+    [budgetCode],
   );
 
   useEffect(() => {
@@ -154,7 +155,8 @@ const EmployeeProfile = () => {
     loadDepartmentsAndDesignations();
     loadReportingToOptions();
     // Load AddEmployeeAllowed from local storage
-    const addEmployeeAllowedValue = secureLocalStorage.getItem("AddEmployeeAllowed");
+    const addEmployeeAllowedValue =
+      secureLocalStorage.getItem("AddEmployeeAllowed");
     if (addEmployeeAllowedValue) {
       setAddEmployeeAllowed(addEmployeeAllowedValue);
     }
@@ -218,7 +220,7 @@ const EmployeeProfile = () => {
         value: dept.idDepartment.toString(),
         label: dept.departmentName,
       })),
-    [departments]
+    [departments],
   );
 
   const designationOptions = useMemo(
@@ -227,7 +229,7 @@ const EmployeeProfile = () => {
         value: desig.idDesignation.toString(),
         label: desig.designationName,
       })),
-    [designations]
+    [designations],
   );
 
   const genderOptions = [
@@ -335,7 +337,7 @@ const EmployeeProfile = () => {
   useEffect(() => {
     if (selectedBudgetCode) {
       const selectedBudgetCodeOption = budgetCodeOptions.find(
-        (option) => option.value === selectedBudgetCode
+        (option) => option.value === selectedBudgetCode,
       );
       if (selectedBudgetCodeOption) {
         setBudgetCodeLabel(selectedBudgetCodeOption.label);
@@ -346,7 +348,7 @@ const EmployeeProfile = () => {
             if (action.payload && action.payload.data) {
               setBudgetCodeLabel(action.payload.data.budgetCode);
             }
-          }
+          },
         );
       }
     }
@@ -374,14 +376,16 @@ const EmployeeProfile = () => {
       setBankAccountsState(mappedAccounts);
 
       const loadBranchesForBanks = async () => {
-        const bankIds = [...new Set(mappedAccounts.map(account => account.selectedBank))];
+        const bankIds = [
+          ...new Set(mappedAccounts.map((account) => account.selectedBank)),
+        ];
 
         for (const bankId of bankIds) {
           if (bankId && !branchesPerBank[bankId]) {
             const branches = await getFilteredBranches(bankId);
-            setBranchesPerBank(prev => ({
+            setBranchesPerBank((prev) => ({
               ...prev,
-              [bankId]: branches
+              [bankId]: branches,
             }));
           }
         }
@@ -407,9 +411,9 @@ const EmployeeProfile = () => {
     dispatch(getAllOptions());
   }, [dispatch]);
 
-  useEffect(() => { }, [bankAccountsState]);
+  useEffect(() => {}, [bankAccountsState]);
 
-  useEffect(() => { }, [selectedEmployee]);
+  useEffect(() => {}, [selectedEmployee]);
 
   const employeeData =
     employees?.map((employee) => ({
@@ -418,11 +422,7 @@ const EmployeeProfile = () => {
       name: employee.fullName,
       designation: employee.designation,
       department: employee.department,
-      joiningDate: new Date(employee.joiningDate).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }),
+      joiningDate: Utils.formatDisplayDate(employee.joiningDate),
       status: employee.currentStatus,
       childCount: employee.childrenCount,
     })) || [];
@@ -456,7 +456,7 @@ const EmployeeProfile = () => {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`
+        `${BASE_URL}/api/v1/Bank/GetBranchesOfBank?idBank=${parsedBankId}`,
       );
       const data = await response.json();
 
@@ -483,7 +483,7 @@ const EmployeeProfile = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -518,9 +518,9 @@ const EmployeeProfile = () => {
   const handleBankChange = async (value, index) => {
     const filteredBranches = await getFilteredBranches(value);
 
-    setBranchesPerBank(prevState => ({
+    setBranchesPerBank((prevState) => ({
       ...prevState,
-      [value]: filteredBranches
+      [value]: filteredBranches,
     }));
 
     setBankAccountsState((prevState) => {
@@ -620,7 +620,7 @@ const EmployeeProfile = () => {
 
   const isDuplicateDayType = (dayType, index) => {
     return overtimeDetails.some(
-      (detail, i) => i !== index && detail.type === dayType
+      (detail, i) => i !== index && detail.type === dayType,
     );
   };
   const handleAddOvertimeRow = () => {
@@ -673,8 +673,6 @@ const EmployeeProfile = () => {
       } else {
         newOvertimeDetails[index].appliedRate = "2.0";
       }
-
-
     } else {
       newOvertimeDetails[index][field] = value;
     }
@@ -752,9 +750,8 @@ const EmployeeProfile = () => {
       }
       if (!["GYD", "USD"].includes(account.currencyCode)) {
         isValid = false;
-        errors[`currencyCode_${index}`] = "Currency must be 'GYD' or 'USD'.";
+        errors[`currencyCode_${index}`] = "Currency must be 'INR' or 'USD'.";
       }
-
     });
     setBankAccountErrors(errors);
     return isValid;
@@ -839,7 +836,7 @@ const EmployeeProfile = () => {
     setIsDeleting(true);
     try {
       const response = await dispatch(
-        deleteEmployeeAttachment(selectedEmployee.idEmployee)
+        deleteEmployeeAttachment(selectedEmployee.idEmployee),
       );
       if (response?.payload?.success) {
         setAttachmentFile(null);
@@ -848,7 +845,7 @@ const EmployeeProfile = () => {
       } else {
         console.error(
           "Delete failed:",
-          response?.payload?.message || "Unknown error"
+          response?.payload?.message || "Unknown error",
         );
       }
     } catch (error) {
@@ -896,7 +893,7 @@ const EmployeeProfile = () => {
       accountNumber: account.accountNumber,
       branchCode: account.selectedBranch.toString(),
       salaryPercentageDistributed: parseFloat(
-        account.salaryPercentageDistributed
+        account.salaryPercentageDistributed,
       ),
       disbursementType: disbursementType,
       currencyCode: account.currencyCode,
@@ -912,7 +909,7 @@ const EmployeeProfile = () => {
 
     // Only include overtime configs if they exist
     const overtimeConfigsPayload = overtimeDetails
-      .filter(detail => detail.type)
+      .filter((detail) => detail.type)
       .map((detail) => {
         let dayType = detail.type;
         if (dayType == "Workday") {
@@ -931,16 +928,18 @@ const EmployeeProfile = () => {
       });
 
     setIsSubmitting(true);
-    if (disbursementType == 'PERCENTAGE') {
+    if (disbursementType == "PERCENTAGE") {
       try {
         // Only dispatch overtime configs if there are any
         const actions = [
           dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-          dispatch(updateEmployeeDetails(formData))
+          dispatch(updateEmployeeDetails(formData)),
         ];
 
         if (overtimeConfigsPayload.length > 0) {
-          actions.push(dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)));
+          actions.push(
+            dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
+          );
         }
 
         const results = await Promise.all(actions);
@@ -948,7 +947,8 @@ const EmployeeProfile = () => {
         const errors = [];
         if (results[0].error) errors.push("Bank Account update failed");
         if (results[1].error) errors.push("Employee Details update failed");
-        if (results[2] && results[2].error) errors.push("Overtime Configs update failed");
+        if (results[2] && results[2].error)
+          errors.push("Overtime Configs update failed");
 
         if (errors.length > 0) {
           console.error("API Errors:", errors);
@@ -966,22 +966,30 @@ const EmployeeProfile = () => {
       dispatch(getAllEmployeeDetails());
     } else {
       let accountLength = bankAccountPayload.length;
-      if (accountLength < 2 || bankAccountPayload[accountLength - 1].salaryPercentageDistributed != 0) {
-        toast.warning("Required atleast 2 bank accounts with last row with amount 0 for type fixed amount", {
-          position: 'top-right',
-          autoClose: 5000
-        });
-        setIsSubmitting(false)
+      if (
+        accountLength < 2 ||
+        bankAccountPayload[accountLength - 1].salaryPercentageDistributed != 0
+      ) {
+        toast.warning(
+          "Required atleast 2 bank accounts with last row with amount 0 for type fixed amount",
+          {
+            position: "top-right",
+            autoClose: 5000,
+          },
+        );
+        setIsSubmitting(false);
       } else {
         try {
           // Only dispatch overtime configs if there are any
           const actions = [
             dispatch(manageEmployeeBankAccount(bankAccountPayload)),
-            dispatch(updateEmployeeDetails(formData))
+            dispatch(updateEmployeeDetails(formData)),
           ];
 
           if (overtimeConfigsPayload.length > 0) {
-            actions.push(dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)));
+            actions.push(
+              dispatch(manageEmployeeOvertimeConfigs(overtimeConfigsPayload)),
+            );
           }
 
           const results = await Promise.all(actions);
@@ -989,7 +997,8 @@ const EmployeeProfile = () => {
           const errors = [];
           if (results[0].error) errors.push("Bank Account update failed");
           if (results[1].error) errors.push("Employee Details update failed");
-          if (results[2] && results[2].error) errors.push("Overtime Configs update failed");
+          if (results[2] && results[2].error)
+            errors.push("Overtime Configs update failed");
 
           if (errors.length > 0) {
             console.error("API Errors:", errors);
@@ -1067,7 +1076,7 @@ const EmployeeProfile = () => {
     const item = employee?.attachmentBlobForchildcount;
 
     const base64Data = item;
-    const fileName = employee.childCountDocumentFilePath || 'downloaded-file';
+    const fileName = employee.childCountDocumentFilePath || "downloaded-file";
 
     // Convert Base64 to Blob
     const byteCharacters = atob(base64Data);
@@ -1076,20 +1085,20 @@ const EmployeeProfile = () => {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+    const blob = new Blob([byteArray], { type: "application/octet-stream" });
 
     // Create a download link
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', fileName); // Set the file name
+    link.setAttribute("download", fileName); // Set the file name
     document.body.appendChild(link);
     link.click();
 
     // Clean up
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }
+  };
 
   const phoneFields = ["phoneNumber1", "phoneNumber2"];
   const numericFields = ["zipCode", "taxIdNumber"];
@@ -1156,16 +1165,25 @@ const EmployeeProfile = () => {
 
   const validateEmployeeForm = () => {
     const errors = {};
-    if (!employeeFormData.employeeCode) errors.employeeCode = "Employee Code is required";
-    if (!employeeFormData.firstName) errors.firstName = "First Name is required";
+    if (!employeeFormData.employeeCode)
+      errors.employeeCode = "Employee Code is required";
+    if (!employeeFormData.firstName)
+      errors.firstName = "First Name is required";
     if (!employeeFormData.lastName) errors.lastName = "Last Name is required";
     if (!employeeFormData.gender) errors.gender = "Gender is required";
-    if (!employeeFormData.idDepartment) errors.idDepartment = "Department is required";
-    if (!employeeFormData.idDesignation) errors.idDesignation = "Designation is required";
-    if (!employeeFormData.joiningDate) errors.joiningDate = "Joining Date is required";
-    if (!employeeFormData.currentStatus) errors.currentStatus = "Current Status is required";
+    if (!employeeFormData.idDepartment)
+      errors.idDepartment = "Department is required";
+    if (!employeeFormData.idDesignation)
+      errors.idDesignation = "Designation is required";
+    if (!employeeFormData.joiningDate)
+      errors.joiningDate = "Joining Date is required";
+    if (!employeeFormData.currentStatus)
+      errors.currentStatus = "Current Status is required";
 
-    if (employeeFormData.emailID && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)) {
+    if (
+      employeeFormData.emailID &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employeeFormData.emailID)
+    ) {
       errors.emailID = "Invalid email format";
     }
 
@@ -1186,7 +1204,11 @@ const EmployeeProfile = () => {
     });
 
     const numericFieldRules = [
-      { field: "zipCode", regex: /^\d{3,10}$/, message: "Zip Code must be 3-10 digits" },
+      {
+        field: "zipCode",
+        regex: /^\d{3,10}$/,
+        message: "Zip Code must be 3-10 digits",
+      },
     ];
 
     numericFieldRules.forEach(({ field, regex, message }) => {
@@ -1201,12 +1223,14 @@ const EmployeeProfile = () => {
       const taxIdValue = employeeFormData.taxIdNumber;
       // Check if value contains only digits and hyphens
       if (!/^[\d-]+$/.test(taxIdValue)) {
-        errors.taxIdNumber = "Tax ID Number must contain only digits and hyphens";
+        errors.taxIdNumber =
+          "Tax ID Number must contain only digits and hyphens";
       } else {
         // Count only digits for length validation
         const digitCount = taxIdValue.replace(/-/g, "").length;
         if (digitCount < 3 || digitCount > 20) {
-          errors.taxIdNumber = "Tax ID Number must be 3-20 digits (hyphens allowed)";
+          errors.taxIdNumber =
+            "Tax ID Number must be 3-20 digits (hyphens allowed)";
         }
       }
     }
@@ -1261,10 +1285,14 @@ const EmployeeProfile = () => {
       const firstErrorField = Object.keys(validationResult.errors)[0];
       if (firstErrorField) {
         setTimeout(() => {
-          const errorElement = document.getElementById(firstErrorField) || 
-                              document.querySelector(`[name="${firstErrorField}"]`);
+          const errorElement =
+            document.getElementById(firstErrorField) ||
+            document.querySelector(`[name="${firstErrorField}"]`);
           if (errorElement) {
-            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
             errorElement.focus();
           }
         }, 100);
@@ -1276,19 +1304,30 @@ const EmployeeProfile = () => {
       setIsSubmittingEmployee(true);
       showLoader();
 
-      const {
-        employeePhoto,
-        ...payloadWithoutPhoto
-      } = {
+      const { employeePhoto, ...payloadWithoutPhoto } = {
         ...employeeFormData,
-        idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
-        idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
-        reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : null,
-        idBudgetCode: employeeFormData.idBudgetCode ? parseInt(employeeFormData.idBudgetCode) : null,
+        idDepartment: employeeFormData.idDepartment
+          ? parseInt(employeeFormData.idDepartment)
+          : null,
+        idDesignation: employeeFormData.idDesignation
+          ? parseInt(employeeFormData.idDesignation)
+          : null,
+        reportingTo: employeeFormData.reportingTo
+          ? parseInt(employeeFormData.reportingTo)
+          : null,
+        idBudgetCode: employeeFormData.idBudgetCode
+          ? parseInt(employeeFormData.idBudgetCode)
+          : null,
         childrenCount: parseInt(employeeFormData.childrenCount) || 0,
-        dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD") : null,
-        joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD") : null,
-        lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format("YYYY-MM-DD") : null,
+        dateOfBirth: employeeFormData.dateOfBirth
+          ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD")
+          : null,
+        joiningDate: employeeFormData.joiningDate
+          ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD")
+          : null,
+        lastWorkingDay: employeeFormData.lastWorkingDay
+          ? moment(employeeFormData.lastWorkingDay).format("YYYY-MM-DD")
+          : null,
       };
 
       if (editingEmployeeId) {
@@ -1327,7 +1366,11 @@ const EmployeeProfile = () => {
       }
 
       if (result.data?.success) {
-        toast.success(editingEmployeeId ? "Employee updated successfully" : "Employee added successfully");
+        toast.success(
+          editingEmployeeId
+            ? "Employee updated successfully"
+            : "Employee added successfully",
+        );
         resetEmployeeForm();
         showLoader();
         dispatch(getAllEmployeeDetails()).finally(() => {
@@ -1369,7 +1412,10 @@ const EmployeeProfile = () => {
       const response = await CommonService.getEmployeeById(employeeId);
       hideLoader();
       if (response.error) {
-        console.error("Error fetching employee details for edit:", response.error);
+        console.error(
+          "Error fetching employee details for edit:",
+          response.error,
+        );
         toast.error("Failed to fetch employee details");
       } else if (response.data?.data) {
         detailedData = response.data.data;
@@ -1381,7 +1427,11 @@ const EmployeeProfile = () => {
     }
 
     const formatDateForForm = (value) =>
-      value ? (moment(value).isValid() ? moment(value).format("YYYY-MM-DD") : null) : null;
+      value
+        ? moment(value).isValid()
+          ? moment(value).format("YYYY-MM-DD")
+          : null
+        : null;
 
     const employeePhotoValue =
       detailedData.employeePhoto ?? profileData?.attachmentBlob ?? null;
@@ -1397,14 +1447,18 @@ const EmployeeProfile = () => {
       idDepartment: detailedData.idDepartment
         ? detailedData.idDepartment.toString()
         : profileData.idDepartment
-        ? profileData.idDepartment.toString()
-        : "",
+          ? profileData.idDepartment.toString()
+          : "",
       idDesignation: detailedData.idDesignation
         ? detailedData.idDesignation.toString()
         : profileData.idDesignation
-        ? profileData.idDesignation.toString()
-        : "",
-      emailID: detailedData.emailID ?? detailedData.emailId ?? profileData.emailId ?? "",
+          ? profileData.idDesignation.toString()
+          : "",
+      emailID:
+        detailedData.emailID ??
+        detailedData.emailId ??
+        profileData.emailId ??
+        "",
       phoneNumber1: detailedData.phoneNumber1 ?? profileData.phoneNumber1 ?? "",
       phoneNumber2: detailedData.phoneNumber2 ?? profileData.phoneNumber2 ?? "",
       address1: detailedData.address1 ?? profileData.address1 ?? "",
@@ -1413,19 +1467,24 @@ const EmployeeProfile = () => {
       city: detailedData.city ?? profileData.city ?? "",
       state: detailedData.state ?? profileData.state ?? "",
       zipCode: detailedData.zipCode ?? profileData.zipCode ?? "",
-      dateOfBirth: formatDateForForm(detailedData.dateOfBirth ?? profileData.dateOfBirth),
-      joiningDate: formatDateForForm(detailedData.joiningDate ?? profileData.joiningDate),
+      dateOfBirth: formatDateForForm(
+        detailedData.dateOfBirth ?? profileData.dateOfBirth,
+      ),
+      joiningDate: formatDateForForm(
+        detailedData.joiningDate ?? profileData.joiningDate,
+      ),
       reportingTo: detailedData.reportingTo
         ? detailedData.reportingTo.toString()
         : profileData.reportingToId
-        ? profileData.reportingToId.toString()
-        : "",
-      currentStatus: detailedData.currentStatus ?? profileData.currentStatus ?? "Working",
+          ? profileData.reportingToId.toString()
+          : "",
+      currentStatus:
+        detailedData.currentStatus ?? profileData.currentStatus ?? "Working",
       idBudgetCode: detailedData.idBudgetCode
         ? detailedData.idBudgetCode.toString()
         : profileData.idBudgetCode
-        ? profileData.idBudgetCode.toString()
-        : "",
+          ? profileData.idBudgetCode.toString()
+          : "",
       childrenCount:
         detailedData.childrenCount ??
         profileData.childrenCount ??
@@ -1433,26 +1492,31 @@ const EmployeeProfile = () => {
         0,
       overTimeAllowedStatus:
         typeof detailedData.overTimeAllowedStatus !== "undefined"
-          ? detailedData.overTimeAllowedStatus === true || detailedData.overTimeAllowedStatus === "true"
+          ? detailedData.overTimeAllowedStatus === true ||
+            detailedData.overTimeAllowedStatus === "true"
           : typeof profileData.overTimeAllowedStatus !== "undefined"
-          ? profileData.overTimeAllowedStatus === true || profileData.overTimeAllowedStatus === "true"
-          : false,
+            ? profileData.overTimeAllowedStatus === true ||
+              profileData.overTimeAllowedStatus === "true"
+            : false,
       employeePhoto: employeePhotoValue,
       lastWorkingDay: formatDateForForm(
-        detailedData.lastWorkingDay ?? profileData.lastWorkingDay
+        detailedData.lastWorkingDay ?? profileData.lastWorkingDay,
       ),
     });
 
     setEmployeeFormErrors({});
     setEmployeePhotoPreview(
-      employeePhotoValue ? `data:image/jpeg;base64,${employeePhotoValue}` : null
+      employeePhotoValue
+        ? `data:image/jpeg;base64,${employeePhotoValue}`
+        : null,
     );
     setEmployeePhotoFile(null);
     setEditingEmployeeId(employeeId);
 
     const profileModalElement = document.getElementById("EMP_profileView");
     if (profileModalElement) {
-      const profileModalInstance = bootstrap.Modal.getInstance(profileModalElement);
+      const profileModalInstance =
+        bootstrap.Modal.getInstance(profileModalElement);
       if (profileModalInstance) {
         profileModalInstance.hide();
       }
@@ -1516,7 +1580,8 @@ const EmployeeProfile = () => {
                   />
                   <div className="mt-3 mx-2">
                     <strong>No. of Active Employees: </strong>
-                    {employees?.filter(emp => emp.currentStatus === 'Working').length || 0}
+                    {employees?.filter((emp) => emp.currentStatus === "Working")
+                      .length || 0}
                   </div>
                 </>
               )}
@@ -1584,8 +1649,10 @@ const EmployeeProfile = () => {
                         Date of Birth, Gender
                       </label>
                       <p className="m-0">
-                        {profileData?.dateOfBirth ? moment(profileData.dateOfBirth).format("MM/DD/YYYY") : "N/A"} -{" "}
-                        {profileData?.gender ? profileData?.gender : "N/A"}
+                        {profileData?.dateOfBirth
+                          ? moment(profileData.dateOfBirth).format("DD-MM-YYYY")
+                          : "N/A"}{" "}
+                        - {profileData?.gender ? profileData?.gender : "N/A"}
                       </p>
                     </div>
 
@@ -1599,7 +1666,9 @@ const EmployeeProfile = () => {
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Phone Number 2</label>
-                      <p className="m-0">{profileData?.phoneNumber2 || "N/A"}</p>
+                      <p className="m-0">
+                        {profileData?.phoneNumber2 || "N/A"}
+                      </p>
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
@@ -1613,9 +1682,7 @@ const EmployeeProfile = () => {
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Joining Date</label>
                       <p className="m-0">
-                        {new Date(
-                          profileData?.joiningDate
-                        ).toLocaleDateString()}
+                        {Utils.formatDisplayDate(profileData?.joiningDate)}
                       </p>
                     </div>
 
@@ -1635,8 +1702,14 @@ const EmployeeProfile = () => {
                     </div>
 
                     <div className="col-lg-4 col-md-6 p-2">
-                      <label className="form-label mb-1">National ID Number</label>
-                      <p className="m-0">{profileData?.nationalIDNumber || profileData?.nationalIdNumber || "N/A"}</p>
+                      <label className="form-label mb-1">
+                        National ID Number
+                      </label>
+                      <p className="m-0">
+                        {profileData?.nationalIDNumber ||
+                          profileData?.nationalIdNumber ||
+                          "N/A"}
+                      </p>
                     </div>
                     <div className="col-lg-4 col-md-6 p-2">
                       <label className="form-label mb-1">Tax ID Number</label>
@@ -1686,7 +1759,7 @@ const EmployeeProfile = () => {
                       Array.isArray(bankData) && bankData.length > 0
                         ? bankData[0]?.disbursementType === "PERCENTAGE"
                           ? "% Salary"
-                          : "Amount(G$)"
+                          : "Amount(₹)"
                         : "Salary",
                       "Currency",
                     ]}
@@ -1698,11 +1771,17 @@ const EmployeeProfile = () => {
                           <td>{account?.accountNumber ?? "-"}</td>
                           <td>
                             {account?.salaryPercentageDistributed ?? "-"}
-                            {account?.disbursementType === "PERCENTAGE" ? " %" : ""}
+                            {account?.disbursementType === "PERCENTAGE"
+                              ? " %"
+                              : ""}
                           </td>
-                          <td>{account?.currencyCode ?? "-"}</td>
+                          <td>
+                            {account?.currencyCode === "GYD"
+                              ? "INR"
+                              : (account?.currencyCode ?? "-")}
+                          </td>
                         </tr>
-                      )
+                      ),
                     )}
                   />
                   {/* <div className="text-end py-2 d-flex justify-content-end gap-2">
@@ -1729,7 +1808,6 @@ const EmployeeProfile = () => {
           </div>
         </div>
       </div>
-
 
       <BootstrapModal
         show={showConfirmModal}
@@ -1778,7 +1856,9 @@ const EmployeeProfile = () => {
       {/* Add/Update Employee Modal */}
       <Modal
         id="addEmployeeModal"
-        title={editingEmployeeId ? "Update Employee Profile" : "Add Employee Profile"}
+        title={
+          editingEmployeeId ? "Update Employee Profile" : "Add Employee Profile"
+        }
         isOpen={showAddEmployeeModal}
         onClose={handleEmployeeModalClose}
         onSubmit={handleEmployeeFormSubmit}
@@ -1797,7 +1877,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.employeeCode ? " is-invalid" : ""}`}
               value={employeeFormData.employeeCode}
-              onChange={(e) => handleEmployeeInputChange("employeeCode", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("employeeCode", e.target.value)
+              }
             />
             {employeeFormErrors.employeeCode && (
               <div className="invalid-feedback d-block">
@@ -1811,7 +1893,9 @@ const EmployeeProfile = () => {
               className={`form-select${employeeFormErrors.idDepartment ? " is-invalid" : ""}`}
               name="idDepartment"
               value={employeeFormData.idDepartment}
-              onChange={(e) => handleEmployeeInputChange("idDepartment", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("idDepartment", e.target.value)
+              }
             >
               <option value="">Select Department</option>
               {departmentOptions.map((option) => (
@@ -1821,7 +1905,9 @@ const EmployeeProfile = () => {
               ))}
             </select>
             {employeeFormErrors.idDepartment && (
-              <div className="text-danger">{employeeFormErrors.idDepartment}</div>
+              <div className="text-danger">
+                {employeeFormErrors.idDepartment}
+              </div>
             )}
           </div>
           <div className="col-md-4">
@@ -1830,7 +1916,9 @@ const EmployeeProfile = () => {
               className={`form-select${employeeFormErrors.idDesignation ? " is-invalid" : ""}`}
               name="idDesignation"
               value={employeeFormData.idDesignation}
-              onChange={(e) => handleEmployeeInputChange("idDesignation", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("idDesignation", e.target.value)
+              }
             >
               <option value="">Select Designation</option>
               {designationOptions.map((option) => (
@@ -1840,10 +1928,11 @@ const EmployeeProfile = () => {
               ))}
             </select>
             {employeeFormErrors.idDesignation && (
-              <div className="text-danger">{employeeFormErrors.idDesignation}</div>
+              <div className="text-danger">
+                {employeeFormErrors.idDesignation}
+              </div>
             )}
           </div>
-
         </div>
 
         <div className="row">
@@ -1857,7 +1946,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.firstName ? " is-invalid" : ""}`}
               value={employeeFormData.firstName}
-              onChange={(e) => handleEmployeeInputChange("firstName", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("firstName", e.target.value)
+              }
             />
             {employeeFormErrors.firstName && (
               <div className="invalid-feedback d-block">
@@ -1875,7 +1966,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.middleName}
-              onChange={(e) => handleEmployeeInputChange("middleName", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("middleName", e.target.value)
+              }
             />
           </div>
           <div className="col-md-4">
@@ -1888,7 +1981,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.lastName ? " is-invalid" : ""}`}
               value={employeeFormData.lastName}
-              onChange={(e) => handleEmployeeInputChange("lastName", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("lastName", e.target.value)
+              }
             />
             {employeeFormErrors.lastName && (
               <div className="invalid-feedback d-block">
@@ -1903,7 +1998,10 @@ const EmployeeProfile = () => {
             <label className="form-label mb-1 mt-2">Gender *</label>
             <div>
               {genderOptions.map((option) => (
-                <div className="form-check form-check-inline" key={option.value}>
+                <div
+                  className="form-check form-check-inline"
+                  key={option.value}
+                >
                   <input
                     className="form-check-input"
                     type="radio"
@@ -1911,9 +2009,14 @@ const EmployeeProfile = () => {
                     id={`gender-${option.value}`}
                     value={option.value}
                     checked={employeeFormData.gender === option.value}
-                    onChange={(e) => handleEmployeeInputChange("gender", e.target.value)}
+                    onChange={(e) =>
+                      handleEmployeeInputChange("gender", e.target.value)
+                    }
                   />
-            <label className="form-check-label" htmlFor={`gender-${option.value}`}>
+                  <label
+                    className="form-check-label"
+                    htmlFor={`gender-${option.value}`}
+                  >
                     {option.label}
                   </label>
                 </div>
@@ -1931,8 +2034,10 @@ const EmployeeProfile = () => {
                   ? moment(employeeFormData.dateOfBirth, "YYYY-MM-DD").toDate()
                   : null
               }
-              onChange={(date) => handleEmployeeInputChange("dateOfBirth", date)}
-              dateFormat="MM/dd/yyyy"
+              onChange={(date) =>
+                handleEmployeeInputChange("dateOfBirth", date)
+              }
+              dateFormat="dd-MM-yyyy"
               className="form-control"
               maxDate={new Date()}
               showYearDropdown
@@ -1949,8 +2054,10 @@ const EmployeeProfile = () => {
                   ? moment(employeeFormData.joiningDate, "YYYY-MM-DD").toDate()
                   : null
               }
-              onChange={(date) => handleEmployeeInputChange("joiningDate", date)}
-              dateFormat="MM/dd/yyyy"
+              onChange={(date) =>
+                handleEmployeeInputChange("joiningDate", date)
+              }
+              dateFormat="dd-MM-yyyy"
               className="form-control"
               showYearDropdown
               showMonthDropdown
@@ -1958,7 +2065,9 @@ const EmployeeProfile = () => {
               wrapperClassName="d-block"
             />
             {employeeFormErrors.joiningDate && (
-              <div className="text-danger">{employeeFormErrors.joiningDate}</div>
+              <div className="text-danger">
+                {employeeFormErrors.joiningDate}
+              </div>
             )}
           </div>
         </div>
@@ -1974,7 +2083,9 @@ const EmployeeProfile = () => {
               type="email"
               className={`form-control${employeeFormErrors.emailID ? " is-invalid" : ""}`}
               value={employeeFormData.emailID}
-              onChange={(e) => handleEmployeeInputChange("emailID", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("emailID", e.target.value)
+              }
             />
             {employeeFormErrors.emailID && (
               <div className="invalid-feedback d-block">
@@ -1992,7 +2103,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.phoneNumber1 ? " is-invalid" : ""}`}
               value={employeeFormData.phoneNumber1}
-              onChange={(e) => handleEmployeeInputChange("phoneNumber1", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("phoneNumber1", e.target.value)
+              }
             />
             {employeeFormErrors.phoneNumber1 && (
               <div className="invalid-feedback d-block">
@@ -2018,7 +2131,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.phoneNumber2 ? " is-invalid" : ""}`}
               value={employeeFormData.phoneNumber2}
-              onChange={(e) => handleEmployeeInputChange("phoneNumber2", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("phoneNumber2", e.target.value)
+              }
             />
             {employeeFormErrors.phoneNumber2 && (
               <div className="invalid-feedback d-block">
@@ -2029,7 +2144,6 @@ const EmployeeProfile = () => {
         </div>
 
         <div className="row">
-
           <div className="col-md-4">
             <label className="form-label mb-1 mt-2" htmlFor="address1">
               Address 1
@@ -2040,7 +2154,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.address1}
-              onChange={(e) => handleEmployeeInputChange("address1", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("address1", e.target.value)
+              }
             />
           </div>
           <div className="col-md-4">
@@ -2053,7 +2169,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.address2}
-              onChange={(e) => handleEmployeeInputChange("address2", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("address2", e.target.value)
+              }
             />
           </div>
           <div className="col-md-4">
@@ -2066,7 +2184,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.address3}
-              onChange={(e) => handleEmployeeInputChange("address3", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("address3", e.target.value)
+              }
             />
           </div>
         </div>
@@ -2082,7 +2202,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.city}
-              onChange={(e) => handleEmployeeInputChange("city", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("city", e.target.value)
+              }
             />
           </div>
           <div className="col-md-4">
@@ -2095,7 +2217,9 @@ const EmployeeProfile = () => {
               type="text"
               className="form-control"
               value={employeeFormData.state}
-              onChange={(e) => handleEmployeeInputChange("state", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("state", e.target.value)
+              }
             />
           </div>
           <div className="col-md-4">
@@ -2108,7 +2232,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.zipCode ? " is-invalid" : ""}`}
               value={employeeFormData.zipCode}
-              onChange={(e) => handleEmployeeInputChange("zipCode", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("zipCode", e.target.value)
+              }
             />
             {employeeFormErrors.zipCode && (
               <div className="invalid-feedback d-block">
@@ -2128,7 +2254,9 @@ const EmployeeProfile = () => {
               className="form-select"
               name="reportingTo"
               value={employeeFormData.reportingTo}
-              onChange={(e) => handleEmployeeInputChange("reportingTo", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("reportingTo", e.target.value)
+              }
             >
               <option value="">Select Reporting Manager</option>
               {reportingToOptions.map((option) => (
@@ -2147,7 +2275,9 @@ const EmployeeProfile = () => {
               className={`form-select${employeeFormErrors.currentStatus ? " is-invalid" : ""}`}
               name="currentStatus"
               value={employeeFormData.currentStatus}
-              onChange={(e) => handleEmployeeInputChange("currentStatus", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("currentStatus", e.target.value)
+              }
             >
               <option value="">Select Status</option>
               {statusOptions.map((option) => (
@@ -2157,7 +2287,9 @@ const EmployeeProfile = () => {
               ))}
             </select>
             {employeeFormErrors.currentStatus && (
-              <div className="text-danger">{employeeFormErrors.currentStatus}</div>
+              <div className="text-danger">
+                {employeeFormErrors.currentStatus}
+              </div>
             )}
           </div>
           {employeeFormData.currentStatus === "NotWorking" && (
@@ -2166,11 +2298,16 @@ const EmployeeProfile = () => {
               <DatePicker
                 selected={
                   employeeFormData.lastWorkingDay
-                    ? moment(employeeFormData.lastWorkingDay, "YYYY-MM-DD").toDate()
+                    ? moment(
+                        employeeFormData.lastWorkingDay,
+                        "YYYY-MM-DD",
+                      ).toDate()
                     : null
                 }
-                onChange={(date) => handleEmployeeInputChange("lastWorkingDay", date)}
-                dateFormat="MM/dd/yyyy"
+                onChange={(date) =>
+                  handleEmployeeInputChange("lastWorkingDay", date)
+                }
+                dateFormat="dd-MM-yyyy"
                 className="form-control"
                 maxDate={new Date()}
                 showYearDropdown
@@ -2192,7 +2329,9 @@ const EmployeeProfile = () => {
               className="form-select"
               name="idBudgetCode"
               value={employeeFormData.idBudgetCode}
-              onChange={(e) => handleEmployeeInputChange("idBudgetCode", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("idBudgetCode", e.target.value)
+              }
             >
               <option value="">Select Budget Code</option>
               {budgetCodeOptions.map((option) => (
@@ -2212,7 +2351,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.taxIdNumber ? " is-invalid" : ""}`}
               value={employeeFormData.taxIdNumber}
-              onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("taxIdNumber", e.target.value)
+              }
             />
             {employeeFormErrors.taxIdNumber && (
               <div className="invalid-feedback d-block">
@@ -2230,7 +2371,9 @@ const EmployeeProfile = () => {
               type="text"
               className={`form-control${employeeFormErrors.idNumber ? " is-invalid" : ""}`}
               value={employeeFormData.idNumber}
-              onChange={(e) => handleEmployeeInputChange("idNumber", e.target.value)}
+              onChange={(e) =>
+                handleEmployeeInputChange("idNumber", e.target.value)
+              }
             />
             {employeeFormErrors.idNumber && (
               <div className="invalid-feedback d-block">
@@ -2242,20 +2385,32 @@ const EmployeeProfile = () => {
 
         <div className="row">
           <div className="col-md-4">
-            <label className="form-label mb-1 mt-2">Overtime Allowed Status</label>
+            <label className="form-label mb-1 mt-2">
+              Overtime Allowed Status
+            </label>
             <div className="form-check form-switch">
               <input
                 className="form-check-input"
                 type="checkbox"
-                checked={employeeFormData.overTimeAllowedStatus === true || employeeFormData.overTimeAllowedStatus === "true"}
-                onChange={(e) => handleEmployeeInputChange("overTimeAllowedStatus", e.target.checked)}
+                checked={
+                  employeeFormData.overTimeAllowedStatus === true ||
+                  employeeFormData.overTimeAllowedStatus === "true"
+                }
+                onChange={(e) =>
+                  handleEmployeeInputChange(
+                    "overTimeAllowedStatus",
+                    e.target.checked,
+                  )
+                }
               />
               <label className="form-check-label">
-                {employeeFormData.overTimeAllowedStatus === true || employeeFormData.overTimeAllowedStatus === "true" ? "Yes" : "No"}
+                {employeeFormData.overTimeAllowedStatus === true ||
+                employeeFormData.overTimeAllowedStatus === "true"
+                  ? "Yes"
+                  : "No"}
               </label>
             </div>
           </div>
-          
         </div>
 
         <div className="row">
@@ -2287,10 +2442,11 @@ const EmployeeProfile = () => {
                   className="btn btn-sm btn-outline-danger mt-2 d-block"
                   onClick={() => {
                     setEmployeePhotoPreview(null);
-                      setEmployeePhotoFile(null);
+                    setEmployeePhotoFile(null);
                     handleEmployeeInputChange("employeePhoto", null);
-                    const fileInput = document.getElementById('employeePhotoInput');
-                    if (fileInput) fileInput.value = '';
+                    const fileInput =
+                      document.getElementById("employeePhotoInput");
+                    if (fileInput) fileInput.value = "";
                   }}
                 >
                   Remove Photo
@@ -2299,8 +2455,6 @@ const EmployeeProfile = () => {
             )}
           </div>
         </div>
-
-
       </Modal>
     </div>
   );

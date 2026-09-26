@@ -257,7 +257,7 @@ function LeavePassagePayroll() {
                                             <td className="text-primary">{item.employeeCode}</td>
                                             <td>{item.employeeName}</td>
                                             <td>{item.departmentName}</td>
-                                            <td>{item.joiningDate ? moment(item.joiningDate).format('MM/DD/YYYY') : '—'}</td>
+                                            <td>{item.joiningDate ? moment(item.joiningDate).format('DD-MM-YYYY') : '—'}</td>
                                             <td>
                                                 {item.salaryMonthText
                                                     ? <span className="badge bg-label-primary">{item.salaryMonthText}</span>

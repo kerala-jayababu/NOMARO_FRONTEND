@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
 import toast from "react-hot-toast";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../../utils/Utils";
 
 function OvertimeTransactionApproval({
   entityId,
@@ -16,7 +17,7 @@ function OvertimeTransactionApproval({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const dispatch = useDispatch();
-  
+
   // Get logged-in employee ID
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const loggedInEmployeeId = userData?.idEmployee;
@@ -143,14 +144,7 @@ function OvertimeTransactionApproval({
                 <tr>
                   <td>{overtimeTransaction?.createdBy}</td>
                   <td>
-                    {new Date(overtimeTransaction?.createdOn).toLocaleString(
-                      "en-US",
-                      {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
+                    {Utils.formatDisplayDate(overtimeTransaction?.createdOn)}
                   </td>
                 </tr>
               </tbody>
@@ -193,7 +187,12 @@ function OvertimeTransactionApproval({
                       <td style={{ width: "30%" }}>Rate Multiplier</td>
                     </tr>
                     {overtimeTransaction.overtimeConfigs.map((cfg) => (
-                      <tr key={cfg.idEmployeeOvertimeConfig || `${cfg.dayType}-${cfg.idEmployee || Math.random()}`}>
+                      <tr
+                        key={
+                          cfg.idEmployeeOvertimeConfig ||
+                          `${cfg.dayType}-${cfg.idEmployee || Math.random()}`
+                        }
+                      >
                         <td>{cfg.dayType}</td>
                         <td>{cfg.standardRate}</td>
                         <td>{cfg.dayRate}</td>
@@ -215,26 +214,12 @@ function OvertimeTransactionApproval({
                 <tr>
                   <td>{overtimeTransaction.dayType}</td>
                   <td>
-                    {new Date(overtimeTransaction.startDate).toLocaleString(
-                      "en-US",
-                      {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
-                    , {overtimeTransaction?.startTime?.slice(0, 5)}
+                    {Utils.formatDisplayDate(overtimeTransaction.startDate)},{" "}
+                    {overtimeTransaction?.startTime?.slice(0, 5)}
                   </td>
                   <td>
-                    {new Date(overtimeTransaction.endDate).toLocaleString(
-                      "en-US",
-                      {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
-                    , {overtimeTransaction?.endTime?.slice(0, 5)}
+                    {Utils.formatDisplayDate(overtimeTransaction.endDate)},{" "}
+                    {overtimeTransaction?.endTime?.slice(0, 5)}
                   </td>
                 </tr>
               </tbody>
@@ -243,9 +228,9 @@ function OvertimeTransactionApproval({
             <table className="table table-bordered mt-3">
               <thead>
                 <tr>
-                <th style={{ width: "25%" }}>Duration</th>
-      <th style={{ width: "25%" }}>Amount</th>
-      <th style={{ width: "50%" }}>Details</th>
+                  <th style={{ width: "25%" }}>Duration</th>
+                  <th style={{ width: "25%" }}>Amount</th>
+                  <th style={{ width: "50%" }}>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -280,26 +265,28 @@ function OvertimeTransactionApproval({
             )}
           </div>
 
-          {
-  loggedInEmployeeId && 
-  selectedRow.targetIdEmployee && 
-  selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
-  selectedRow.actionStatus === null && (
-            <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => handleApproveWorkflow()}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={() => setShowRejectModal(true)}
-              >
-                Reject
-              </button>
-            </div>
-          )}
+          {loggedInEmployeeId &&
+            selectedRow.targetIdEmployee &&
+            selectedRow.targetIdEmployee
+              .split(",")
+              .map((id) => parseInt(id.trim()))
+              .includes(loggedInEmployeeId) &&
+            selectedRow.actionStatus === null && (
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleApproveWorkflow()}
+                >
+                  Approve
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => setShowRejectModal(true)}
+                >
+                  Reject
+                </button>
+              </div>
+            )}
         </div>
       </div>
       {showRejectModal && (

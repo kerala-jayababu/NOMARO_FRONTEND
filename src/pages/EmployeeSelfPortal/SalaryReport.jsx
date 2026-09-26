@@ -202,15 +202,15 @@ function SalaryReport() {
 
                                             <div className='MonthSalary_dts_inner'>
                                                 <div className='MonthSalary_dts_02'>
-                                                    <label> Earnings (G$)</label>
+                                                    <label> Earnings (₹)</label>
                                                     <p>{Utils.formattedNumber(sal?.totalEarnings)}</p>
                                                 </div>
                                                 <div className='MonthSalary_dts_02'>
-                                                    <label> Deductions (G$)</label>
+                                                    <label> Deductions (₹)</label>
                                                     <p>{Utils.formattedNumber(sal?.totalDeductions)}</p>
                                                 </div>
                                                 <div className='MonthSalary_dts_02'>
-                                                    <label>Net Salary (G$)</label>
+                                                    <label>Net Salary (₹)</label>
                                                     <p>{Utils.formattedNumber(sal?.totalEarnings - sal?.totalDeductions)}</p>
                                                 </div>
                                             </div>
@@ -233,15 +233,15 @@ function SalaryReport() {
 
                                 <div className='MonthperiodSection_inner'>
                                     <div className='MonthperiodSection_dts_02'>
-                                        <label> Total <br></br>Earnings (G$)</label>
+                                        <label> Total <br></br>Earnings (₹)</label>
                                         <p>{Utils.formattedNumber(grossEarnings)}</p>
                                     </div>
                                     <div className='MonthperiodSection_dts_02'>
-                                        <label> Total <br></br>Deductions (G$)</label>
+                                        <label> Total <br></br>Deductions (₹)</label>
                                         <p>{Utils.formattedNumber(grossDeductions)}</p>
                                     </div>
                                     <div className='MonthperiodSection_dts_02'>
-                                        <label>Total <br></br> Net Salary (G$)</label>
+                                        <label>Total <br></br> Net Salary (₹)</label>
                                         <p>{Utils.formattedNumber(grossNetSalary)}</p>
                                     </div>
                                 </div>
@@ -311,9 +311,9 @@ function SalaryReport() {
                                                     />
                                                 </th>
                                                 <th>Month</th>
-                                                <th className="text-end">Total Earnings (G$)</th>
-                                                <th className="text-end">Total Deductions (G$)</th>
-                                                <th className="text-end">Net Salary (G$)</th>
+                                                <th className="text-end">Total Earnings (₹)</th>
+                                                <th className="text-end">Total Deductions (₹)</th>
+                                                <th className="text-end">Net Salary (₹)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -361,15 +361,15 @@ function SalaryReport() {
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td>Total Earnings G$</td>
+                                                    <td>Total Earnings ₹</td>
                                                     <td className="text-end">{Utils.formattedNumber(grossEarnings)}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Total Deductions G$</td>
+                                                    <td>Total Deductions ₹</td>
                                                     <td className="text-end">{Utils.formattedNumber(grossDeductions)}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Net Salary G$</td>
+                                                    <td>Net Salary ₹</td>
                                                     <td className="text-end">{Utils.formattedNumber(grossNetSalary)}</td>
                                                 </tr>
                                             </tbody>

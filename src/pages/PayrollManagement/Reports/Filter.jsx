@@ -101,7 +101,7 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
           </label>
           <DatePicker
             className="form-control"
-            dateFormat="MM/dd/yyyy"
+            dateFormat="dd-MM-yyyy"
             selected={selectedDate}
             placeholderText="Date"
             onChange={(date) => {

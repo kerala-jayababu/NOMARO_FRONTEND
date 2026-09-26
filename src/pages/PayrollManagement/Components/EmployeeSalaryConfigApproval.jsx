@@ -4,6 +4,7 @@ import { getEmployeeSalaryConfigById } from "../../../redux/reducers/ConfigAppro
 import toast from "react-hot-toast";
 import SalaryGenerationService from "../../../core/services/SalaryGenerationService";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../../utils/Utils";
 
 function EmployeeSalaryConfigApproval({
   entityId,
@@ -17,7 +18,7 @@ function EmployeeSalaryConfigApproval({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const dispatch = useDispatch();
-  
+
   // Get logged-in employee ID
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const loggedInEmployeeId = userData?.idEmployee;
@@ -36,7 +37,7 @@ function EmployeeSalaryConfigApproval({
       },
     ];
 
-    try {      
+    try {
       const res = await SalaryGenerationService.handleApprovalWorkflow(content);
       if (res.error) {
         toast.error(res.error);
@@ -83,19 +84,18 @@ function EmployeeSalaryConfigApproval({
   };
 
   function getDetails(item) {
-    if (item.calculationMethod.toLowerCase() === 'percentage') { 
+    if (item.calculationMethod.toLowerCase() === "percentage") {
       return `${item.percentageValue}% of ${item.percentageOfIdSalaryHeadValue}`;
     }
 
-   if (item.calculationMethod.toLowerCase() === 'fixedamount') { 
+    if (item.calculationMethod.toLowerCase() === "fixedamount") {
       return "FIXED AMOUNT";
     }
 
-     if (item.calculationMethod.toLowerCase() === 'formula') { 
-      return 'Formula - ' + item.customFormula;
+    if (item.calculationMethod.toLowerCase() === "formula") {
+      return "Formula - " + item.customFormula;
     }
   }
-
 
   return (
     <div
@@ -107,10 +107,12 @@ function EmployeeSalaryConfigApproval({
           <div className="modal-header">
             <h5 className="modal-title">
               Employee Salary Config Approval{" "}
-                {selectedRow.currentStatus?.toLowerCase() === "approved" ?
-                " (Already Approved)":''}
-                {selectedRow.currentStatus?.toLowerCase() === "rejected" ?
-                " (Rejected)":''}
+              {selectedRow.currentStatus?.toLowerCase() === "approved"
+                ? " (Already Approved)"
+                : ""}
+              {selectedRow.currentStatus?.toLowerCase() === "rejected"
+                ? " (Rejected)"
+                : ""}
             </h5>
             <button
               type="button"
@@ -131,14 +133,7 @@ function EmployeeSalaryConfigApproval({
                 <tr>
                   <td>{employeeSalaryConfig.createdByValue}</td>
                   <td>
-                    {new Date(employeeSalaryConfig.createdOn).toLocaleString(
-                      "en-US",
-                      {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }
-                    )}
+                    {Utils.formatDisplayDate(employeeSalaryConfig.createdOn)}
                   </td>
                 </tr>
               </tbody>
@@ -167,14 +162,7 @@ function EmployeeSalaryConfigApproval({
             <div className="mt-3">
               <strong>
                 Valid From :{" "}
-                {new Date(employeeSalaryConfig.validFrom).toLocaleString(
-                  "en-US",
-                  {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  }
-                )}
+                {Utils.formatDisplayDate(employeeSalaryConfig.validFrom)}
               </strong>
             </div>
 
@@ -190,15 +178,17 @@ function EmployeeSalaryConfigApproval({
               </thead>
               <tbody>
                 {employeeSalaryConfig.employeeSalaryConfigDetails?.map(
-                  (item,index) => (
+                  (item, index) => (
                     <tr key={index}>
                       <td>{item.salaryHeadCode}</td>
                       <td>{item.salaryHeadName}</td>
                       <td>{item.headType}</td>
                       <td>{getDetails(item)}</td>
-                      <td className="text-end">{Number(item.salaryAmount).toFixed(2)}</td>
+                      <td className="text-end">
+                        {Number(item.salaryAmount).toFixed(2)}
+                      </td>
                     </tr>
-                  )
+                  ),
                 )}
               </tbody>
             </table>
@@ -219,33 +209,37 @@ function EmployeeSalaryConfigApproval({
                   <td className="text-center">
                     {Number(employeeSalaryConfig.totalDeductions).toFixed(2)}
                   </td>
-                  <td className="text-center">{Number(employeeSalaryConfig.netSalary).toFixed(2)}</td>
+                  <td className="text-center">
+                    {Number(employeeSalaryConfig.netSalary).toFixed(2)}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {
-            loggedInEmployeeId && 
-            selectedRow.targetIdEmployee && 
-            selectedRow.targetIdEmployee.split(',').map(id => parseInt(id.trim())).includes(loggedInEmployeeId) && 
-            selectedRow.actionStatus === null && 
+          {loggedInEmployeeId &&
+            selectedRow.targetIdEmployee &&
+            selectedRow.targetIdEmployee
+              .split(",")
+              .map((id) => parseInt(id.trim()))
+              .includes(loggedInEmployeeId) &&
+            selectedRow.actionStatus === null &&
             selectedRow.currentStatus?.toLowerCase() !== "approved" && (
-            <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => handleApproveWorkflow()}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={() => setShowRejectModal(true)}
-              >
-                Reject
-              </button>
-            </div>
-          )}
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleApproveWorkflow()}
+                >
+                  Approve
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => setShowRejectModal(true)}
+                >
+                  Reject
+                </button>
+              </div>
+            )}
         </div>
       </div>
       {showRejectModal && (

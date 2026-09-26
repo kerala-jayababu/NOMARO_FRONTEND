@@ -72,14 +72,17 @@ function collectLeaveTypes(items) {
     (item.leaveBreakdown || []).forEach((lb) => {
       if (!map.has(lb.leaveTypeName))
         map.set(lb.leaveTypeName, lb.leaveCode || lb.leaveTypeName);
-    })
+    }),
   );
-  return Array.from(map.entries()).map(([typeName, leaveCode]) => ({ typeName, leaveCode }));
+  return Array.from(map.entries()).map(([typeName, leaveCode]) => ({
+    typeName,
+    leaveCode,
+  }));
 }
 
 function getLeaveDayForType(item, typeName) {
   const lb = (item.leaveBreakdown || []).find(
-    (x) => x.leaveTypeName === typeName
+    (x) => x.leaveTypeName === typeName,
   );
   return lb?.totalDays ?? 0;
 }
@@ -132,7 +135,10 @@ function CenteredSpinner() {
 function KpiCard({ label, value, sub, borderColor, loading }) {
   return (
     <div className="col-md-3 col-sm-6">
-      <div className="card h-100" style={{ borderTop: `3px solid ${borderColor}` }}>
+      <div
+        className="card h-100"
+        style={{ borderTop: `3px solid ${borderColor}` }}
+      >
         <div className="card-body">
           <p className="text-muted mb-1" style={{ fontSize: 13 }}>
             {label}
@@ -144,7 +150,7 @@ function KpiCard({ label, value, sub, borderColor, loading }) {
                 role="status"
               />
             ) : (
-              value ?? "--"
+              (value ?? "--")
             )}
           </h3>
           {sub && (
@@ -160,7 +166,13 @@ function KpiCard({ label, value, sub, borderColor, loading }) {
 
 // ── Overview Tab ──────────────────────────────────────────────────────────────
 
-function OverviewTab({ donutData, lineData, deptChartData, leaveTypes, loading }) {
+function OverviewTab({
+  donutData,
+  lineData,
+  deptChartData,
+  leaveTypes,
+  loading,
+}) {
   if (loading) return <CenteredSpinner />;
 
   return (
@@ -192,7 +204,7 @@ function OverviewTab({ donutData, lineData, deptChartData, leaveTypes, loading }
                     </Pie>
                     <Tooltip
                       formatter={(v) =>
-                        typeof v === "number" ? v.toLocaleString() : v
+                        typeof v === "number" ? v.toLocaleString("en-IN") : v
                       }
                     />
                     <Legend
@@ -281,7 +293,10 @@ function OverviewTab({ donutData, lineData, deptChartData, leaveTypes, loading }
 // ── Department Tab ────────────────────────────────────────────────────────────
 
 function exportToExcel(rows, fileName) {
-  if (!rows.length) { toast.warning("No data available to export"); return; }
+  if (!rows.length) {
+    toast.warning("No data available to export");
+    return;
+  }
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Sheet1");
   XLSX.writeFile(wb, fileName);
@@ -297,7 +312,10 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
       leaveTypes.forEach(({ typeName, leaveCode }) => {
         row[leaveCode] = getLeaveDayForType(dept, typeName);
       });
-      const total = (dept.leaveBreakdown || []).reduce((sum, lb) => sum + (lb.totalDays || 0), 0);
+      const total = (dept.leaveBreakdown || []).reduce(
+        (sum, lb) => sum + (lb.totalDays || 0),
+        0,
+      );
       row["Total"] = total.toFixed(2);
       return row;
     });
@@ -366,15 +384,19 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
                   departmentData.map((dept, i) => {
                     const total = (dept.leaveBreakdown || []).reduce(
                       (sum, lb) => sum + (lb.totalDays || 0),
-                      0
+                      0,
                     );
                     return (
                       <tr key={i}>
                         <td className="fw-semibold">{dept.departmentName}</td>
                         {leaveTypes.map(({ typeName }) => (
-                          <td key={typeName}>{getLeaveDayForType(dept, typeName)}</td>
+                          <td key={typeName}>
+                            {getLeaveDayForType(dept, typeName)}
+                          </td>
                         ))}
-                        <td className="fw-bold text-primary">{total.toFixed(2)}</td>
+                        <td className="fw-bold text-primary">
+                          {total.toFixed(2)}
+                        </td>
                       </tr>
                     );
                   })
@@ -390,7 +412,12 @@ function DepartmentTab({ deptChartData, leaveTypes, departmentData, loading }) {
 
 // ── Designation Tab ───────────────────────────────────────────────────────────
 
-function DesignationTab({ desigChartData, leaveTypes, designationData, loading }) {
+function DesignationTab({
+  desigChartData,
+  leaveTypes,
+  designationData,
+  loading,
+}) {
   if (loading) return <CenteredSpinner />;
 
   const handleExport = () => {
@@ -399,7 +426,10 @@ function DesignationTab({ desigChartData, leaveTypes, designationData, loading }
       leaveTypes.forEach(({ typeName, leaveCode }) => {
         row[leaveCode] = getLeaveDayForType(desig, typeName);
       });
-      const total = (desig.leaveBreakdown || []).reduce((sum, lb) => sum + (lb.totalDays || 0), 0);
+      const total = (desig.leaveBreakdown || []).reduce(
+        (sum, lb) => sum + (lb.totalDays || 0),
+        0,
+      );
       row["Total"] = total.toFixed(2);
       return row;
     });
@@ -468,15 +498,19 @@ function DesignationTab({ desigChartData, leaveTypes, designationData, loading }
                   designationData.map((desig, i) => {
                     const total = (desig.leaveBreakdown || []).reduce(
                       (sum, lb) => sum + (lb.totalDays || 0),
-                      0
+                      0,
                     );
                     return (
                       <tr key={i}>
                         <td className="fw-semibold">{desig.designationName}</td>
                         {leaveTypes.map(({ typeName }) => (
-                          <td key={typeName}>{getLeaveDayForType(desig, typeName)}</td>
+                          <td key={typeName}>
+                            {getLeaveDayForType(desig, typeName)}
+                          </td>
                         ))}
-                        <td className="fw-bold text-primary">{total.toFixed(2)}</td>
+                        <td className="fw-bold text-primary">
+                          {total.toFixed(2)}
+                        </td>
                       </tr>
                     );
                   })
@@ -554,7 +588,11 @@ function EmployeesTab({
                 </option>
               ))}
             </select>
-            <button style={{ minWidth: 120 }} className="btn btn-sm btn-primary" onClick={handleExport}>
+            <button
+              style={{ minWidth: 120 }}
+              className="btn btn-sm btn-primary"
+              onClick={handleExport}
+            >
               <i className="bx bx-download me-1"></i>Export Excel
             </button>
           </div>
@@ -584,10 +622,16 @@ function EmployeesTab({
                 employeeData.map((emp, i) => (
                   <tr key={i}>
                     <td className="fw-semibold">{emp.employeeName || "--"}</td>
-                    <td className="text-primary">{emp.departmentName || "--"}</td>
-                    <td className="text-primary">{emp.designationName || "--"}</td>
+                    <td className="text-primary">
+                      {emp.departmentName || "--"}
+                    </td>
+                    <td className="text-primary">
+                      {emp.designationName || "--"}
+                    </td>
                     {leaveTypes.map(({ typeName }) => (
-                      <td key={typeName}>{getLeaveDayForType(emp, typeName)}</td>
+                      <td key={typeName}>
+                        {getLeaveDayForType(emp, typeName)}
+                      </td>
                     ))}
                     <td className="fw-bold text-primary">
                       {(emp.totalLeaveDays ?? 0).toFixed(2)}
@@ -653,7 +697,12 @@ function AnnualLeaveDashboard() {
         const fyStart = now.getMonth() + 1 >= 7 ? calYear : calYear - 1;
 
         // Keep: previous year, current year, next 2 years
-        const allowed = new Set([fyStart - 1, fyStart, fyStart + 1, fyStart + 2]);
+        const allowed = new Set([
+          fyStart - 1,
+          fyStart,
+          fyStart + 1,
+          fyStart + 2,
+        ]);
         const filtered = allYears.filter((y) => {
           const startYear = parseInt((y.displayText || "").split("-")[0], 10);
           return allowed.has(startYear);
@@ -683,7 +732,9 @@ function AnnualLeaveDashboard() {
     };
 
     init();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // ── Load dashboard data when year changes ────────────────────────────────
@@ -720,7 +771,9 @@ function AnnualLeaveDashboard() {
     };
 
     load();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [selectedYear]);
 
   // ── Load employees when tab active or filters change ─────────────────────
@@ -739,7 +792,8 @@ function AnnualLeaveDashboard() {
         if (empFilters.idDesignation)
           params.IdDesignation = empFilters.idDesignation;
 
-        const res = await LeaveManagementService.getEmployeeLeaveDetails(params);
+        const res =
+          await LeaveManagementService.getEmployeeLeaveDetails(params);
         if (!isMounted) return;
         setEmployeeData(resolveArray(res));
       } catch (err) {
@@ -751,24 +805,31 @@ function AnnualLeaveDashboard() {
     };
 
     load();
-    return () => { isMounted = false; };
-  }, [activeTab, selectedYear, empFilters.idDepartment, empFilters.idDesignation]);
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    activeTab,
+    selectedYear,
+    empFilters.idDepartment,
+    empFilters.idDesignation,
+  ]);
 
   // ── Derived / memoised data ───────────────────────────────────────────────
 
   const leaveTypes = useMemo(
     () => collectLeaveTypes(departmentData),
-    [departmentData]
+    [departmentData],
   );
 
   const desigLeaveTypes = useMemo(
     () => collectLeaveTypes(designationData),
-    [designationData]
+    [designationData],
   );
 
   const empLeaveTypes = useMemo(
     () => collectLeaveTypes(employeeData),
-    [employeeData]
+    [employeeData],
   );
 
   const deptChartData = useMemo(() => {
@@ -797,7 +858,7 @@ function AnnualLeaveDashboard() {
         name: lt.leaveTypeName,
         value: lt.totalDays,
       })),
-    [leaveTypeData]
+    [leaveTypeData],
   );
 
   const lineData = useMemo(
@@ -806,7 +867,7 @@ function AnnualLeaveDashboard() {
         name: m.monthName,
         value: m.totalLeaveDays,
       })),
-    [monthlyTrend]
+    [monthlyTrend],
   );
 
   const kpi = kpiData || {};
@@ -836,9 +897,7 @@ function AnnualLeaveDashboard() {
           value={selectedYear || ""}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
         >
-          {workYears.length === 0 && (
-            <option value="">Loading years...</option>
-          )}
+          {workYears.length === 0 && <option value="">Loading years...</option>}
           {workYears.map((y) => (
             <option key={y.idWorkYear} value={y.idWorkYear}>
               {y.displayText}

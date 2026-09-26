@@ -321,7 +321,7 @@ function LeavePassageAmount() {
                                                     <td>{item?.employeeCode}</td>
                                                     <td>{item?.employeeName}</td>
                                                     <td>{item?.departmentName}</td>
-                                                    <td>{item?.joiningDate ? moment(item.joiningDate).format("MM/DD/YYYY") : 'N/A'}</td>
+                                                    <td>{item?.joiningDate ? moment(item.joiningDate).format("DD-MM-YYYY") : 'N/A'}</td>
                                                     <td>{item?.requestedMonthName || '-'}</td>
                                                     <td>{item?.lpRequestApprovalStatus ? item.lpRequestApprovalStatus.charAt(0).toUpperCase() + item.lpRequestApprovalStatus.slice(1).toLowerCase() : '-'}</td>
                                                     <td className="text-end">

@@ -74,7 +74,7 @@ function LeavePassageApproval({
 
   const formatNumber = (value) => {
     const amount = Number(value ?? 0);
-    return amount.toLocaleString(undefined, {
+    return amount.toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -216,9 +216,9 @@ function LeavePassageApproval({
                       </tr>
                       <tr>
                         <th>Description</th>
-                        <th>Amount (G$)</th>
+                        <th>Amount (₹)</th>
                         <th>Amount (US$)</th>
-                        <th>YTD Amount (G$)</th>
+                        <th>YTD Amount (₹)</th>
                         <th>YTD Amount (US$)</th>
                       </tr>
                     </thead>
@@ -247,9 +247,9 @@ function LeavePassageApproval({
                       </tr>
                       <tr>
                         <th>Description</th>
-                        <th>Amount (G$)</th>
+                        <th>Amount (₹)</th>
                         <th>Amount (US$)</th>
-                        <th>YTD Amount (G$)</th>
+                        <th>YTD Amount (₹)</th>
                         <th>YTD Amount (US$)</th>
                       </tr>
                     </thead>
@@ -269,7 +269,7 @@ function LeavePassageApproval({
 
                 <div className="d-flex align-items-center justify-content-between mt-3">
                   <div className="fw-bold" style={{ fontSize: "1.1rem" }}>
-                    Net Pay G$:
+                    Net Pay ₹:
                     <span className="ms-2">{formatNumber(
                       payslipData.earnings?.reduce(
                         (acc, e) => acc + (e.amountG ?? 0),
@@ -282,7 +282,7 @@ function LeavePassageApproval({
                     )}</span>
                   </div>
                   <div className="d-flex align-items-center">
-                    <label className="mb-0 me-2">Leave Passage Amount G$:</label>
+                    <label className="mb-0 me-2">Leave Passage Amount ₹:</label>
                     <div className="input-group" style={{ minWidth: "260px" }}>
                       <input
                         type="text"
