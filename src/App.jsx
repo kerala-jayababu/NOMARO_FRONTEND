@@ -55,6 +55,7 @@ import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
 import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 import Banks from "./pages/MasterData/banks";
+import OfficeTypes from "./pages/MasterData/officeTypes";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import LeaveDashboard from "./pages/dashboard/LeaveDashboard";
@@ -139,6 +140,7 @@ function App() {
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
               <Route path="banks" element={<Banks/>} />
+              <Route path="office-types" element={<OfficeTypes />} />
               <Route path="leave-types" element={<LeaveTypes/>} />
               <Route path="leave-templates" element={<LeaveTemplates/>} />
               <Route path="leave-template-approval" element={<LeaveTemplateApproval/>} />
