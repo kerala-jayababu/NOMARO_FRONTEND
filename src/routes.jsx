@@ -29,6 +29,7 @@ import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import Banks from "./pages/MasterData/banks";
 import OfficeTypes from "./pages/MasterData/officeTypes";
+import Offices from "./pages/MasterData/OfficeManagement/Offices";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import ServiceChange from "./pages/MasterData/serviceChange";
@@ -158,6 +159,14 @@ export const privateRoutes = [
   {
     path: "/dashboard/office-types",
     element: <OfficeTypes />,
+  },
+  {
+    path: "/dashboard/office-management",
+    element: <Offices />,
+  },
+  {
+    path: "/dashboard/office-mangement",
+    element: <Offices />,
   },
   {
     path: "/dashboard/service-management",

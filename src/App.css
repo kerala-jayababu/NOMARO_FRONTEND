@@ -1585,3 +1585,20 @@ body::-webkit-scrollbar {
 .form-control-select__placeholder {
   color: #4d5975 !important;
 }
+
+/* Scrollable data grid: rows scroll inside the grid, the header row stays visible
+   (Salary Generation, Salary Approval, Salary Slips) */
+.scroll-grid {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.scroll-grid > table {
+  margin-bottom: 0;
+}
+.scroll-grid > table > thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--bs-card-bg, #fff);
+  box-shadow: inset 0 -1px 0 rgba(67, 89, 113, 0.2);
+}

@@ -144,7 +144,24 @@ function ViewPaySlips() {
       });
 
       setSalaryMonthsList(filtered);
-      setFilteredMonthsList(filtered);
+
+      // Default filter: Salary From = previous month, Salary To = current month
+      const findMonth = (date) => filtered.find(month => {
+        const monthDate = new Date(month.salaryMonthDate);
+        return monthDate.getFullYear() === date.getFullYear() && monthDate.getMonth() === date.getMonth();
+      });
+      const previousMonth = findMonth(new Date(currentYear, currentDate.getMonth() - 1, 1));
+      const thisMonth = findMonth(new Date(currentYear, currentDate.getMonth(), 1));
+
+      if (previousMonth) {
+        setFromMonth(previousMonth.idSalaryMonth.toString());
+        setFilteredMonthsList(filtered.filter(el => el.idSalaryMonth >= previousMonth.idSalaryMonth));
+      } else {
+        setFilteredMonthsList(filtered);
+      }
+      if (thisMonth) {
+        setToMonth(thisMonth.idSalaryMonth.toString());
+      }
     }).catch(err => {
     });
   };
@@ -319,7 +336,7 @@ function ViewPaySlips() {
 
             </div>
             <div className="card-body">
-              <div className="table-responsive text-nowrap" style={{ maxHeight: '500px', overflow: 'auto' }}>
+              <div className="table-responsive text-nowrap scroll-grid">
                 <table className="table table-sm">
                   <thead>
                     <tr>

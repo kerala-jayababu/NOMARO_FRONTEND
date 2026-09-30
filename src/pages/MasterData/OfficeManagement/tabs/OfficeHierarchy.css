@@ -1,0 +1,11 @@
+/* Office tree reuses the Org Hierarchy rc-tree styles; nodes here have no photo, so centre the two text lines */
+.office-hierarchy .rc-tree .rc-tree-treenode .rc-tree-node-content-wrapper {
+  display: inline-flex;
+  align-items: center;
+  line-height: normal;
+}
+
+.office-hierarchy .rc-tree-title {
+  display: inline-flex;
+  align-items: center;
+}

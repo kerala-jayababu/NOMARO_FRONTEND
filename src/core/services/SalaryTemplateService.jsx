@@ -11,9 +11,11 @@ export default class SalaryTemplateService {
     }
   }
 
-  static getAllSalaryTemplates = async (searchText, status) => {
+  static getAllSalaryTemplates = async (searchText, status, includeInactive = false) => {
     try {
-      const res = await API.get("/api/v1/SalaryTemplate/GetAllSalaryTemplates" + '?searchText=' + searchText + '&dropdownFilter=' + status);
+      const res = await API.get("/api/v1/SalaryTemplate/GetAllSalaryTemplates", {
+        params: { searchText: searchText || undefined, dropdownFilter: status || undefined, includeInactive },
+      });
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
@@ -29,23 +31,28 @@ export default class SalaryTemplateService {
     }
   }
 
+  // Returns { error, data } where data is the API response body; the page shows the messages
   static saveSalaryTemplateData = async (payload) => {
     try {
       const res = await API.post("/api/v1/SalaryTemplate/AddSalaryTemplate", payload);
-      handleApiSuccessOrError(res, false);
-      return { error: null, data: res };
+      if (res.data?.success === false) {
+        return { error: res.data.message || "An error occurred", data: null };
+      }
+      return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(res.data, true);
+      return { error: error.response?.data?.message || "An error occurred", data: null };
     }
   }
 
   static updateSalaryTemplateData = async (payload) => {
     try {
       const res = await API.post("/api/v1/SalaryTemplate/UpdateSalaryTemplate", payload);
-      handleApiSuccessOrError(res.data, false);
-      return { error: null, data: res };
+      if (res.data?.success === false) {
+        return { error: res.data.message || "An error occurred", data: null };
+      }
+      return { error: null, data: res.data };
     } catch (error) {
-      return handleApiSuccessOrError(error, true);
+      return { error: error.response?.data?.message || "An error occurred", data: null };
     }
   }
 

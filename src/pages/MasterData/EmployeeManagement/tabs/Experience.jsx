@@ -42,6 +42,21 @@ const Experience = () => {
     experienceCertificate: null,
   });
 
+  // India is the default Country for a new record (matched by name, so the id doesn't matter)
+  const getDefaultCountryId = () => {
+    const india = countries.find((c) => (c.countryName || "").trim().toLowerCase() === "india");
+    return india ? india.idCountry.toString() : "";
+  };
+
+  useEffect(() => {
+    if (editingId) return;
+    const defaultCountryId = getDefaultCountryId();
+    if (!defaultCountryId) return;
+    setFormData((prev) => (prev.idCountry ? prev : { ...prev, idCountry: defaultCountryId }));
+    setInitialFormData((prev) => (prev && !prev.idCountry ? { ...prev, idCountry: defaultCountryId } : prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries]);
+
   const employmentTypes = ["FullTime", "Contract", "Consultant"];
 
   useEffect(() => {
@@ -68,7 +83,7 @@ const Experience = () => {
         companyName: "",
         designation: "",
         companyAddress: "",
-        idCountry: "",
+        idCountry: getDefaultCountryId(),
         department: "",
         employmentType: "FullTime",
         fromDate: null,
@@ -331,7 +346,7 @@ const Experience = () => {
       companyName: "",
       designation: "",
       companyAddress: "",
-      idCountry: "",
+      idCountry: getDefaultCountryId(),
       department: "",
       employmentType: "FullTime",
       fromDate: null,
@@ -509,40 +524,41 @@ const Experience = () => {
               </select>
             </div>
 
-            <div className="mb-3">
-              <label className="form-label mb-1">From Date *</label>
-              <DatePicker
-                selected={formData.fromDate}
-                onChange={(date) => handleInputChange("fromDate", date)}
-                dateFormat="dd-MM-yyyy"
-                className="form-control"
-                showYearDropdown
-                showMonthDropdown
-                dropdownMode="select"
-                wrapperClassName="d-block"
-                maxDate={formData.toDate || new Date()}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label mb-1">To Date *</label>
-              <DatePicker
-                selected={formData.toDate}
-                onChange={(date) => handleInputChange("toDate", date)}
-                dateFormat="dd-MM-yyyy"
-                className={`form-control${!formData.toDate && formData.fromDate ? " is-invalid" : ""}`}
-                showYearDropdown
-                showMonthDropdown
-                dropdownMode="select"
-                wrapperClassName="d-block"
-                minDate={formData.fromDate}
-                maxDate={new Date()}
-              />
-              {!formData.toDate && formData.fromDate && (
-                <div className="invalid-feedback d-block">
-                  To Date is required
-                </div>
-              )}
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label mb-1">From Date *</label>
+                <DatePicker
+                  selected={formData.fromDate}
+                  onChange={(date) => handleInputChange("fromDate", date)}
+                  dateFormat="dd-MM-yyyy"
+                  className="form-control"
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                  wrapperClassName="d-block"
+                  maxDate={formData.toDate || new Date()}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label mb-1">To Date *</label>
+                <DatePicker
+                  selected={formData.toDate}
+                  onChange={(date) => handleInputChange("toDate", date)}
+                  dateFormat="dd-MM-yyyy"
+                  className={`form-control${!formData.toDate && formData.fromDate ? " is-invalid" : ""}`}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                  wrapperClassName="d-block"
+                  minDate={formData.fromDate}
+                  maxDate={new Date()}
+                />
+                {!formData.toDate && formData.fromDate && (
+                  <div className="invalid-feedback d-block">
+                    To Date is required
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mb-3">

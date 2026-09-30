@@ -398,7 +398,8 @@ const EmployeeManagement = () => {
                               ? '2px solid #696cff' 
                               : '2px solid rgba(67, 89, 113, 0.12)',
                             borderRadius: '8px 8px 0 0',
-                            padding: '0.75rem 1.25rem',
+                            padding: '0.4rem 1.25rem',
+                            lineHeight: 1.3,
                             marginRight: '0.5rem',
                             backgroundColor: activeTab === tab.id 
                               ? '#fff' 

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import RCTree from "rc-tree";
 import "rc-tree/assets/index.css";
 import "../../OrgHierarchy.css";
+import "./OfficeHierarchy.css";
 
 function OfficeHierarchy({ offices, onViewOffice }) {
   const [expandedKeys, setExpandedKeys] = useState([]);
@@ -122,7 +123,7 @@ function OfficeHierarchy({ offices, onViewOffice }) {
             <p className="mt-2 text-muted">No offices available</p>
           </div>
         ) : (
-          <div className="rc-tree-container">
+          <div className="rc-tree-container office-hierarchy">
             <RCTree
               treeData={rcTreeData}
               expandedKeys={expandedKeys}

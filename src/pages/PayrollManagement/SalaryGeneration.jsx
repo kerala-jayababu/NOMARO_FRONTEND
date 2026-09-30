@@ -851,7 +851,6 @@ function SalaryGeneration() {
                         label: "Filter Designation Based",
                       },
                       { value: "department", label: "Filter Department Based" },
-                      { value: "budget", label: "Filter Budget Based" },
                     ]}
                     isSearchable
                     ref={filterRef}
@@ -877,24 +876,6 @@ function SalaryGeneration() {
                         setFilter(option?.value || "");
                       }}
                       placeholder={"Select Department"}
-                      className="textSize"
-                    />
-                  ) : option === "budget" ? (
-                    <Select
-                      ref={optionsRef}
-                      options={[
-                        { value: "", label: "All Budget Codes" },
-                        ...(options?.data?.map((budget) => ({
-                          value: budget.budgetCode,
-                          label: budget.budgetCode,
-                        })) || []),
-                      ]}
-                      isSearchable
-                      onChange={(option) => {
-                        if (statusRef.current) statusRef.current.value = "All";
-                        setFilter(option?.value || "");
-                      }}
-                      placeholder={"Select Budget Code"}
                       className="textSize"
                     />
                   ) : (
@@ -932,152 +913,152 @@ function SalaryGeneration() {
                 </div>
               </div>
               <div className="table-responsive ">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>
-                        {[
-                          "not generated",
-                          "draft generated",
-                          "rejected",
-                        ].includes(statusFilter?.value?.toLowerCase()) && (
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            checked={
-                              salaryDraft.length ===
-                              salaryGenerationList?.length
-                            }
-                            onChange={handleSelectAll}
-                          />
-                        )}
-                      </th>
-                      <th>Emp. Code</th>
-                      <th>Employee Name</th>
-                      <th>Department</th>
-                      <th>Designation</th>
-                      <th>Budget Code</th>
-                      <th className="text-end">Total Earnings</th>
-                      <th className="text-end">Total Deductions</th>
-                      <th className="text-end">Net Salary</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salaryGenerationList
-                      ?.filter((x) => {
-                        if (!filter) return true;
-
-                        if (option === "department")
-                          return (
-                            x?.departmentName?.toLowerCase() ===
-                            filter.toLowerCase()
-                          );
-
-                        if (option === "designation")
-                          return (
-                            x?.designationName?.toLowerCase() ===
-                            filter.toLowerCase()
-                          );
-
-                        if (option === "budget")
-                          return (
-                            x?.budgetCode?.toLowerCase() ===
-                            filter.toLowerCase()
-                          );
-
-                        return true;
-                      })
-                      ?.map((item, index) => (
-                        <tr key={index}>
-                          <td>
+                <div className="scroll-grid">
+                  <table className="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>
+                          {[
+                            "not generated",
+                            "draft generated",
+                            "rejected",
+                          ].includes(statusFilter?.value?.toLowerCase()) && (
                             <input
                               type="checkbox"
-                              className="form-check-input cursor-pointer data-checkbox"
-                              value={item.approvalStatus}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSalaryDraft((prev) => [...prev, item]);
-                                } else {
-                                  setSalaryDraft((prev) =>
-                                    prev.filter(
-                                      (x) =>
-                                        x.employeeCode !== item.employeeCode,
-                                    ),
-                                  );
-                                }
-                              }}
-                              disabled={disableCheckBox(item)}
+                              class="form-check-input"
+                              checked={
+                                salaryDraft.length ===
+                                salaryGenerationList?.length
+                              }
+                              onChange={handleSelectAll}
                             />
-                          </td>
-                          <td>
-                            {item.approvalStatus.toLowerCase() ===
-                            "not generated" ? (
+                          )}
+                        </th>
+                        <th>Emp. Code</th>
+                        <th>Employee Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th className="text-end">Total Earnings</th>
+                        <th className="text-end">Total Deductions</th>
+                        <th className="text-end">Net Salary</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {salaryGenerationList
+                        ?.filter((x) => {
+                          if (!filter) return true;
+
+                          if (option === "department")
+                            return (
+                              x?.departmentName?.toLowerCase() ===
+                              filter.toLowerCase()
+                            );
+
+                          if (option === "designation")
+                            return (
+                              x?.designationName?.toLowerCase() ===
+                              filter.toLowerCase()
+                            );
+
+                          if (option === "budget")
+                            return (
+                              x?.budgetCode?.toLowerCase() ===
+                              filter.toLowerCase()
+                            );
+
+                          return true;
+                        })
+                        ?.map((item, index) => (
+                          <tr key={index}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                className="form-check-input cursor-pointer data-checkbox"
+                                value={item.approvalStatus}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSalaryDraft((prev) => [...prev, item]);
+                                  } else {
+                                    setSalaryDraft((prev) =>
+                                      prev.filter(
+                                        (x) =>
+                                          x.employeeCode !== item.employeeCode,
+                                      ),
+                                    );
+                                  }
+                                }}
+                                disabled={disableCheckBox(item)}
+                              />
+                            </td>
+                            <td>
+                              {item.approvalStatus.toLowerCase() ===
+                              "not generated" ? (
+                                <span
+                                  style={{
+                                    color: "#6c757d",
+                                    cursor: "not-allowed",
+                                  }}
+                                >
+                                  {item.employeeCode}
+                                </span>
+                              ) : (
+                                <a
+                                  href="#"
+                                  style={{
+                                    color: "var(--link-color)",
+                                    cursor: "pointer",
+                                    textDecoration: "none",
+                                  }}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleEmployeeCodeClick(item);
+                                  }}
+                                  title="Click to view salary slip details"
+                                >
+                                  {item.employeeCode}
+                                </a>
+                              )}
+                            </td>
+                            <td>{item.employeeName}</td>
+                            <td>{item.departmentName}</td>
+                            <td>{item.designationName}</td>
+                            <td className="text-end">
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(item.totalEarnings)}
+                            </td>
+                            <td className="text-end">
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(item.totalDeductions)}
+                            </td>
+                            <td className="text-end">
+                              {new Intl.NumberFormat("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(item.netSalary)}
+                            </td>
+                            <td>
                               <span
-                                style={{
-                                  color: "#6c757d",
-                                  cursor: "not-allowed",
-                                }}
+                                className={`badge ${
+                                  statusColor.find(
+                                    (x) =>
+                                      x.status ===
+                                      item.approvalStatus.toLowerCase(),
+                                  )?.color
+                                }`}
                               >
-                                {item.employeeCode}
+                                {item.approvalStatus}
                               </span>
-                            ) : (
-                              <a
-                                href="#"
-                                style={{
-                                  color: "var(--link-color)",
-                                  cursor: "pointer",
-                                  textDecoration: "none",
-                                }}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleEmployeeCodeClick(item);
-                                }}
-                                title="Click to view salary slip details"
-                              >
-                                {item.employeeCode}
-                              </a>
-                            )}
-                          </td>
-                          <td>{item.employeeName}</td>
-                          <td>{item.departmentName}</td>
-                          <td>{item.designationName}</td>
-                          <td>{item.budgetCode}</td>
-                          <td className="text-end">
-                            {new Intl.NumberFormat("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(item.totalEarnings)}
-                          </td>
-                          <td className="text-end">
-                            {new Intl.NumberFormat("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(item.totalDeductions)}
-                          </td>
-                          <td className="text-end">
-                            {new Intl.NumberFormat("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(item.netSalary)}
-                          </td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                statusColor.find(
-                                  (x) =>
-                                    x.status ===
-                                    item.approvalStatus.toLowerCase(),
-                                )?.color
-                              }`}
-                            >
-                              {item.approvalStatus}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 {/* Summary row below the table */}
                 {salaryGenerationList?.length > 0 && (

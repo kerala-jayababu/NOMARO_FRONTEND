@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import NavTabButton from '../../components/navbarButton';
 import CommonService from '../../core/services/CommonService';
+import OfficeManagementService from '../../core/services/OfficeManagementService';
 import { showToast } from '../../components/ToastNotifications/toastUtils';
 import { NumericFormat } from 'react-number-format';
+import { Modal } from 'react-bootstrap';
 
 function Assets() {
   const [activeTab, setActiveTab] = useState("#navs-top-asset-types");
@@ -26,10 +28,17 @@ function Assets() {
     averageCost: 0,
     assetWorkingStatus: '',
     isAllocated: false,
-    assetTypeName: ''
+    assetTypeName: '',
+    idOffice: '',
+    idEmployee: ''
   });
+  // Allocation: offices, and the employees currently posted in the selected office
+  const [offices, setOffices] = useState([]);
+  const [officeEmployees, setOfficeEmployees] = useState([]);
+  const [loadingOfficeEmployees, setLoadingOfficeEmployees] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
+  const [showAssetModal, setShowAssetModal] = useState(false);
   const [searchText, setSearchText] = useState('');
 
   const assetTypeNameRef = useRef(null);
@@ -162,6 +171,35 @@ function Assets() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText, activeTab]);
 
+  const fetchOffices = async () => {
+    const response = await OfficeManagementService.getOffices({ isActive: true });
+    setOffices(!response.error && Array.isArray(response.data?.data) ? response.data.data : []);
+  };
+
+  // Employees currently posted in the office; the asset's current employee is kept in the list when editing
+  const fetchOfficeEmployees = async (idOffice, currentEmployee = null) => {
+    if (!idOffice) {
+      setOfficeEmployees(currentEmployee ? [currentEmployee] : []);
+      return;
+    }
+    setLoadingOfficeEmployees(true);
+    try {
+      const response = await OfficeManagementService.getOfficeEmployees(idOffice, true);
+      const list = !response.error && Array.isArray(response.data?.data) ? response.data.data : [];
+      if (currentEmployee && !list.some((e) => e.idEmployee === currentEmployee.idEmployee)) {
+        list.push(currentEmployee);
+      }
+      setOfficeEmployees(list);
+    } finally {
+      setLoadingOfficeEmployees(false);
+    }
+  };
+
+  const handleOfficeChange = (value) => {
+    setAssetForm((prev) => ({ ...prev, idOffice: value, idEmployee: '' }));
+    fetchOfficeEmployees(value);
+  };
+
   const handleAssetChange = (field, value) => {
     setAssetForm({
       ...assetForm,
@@ -200,17 +238,20 @@ function Assets() {
         averageCost: parseFloat(assetForm.averageCost) || 0,
         assetWorkingStatus: assetForm.assetWorkingStatus,
         isAllocated: assetForm.isAllocated,
-        assetTypeName: assetForm.assetTypeName
+        assetTypeName: assetForm.assetTypeName,
+        // Both optional: allocated to an office, and to an employee of that office only when chosen
+        idOffice: assetForm.idOffice ? parseInt(assetForm.idOffice) : null,
+        idEmployee: assetForm.idEmployee ? parseInt(assetForm.idEmployee) : null
       };
 
       const response = await CommonService.addOrUpdateAssets([payload]);
       if (response.error) {
-        showToast('Failed to save asset', 'error');
+        showToast(response.error?.message || response.error?.response?.data?.message || (typeof response.error === 'string' ? response.error : 'Failed to save asset'), 'error');
       } else {
         showToast(editingAsset ? 'Asset updated successfully' : 'Asset added successfully', 'success');
+        setShowAssetModal(false);
         resetAssetForm();
         fetchAssets();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
       showToast('Failed to save asset', 'error');
@@ -228,9 +269,26 @@ function Assets() {
       averageCost: asset.averageCost || 0,
       assetWorkingStatus: asset.assetWorkingStatus || '',
       isAllocated: asset.isAllocated || false,
-      assetTypeName: asset.assetTypeName || ''
+      assetTypeName: asset.assetTypeName || '',
+      idOffice: asset.idOffice ? asset.idOffice.toString() : '',
+      idEmployee: asset.idEmployee ? asset.idEmployee.toString() : ''
     });
+    fetchOfficeEmployees(
+      asset.idOffice,
+      asset.idEmployee ? { idEmployee: asset.idEmployee, employeeCode: asset.employeeCode, employeeName: asset.employeeName } : null
+    );
     setEditingAsset(asset);
+    setShowAssetModal(true);
+  };
+
+  const handleAddAsset = () => {
+    resetAssetForm();
+    setShowAssetModal(true);
+  };
+
+  const handleCloseAssetModal = () => {
+    setShowAssetModal(false);
+    resetAssetForm();
   };
 
   const resetAssetForm = () => {
@@ -242,8 +300,11 @@ function Assets() {
       averageCost: 0,
       assetWorkingStatus: '',
       isAllocated: false,
-      assetTypeName: ''
+      assetTypeName: '',
+      idOffice: '',
+      idEmployee: ''
     });
+    setOfficeEmployees([]);
     setEditingAsset(null);
   };
 
@@ -256,10 +317,11 @@ function Assets() {
     }
   };
 
-  // Load asset types for dropdown when assets tab is active
+  // Load asset types and offices for the dropdowns when assets tab is active
   useEffect(() => {
     if (activeTab === "#navs-top-assets") {
       fetchAssetTypes();
+      fetchOffices();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -402,7 +464,7 @@ function Assets() {
             role="tabpanel"
           >
             <div className="row mt-3">
-              <div className="col-lg-8">
+              <div className="col-lg-12">
                 <div className="card">
                   <div className="card-header d-flex align-items-center justify-content-between pb-3">
                     <h5 className="m-0">Assets List</h5>
@@ -415,6 +477,9 @@ function Assets() {
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                       />
+                      <button type="button" className="btn btn-primary btn-sm px-4" onClick={handleAddAsset}>
+                        <i className="bx bx-plus me-1"></i> Add
+                      </button>
                     </div>
                   </div>
                   <div className="card-body">
@@ -430,14 +495,15 @@ function Assets() {
                               <th>Details</th>
                               <th className="text-end">Cost</th>
                               <th>Status</th>
-                              <th>Allocated</th>
+                              <th>Office</th>
+                              <th>Employee</th>
                               <th className="text-end">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {!Array.isArray(assets) || assets.length === 0 ? (
                               <tr>
-                                <td colSpan="7" className="text-center">
+                                <td colSpan="8" className="text-center">
                                   <div className="Nodatafound_box">
                                     <h6><i className="bx bx-search"></i> No data available!</h6>
                                   </div>
@@ -456,10 +522,11 @@ function Assets() {
                                     }).format(asset.averageCost || 0)}
                                   </td>
                                   <td>{asset.assetWorkingStatus === 'NotWorking' ? 'Not Working' : asset.assetWorkingStatus}</td>
+                                  <td>{asset.officeName || '-'}</td>
                                   <td>
-                                    <span className={`badge ${asset.isAllocated ? 'bg-label-success' : 'bg-label-secondary'}`}>
-                                      {asset.isAllocated ? 'Yes' : 'No'}
-                                    </span>
+                                    {asset.idEmployee
+                                      ? `${asset.employeeCode ? asset.employeeCode + ' - ' : ''}${asset.employeeName || ''}`
+                                      : '-'}
                                   </td>
                                   <td className="text-end">
                                     <button
@@ -481,134 +548,146 @@ function Assets() {
                   </div>
                 </div>
               </div>
-              <div className="col-lg-4">
-                <div className="card">
-                  <div className="card-header d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">
-                      {editingAsset ? 'Update Asset' : 'Add Asset'}
-                    </h5>
-                  </div>
-                  <div className="card-body">
-                    <form onSubmit={handleAssetSubmit}>
-                      <div className="mb-3">
-                        <label className="form-label">Asset Type</label>
-                        <select
-                          className="form-select"
-                          value={assetForm.idAssetType || 0}
-                          onChange={(e) => {
-                            const selectedValue = parseInt(e.target.value) || 0;
-                            const selectedType = Array.isArray(assetTypes) && selectedValue > 0 
-                              ? assetTypes.find(t => t.idAssetType === selectedValue) 
-                              : null;
-                            
-                            setAssetForm(prev => ({
-                              ...prev,
-                              idAssetType: selectedValue,
-                              assetTypeName: selectedType?.assetTypeName || ''
-                            }));
-                          }}
-                          required
-                        >
-                          <option value={0}>Select Asset Type</option>
-                          {Array.isArray(assetTypes) && assetTypes.length > 0 ? assetTypes.map((type) => (
-                            <option key={type.idAssetType} value={type.idAssetType}>
-                              {type.assetTypeName}
-                            </option>
-                          )) : (
-                            <option disabled>No asset types available. Please add asset types first.</option>
-                          )}
-                        </select>
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Serial Number</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={assetForm.assetSerialNumber}
-                          onChange={(e) => handleAssetChange('assetSerialNumber', e.target.value)}
-                          placeholder="Enter serial number"
-                          ref={assetSerialNumberRef}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Asset Details</label>
-                        <textarea
-                          className="form-control"
-                          value={assetForm.assetDetails}
-                          onChange={(e) => handleAssetChange('assetDetails', e.target.value)}
-                          placeholder="Enter asset details"
-                          rows="3"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Average Cost</label>
-                        <NumericFormat
-                          className="form-control"
-                          value={assetForm.averageCost}
-                          onValueChange={(values) => handleAssetChange('averageCost', values.floatValue || 0)}
-                          decimalScale={2}
-                          allowNegative={false}
-                          thousandSeparator={true}
-                          allowLeadingZeros={false}
-                          placeholder="Enter cost"
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Working Status</label>
-                        <select
-                          className="form-select"
-                          value={assetForm.assetWorkingStatus}
-                          onChange={(e) => handleAssetChange('assetWorkingStatus', e.target.value)}
-                          required
-                        >
-                          <option value="">Select Working Status</option>
-                          <option value="Working">Working</option>
-                          <option value="NotWorking">Not Working</option>
-                        </select>
-                      </div>
-                      <div className="mb-3">
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            checked={assetForm.isAllocated}
-                            onChange={(e) => handleAssetChange('isAllocated', e.target.checked)}
-                            id="isAllocated"
-                          />
-                          <label className="form-check-label" htmlFor="isAllocated">
-                            Is Allocated
-                          </label>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <button
-                          type="submit"
-                          className="btn btn-primary px-4 me-2"
-                          disabled={loadingAssets}
-                        >
-                          {loadingAssets ? 'Saving...' : editingAsset ? 'Update' : 'Submit'}
-                        </button>
-                        {editingAsset && (
-                          <button
-                            type="button"
-                            className="btn btn-outline-secondary px-4"
-                            onClick={resetAssetForm}
-                            disabled={loadingAssets}
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add / Edit Asset popup */}
+      <Modal show={showAssetModal} onHide={handleCloseAssetModal} size="lg" centered backdrop="static" keyboard={false}
+        aria-labelledby="asset-modal-title">
+        <form onSubmit={handleAssetSubmit}>
+          <Modal.Header closeButton>
+            <Modal.Title id="asset-modal-title">
+              <h5 className="m-0">{editingAsset ? 'Edit Asset' : 'Add Asset'}</h5>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Asset Type</label>
+                <select
+                  className="form-select"
+                  value={assetForm.idAssetType || 0}
+                  onChange={(e) => {
+                    const selectedValue = parseInt(e.target.value) || 0;
+                    const selectedType = Array.isArray(assetTypes) && selectedValue > 0 
+                      ? assetTypes.find(t => t.idAssetType === selectedValue) 
+                      : null;
+            
+                    setAssetForm(prev => ({
+                      ...prev,
+                      idAssetType: selectedValue,
+                      assetTypeName: selectedType?.assetTypeName || ''
+                    }));
+                  }}
+                  required
+                >
+                  <option value={0}>Select Asset Type</option>
+                  {Array.isArray(assetTypes) && assetTypes.length > 0 ? assetTypes.map((type) => (
+                    <option key={type.idAssetType} value={type.idAssetType}>
+                      {type.assetTypeName}
+                    </option>
+                  )) : (
+                    <option disabled>No asset types available. Please add asset types first.</option>
+                  )}
+                </select>
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Serial Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={assetForm.assetSerialNumber}
+                  onChange={(e) => handleAssetChange('assetSerialNumber', e.target.value)}
+                  placeholder="Enter serial number"
+                  ref={assetSerialNumberRef}
+                  required
+                />
+              </div>
+              <div className="col-12 mb-3">
+                <label className="form-label">Asset Details</label>
+                <textarea
+                  className="form-control"
+                  value={assetForm.assetDetails}
+                  onChange={(e) => handleAssetChange('assetDetails', e.target.value)}
+                  placeholder="Enter asset details"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Average Cost</label>
+                <NumericFormat
+                  className="form-control"
+                  value={assetForm.averageCost}
+                  onValueChange={(values) => handleAssetChange('averageCost', values.floatValue || 0)}
+                  decimalScale={2}
+                  allowNegative={false}
+                  thousandSeparator={true}
+                  allowLeadingZeros={false}
+                  placeholder="Enter cost"
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Working Status</label>
+                <select
+                  className="form-select"
+                  value={assetForm.assetWorkingStatus}
+                  onChange={(e) => handleAssetChange('assetWorkingStatus', e.target.value)}
+                  required
+                >
+                  <option value="">Select Working Status</option>
+                  <option value="Working">Working</option>
+                  <option value="NotWorking">Not Working</option>
+                </select>
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Office</label>
+                <select
+                  className="form-select"
+                  value={assetForm.idOffice}
+                  onChange={(e) => handleOfficeChange(e.target.value)}
+                >
+                  <option value="">Not allocated</option>
+                  {offices.map((office) => (
+                    <option key={office.idOffice} value={office.idOffice}>
+                      {office.officeCode} - {office.officeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Employee</label>
+                <select
+                  className="form-select"
+                  value={assetForm.idEmployee}
+                  onChange={(e) => handleAssetChange('idEmployee', e.target.value)}
+                  disabled={!assetForm.idOffice && !assetForm.idEmployee}
+                >
+                  <option value="">
+                    {loadingOfficeEmployees ? 'Loading...' : assetForm.idOffice ? 'Office only (no employee)' : 'Select an office first'}
+                  </option>
+                  {officeEmployees.map((emp) => (
+                    <option key={emp.idEmployee} value={emp.idEmployee}>
+                      {emp.employeeCode ? `${emp.employeeCode} - ` : ''}{emp.employeeName}
+                    </option>
+                  ))}
+                </select>
+                <small className="text-muted">Optional: choose only when the asset is given to an employee of this office.</small>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button type="submit" className="btn btn-primary btn-sm py-2 px-4 me-2" disabled={loadingAssets}>
+              {loadingAssets ? 'Saving...' : editingAsset ? 'Update' : 'Submit'}
+            </button>
+            <button type="button" className="btn btn-outline-secondary btn-sm py-2 px-4" onClick={handleCloseAssetModal} disabled={loadingAssets}>
+              Cancel
+            </button>
+          </Modal.Footer>
+        </form>
+      </Modal>
     </div>
   );
 }

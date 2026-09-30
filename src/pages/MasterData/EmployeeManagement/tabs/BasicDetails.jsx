@@ -1,13 +1,37 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import { toast } from "react-toastify";
 import CommonService from "../../../../core/services/CommonService";
+import EmployeeStatutoryDetailsService from "../../../../core/services/EmployeeStatutoryDetailsService";
 import { EmployeeContext } from "../EmployeeManagement";
 import { useLoader } from "../../../../components/LoaderContext";
 import { useDispatch } from "react-redux";
 import { getEmployeeProfileByID } from "../../../../redux/reducers/getAllEmployeeProfiles";
+
+// Defaults for Nationality and Citizenship (matched to the dropdown values without case)
+const DEFAULT_NATIONALITY = "Indian";
+const DEFAULT_CITIZENSHIP = "India";
+// Default PT State (States.StateCode) when the employee has no statutory details yet
+const DEFAULT_PT_STATE_CODE = "KL";
+
+// EmployeeStatutoryDetails (one row per employee). Gender and Date of Birth are taken from the employee by the API.
+const initialStatutoryData = {
+  pan: "",
+  uan: "",
+  pfNumber: "",
+  isPFApplicable: false,
+  pfOnActualWage: false,
+  isEPSApplicable: false,
+  vpfRate: "",
+  esiNumber: "",
+  isESIApplicable: false,
+  isDisabled: false,
+  idPTState: "",
+  isPTApplicable: false,
+  isLWFApplicable: false,
+};
 
 const BasicDetails = () => {
   const { employeeId, setEmployeeId, setHasUnsavedChanges, setEmployeeName } = useContext(EmployeeContext) || {};
@@ -45,8 +69,8 @@ const BasicDetails = () => {
     overTimeAllowedStatus: false,
     employeePhoto: null,
     lastWorkingDay: null,
-    nationality: "",
-    citizenShip: "",
+    nationality: DEFAULT_NATIONALITY,
+    citizenShip: DEFAULT_CITIZENSHIP,
     maritalStatus: "",
     passportNumber: "",
     workPhone: "",
@@ -58,6 +82,11 @@ const BasicDetails = () => {
   });
 
   const [employeeFormErrors, setEmployeeFormErrors] = useState({});
+  const [statutoryData, setStatutoryData] = useState(initialStatutoryData);
+  const [loadedStatutoryData, setLoadedStatutoryData] = useState(initialStatutoryData);
+  const [ptStates, setPtStates] = useState([]);
+  // true once the default PT State may be applied (no statutory details saved for this employee)
+  const applyDefaultPtStateRef = useRef(true);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [reportingToOptions, setReportingToOptions] = useState([]);
@@ -65,6 +94,21 @@ const BasicDetails = () => {
   const [workTypeOptions, setWorkTypeOptions] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
   const [nationalityOptions, setNationalityOptions] = useState([]);
+
+  useEffect(() => {
+    const match = (options, value) =>
+      options.find((o) => (o.value || "").toLowerCase() === (value || "").toLowerCase());
+    const nationality = match(nationalityOptions, employeeFormData.nationality);
+    const citizenship = match(countryOptions, employeeFormData.citizenShip);
+    if ((nationality && nationality.value !== employeeFormData.nationality) ||
+        (citizenship && citizenship.value !== employeeFormData.citizenShip)) {
+      setEmployeeFormData((prev) => ({
+        ...prev,
+        ...(nationality ? { nationality: nationality.value } : {}),
+        ...(citizenship ? { citizenShip: citizenship.value } : {}),
+      }));
+    }
+  }, [nationalityOptions, countryOptions, employeeFormData.nationality, employeeFormData.citizenShip]);
   const [employeePhotoPreview, setEmployeePhotoPreview] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +149,97 @@ const BasicDetails = () => {
       loadEmployeeData(employeeId);
     }
   }, [employeeId]);
+
+  useEffect(() => {
+    loadStatutoryDetails(employeeId);
+  }, [employeeId]);
+
+  // Default PT State: Kerala (KL) for an employee without saved statutory details; applied once, so it can be changed
+  useEffect(() => {
+    if (!applyDefaultPtStateRef.current || statutoryData.idPTState || ptStates.length === 0) return;
+    const defaultState = ptStates.find((s) => s.isActive && (s.stateCode || "").toUpperCase() === DEFAULT_PT_STATE_CODE);
+    applyDefaultPtStateRef.current = false;
+    if (defaultState) {
+      const idPTState = String(defaultState.idState);
+      setStatutoryData((prev) => ({ ...prev, idPTState }));
+      setLoadedStatutoryData((prev) => ({ ...prev, idPTState }));
+    }
+  }, [ptStates, statutoryData.idPTState]);
+
+  // PT State dropdown: states that have Professional Tax
+  useEffect(() => {
+    EmployeeStatutoryDetailsService.getStates({ hasPT: true }).then((res) => {
+      setPtStates(Array.isArray(res?.data?.data) ? res.data.data : []);
+    });
+  }, []);
+
+  const loadStatutoryDetails = async (id) => {
+    if (!id) {
+      applyDefaultPtStateRef.current = true;
+      setStatutoryData(initialStatutoryData);
+      setLoadedStatutoryData(initialStatutoryData);
+      return;
+    }
+    const res = await EmployeeStatutoryDetailsService.getEmployeeStatutoryDetailsById(id);
+    const d = res?.data?.data;
+    const data = d
+      ? {
+          pan: d.pan ?? "",
+          uan: d.uan ?? "",
+          pfNumber: d.pfNumber ?? "",
+          isPFApplicable: !!d.isPFApplicable,
+          pfOnActualWage: !!d.pfOnActualWage,
+          isEPSApplicable: !!d.isEPSApplicable,
+          vpfRate: d.vpfRate ?? "",
+          esiNumber: d.esiNumber ?? "",
+          isESIApplicable: !!d.isESIApplicable,
+          isDisabled: !!d.isDisabled,
+          idPTState: d.idPTState != null ? String(d.idPTState) : "",
+          isPTApplicable: !!d.isPTApplicable,
+          isLWFApplicable: !!d.isLWFApplicable,
+        }
+      : initialStatutoryData;
+    applyDefaultPtStateRef.current = !d;
+    setStatutoryData(data);
+    setLoadedStatutoryData(data);
+  };
+
+  const handleStatutoryChange = (field, value) => {
+    let sanitized = value;
+    if (typeof sanitized === "string") {
+      if (field === "pan" || field === "pfNumber") sanitized = sanitized.toUpperCase().replace(/\s/g, "");
+      if (field === "uan") sanitized = sanitized.replace(/\D/g, "").slice(0, 12);
+      if (field === "esiNumber") sanitized = sanitized.replace(/\D/g, "").slice(0, 17);
+      if (field === "vpfRate" && !/^\d{0,3}(\.\d{0,2})?$/.test(sanitized)) return;
+    }
+    setStatutoryData((prev) => ({ ...prev, [field]: sanitized }));
+    if (setHasUnsavedChanges) setHasUnsavedChanges(true);
+    if (employeeFormErrors[field]) {
+      setEmployeeFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const saveStatutoryDetails = (idEmployee) =>
+    EmployeeStatutoryDetailsService.addOrUpdateEmployeeStatutoryDetails({
+      idEmployee: parseInt(idEmployee),
+      pan: statutoryData.pan.trim() || null,
+      uan: statutoryData.uan.trim() || null,
+      pfNumber: statutoryData.pfNumber.trim() || null,
+      isPFApplicable: statutoryData.isPFApplicable,
+      pfOnActualWage: statutoryData.pfOnActualWage,
+      isEPSApplicable: statutoryData.isEPSApplicable,
+      vpfRate: statutoryData.vpfRate === "" ? null : Number(statutoryData.vpfRate),
+      esiNumber: statutoryData.esiNumber.trim() || null,
+      isESIApplicable: statutoryData.isESIApplicable,
+      isDisabled: statutoryData.isDisabled,
+      idPTState: statutoryData.idPTState === "" ? null : parseInt(statutoryData.idPTState),
+      isPTApplicable: statutoryData.isPTApplicable,
+      isLWFApplicable: statutoryData.isLWFApplicable,
+    });
 
   const loadDepartmentsAndDesignations = async () => {
     try {
@@ -365,8 +500,8 @@ const BasicDetails = () => {
             : false,
         employeePhoto: employeePhotoValue,
         lastWorkingDay: formatDateForForm(detailedData.lastWorkingDay),
-        nationality: detailedData.nationality ?? "",
-        citizenShip: detailedData.citizenShip ?? "",
+        nationality: detailedData.nationality || DEFAULT_NATIONALITY,
+        citizenShip: detailedData.citizenShip || DEFAULT_CITIZENSHIP,
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
         workPhone: "",
@@ -444,8 +579,8 @@ const BasicDetails = () => {
         childrenCount: detailedData.childrenCount ?? 0,
         overTimeAllowedStatus: typeof detailedData.overTimeAllowedStatus !== "undefined" ? (detailedData.overTimeAllowedStatus === true || detailedData.overTimeAllowedStatus === "true") : false,
         lastWorkingDay: detailedData.lastWorkingDay ? moment(detailedData.lastWorkingDay).format("YYYY-MM-DD") : null,
-        nationality: detailedData.nationality ?? "",
-        citizenShip: detailedData.citizenShip ?? "",
+        nationality: detailedData.nationality || DEFAULT_NATIONALITY,
+        citizenShip: detailedData.citizenShip || DEFAULT_CITIZENSHIP,
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
         workPhone: "",
@@ -605,6 +740,20 @@ const BasicDetails = () => {
       }
     }
 
+    // Statutory details (same checks as the API)
+    if (statutoryData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(statutoryData.pan)) {
+      errors.pan = "PAN must be 10 characters, like ABCDE1234F";
+    }
+    if (statutoryData.uan && !/^[0-9]{12}$/.test(statutoryData.uan)) {
+      errors.uan = "UAN must be 12 digits";
+    }
+    if (statutoryData.esiNumber && !/^([0-9]{10}|[0-9]{17})$/.test(statutoryData.esiNumber)) {
+      errors.esiNumber = "ESI Number must be 10 or 17 digits";
+    }
+    if (statutoryData.vpfRate !== "" && (Number(statutoryData.vpfRate) < 0 || Number(statutoryData.vpfRate) > 100)) {
+      errors.vpfRate = "VPF Rate must be between 0 and 100";
+    }
+
     setEmployeeFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -688,6 +837,17 @@ const BasicDetails = () => {
       }
 
       if (result.data?.success) {
+        // Statutory details are saved against the employee (new employees get their id from the response)
+        const savedEmployeeId = editingEmployeeId || result.data?.data?.idEmployee;
+        if (savedEmployeeId) {
+          const statutoryResult = await saveStatutoryDetails(savedEmployeeId);
+          if (statutoryResult.error) {
+            toast.error(`Employee saved, but statutory details were not saved: ${statutoryResult.error}`);
+          } else {
+            setLoadedStatutoryData(statutoryData);
+          }
+        }
+
         const message = editingEmployeeId ? "Employee updated successfully" : "Employee added successfully";
         toast.success(message);
 
@@ -795,6 +955,8 @@ const BasicDetails = () => {
   };
 
   const handleReset = () => {
+    if (!employeeId) applyDefaultPtStateRef.current = true;
+    setStatutoryData(employeeId ? loadedStatutoryData : initialStatutoryData);
     setEmployeeFormData({
       employeeCode: "",
       firstName: "",
@@ -825,8 +987,8 @@ const BasicDetails = () => {
       overTimeAllowedStatus: false,
       employeePhoto: null,
       lastWorkingDay: null,
-      nationality: "",
-      citizenShip: "",
+      nationality: DEFAULT_NATIONALITY,
+      citizenShip: DEFAULT_CITIZENSHIP,
       maritalStatus: "",
       passportNumber: "",
       workPhone: "",
@@ -1071,14 +1233,8 @@ const BasicDetails = () => {
                 </select>
               </div>
               <div className="col-md-4">
-                {/* Empty column for Reporting To alignment */}
-              </div>
-            </div>
-
-            <div className="row mt-3">
-              <div className="col-md-4">
                 <label className="form-label mb-1" htmlFor="nationalIDNumber">
-                  National ID Number
+                  Aadhar Number
                 </label>
                 <input
                   id="nationalIDNumber"
@@ -1087,38 +1243,118 @@ const BasicDetails = () => {
                   className="form-control"
                   value={employeeFormData.nationalIDNumber}
                   onChange={(e) => handleEmployeeInputChange("nationalIDNumber", e.target.value)}
-                  placeholder="Enter National ID Number"
+                  placeholder="Enter Aadhar Number"
                   maxLength={20}
                 />
               </div>
+            </div>
+
+          </div>
+
+          {/* Statutory Details Section (EmployeeStatutoryDetails) */}
+          <div className="mb-4">
+            <div className="bg-secondary p-2 mb-3">
+              <h6 className="mb-0 text-white">Statutory Details</h6>
+            </div>
+            <div className="row">
               <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="idNumber">
-                  NIS Number
-                </label>
-                <input
-                  id="idNumber"
-                  name="idNumber"
-                  type="text"
-                  className="form-control"
-                  value={employeeFormData.idNumber}
-                  onChange={(e) => handleEmployeeInputChange("idNumber", e.target.value)}
-                  placeholder="Enter ID Number"
-                  maxLength={50}
-                />
+                <label className="form-label mb-1" htmlFor="pan">PAN</label>
+                <input id="pan" type="text" className={`form-control${employeeFormErrors.pan ? " is-invalid" : ""}`}
+                  value={statutoryData.pan} maxLength={10} placeholder="ABCDE1234F"
+                  onChange={(e) => handleStatutoryChange("pan", e.target.value)} />
+                {employeeFormErrors.pan && <div className="invalid-feedback d-block">{employeeFormErrors.pan}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="taxIdNumber">
-                  Tax ID Number
-                </label>
-                <input
-                  id="taxIdNumber"
-                  name="taxIdNumber"
-                  type="text"
-                  className="form-control"
-                  value={employeeFormData.taxIdNumber}
-                  onChange={(e) => handleEmployeeInputChange("taxIdNumber", e.target.value)}
-                  maxLength={20}
-                />
+                <label className="form-label mb-1" htmlFor="uan">UAN</label>
+                <input id="uan" type="text" className={`form-control${employeeFormErrors.uan ? " is-invalid" : ""}`}
+                  value={statutoryData.uan} maxLength={12} placeholder="12 digits"
+                  onChange={(e) => handleStatutoryChange("uan", e.target.value)} />
+                {employeeFormErrors.uan && <div className="invalid-feedback d-block">{employeeFormErrors.uan}</div>}
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="pfNumber">PF Number</label>
+                <input id="pfNumber" type="text" className="form-control"
+                  value={statutoryData.pfNumber} maxLength={30} placeholder="KA/BNG/0001/1001"
+                  onChange={(e) => handleStatutoryChange("pfNumber", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="row mt-3">
+              <div className="col-md-4">
+                <label className="form-label mb-1 d-block">Provident Fund</label>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isPFApplicable" checked={statutoryData.isPFApplicable}
+                    onChange={(e) => handleStatutoryChange("isPFApplicable", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isPFApplicable">PF Applicable</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isEPSApplicable" checked={statutoryData.isEPSApplicable}
+                    onChange={(e) => handleStatutoryChange("isEPSApplicable", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isEPSApplicable">EPS Applicable</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="pfOnActualWage" checked={statutoryData.pfOnActualWage}
+                    onChange={(e) => handleStatutoryChange("pfOnActualWage", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="pfOnActualWage">PF on Actual Wage</label>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="vpfRate">VPF Rate (%)</label>
+                <input id="vpfRate" type="text" className={`form-control${employeeFormErrors.vpfRate ? " is-invalid" : ""}`}
+                  value={statutoryData.vpfRate} placeholder="e.g. 5.00"
+                  onChange={(e) => handleStatutoryChange("vpfRate", e.target.value)} />
+                {employeeFormErrors.vpfRate && <div className="invalid-feedback d-block">{employeeFormErrors.vpfRate}</div>}
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="esiNumber">ESI Number</label>
+                <input id="esiNumber" type="text" className={`form-control${employeeFormErrors.esiNumber ? " is-invalid" : ""}`}
+                  value={statutoryData.esiNumber} maxLength={17} placeholder="10 or 17 digits"
+                  onChange={(e) => handleStatutoryChange("esiNumber", e.target.value)} />
+                {employeeFormErrors.esiNumber && <div className="invalid-feedback d-block">{employeeFormErrors.esiNumber}</div>}
+              </div>
+            </div>
+
+            <div className="row mt-3">
+              <div className="col-md-4">
+                <label className="form-label mb-1 d-block">ESI</label>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isESIApplicable" checked={statutoryData.isESIApplicable}
+                    onChange={(e) => handleStatutoryChange("isESIApplicable", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isESIApplicable">ESI Applicable</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isDisabled" checked={statutoryData.isDisabled}
+                    onChange={(e) => handleStatutoryChange("isDisabled", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isDisabled">Person with Disability</label>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1" htmlFor="idPTState">PT State</label>
+                <select id="idPTState" className="form-select"
+                  value={statutoryData.idPTState}
+                  onChange={(e) => handleStatutoryChange("idPTState", e.target.value)}>
+                  <option value="">Select PT State</option>
+                  {ptStates
+                    .filter((s) => s.isActive || String(s.idState) === String(statutoryData.idPTState))
+                    .map((s) => (
+                      <option key={s.idState} value={String(s.idState)}>
+                        {s.stateName} ({s.stateCode}){s.isActive ? "" : " - Inactive"}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label mb-1 d-block">PT / LWF</label>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isPTApplicable" checked={statutoryData.isPTApplicable}
+                    onChange={(e) => handleStatutoryChange("isPTApplicable", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isPTApplicable">PT Applicable</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input className="form-check-input" type="checkbox" id="isLWFApplicable" checked={statutoryData.isLWFApplicable}
+                    onChange={(e) => handleStatutoryChange("isLWFApplicable", e.target.checked)} />
+                  <label className="form-check-label" htmlFor="isLWFApplicable">LWF Applicable</label>
+                </div>
               </div>
             </div>
           </div>

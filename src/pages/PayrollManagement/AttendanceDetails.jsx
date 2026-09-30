@@ -30,14 +30,16 @@ function AttendanceDetails() {
         const yesterday = moment().subtract(1, 'days');
         // If today is the 1st of the month, endDate should be the same as startDate
         if (moment().date() === 1) {
-            return startOfMonth.format('DD-MM-YYYY');
+            return startOfMonth.toDate();
         }
-        return yesterday.format('DD-MM-YYYY');
+        return yesterday.startOf('day').toDate();
     };
 
-    const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
-    const [endDate, setEndDate] = useState(getInitialEndDate());
-    const today = moment(new Date()).format('DD-MM-YYYY')
+    // Dates are kept as Date objects: the date pickers read text like "29-09-2026" as month-first,
+    // which is invalid from the 13th of the month and crashed the page (blank screen)
+    const [startDate, setStartDate] = useState(() => moment().startOf('month').toDate());
+    const [endDate, setEndDate] = useState(getInitialEndDate);
+    const today = moment().startOf('day').toDate();
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const filteredEmployees = [
@@ -111,7 +113,7 @@ function AttendanceDetails() {
             formattedStartDate,
             formattedEndDate
         ).then(res => {
-            setAttendanceDetails(res.data.data);
+            setAttendanceDetails(Array.isArray(res?.data?.data) ? res.data.data : []);
             hideLoader();
         }).catch(err => {
             setAttendanceDetails([]);

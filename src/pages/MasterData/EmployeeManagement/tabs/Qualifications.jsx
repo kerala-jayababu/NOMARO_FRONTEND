@@ -36,6 +36,21 @@ const Qualifications = () => {
     certificate: null,
   });
 
+  // India is the default Country for a new record (matched by name, so the id doesn't matter)
+  const getDefaultCountryId = () => {
+    const india = countries.find((c) => (c.countryName || "").trim().toLowerCase() === "india");
+    return india ? india.idCountry.toString() : "";
+  };
+
+  useEffect(() => {
+    if (editingId) return;
+    const defaultCountryId = getDefaultCountryId();
+    if (!defaultCountryId) return;
+    setFormData((prev) => (prev.idCountry ? prev : { ...prev, idCountry: defaultCountryId }));
+    setInitialFormData((prev) => (prev && !prev.idCountry ? { ...prev, idCountry: defaultCountryId } : prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries]);
+
   useEffect(() => {
     let isMounted = true;
     
@@ -65,7 +80,7 @@ const Qualifications = () => {
         qualificationName: "",
         specialization: "",
         institutionName: "",
-        idCountry: "",
+        idCountry: getDefaultCountryId(),
         yearOfCompletion: "",
         gradeOrPercentage: "",
         certificate: null,
@@ -335,7 +350,7 @@ const Qualifications = () => {
       qualificationName: "",
       specialization: "",
       institutionName: "",
-      idCountry: "",
+      idCountry: getDefaultCountryId(),
       yearOfCompletion: "",
       gradeOrPercentage: "",
       certificate: null,
@@ -489,33 +504,34 @@ const Qualifications = () => {
               </select>
             </div>
 
-            <div className="mb-3">
-              <label className="form-label mb-1">Year of Completion *</label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.yearOfCompletion}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Only allow digits and restrict to 4 digits
-                  if (value === "" || (/^\d{1,4}$/.test(value))) {
-                    handleInputChange("yearOfCompletion", value);
-                  }
-                }}
-                maxLength="4"
-                placeholder="YYYY"
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label mb-1">Grade / Percentage</label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.gradeOrPercentage}
-                onChange={(e) => handleInputChange("gradeOrPercentage", e.target.value)}
-                maxLength={50}
-              />
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label mb-1">Year of Completion *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.yearOfCompletion}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Only allow digits and restrict to 4 digits
+                    if (value === "" || (/^\d{1,4}$/.test(value))) {
+                      handleInputChange("yearOfCompletion", value);
+                    }
+                  }}
+                  maxLength="4"
+                  placeholder="YYYY"
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label mb-1">Grade / Percentage</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.gradeOrPercentage}
+                  onChange={(e) => handleInputChange("gradeOrPercentage", e.target.value)}
+                  maxLength={50}
+                />
+              </div>
             </div>
 
             <div className="mb-3">

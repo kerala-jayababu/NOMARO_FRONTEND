@@ -47,6 +47,16 @@ export default class CommonService {
     }
   };
 
+  // Where a salary head is used (templates, employee salary structures, other heads' formulas / base head)
+  static getSalaryHeadUsage = async (idSalaryHead) => {
+    try {
+      const res = await API.get("/api/v1/MasterData/GetSalaryHeadUsage?idSalaryHead=" + idSalaryHead);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+
   static getHolidayTypes = async () => {
     try {
       const res = await API.get("/api/v1/Common/GetHolidayTypes");

@@ -120,12 +120,15 @@ function ScheduledDeductions() {
       );
     });
 
-    // Set as default selected
+    // Set as default selected: Salary Month From and Salary Month To = current month,
+    // and Salary Month To only offers the current month and later months
     if (currentMonthData) {
       setNewData((prevData) => ({
         ...prevData,
-        deductionFromSalaryMonthDate: currentMonthData.salaryMonthDate
+        deductionFromSalaryMonthDate: currentMonthData.salaryMonthDate,
+        deductionToSalaryMonthDate: currentMonthData.salaryMonthDate
       }));
+      setFilteredMonthsList(monthsFrom(currentMonthData.salaryMonthDate));
     }
   }
 
@@ -406,34 +409,25 @@ function ScheduledDeductions() {
       return;
     }
 
+    // Salary Month To defaults to the month chosen in Salary Month From
     setNewData({
       ...newData,
       deductionFromSalaryMonthDate: selectedDate,
-      deductionToSalaryMonthDate: "",
+      deductionToSalaryMonthDate: selectedDate || "",
     });
 
-    if (selectedId) {
-      const filteredList = salaryMonthsList.filter(
-        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
-      );
-      setFilteredMonthsList(filteredList);
-    } else {
-      setFilteredMonthsList(salaryMonthsList);
-    }
+    setFilteredMonthsList(monthsFrom(selectedDate));
+  };
+
+  // Salary Month To only offers the From month and later months
+  const monthsFrom = (fromDate) => {
+    if (!fromDate) return salaryMonthsList;
+    const from = new Date(fromDate);
+    return salaryMonthsList.filter((el) => new Date(el.salaryMonthDate) >= from);
   };
 
   const handleMonthFromChangeEdit = (e) => {
-    const selectedDate = e;
-    const selectedId = (salaryMonthsList.find((el) => el.salaryMonthDate === selectedDate))?.idSalaryMonth;
-
-    if (selectedId) {
-      const filteredList = salaryMonthsList.filter(
-        (el) => el.idSalaryMonth > parseInt(selectedId, 10)
-      );
-      setFilteredMonthsList(filteredList);
-    } else {
-      setFilteredMonthsList(salaryMonthsList);
-    }
+    setFilteredMonthsList(monthsFrom(e));
   };
 
   const handleMonthToChange = (e) => {

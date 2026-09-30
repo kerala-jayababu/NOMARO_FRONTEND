@@ -156,11 +156,7 @@ function Offices() {
       label: "Parent Office",
       render: (value) => value || "-",
     },
-    {
-      key: "city",
-      label: "City / State",
-      render: (_, row) => [row.city, row.state].filter(Boolean).join(", ") || "-",
-    },
+    { key: "city", label: "City", render: (value) => value || "-" },
     {
       key: "officeHeadName",
       label: "Office Head",

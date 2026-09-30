@@ -89,6 +89,16 @@ export default class EmployeeSalaryConfigService {
     }
   }
 
+  // Current approved structure, pending structure, default Valid From / Revision Reason and warnings for the selected employee
+  static getEmployeeSalaryStructureInfo = async (idEmployee) => {
+    try {
+      const res = await API.get("/api/v1/EmployeeSalaryConfig/GetEmployeeSalaryStructureInfo?idEmployee=" + idEmployee);
+      return { error: null, data: res.data };
+    } catch (error) {
+      return { error: error.response?.data?.message || "An error occurred", data: null };
+    }
+  }
+
   static unApproveEmployeeSalaryConfig = async (payload) => {
     try {
       const res = await API.post("/api/v1/EmployeeSalaryConfig/UnApproveEmployeeSalaryConfig", payload);

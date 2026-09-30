@@ -13,6 +13,11 @@ import { DeleteIcon, AddIcon, UpIcon, DownIcon } from "../../../../components/ic
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 import secureLocalStorage from "react-secure-storage";
+
+// Bank accounts are always in Indian Rupees (the currency is no longer asked on the screen)
+const DEFAULT_CURRENCY_CODE = "INR";
+// The first bank account gets 100% of the salary by default
+const DEFAULT_SALARY_PERCENTAGE = "100";
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
 const BankDetails = () => {
@@ -182,7 +187,7 @@ const BankDetails = () => {
               account.salaryPercentageDistributed != null
                 ? account.salaryPercentageDistributed.toString()
                 : "",
-            currencyCode: account.currencyCode || "GYD",
+            currencyCode: DEFAULT_CURRENCY_CODE,
             orderNumber: account.orderNumber || index + 1,
           })
         );
@@ -213,10 +218,10 @@ const BankDetails = () => {
         const defaultBankAccount = {
           idEmployeeBankAccount: null,
           selectedBank: banks.length > 0 ? banks[0].value : "",
-          selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+          selectedBranch: "",
           accountNumber: "",
-          salaryPercentageDistributed: "",
-          currencyCode: "GYD",
+          salaryPercentageDistributed: DEFAULT_SALARY_PERCENTAGE,
+          currencyCode: DEFAULT_CURRENCY_CODE,
           orderNumber: 1,
         };
         mappedBankAccounts = [defaultBankAccount];
@@ -275,6 +280,21 @@ const BankDetails = () => {
     }
   };
 
+  useEffect(() => {
+    const missingBankIds = [
+      ...new Set(
+        bankAccountsState
+          .map((account) => account.selectedBank)
+          .filter((bankId) => bankId && !branchesPerBank[bankId])
+      ),
+    ];
+    missingBankIds.forEach(async (bankId) => {
+      const branches = await getFilteredBranches(bankId);
+      setBranchesPerBank((prev) => (prev[bankId] ? prev : { ...prev, [bankId]: branches }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankAccountsState]);
+
   const getFilteredBranches = async (bankId) => {
     const parsedBankId = parseInt(bankId, 10);
     try {
@@ -284,7 +304,7 @@ const BankDetails = () => {
       const data = await response.json();
       return data.data.map((branch) => ({
         value: branch.idBankBranches,
-        label: branch.abaRoutingNumber,
+        label: branch.branchName || branch.abaRoutingNumber || "",
       }));
     } catch (error) {
       console.error("Error fetching branches:", error);
@@ -391,7 +411,7 @@ const BankDetails = () => {
           selectedBranch: "",
           accountNumber: "",
           salaryPercentageDistributed: "",
-          currencyCode: "GYD",
+          currencyCode: DEFAULT_CURRENCY_CODE,
           orderNumber: nextOrderNumber,
         },
       ];
@@ -417,10 +437,10 @@ const BankDetails = () => {
           {
             idEmployeeBankAccount: null,
             selectedBank: banks.length > 0 ? banks[0].value : "",
-            selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+            selectedBranch: "",
             accountNumber: "",
-            salaryPercentageDistributed: "",
-            currencyCode: "GYD",
+            salaryPercentageDistributed: DEFAULT_SALARY_PERCENTAGE,
+            currencyCode: DEFAULT_CURRENCY_CODE,
             orderNumber: 1,
           },
         ];
@@ -652,10 +672,6 @@ const BankDetails = () => {
             "Fixed amount must be a positive number with up to 12 digits.";
         }
       }
-      if (!["GYD", "USD"].includes(account.currencyCode)) {
-        isValid = false;
-        errors[`currencyCode_${index}`] = "Currency must be 'INR' or 'USD'.";
-      }
     });
     setBankAccountErrors(errors);
     return isValid;
@@ -732,7 +748,7 @@ const BankDetails = () => {
         account.salaryPercentageDistributed
       ),
       disbursementType: disbursementType,
-      currencyCode: account.currencyCode,
+      currencyCode: DEFAULT_CURRENCY_CODE,
       orderNumber: account.orderNumber || index + 1,
     }));
 
@@ -849,10 +865,10 @@ const BankDetails = () => {
         {
           idEmployeeBankAccount: null,
           selectedBank: banks.length > 0 ? banks[0].value : "",
-          selectedBranch: bankBranches.length > 0 ? bankBranches[0].value : "",
+          selectedBranch: "",
           accountNumber: "",
-          salaryPercentageDistributed: "",
-          currencyCode: "GYD",
+          salaryPercentageDistributed: DEFAULT_SALARY_PERCENTAGE,
+          currencyCode: DEFAULT_CURRENCY_CODE,
           orderNumber: 1,
         },
       ]);
@@ -929,14 +945,13 @@ const BankDetails = () => {
           <thead>
             <tr>
               <th className="bank-name" style={{ width: "35%" }}>Bank Name</th>
-              <th className="routing-number">Routing Number</th>
+              <th className="routing-number">Bank Branch</th>
               <th className="account-number" style={{ width: "20%" }}>
                 Account Number
               </th>
               <th className="salary-percentage">
                 {disbursementType === "PERCENTAGE" ? "% Salary" : "Amount(₹)"}
               </th>
-              <th className="currency">Bank Acc. Currency</th>
               <th style={{ width: "10%" }}></th>
             </tr>
           </thead>
@@ -967,7 +982,7 @@ const BankDetails = () => {
                         value={bank.selectedBranch}
                         onChange={(e) => handleBranchChange(e.target.value, index)}
                       >
-                        <option value="">Select</option>
+                        <option value="">Select Branch</option>
                         {(bank.selectedBank
                           ? branchesPerBank[bank.selectedBank] || []
                           : []
@@ -1021,20 +1036,6 @@ const BankDetails = () => {
                         }}
                       />
                     </td>
-                    <td className="currency">
-                      <select
-                        className="form-select"
-                        name="currencyCode"
-                        value={bank.currencyCode}
-                        onChange={(e) =>
-                          handleInputChange(e, index, "currencyCode")
-                        }
-                      >
-                        <option value="">Select</option>
-                        <option value="GYD">INR</option>
-                        <option value="USD">USD</option>
-                      </select>
-                    </td>
                     <td style={{ textAlign: 'left' }}>
                       <div className="action-icons" style={{ display: 'flex', gap: '4px', alignItems: 'center', justifyContent: 'flex-start' }}>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '2px' }}>
@@ -1066,7 +1067,7 @@ const BankDetails = () => {
                     key.endsWith(`_${index}`)
                   ) && (
                     <tr>
-                      <td className="error-message" colSpan="6">
+                      <td className="error-message" colSpan="5">
                         <div>
                           {bankAccountErrors[`idBank_${index}`] && (
                             <div>{bankAccountErrors[`idBank_${index}`]}</div>
@@ -1086,11 +1087,6 @@ const BankDetails = () => {
                               {bankAccountErrors[`salaryPercentage_${index}`]}
                             </div>
                           )}
-                          {bankAccountErrors[`currencyCode_${index}`] && (
-                            <div>
-                              {bankAccountErrors[`currencyCode_${index}`]}
-                            </div>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -1099,7 +1095,7 @@ const BankDetails = () => {
               ))
             ) : (
               <tr>
-                <td className="text-center no-accounts" colSpan="6">
+                <td className="text-center no-accounts" colSpan="5">
                   No bank accounts found. Click '+' to add one.
                 </td>
               </tr>
