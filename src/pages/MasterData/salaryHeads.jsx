@@ -76,6 +76,7 @@ const SalaryHeads = () => {
   const [isLoadingHead, setIsLoadingHead] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
+  const [typeFilter, setTypeFilter] = useState(""); // list filter by head type
   const [usage, setUsage] = useState([]); // where the head being edited is used
   const [deactivateWarning, setDeactivateWarning] = useState("");
   const formulaRef = useRef(null);
@@ -452,7 +453,9 @@ const SalaryHeads = () => {
     { key: "actions", label: "" },
   ];
 
-  const sortedHeads = [...heads].sort(
+  const sortedHeads = [...heads]
+    .filter((h) => !typeFilter || normalizeHeadType(h.headType) === typeFilter)
+    .sort(
     (a, b) => (a.calcSequence ?? 9999) - (b.calcSequence ?? 9999) || (a.orderNumber ?? 9999) - (b.orderNumber ?? 9999)
   );
 
@@ -480,9 +483,18 @@ const SalaryHeads = () => {
       <div className="card">
         <div className="card-header d-flex align-items-center justify-content-between pb-3">
           <h5 className="m-0">List of Salary Heads</h5>
-          <button type="button" className="btn btn-primary btn-sm px-4" onClick={handleAddClick}>
-            <i className="bx bx-plus me-1"></i> Add
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <select className="form-select form-select-sm" style={{ width: "210px" }}
+              value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} aria-label="Filter by type">
+              <option value="">All Types</option>
+              {HEAD_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+            </select>
+            <button type="button" className="btn btn-primary btn-sm px-4" onClick={handleAddClick}>
+              <i className="bx bx-plus me-1"></i> Add
+            </button>
+          </div>
         </div>
         <div className="card-body">
           <Grid
