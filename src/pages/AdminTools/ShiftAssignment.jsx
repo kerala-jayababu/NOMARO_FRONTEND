@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import ShiftManagementService from "../../core/services/ShiftManagementService";
+import ShiftSetupService from "../../core/services/ShiftSetupService";
 import { showToast } from '../../components/ToastNotifications/toastUtils';
 import isoWeek from 'dayjs/plugin/isoWeek';
 
@@ -13,6 +14,8 @@ dayjs.extend(isoWeek);
 const ShiftAssignment = () => {
   const [weekStart, setWeekStart] = useState(dayjs().startOf('isoWeek'));
   const [selectedShift, setSelectedShift] = useState(null);
+  const [officeOptions, setOfficeOptions] = useState([]);
+  const [selectedOfficeId, setSelectedOfficeId] = useState("");
   const [shiftOptions, setShiftOptions] = useState([]);
   const [scheduleList, setScheduleList] = useState([]);
   const [shiftTimes, setShiftTimes] = useState([]);
@@ -35,18 +38,65 @@ const ShiftAssignment = () => {
   const isPastWeek = weekStart.endOf('week').isBefore(today);
 
   useEffect(() => {
-      getShiftList();
-    }, []);
+    let isMounted = true;
 
-  const getShiftList = () => {
+    const getOfficeOptions = async () => {
     setLoading(true);
-      ShiftManagementService.getShiftList()
-      .then((res) => {
-      const sorted = (res.data.data || []).sort((a, b) => a.idShift - b.idShift);
-      setShiftOptions(sorted.map(shift => ({ value: shift.idShift, label: shift.shiftName })));
-      })
-      .finally(() => setLoading(false));
+      try {
+        const response = await ShiftSetupService.getShiftSetupDetails();
+        if (!isMounted) return;
+        if (response.error || !response.data?.success) {
+          showToast(response.error || response.data?.message || "Unable to load offices.", "error");
+          return;
+        }
+
+        setOfficeOptions(
+          (response.data.data || []).map((office) => ({
+            value: office.idOffice,
+            label: `${office.officeCode} - ${office.officeName}`,
+          })),
+        );
+      } catch {
+        if (isMounted) showToast("Unable to load offices.", "error");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     };
+
+    getOfficeOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleChangeOffice = async (event) => {
+    const officeId = event.target.value;
+    setSelectedOfficeId(officeId);
+    setSelectedShift(null);
+    setShiftOptions([]);
+    setScheduleList([]);
+    setShiftTimes([]);
+    setEmployeeList([]);
+    setAssignments({});
+    setExistingAssignments({});
+
+    if (!officeId) return;
+
+    setLoading(true);
+    try {
+      const response = await ShiftManagementService.getShiftList(Number(officeId));
+      if (response.error) return;
+      if (!response.data?.success) {
+        showToast(response.data?.message || "Unable to load shifts for this office.", "error");
+        return;
+      }
+
+      const sorted = (response.data.data || []).slice().sort((a, b) => a.idShift - b.idShift);
+      setShiftOptions(sorted.map((shift) => ({ value: shift.idShift, label: shift.shiftName })));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getScheduleList = (idShift) => ShiftManagementService.getScheduleListByShiftId(idShift);
 
@@ -80,21 +130,34 @@ const ShiftAssignment = () => {
     const selected = shiftOptions.find(opt => opt.value === parseInt(e.target.value));
     setSelectedShift(selected);
     setWeekStart(dayjs().startOf('isoWeek'));
-    setLoading(true);
+    if (!selected) {
+      setScheduleList([]);
+      setShiftTimes([]);
+      setEmployeeList([]);
+      setAssignments({});
+      setExistingAssignments({});
+      return;
+    }
 
-    const scheduleRes = await getScheduleList(selected?.value);
-    const formattedSchedules = (scheduleRes.data.data || []).map(s => ({
+    setLoading(true);
+    try {
+      const scheduleRes = await getScheduleList(selected.value);
+      const formattedSchedules = (scheduleRes.data.data || []).map(s => ({
           ...s,
           startTime: dayjs(`2000-01-01 ${s.startTime}`, "YYYY-MM-DD HH:mm:ss"),
           endTime: dayjs(`2000-01-01 ${s.endTime}`, "YYYY-MM-DD HH:mm:ss"),
           workDays: s.workDays ? s.workDays.split(',') : [],
         }));
-    setScheduleList(formattedSchedules);
-    setShiftTimes(formattedSchedules.map(s => `${s.startTime.format("h:mm A")} to ${s.endTime.format("h:mm A")}`));
+      setScheduleList(formattedSchedules);
+      setShiftTimes(formattedSchedules.map(s => `${s.startTime.format("h:mm A")} to ${s.endTime.format("h:mm A")}`));
 
-    await getEmployeeList(selected.value);
-    await loadAssignments(selected.value, formattedSchedules);
-    setLoading(false);
+      await getEmployeeList(selected.value);
+      await loadAssignments(selected.value, formattedSchedules);
+    } catch {
+      showToast("Unable to load shift assignment details.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCellClick = (date, slot) => {
@@ -266,8 +329,27 @@ const ShiftAssignment = () => {
 
       <div className="d-flex align-items-center mb-3 gap-3">
         <div style={{ width: '300px' }}>
+          <label className="form-label fw-bold">Office</label>
+          <select
+            className="form-select"
+            value={selectedOfficeId}
+            onChange={handleChangeOffice}
+            disabled={loading && officeOptions.length === 0}
+          >
+            <option value="">Choose Office</option>
+            {officeOptions.map((office) => (
+              <option key={office.value} value={office.value}>{office.label}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ width: '300px' }}>
           <label className="form-label fw-bold">Shift Name</label>
-          <select className="form-select" onChange={handleChangeShift}>
+          <select
+            className="form-select"
+            value={selectedShift?.value || ""}
+            onChange={handleChangeShift}
+            disabled={!selectedOfficeId || loading}
+          >
             <option value="">Choose Shift</option>
             {shiftOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

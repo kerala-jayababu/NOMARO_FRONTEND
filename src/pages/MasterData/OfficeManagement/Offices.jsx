@@ -111,9 +111,22 @@ function Offices() {
     setShowFormModal(true);
   };
 
-  const handleEdit = (office) => {
-    setSelectedOffice(office);
-    setShowFormModal(true);
+  const handleEdit = async (office) => {
+    showLoader();
+    try {
+      const response = await OfficeManagementService.getOfficeById(office.idOffice);
+      if (response.error || !response.data?.data) {
+        showToast(response.error || "Failed to load office details", "error");
+        return;
+      }
+
+      setSelectedOffice(response.data.data);
+      setShowFormModal(true);
+    } catch (error) {
+      showToast("Failed to load office details", "error");
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleView = (idOffice) => {

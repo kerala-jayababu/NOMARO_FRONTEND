@@ -3,9 +3,11 @@ import { handleApiSuccessOrError } from "../constants/commons";
 
 export default class ShiftManagementService {
 
-  static getShiftList = async () => {
+  static getShiftList = async (idOffice) => {
     try {
-      const res = await API.get("api/v1/Shift/GetShiftList");
+      const res = await API.get("api/v1/Shift/GetShiftList", {
+        params: idOffice ? { idOffice } : {},
+      });
       return { error: null, data: res.data };
     } catch (error) {
       return handleApiSuccessOrError(error, true);
@@ -33,7 +35,6 @@ export default class ShiftManagementService {
   static saveShift = async(data) => {
     try {
       const response = await API.post("api/v1/Shift/AddShift", data);
-      handleApiSuccessOrError(response.data,false);
       return { error: null, data: response.data };
     } catch (error) {
       return handleApiSuccessOrError(error,true);

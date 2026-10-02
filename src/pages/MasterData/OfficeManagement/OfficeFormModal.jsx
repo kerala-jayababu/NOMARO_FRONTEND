@@ -1,14 +1,48 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Modal } from "react-bootstrap";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import OfficeManagementService from "../../../core/services/OfficeManagementService";
+import CommonService from "../../../core/services/CommonService";
 import { showToast } from "../../../components/ToastNotifications/toastUtils";
 import Utils from "../../../utils/Utils";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WEEK_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+const DEFAULT_WORKING_DAYS = WEEK_DAYS.slice(0, 6);
+
+const parseShiftHours = (parameterValue) => {
+  const match = String(parameterValue || "")
+    .trim()
+    .match(/^(\d{1,2}:\d{2}\s*[AP]M)\s+to\s+(\d{1,2}:\d{2}\s*[AP]M)$/i);
+
+  if (!match) return null;
+
+  const timeFormats = ["h:mm A", "hh:mm A"];
+  const start = moment(match[1], timeFormats, true);
+  const end = moment(match[2], timeFormats, true);
+  if (!start.isValid() || !end.isValid()) return null;
+
+  return {
+    startTime: dayjs(start.toDate()),
+    endTime: dayjs(end.toDate()),
+  };
+};
+
+const parseStoredTime = (timeValue) => {
+  if (!timeValue) return null;
+  const parsed = moment(timeValue, ["HH:mm:ss", "HH:mm:ss.SSS", "HH:mm"], true);
+  return parsed.isValid() ? dayjs(parsed.toDate()) : null;
+};
+
+const formatWorkingDays = (days) =>
+  days.map((day) => day.charAt(0) + day.slice(1).toLowerCase()).join(", ");
 
 const getInitialFormData = (office) => ({
   officeCode: office?.officeCode || "",
@@ -36,6 +70,76 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
   const [formData, setFormData] = useState(getInitialFormData(office));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [regularShiftSchedules, setRegularShiftSchedules] = useState([]);
+  const [isLoadingShiftSchedules, setIsLoadingShiftSchedules] = useState(false);
+  const [workingDaysModal, setWorkingDaysModal] = useState({
+    visible: false,
+    index: null,
+    selectedDays: [],
+  });
+
+  useEffect(() => {
+    if (!show) return undefined;
+
+    let isCurrent = true;
+    setIsLoadingShiftSchedules(true);
+
+    if (office?.shiftSchedule) {
+      const savedSchedule = office.shiftSchedule;
+      const savedWorkDays = (savedSchedule.workDays || "")
+        .split(",")
+        .map((day) => day.trim().toUpperCase())
+        .filter(Boolean);
+
+      setRegularShiftSchedules([
+        {
+          name: savedSchedule.shiftName || "RegularShiftHours",
+          startTime: parseStoredTime(savedSchedule.startTime),
+          endTime: parseStoredTime(savedSchedule.endTime),
+          workingDays: savedWorkDays.length > 0 ? savedWorkDays : [...DEFAULT_WORKING_DAYS],
+        },
+      ]);
+      setIsLoadingShiftSchedules(false);
+
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    CommonService.getSystemParameters()
+      .then((response) => {
+        if (!isCurrent) return;
+        if (response.error) {
+          setRegularShiftSchedules([]);
+          return;
+        }
+
+        const parameters = response.data?.data || [];
+        setRegularShiftSchedules(
+          parameters
+            .filter(
+              (parameter) =>
+                parameter.parameterName?.trim().toLowerCase() ===
+                  "regularshifthours" && parameter.parameterValue?.trim(),
+            )
+            .map((parameter) => ({
+              name: parameter.parameterName.trim(),
+              ...parseShiftHours(parameter.parameterValue),
+              workingDays: [...DEFAULT_WORKING_DAYS],
+            })),
+        );
+      })
+      .catch(() => {
+        if (isCurrent) setRegularShiftSchedules([]);
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingShiftSchedules(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [show, office?.idOffice]);
 
   // An office cannot be placed under itself or under one of its own sub offices
   const parentOfficeOptions = useMemo(() => {
@@ -66,6 +170,48 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
+
+  const updateShiftSchedule = (index, field, value) => {
+    setRegularShiftSchedules((currentSchedules) =>
+      currentSchedules.map((schedule, scheduleIndex) =>
+        scheduleIndex === index ? { ...schedule, [field]: value } : schedule,
+      ),
+    );
+  };
+
+  const getScheduleDuration = (schedule) => {
+    if (!schedule.startTime || !schedule.endTime) return "-";
+
+    let durationMinutes = dayjs(schedule.endTime).diff(schedule.startTime, "minutes");
+    if (durationMinutes < 0) durationMinutes += 24 * 60;
+
+    return `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
+  };
+
+  const openWorkingDaysModal = (index) => {
+    setWorkingDaysModal({
+      visible: true,
+      index,
+      selectedDays: [...regularShiftSchedules[index].workingDays],
+    });
+  };
+
+  const toggleWorkingDay = (day) => {
+    setWorkingDaysModal((current) => ({
+      ...current,
+      selectedDays: current.selectedDays.includes(day)
+        ? current.selectedDays.filter((selectedDay) => selectedDay !== day)
+        : [...current.selectedDays, day],
+    }));
+  };
+
+  const saveWorkingDays = () => {
+    updateShiftSchedule(workingDaysModal.index, "workingDays", [...workingDaysModal.selectedDays]);
+    setWorkingDaysModal({ visible: false, index: null, selectedDays: [] });
+  };
+
+  const closeWorkingDaysModal = () =>
+    setWorkingDaysModal({ visible: false, index: null, selectedDays: [] });
 
   const validateForm = () => {
     const newErrors = {};
@@ -126,6 +272,15 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
         idOfficeHead: formData.idOfficeHead || null,
         // Shift schedule is not edited on this screen; keep the existing value on update
         idShiftSchedule: office?.idShiftSchedule || null,
+        shiftSchedule: !isEditing && regularShiftSchedules[0]
+          ? {
+              shiftName: regularShiftSchedules[0].name.trim(),
+              isRegularShiftJustTimeChange: true,
+              startTime: dayjs(regularShiftSchedules[0].startTime).format("HH:mm:ss"),
+              endTime: dayjs(regularShiftSchedules[0].endTime).format("HH:mm:ss"),
+              workDays: regularShiftSchedules[0].workingDays.join(","),
+            }
+          : null,
         openedDate: formData.openedDate ? moment(formData.openedDate).format("YYYY-MM-DD") : null,
         closedDate: formData.closedDate ? moment(formData.closedDate).format("YYYY-MM-DD") : null,
         isActive: formData.isActive,
@@ -166,15 +321,16 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
   );
 
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      size="xl"
-      aria-labelledby="contained-modal-title-vcenter"
-      centered
-      backdrop="static"
-      keyboard={false}
-    >
+    <>
+      <Modal
+        show={show}
+        onHide={onHide}
+        size="xl"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
       <Modal.Header closeButton>
         <Modal.Title>
           <h5>{isEditing ? "Update Office" : "Add Office"}</h5>
@@ -289,6 +445,75 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
                 />
                 {errors.closedDate && <div className="text-danger">{errors.closedDate}</div>}
               </div>
+
+              <div className="col-12 p-2">
+                <h6 className="text-success mb-2">Schedules</h6>
+                {isLoadingShiftSchedules ? (
+                  <div className="text-center text-muted p-3">Loading schedules...</div>
+                ) : regularShiftSchedules.length > 0 ? (
+                  <div className="table-responsive">
+                    <table className="table table-bordered table-sm mb-0">
+                      <thead>
+                        <tr>
+                          <th>Schedule</th>
+                          <th>Duration</th>
+                          <th>Working Days</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {regularShiftSchedules.map((schedule, index) => (
+                          <tr key={index}>
+                            <td>
+                              <div className="d-flex flex-column">
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm mb-1"
+                                  value={schedule.name}
+                                  maxLength={100}
+                                  aria-label="Schedule name"
+                                  onChange={(event) =>
+                                    updateShiftSchedule(index, "name", event.target.value)
+                                  }
+                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                  <MobileTimePicker
+                                    value={schedule.startTime || null}
+                                    onChange={(value) => updateShiftSchedule(index, "startTime", value)}
+                                    ampm
+                                    minutesStep={1}
+                                    slotProps={{ textField: { size: "small", placeholder: "Start time" } }}
+                                  />
+                                  <MobileTimePicker
+                                    value={schedule.endTime || null}
+                                    onChange={(value) => updateShiftSchedule(index, "endTime", value)}
+                                    ampm
+                                    minutesStep={1}
+                                    slotProps={{ textField: { size: "small", placeholder: "End time" } }}
+                                  />
+                                </LocalizationProvider>
+                              </div>
+                            </td>
+                            <td>{getScheduleDuration(schedule)}</td>
+                            <td>
+                              <button
+                                type="button"
+                                className="btn btn-link p-0 text-start"
+                                onClick={() => openWorkingDaysModal(index)}
+                              >
+                                {formatWorkingDays(schedule.workingDays)}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted p-3">
+                    No regular shift hours are configured.
+                  </div>
+                )}
+              </div>
             </div>
           </form>
         </div>
@@ -306,7 +531,62 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
           Cancel
         </button>
       </Modal.Footer>
-    </Modal>
+      </Modal>
+
+      <Modal
+        show={workingDaysModal.visible}
+        onHide={closeWorkingDaysModal}
+        size="sm"
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Select Working Days</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-primary mb-2"
+            onClick={() => {
+              const allSelected = WEEK_DAYS.every((day) =>
+                workingDaysModal.selectedDays.includes(day),
+              );
+              setWorkingDaysModal((current) => ({
+                ...current,
+                selectedDays: allSelected ? [] : [...WEEK_DAYS],
+              }));
+            }}
+          >
+            {WEEK_DAYS.every((day) => workingDaysModal.selectedDays.includes(day))
+              ? "Unselect All"
+              : "Select All"}
+          </button>
+          {WEEK_DAYS.map((day) => (
+            <div key={day} className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id={`office-working-day-${day}`}
+                checked={workingDaysModal.selectedDays.includes(day)}
+                onChange={() => toggleWorkingDay(day)}
+              />
+              <label className="form-check-label" htmlFor={`office-working-day-${day}`}>
+                {day.charAt(0) + day.slice(1).toLowerCase()}
+              </label>
+            </div>
+          ))}
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="btn btn-primary" onClick={saveWorkingDays}>
+            Save
+          </button>
+          <button type="button" className="btn btn-outline-secondary" onClick={closeWorkingDaysModal}>
+            Cancel
+          </button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }
 

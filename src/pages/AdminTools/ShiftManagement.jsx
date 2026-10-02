@@ -5,6 +5,7 @@ import Button from "../../components/button";
 import Select from "react-select";
 import CommonService from "../../core/services/CommonService";
 import ShiftManagementService from "../../core/services/ShiftManagementService";
+import ShiftSetupService from "../../core/services/ShiftSetupService";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileTimePicker } from '@mui/x-date-pickers/MobileTimePicker';
@@ -17,6 +18,9 @@ const ShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
   const [editingShiftId, setEditingShiftId] = useState(null);
   const [selectedShift, setSelectedShift] = useState(null);
+  const [officeOptions, setOfficeOptions] = useState([]);
+  const [selectedOffice, setSelectedOffice] = useState(null);
+  const [loadingOffices, setLoadingOffices] = useState(false);
 
   const [employeeRows, setEmployeeRows] = useState([]);
   const [employeesListOption, setEmployeesListOption] = useState([]);
@@ -28,6 +32,7 @@ const ShiftManagement = () => {
   const selectRef = useRef();
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [loadingShift, setLoadingShift] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirm, setOnConfirm] = useState(() => () => {});
@@ -43,8 +48,30 @@ const ShiftManagement = () => {
 
   useEffect(() => {
     getEmployeeOptions();
-    getShiftList();
+    getOfficeOptions();
   }, []);
+
+  const getOfficeOptions = async () => {
+    setLoadingOffices(true);
+    try {
+      const response = await ShiftSetupService.getShiftSetupDetails();
+      if (response.error || !response.data?.success) {
+        showToast(response.error || response.data?.message || "Unable to load offices.", "error");
+        return;
+      }
+
+      setOfficeOptions(
+        (response.data.data || []).map((office) => ({
+          value: office.idOffice,
+          label: `${office.officeCode} - ${office.officeName}`,
+        })),
+      );
+    } catch (error) {
+      showToast("Unable to load offices.", "error");
+    } finally {
+      setLoadingOffices(false);
+    }
+  };
 
   const getEmployeeOptions = () => {
     CommonService.getEmployeeList()
@@ -70,16 +97,33 @@ const ShiftManagement = () => {
       .catch(() => {});
   };
 
-  const getShiftList = async () => {
+  const getShiftList = async (idOffice = selectedOffice?.value) => {
+    if (!idOffice) {
+      setShifts([]);
+      return [];
+    }
+
     setLoadingShift(true);
     try {
-      const res = await ShiftManagementService.getShiftList();
+      const res = await ShiftManagementService.getShiftList(idOffice);
+      if (res.error) {
+        showToast(res.error, "error");
+        setShifts([]);
+        return [];
+      }
       const sortedShifts = (res.data.data || []).slice().sort((a, b) => a.idShift - b.idShift);
       setShifts(sortedShifts);
       return sortedShifts;
     } finally {
       setLoadingShift(false);
     }
+  };
+
+  const handleOfficeSelect = async (office) => {
+    setSelectedOffice(office);
+    handleReset();
+    setShifts([]);
+    if (office) await getShiftList(office.value);
   };
 
   const handleShiftEdit = async (idShift) => {
@@ -103,21 +147,56 @@ const ShiftManagement = () => {
   };
 
   const handleShiftSubmit = async () => {
-    let shiftPayload;
+    if (isSubmitting) return;
+    if (!selectedOffice) {
+      showToast("Please select an office.", "error");
+      return;
+    }
+
     if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    try {
+    let shiftPayload;
+    const wasEditing = Boolean(editingShiftId);
     let shiftResponse;
-    if (editingShiftId) {
-      shiftPayload = { idShift: editingShiftId, shiftName, isRegularShiftJustTimeChange };
+    if (wasEditing) {
+      shiftPayload = {
+        idShift: editingShiftId,
+        idOffice: selectedOffice.value,
+        shiftName,
+        isRegularShiftJustTimeChange,
+      };
       shiftResponse = await ShiftManagementService.updateShift(shiftPayload);
     } else {
-      shiftPayload = { shiftName, isRegularShiftJustTimeChange };
+      shiftPayload = {
+        idOffice: selectedOffice.value,
+        shiftName,
+        isRegularShiftJustTimeChange,
+      };
       shiftResponse = await ShiftManagementService.saveShift(shiftPayload);
-      const freshShifts = await getShiftList();
-      const createdShift = freshShifts
-        .filter((s) => s.shiftName === shiftName)
-        .sort((a, b) => b.idShift - a.idShift)[0];
+      if (shiftResponse.error) return;
+      if (!shiftResponse.data?.success) {
+        showToast(shiftResponse.data?.message || "Unable to add shift.", "error");
+        return;
+      }
+
+      const createdShift = shiftResponse.data.data;
       shiftPayload.idShift = createdShift?.idShift;
+      if (!shiftPayload.idShift) {
+        showToast("The shift was created, but its ID was not returned.", "error");
+        return;
+      }
+      setShifts((currentShifts) =>
+        [...currentShifts, createdShift].sort((first, second) => first.idShift - second.idShift),
+      );
       setEditingShiftId(shiftPayload.idShift);
+    }
+
+    if (shiftResponse.error) return;
+    if (!shiftResponse.data?.success) {
+      showToast(shiftResponse.data?.message || "Unable to save shift.", "error");
+      return;
     }
    
     const updatedEmployeeRows = employeeRows.map((row) => ({
@@ -126,6 +205,11 @@ const ShiftManagement = () => {
       shiftName: shiftName,
     }));
     let employeeRes = await ShiftManagementService.saveEmployeeInShift(updatedEmployeeRows);
+    if (employeeRes.error) return;
+    if (!employeeRes.data?.success) {
+      showToast(employeeRes.data?.message || "Unable to save shift employees.", "error");
+      return;
+    }
 
     const updatedScheduleRows = scheduleRows.map((row) => ({
       ...row,
@@ -136,15 +220,25 @@ const ShiftManagement = () => {
       shiftName: shiftName,
     }));
     let scheduleRes = await ShiftManagementService.saveScheduleInShift(updatedScheduleRows);
+    if (scheduleRes.error) return;
+    if (!scheduleRes.data?.success) {
+      showToast(scheduleRes.data?.message || "Unable to save shift schedules.", "error");
+      return;
+    }
 
-    await Promise.all([
-      getEmployeeList(shiftPayload.idShift),
-      getScheduleList(shiftPayload.idShift)
-    ]);
-    if(shiftResponse.data.success === true && employeeRes.data.success === true 
-      && scheduleRes.data.success === true){
-      showToast("Shift saved successfully", "success");
-      handleReset();
+    if (wasEditing) {
+      setShifts((currentShifts) =>
+        currentShifts.map((shift) =>
+          shift.idShift === shiftPayload.idShift ? { ...shift, shiftName } : shift,
+        ),
+      );
+    }
+    showToast(wasEditing ? "Shift updated successfully." : "Shift added successfully.", "success");
+    handleReset();
+    } catch (error) {
+      showToast("Failed to save shift.", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -234,6 +328,7 @@ const ShiftManagement = () => {
     setShiftName("");
     setIsRegularShiftJustTimeChange(false);
     setEditingShiftId(null);
+    setSelectedShift(null);
     setEmployeeRows([]);
     setScheduleRows([]);
     };
@@ -335,16 +430,37 @@ const ShiftManagement = () => {
         </div>
       )}
       <div className="row">
+        <div className="col-md-3 mb-3">
+          <label className="form-label mb-1"><b>Office</b></label>
+          <Select
+            options={officeOptions}
+            value={selectedOffice}
+            onChange={handleOfficeSelect}
+            isDisabled={isSubmitting}
+            isClearable
+            isLoading={loadingOffices}
+            placeholder="Select Office"
+            className="textSize"
+          />
+        </div>
+      </div>
+      <div className="row">
         <div className="col-md-3">
           <Card title="List of Shifts">
-            <ul className="list-group">
-              {shifts.map((shift) => (
-                <li key={shift.idShift} className="list-group-item d-flex justify-content-between align-items-center">
-                  {shift.shiftName}
-                  <span onClick={() => handleShiftEdit(shift.idShift)} style={{ cursor: "pointer" }} className="bx bx-pencil"></span>
-                </li>
-              ))}
-            </ul>
+            {!selectedOffice ? (
+              <div className="text-muted">Select an office to view shifts.</div>
+            ) : shifts.length > 0 ? (
+              <ul className="list-group">
+                {shifts.map((shift) => (
+                  <li key={shift.idShift} className="list-group-item d-flex justify-content-between align-items-center">
+                    {shift.shiftName}
+                    <span onClick={() => handleShiftEdit(shift.idShift)} style={{ cursor: "pointer" }} className="bx bx-pencil"></span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-muted">No shifts configured for this office.</div>
+            )}
           </Card>
         </div>
 
@@ -604,8 +720,10 @@ const ShiftManagement = () => {
           </Card>
 
           <div className="text-center mt-3">
-            <Button className="btn btn-primary px-4 me-2" onClick={handleShiftSubmit}>Submit</Button>
-            <Button className="btn btn-outline-secondary px-4" onClick={handleReset}>Reset</Button>
+            <Button className="btn btn-primary px-4 me-2" onClick={handleShiftSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+            <Button className="btn btn-outline-secondary px-4" onClick={handleReset} disabled={isSubmitting}>Reset</Button>
           </div>
           {confirmModalVisible && (
             <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} >
