@@ -1,0 +1,338 @@
+.office-shift-page {
+  min-height: 100%;
+  padding: 4px 2px 24px;
+  color: #273746;
+}
+
+.office-shift-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #718096;
+  font-size: 13px;
+}
+
+.office-shift-breadcrumb i {
+  font-size: 16px;
+}
+
+.office-shift-breadcrumb strong {
+  color: #34495e;
+  font-weight: 600;
+}
+
+.office-shift-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 22px;
+  border-bottom: 1px solid #dce4e8;
+}
+
+.office-shift-header h1 {
+  margin: 0 0 7px;
+  color: #155b48;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.office-shift-header p {
+  margin: 0;
+  color: #6c7a89;
+  font-size: 15px;
+}
+
+.office-shift-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.9fr) minmax(520px, 1.7fr);
+  gap: 16px;
+  min-height: 540px;
+  padding-top: 16px;
+}
+
+.office-hierarchy-panel,
+.office-shift-configuration {
+  min-width: 0;
+  border: 1px solid #e0e8eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.office-hierarchy-panel {
+  padding: 14px 12px;
+}
+
+.office-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cfdadd;
+  border-radius: 5px;
+  color: #6c7a89;
+}
+
+.office-search i {
+  font-size: 18px;
+}
+
+.office-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #34495e;
+  background: transparent;
+  font: inherit;
+}
+
+.office-tree-root,
+.office-tree-children {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.office-tree-item {
+  position: relative;
+}
+
+.office-tree-children {
+  margin: 0 0 0 23px;
+  padding-left: 9px;
+  border-left: 1px solid #d9e3e2;
+}
+
+.office-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 39px;
+  padding-left: 0;
+  border-radius: 5px;
+}
+
+.office-tree-row.is-selected {
+  background: #c4e8d2;
+  box-shadow: inset 5px 0 0 #167347;
+}
+
+.office-tree-row.is-selected .office-tree-select,
+.office-tree-row.is-selected .office-tree-select i {
+  color: #174b34;
+}
+
+.office-tree-row.is-selected .office-tree-select {
+  font-weight: 700;
+}
+
+.office-tree-toggle,
+.office-tree-spacer {
+  display: grid;
+  flex: 0 0 25px;
+  place-items: center;
+  width: 25px;
+  height: 30px;
+  border: 0;
+  color: #425563;
+  background: transparent;
+}
+
+.office-tree-toggle {
+  cursor: pointer;
+}
+
+.office-tree-toggle i {
+  font-size: 19px;
+}
+
+.office-tree-select {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+  height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  color: #34495e;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.office-tree-select i {
+  color: #526b7a;
+  font-size: 18px;
+}
+
+.office-tree-select span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.office-shift-configuration {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px 14px;
+}
+
+.office-shift-config-heading h2 {
+  margin: 0;
+  color: #155b48;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.office-shift-rule {
+  height: 1px;
+  margin: 12px 0 16px;
+  background: #e2e9eb;
+}
+
+.office-shift-config-heading h3 {
+  margin: 0 0 12px;
+  color: #435568;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.office-shift-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e1e8ed;
+  border-radius: 5px;
+}
+
+.office-shift-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.office-shift-table th,
+.office-shift-table td {
+  height: 47px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #e4eaee;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.office-shift-table th {
+  color: #526276;
+  background: #f3f6f8;
+  font-weight: 650;
+}
+
+.office-shift-table th:first-child,
+.office-shift-table td:first-child {
+  width: 82px;
+}
+
+.office-shift-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.office-table-name {
+  display: inline-block;
+  padding-left: calc(var(--office-depth) * 20px);
+  color: #34495e;
+  font-weight: 600;
+}
+
+.shift-manager-select {
+  width: min(100%, 310px);
+  min-width: 210px;
+  height: 37px;
+  padding: 0 11px;
+  border: 1px solid #d8e0e6;
+  border-radius: 5px;
+  color: #7a8794;
+  background: #f7f9fa;
+  font: inherit;
+}
+
+.office-shift-table-state {
+  height: 120px !important;
+  color: #778592;
+  text-align: center !important;
+}
+
+.office-shift-state {
+  padding: 22px 10px;
+  color: #718096;
+  font-size: 14px;
+  text-align: center;
+}
+
+.office-shift-error {
+  color: #a33a3a;
+}
+
+.office-shift-error p {
+  margin: 0 0 12px;
+}
+
+.office-shift-error button {
+  padding: 6px 12px;
+  border: 1px solid #a33a3a;
+  border-radius: 4px;
+  color: #a33a3a;
+  background: #fff;
+  cursor: pointer;
+}
+
+.office-shift-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.office-shift-actions i {
+  font-size: 17px;
+}
+
+@media (max-width: 900px) {
+  .office-shift-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .office-hierarchy-panel {
+    max-height: 360px;
+    overflow: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .office-shift-header {
+    padding-right: 2px;
+    padding-left: 2px;
+  }
+
+  .office-shift-header h1 {
+    font-size: 22px;
+  }
+
+  .office-shift-header p {
+    font-size: 14px;
+  }
+
+  .office-shift-configuration {
+    padding: 12px 9px;
+  }
+
+  .office-shift-table th,
+  .office-shift-table td {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .office-shift-actions {
+    flex-wrap: wrap;
+  }
+}

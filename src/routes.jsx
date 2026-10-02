@@ -36,6 +36,7 @@ import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
 import ServiceChange from "./pages/MasterData/serviceChange";
 import ServiceApproval from "./pages/MasterData/serviceApproval";
+import OfficeShiftManagement from "./pages/AdminTools/OfficeShiftManagement";
 
 export const privateRoutes = [
   {
@@ -173,6 +174,10 @@ export const privateRoutes = [
   {
     path: "/dashboard/office-management",
     element: <Offices />,
+  },
+  {
+    path: "/dashboard/shift-manager-setup",
+    element: <OfficeShiftManagement />,
   },
   {
     path: "/dashboard/office-mangement",

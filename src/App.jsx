@@ -81,6 +81,7 @@ import ForgotCardApproval from "./pages/MasterData/forgotCardApproval";
 import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
 import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
 import SickLeaveSalDeduction from "./pages/PayrollManagement/SickLeaveSalDeduction";
+import OfficeShiftManagement from "./pages/AdminTools/OfficeShiftManagement";
 
 function LeavePassageRoute() {
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
@@ -140,6 +141,7 @@ function App() {
               <Route path="attendance" element={<AttendanceDetails/>} />
               <Route path="shift-config" element={<ShiftManagement/>} />
               <Route path="shift-assignment" element={<ShiftAssignment/>} />
+              <Route path="shift-manager-setup" element={<OfficeShiftManagement />} />
               <Route path="leave-report" element={<LeaveDetailReport/>} />
               <Route path="unauthorized-absence" element={<UnAuthorizedAbsence/>} />
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />

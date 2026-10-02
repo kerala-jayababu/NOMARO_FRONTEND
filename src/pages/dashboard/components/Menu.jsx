@@ -113,7 +113,7 @@ function Menu({ viewType }) {
               <div data-i18n="Account Settings">{screen.screenName}</div>
             </a>
             <ul className="menu-sub">
-              {screen.subMenus
+              {(screen.subMenus || [])
                 .slice()
                 .sort((a, b) => a.screenName.localeCompare(b.screenName))
                 .map((menuItem) => (

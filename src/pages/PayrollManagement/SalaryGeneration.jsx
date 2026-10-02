@@ -922,6 +922,7 @@ function SalaryGeneration() {
                             "not generated",
                             "draft generated",
                             "rejected",
+                            "pending",
                           ].includes(statusFilter?.value?.toLowerCase()) && (
                             <input
                               type="checkbox"
@@ -1153,7 +1154,8 @@ function SalaryGeneration() {
                       salaryDraft.filter(
                         (x) =>
                           x.approvalStatus.toLowerCase() === "draft" ||
-                          x.approvalStatus.toLowerCase() === "rejected",
+                          x.approvalStatus.toLowerCase() === "rejected" ||
+                          x.approvalStatus.toLowerCase() === "pending"
                       ).length === 0
                     }
                     onClick={() => ExportSalaryGeneration()}

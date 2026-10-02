@@ -1240,6 +1240,7 @@ const AddChecklistModal = ({ template, departments, templateDepartments, onClose
       idDepartment: parseInt(item.idDepartment, 10),
       checkListItem: item.checkListItem,
       isMandatory: item.isMandatory,
+      deptEmployees: [],
     }));
 
     setIsSubmitting(true);
