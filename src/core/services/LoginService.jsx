@@ -20,4 +20,40 @@ export default class LoginService {
             return handleApiSuccessOrError(error, true);
         }
     }
+
+    static loginWithPassword = async (email, password) => {
+        try {
+            const res = await API.post("/api/v1/Account/LoginWithPassword", { emailID: email, password });
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
+    static resetPasswordWithOtp = async (payload) => {
+        try {
+            const res = await API.post("/api/v1/Account/ResetPasswordWithOTP", payload);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
+    static getPasswordStatus = async () => {
+        try {
+            const res = await API.get("/api/v1/Account/GetPasswordStatus");
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
+    static changePassword = async (payload) => {
+        try {
+            const res = await API.post("/api/v1/Account/ChangePassword", payload);
+            return { error: null, data: res.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
 }

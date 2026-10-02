@@ -4,6 +4,7 @@ import secureLocalStorage from "react-secure-storage";
 import CommonService from "../../../core/services/CommonService";
 import Utils from "../../../utils/Utils";
 import ConfirmationModal from "../../../components/ConfirmationModal";
+import ChangePasswordModal from "../../../components/ChangePasswordModal";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 function Navbar({ view }) {
@@ -15,6 +16,7 @@ function Navbar({ view }) {
   const currentAuth = secureLocalStorage.getItem("currentAuth");
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const { changeTheme } = useTheme();
   const [productName, setProductName] = useState(
     currentAuth == "PAYROLL" ? "" : "Employee Self Portal",
@@ -461,6 +463,12 @@ function Navbar({ view }) {
                 </li>
               )}
               <li>
+                <a className="dropdown-item cursor" onClick={() => setShowChangePassword(true)}>
+                  <i className="bx bx-lock-alt me-2"></i>
+                  <span className="align-middle">Change Password</span>
+                </a>
+              </li>
+              <li>
                 <a className="dropdown-item cursor" onClick={logout}>
                   <i className="bx bx-power-off me-2"></i>
                   <span className="align-middle">Log Out</span>
@@ -470,6 +478,10 @@ function Navbar({ view }) {
           </li>
         </ul>
       </div>
+      <ChangePasswordModal
+        show={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
       {showConfirmation && (
         <ConfirmationModal
           modalShow={true}

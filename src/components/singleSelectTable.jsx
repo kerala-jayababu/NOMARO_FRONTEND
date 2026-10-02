@@ -22,7 +22,7 @@ const SingleSelectTable = ({
   };
 
   return (
-    <div className="card ScreenpermissionCard mb-2 border">
+    <div className="card ScreenpermissionCard border h-100 d-flex flex-column">
       <div className="card-header d-flex align-items-center justify-content-between px-3 py-3 border-bottom">
         <h5 className="m-0">{title}</h5>
         <div className="list_menu">
@@ -38,9 +38,10 @@ const SingleSelectTable = ({
           </div>
         </div>
       </div>
-      <div className="card-body p-0">
+      <div className="card-body p-0 d-flex flex-column" style={{ flex: 1, minHeight: 0 }}>
         <div className="table-responsive"  style={{
-                            maxHeight: "380px", // Adjust the height as needed
+                            flex: 1, // fills the card; the card height is set by the page
+                            minHeight: 0,
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>

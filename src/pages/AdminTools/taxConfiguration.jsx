@@ -1,566 +1,337 @@
-import React, { useState, useEffect, useRef } from "react";
-import TaxConfigService from "../../core/services/TaxConfigService";
+import React, { useEffect, useMemo, useState } from "react";
+import { Modal } from "react-bootstrap";
+import { NumericFormat } from "react-number-format";
 import { toast } from "react-toastify";
 import moment from "moment";
-import { NumericFormat } from "react-number-format";
-import DatePicker from "react-datepicker";
+import TaxConfigService from "../../core/services/TaxConfigService";
 import CommonService from "../../core/services/CommonService";
-import { Form } from "react-bootstrap";
+import { useLoader } from "../../components/LoaderContext";
+
+// TaxYearConfigs.IdTaxRegime (1 = New Regime, 2 = Old Regime, as in the current data)
+const TAX_REGIMES = [
+  { value: 1, label: "New Regime" },
+  { value: 2, label: "Old Regime" },
+];
+const regimeLabel = (id) => TAX_REGIMES.find((r) => r.value === Number(id))?.label || `Regime ${id}`;
+
+// TaxSlabs.AgeCategory
+const AGE_CATEGORIES = [
+  { value: "ALL", label: "All ages" },
+  { value: "BELOW60", label: "Below 60" },
+  { value: "SENIOR", label: "Senior (60 to 80)" },
+  { value: "SUPER", label: "Super Senior (80 and above)" },
+];
+const ageLabel = (code) => AGE_CATEGORIES.find((a) => a.value === code)?.label || code;
+
+const formatAmount = (value) =>
+  value === null || value === undefined || value === ""
+    ? ""
+    : new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+const yearLabel = (fy) => {
+  if (!fy) return "";
+  const from = fy.financialYearFrom ? moment(fy.financialYearFrom) : null;
+  const to = fy.financialYearTo ? moment(fy.financialYearTo) : null;
+  return from && to ? `${from.year()}-${String(to.year() % 100).padStart(2, "0")}` : fy.financialYearName || "";
+};
+
+const emptyConfig = {
+  idTaxYearConfig: 0,
+  idTaxRegime: 1,
+  standardDeduction: "",
+  rebateIncomeLimit: "",
+  rebateMaxAmount: "",
+  cessRate: "4",
+  allowMarginalRelief: false,
+};
+
+const emptySlab = { idTaxSlab: 0, ageCategory: "ALL", incomeFrom: "", incomeTo: "", taxRate: "" };
+
+const numberOrNull = (value) => (value === "" || value === null || value === undefined ? null : Number(value));
 
 function TaxConfiguration() {
-  const [baseTaxThresholds, setBaseTaxThresholds] = useState([]);
-  const [childTaxThresholds, setChildTaxThresholds] = useState([]);
+  const { showLoader, hideLoader } = useLoader();
+
   const [financialYears, setFinancialYears] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [baseError, setBaseError] = useState(null);
-  const [childError, setChildError] = useState(null);
-  const [selectedFinancialYear, setSelectedFinancialYear] = useState("");
-  const [validated, setValidated] = useState(false);
-  const [childValidated, setChildValidated] = useState(false);
-  const [idFinancialYear, setIdFinancialYear] = useState("");
-  const [formData, setFormData] = useState({
-    idTaxSlab: 0,
-    minAmount: "",
-    maxAmount: "",
-    taxRate: "",
-    financialYearFrom: moment().format("YYYY-MM-DD"),
-    idFinancialYear: "",
-  });
+  const [selectedYearId, setSelectedYearId] = useState("");
+  const [configs, setConfigs] = useState([]); // TaxYearConfigs of the selected year
+  const [selectedConfigId, setSelectedConfigId] = useState(""); // "" = new configuration
+  const [configForm, setConfigForm] = useState(emptyConfig);
+  const [configErrors, setConfigErrors] = useState({});
 
-  const [childFormData, setChildFormData] = useState({
-    idChildTaxThreshold: 0,
-    childrenCount: "",
-    taxThresholdAmount: "",
-    financialYearFrom: moment().format("YYYY-MM-DD"),
-    idFinancialYear: "",
-  });
+  const [slabs, setSlabs] = useState([]);
+  const [ageFilter, setAgeFilter] = useState("");
+  const [loadingSlabs, setLoadingSlabs] = useState(false);
+  const [showSlabModal, setShowSlabModal] = useState(false);
+  const [slabForm, setSlabForm] = useState(emptySlab);
+  const [slabErrors, setSlabErrors] = useState({});
 
-  const [childFormErrors, setChildFormErrors] = useState({
-    idChildTaxThreshold: 0,
-    childrenCount: "",
-    taxThresholdAmount: "",
-    financialYearFrom: "",
-  });
+  const selectedConfig = useMemo(
+    () => configs.find((c) => String(c.idTaxYearConfig) === String(selectedConfigId)),
+    [configs, selectedConfigId]
+  );
 
-  const [formErrors, setFormErrors] = useState({
-    minAmount: "",
-    maxAmount: "",
-    taxRate: "",
-    financialYearFrom: "",
-  });
-
-  const maxAmountRef = useRef(null); // Create a ref for the NumericFormat input
-  const childAmountRef = useRef(null); // Create a ref for the NumericFormat input
-
-  const currentYear = moment().year();
-  const nextYear = currentYear + 1;
-
-  const handleButtonClick = (type) => {
-    console.log("type", type);
-    // Focus on the input when the button is clicked
-    if (type === "basetax") {
-      if (maxAmountRef.current) {
-        maxAmountRef.current.focus();
-      }
-    } else if (type === "childtax") {
-      if (childAmountRef.current) {
-        childAmountRef.current.focus();
-      }
-    }
-  };
+  // Previous years, the current one and the next one
+  const visibleYears = useMemo(() => {
+    const nextYear = moment().year() + 1;
+    return financialYears.filter((fy) => !fy.financialYearFrom || moment(fy.financialYearFrom).year() <= nextYear);
+  }, [financialYears]);
 
   useEffect(() => {
-    getAllFinancialYears();
+    CommonService.getAllFinancialYears().then((res) => {
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.data) ? res.data.data : [];
+      setFinancialYears(list);
+      const today = moment();
+      const current =
+        list.find(
+          (fy) => today.isSameOrAfter(moment(fy.financialYearFrom)) && today.isSameOrBefore(moment(fy.financialYearTo))
+        ) || list[0];
+      if (current) setSelectedYearId(String(current.idFinancialYear));
+    });
   }, []);
 
-  const getBaseTaxThresholds = (idFinancialYear) => {
-    setLoading(true);
-    TaxConfigService.getBaseTaxThresholds(idFinancialYear)
-      .then((res) => {
-        setBaseTaxThresholds(res.data.data);
-        setBaseError(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setBaseError("Failed to load tax thresholds");
-        setLoading(false);
-        // toast.error('Something went wrong!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
+  useEffect(() => {
+    if (selectedYearId) loadConfigs(selectedYearId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYearId]);
+
+  useEffect(() => {
+    if (selectedConfig) {
+      setConfigForm({
+        idTaxYearConfig: selectedConfig.idTaxYearConfig,
+        idTaxRegime: selectedConfig.idTaxRegime,
+        standardDeduction: selectedConfig.standardDeduction ?? "",
+        rebateIncomeLimit: selectedConfig.rebateIncomeLimit ?? "",
+        rebateMaxAmount: selectedConfig.rebateMaxAmount ?? "",
+        cessRate: selectedConfig.cessRate ?? "",
+        allowMarginalRelief: !!selectedConfig.allowMarginalRelief,
       });
-  };
-
-  const getChildTaxThresholds = (idFinancialYear) => {
-    setLoading(true);
-    TaxConfigService.getChildTaxThresholds(idFinancialYear)
-      .then((res) => {
-        setChildTaxThresholds(res.data.data);
-        setChildError(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        // console.log('err', err);
-        setChildError("Failed to load child tax thresholds");
-        setLoading(false);
-        // toast.error(err.data.message, {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
-  };
-
-  const getAllFinancialYears = () => {
-    setLoading(true);
-    CommonService.getAllFinancialYears()
-      .then((res) => {
-        setFinancialYears(res.data);
-        const today = moment();
-        const currentFY =
-          res.data.find(
-            (year) =>
-              today.isSameOrAfter(moment(year.financialYearFrom)) &&
-              today.isSameOrBefore(moment(year.financialYearTo)),
-          ) || res.data[0];
-        setIdFinancialYear(currentFY.idFinancialYear);
-        setFormData((prevData) => ({
-          ...prevData,
-          idFinancialYear: currentFY.idFinancialYear,
-        }));
-        setChildFormData((prevData) => ({
-          ...prevData,
-          idFinancialYear: currentFY.idFinancialYear,
-        }));
-        setSelectedFinancialYear(currentFY.idFinancialYear);
-        getBaseTaxThresholds(currentFY.idFinancialYear);
-        getChildTaxThresholds(currentFY.idFinancialYear);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setBaseError("Failed to load financial years");
-        setChildError("Failed to load financial years");
-        // toast.error('Failed to load financial years!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
-  };
-
-  const handleInputChange = (value, field) => {
-    let newValue;
-
-    // If the value is an object, extract the 'value' property
-    if (value && value.hasOwnProperty("value")) {
-      value = value.value; // Extract the 'value' property from the object
-    }
-
-    // If the value is a string (especially for number fields), attempt to parse it to a float
-    if (typeof value === "string" && !isNaN(value)) {
-      value = parseFloat(value); // Convert the string to a number
-    }
-
-    // Check if the field is 'financialYearFrom', which expects a Date object
-    if (field === "financialYearFrom") {
-      // Ensure the value is a valid Date object or null
-      newValue = value instanceof Date ? value : null;
-    } else if (typeof value === "number") {
-      // Handle number fields (e.g., minAmount, maxAmount, taxRate)
-      newValue = value;
+      loadSlabs(selectedConfig.idTaxYearConfig);
     } else {
-      // For other fields (if any are added in the future), assign the value as-is
-      newValue = value;
+      // New configuration: first regime not yet set up for this year
+      const usedRegimes = configs.map((c) => c.idTaxRegime);
+      const freeRegime = TAX_REGIMES.find((r) => !usedRegimes.includes(r.value))?.value ?? 1;
+      setConfigForm({ ...emptyConfig, idTaxRegime: freeRegime });
+      setSlabs([]);
     }
+    setConfigErrors({});
+    setAgeFilter("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConfig, configs]);
 
-    // Update form data
-    setFormData((prev) => ({
-      ...prev,
-      [field]: newValue,
-    }));
-
-    // Clear error for the specific field
-    setFormErrors((prevErrors) => ({
-      ...prevErrors,
-      [field]: "",
-    }));
+  const loadConfigs = async (idFinancialYear, keepConfigId = null) => {
+    const res = await TaxConfigService.getTaxYearConfigs(idFinancialYear);
+    const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+    setConfigs(list);
+    const keep = keepConfigId && list.find((c) => c.idTaxYearConfig === keepConfigId);
+    setSelectedConfigId(keep ? String(keep.idTaxYearConfig) : list.length ? String(list[0].idTaxYearConfig) : "");
   };
 
-  const validateForm = () => {
-    const errors = {};
-
-    // Validate Min and Max amount
-    if (parseFloat(formData.minAmount) >= parseFloat(formData.maxAmount)) {
-      errors.minAmount = "Min Income must be less than Max Income";
-      errors.maxAmount = "Max Income must be greater than Min Income";
-    }
-
-    // Validate Tax Rate
-    if (
-      formData.taxRate === undefined ||
-      formData.taxRate === null ||
-      formData.taxRate < 0
-    ) {
-      errors.taxRate = "Tax Rate must be a positive number or 0";
-    }
-
-    // Validate financial year
-    if (!formData.financialYearFrom) {
-      errors.financialYearFrom = "Effective Date is required";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+  const loadSlabs = async (idTaxYearConfig) => {
+    setLoadingSlabs(true);
+    const res = await TaxConfigService.getTaxSlabs(idTaxYearConfig);
+    setSlabs(Array.isArray(res?.data?.data) ? res.data.data : []);
+    setLoadingSlabs(false);
   };
 
-  const handleSubmit = async (e) => {
+  // ---------- Tax year configuration ----------
+
+  const setConfigField = (field, value) => {
+    setConfigForm((prev) => ({ ...prev, [field]: value }));
+    setConfigErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const validateConfig = () => {
+    const e = {};
+    if (!selectedYearId) e.year = "Select the financial year.";
+    if (configForm.standardDeduction === "") e.standardDeduction = "Standard Deduction is required.";
+    if (configForm.cessRate === "") e.cessRate = "Cess Rate is required.";
+    else if (Number(configForm.cessRate) > 100) e.cessRate = "Cess Rate must be between 0 and 100.";
+    if ((configForm.rebateIncomeLimit === "") !== (configForm.rebateMaxAmount === ""))
+      e.rebateMaxAmount = "Enter both Rebate Income Limit and Rebate Max Amount, or leave both empty.";
+    if (configs.some((c) => c.idTaxRegime === Number(configForm.idTaxRegime) && c.idTaxYearConfig !== configForm.idTaxYearConfig))
+      e.idTaxRegime = "This financial year already has a configuration for this regime.";
+    setConfigErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const saveConfig = async (e) => {
     e.preventDefault();
-    console.log("formData", formData);
-    if (checkEmptyDataInObject(formData)) {
-      setValidated(true);
+    if (!validateConfig()) return;
+    showLoader();
+    const res = await TaxConfigService.addOrUpdateTaxYearConfig({
+      idTaxYearConfig: configForm.idTaxYearConfig,
+      idFinancialYear: Number(selectedYearId),
+      idTaxRegime: Number(configForm.idTaxRegime),
+      standardDeduction: Number(configForm.standardDeduction),
+      rebateIncomeLimit: numberOrNull(configForm.rebateIncomeLimit),
+      rebateMaxAmount: numberOrNull(configForm.rebateMaxAmount),
+      cessRate: Number(configForm.cessRate),
+      allowMarginalRelief: configForm.allowMarginalRelief,
+    });
+    hideLoader();
+    if (res.error) {
+      toast.error(res.error);
       return;
     }
-    setLoading(true);
-    setBaseError(null);
-    setChildError(null);
-
-    if (!validateForm()) {
-      setLoading(false);
-      return;
-    }
-
-    const financialYearFromData = moment(formData.financialYearFrom)
-      .startOf("day")
-      .format("YYYY-MM-DDTHH:mm:ss");
-    const payload = {
-      idTaxSlab: formData.idTaxSlab,
-      minAmount: parseFloat(formData.minAmount),
-      maxAmount: parseFloat(formData.maxAmount),
-      taxRate: parseFloat(formData.taxRate),
-      financialYearFrom: financialYearFromData,
-    };
-    // console.log('payload',  moment(formData.financialYearFrom).format());
-
-    const matchingYear = financialYears.find(
-      (year) =>
-        moment(year.financialYearFrom).year() ===
-        moment(formData.financialYearFrom).year(),
-    );
-
-    // If a matching financial year is found, add `idFinancialYear` and `financialYearTo` to the payload
-    if (matchingYear) {
-      payload["idFinancialYear"] = matchingYear.idFinancialYear;
-      payload["financialYearTo"] = matchingYear.financialYearTo;
-    }
-
-    console.log("payload", payload);
-
-    if (formData.idTaxSlab !== 0) {
-      updateTaxThreshold(payload);
-    } else {
-      addTaxThreshold(payload);
-    }
+    toast.success(res.data?.message || "Tax year configuration saved.");
+    // After adding, select the new configuration (the one with this regime)
+    const listRes = await TaxConfigService.getTaxYearConfigs(selectedYearId);
+    const list = Array.isArray(listRes?.data?.data) ? listRes.data.data : [];
+    setConfigs(list);
+    const saved = list.find((c) => c.idTaxRegime === Number(configForm.idTaxRegime));
+    setSelectedConfigId(saved ? String(saved.idTaxYearConfig) : "");
   };
 
-  const addTaxThreshold = (payload) => {
-    TaxConfigService.createTaxThreshold(payload)
-      .then((res) => {
-        if (res.data.success) {
-          // toast.success('Tax threshold added successfully', {
-          //   position: 'top-right',
-          //   autoClose: 2000
-          // });
-          getBaseTaxThresholds(selectedFinancialYear);
-          setLoading(false);
-          handleReset();
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        // toast.error('Something went wrong!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
+  // ---------- Tax slabs ----------
+
+  const visibleSlabs = useMemo(
+    () => (ageFilter ? slabs.filter((s) => s.ageCategory === ageFilter) : slabs),
+    [slabs, ageFilter]
+  );
+
+  // Age categories used in this configuration, plus the standard ones
+  const ageOptions = useMemo(() => {
+    const used = slabs.map((s) => s.ageCategory).filter(Boolean);
+    const known = AGE_CATEGORIES.map((a) => a.value);
+    return [...AGE_CATEGORIES, ...[...new Set(used)].filter((u) => !known.includes(u)).map((u) => ({ value: u, label: u }))];
+  }, [slabs]);
+
+  const openAddSlab = () => {
+    // Next slab starts where the last slab of the category ends
+    const category = ageFilter || (slabs[0]?.ageCategory ?? "ALL");
+    const last = slabs.filter((s) => s.ageCategory === category).sort((a, b) => b.incomeFrom - a.incomeFrom)[0];
+    setSlabForm({ ...emptySlab, ageCategory: category, incomeFrom: last?.incomeTo ?? (last ? "" : 0) });
+    setSlabErrors({});
+    setShowSlabModal(true);
   };
 
-  const handleEdit = (threshold) => {
-    setFormData({
-      idTaxSlab: threshold.idTaxSlab,
-      minAmount: threshold.minAmount,
-      maxAmount: threshold.maxAmount,
-      taxRate: threshold.taxRate,
-      financialYearFrom: moment(threshold.financialYearFrom).format(
-        "YYYY-MM-DD",
-      ),
+  const openEditSlab = (slab) => {
+    setSlabForm({
+      idTaxSlab: slab.idTaxSlab,
+      ageCategory: slab.ageCategory,
+      incomeFrom: slab.incomeFrom,
+      incomeTo: slab.incomeTo ?? "",
+      taxRate: slab.taxRate,
     });
+    setSlabErrors({});
+    setShowSlabModal(true);
   };
 
-  const updateTaxThreshold = (payload) => {
-    TaxConfigService.updateTaxThreshold(payload)
-      .then((res) => {
-        if (res.data.success) {
-          // toast.success('Tax threshold updated successfully', {
-          //   position: 'top-right',
-          //   autoClose: 2000
-          // });
-          getBaseTaxThresholds(selectedFinancialYear);
-          setLoading(false);
-          handleReset();
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        // toast.error('Something went wrong!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
+  const setSlabField = (field, value) => {
+    setSlabForm((prev) => ({ ...prev, [field]: value }));
+    setSlabErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const handleReset = () => {
-    setValidated(false);
-    setFormData({
-      idTaxSlab: 0,
-      minAmount: "",
-      maxAmount: "",
-      taxRate: "",
-      financialYearFrom: moment().format("YYYY-MM-DD"),
-      idFinancialYear: idFinancialYear,
-    });
+  const validateSlab = () => {
+    const e = {};
+    if (!slabForm.ageCategory) e.ageCategory = "Age Category is required.";
+    if (slabForm.incomeFrom === "") e.incomeFrom = "Income From is required.";
+    if (slabForm.incomeTo !== "" && Number(slabForm.incomeTo) <= Number(slabForm.incomeFrom))
+      e.incomeTo = "Income To must be greater than Income From (leave it empty for the top slab).";
+    if (slabForm.taxRate === "") e.taxRate = "Tax Rate is required.";
+    else if (Number(slabForm.taxRate) > 100) e.taxRate = "Tax Rate must be between 0 and 100.";
 
-    setFormErrors({
-      minAmount: "",
-      maxAmount: "",
-      taxRate: "",
-      financialYearFrom: "",
-    });
+    // Ranges must not overlap within the same age category
+    if (!e.incomeFrom && !e.incomeTo) {
+      const from = Number(slabForm.incomeFrom);
+      const to = slabForm.incomeTo === "" ? Infinity : Number(slabForm.incomeTo);
+      const clash = slabs.find(
+        (s) =>
+          s.ageCategory === slabForm.ageCategory &&
+          s.idTaxSlab !== slabForm.idTaxSlab &&
+          from < (s.incomeTo ?? Infinity) &&
+          s.incomeFrom < to
+      );
+      if (clash)
+        e.incomeFrom = `Overlaps the slab ${formatAmount(clash.incomeFrom)} - ${
+          clash.incomeTo === null ? "and above" : formatAmount(clash.incomeTo)
+        }.`;
+    }
+    setSlabErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleChildInputChange = (value, field) => {
-    let newValue;
-    let errorMessage = "";
-    // If the value is an object, extract the 'value' property
-    if (value && value.hasOwnProperty("value")) {
-      value = value.value; // Extract the 'value' property from the object
-    }
-
-    // If the value is a string (especially for number fields), attempt to parse it to a float
-    if (typeof value === "string" && !isNaN(value)) {
-      value = parseFloat(value); // Convert the string to a number
-    }
-
-    // Check if the field is 'financialYearFrom', which expects a Date object
-    if (field === "financialYearFrom") {
-      newValue = value instanceof Date ? value : null;
-    } else if (typeof value === "number") {
-      // Handle number fields (e.g., childrenCount)
-      // Enforce the maximum limit for childrenCount
-      if (field === "childrenCount" && value > 20) {
-        toast.error("Child count must be less than 20", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-        newValue = 20;
-      } else {
-        newValue = value;
-      }
-    } else {
-      newValue = value;
-    }
-
-    setChildFormData((prev) => ({
-      ...prev,
-      [field]: newValue,
-    }));
-    setChildFormErrors((prevErrors) => ({
-      ...prevErrors,
-      [field]: errorMessage,
-    }));
-  };
-
-  const validateChildForm = () => {
-    console.log("childFormData", childFormData);
-    const errors = {};
-
-    if (!childFormData.childrenCount || childFormData.childrenCount <= 0) {
-      errors.childrenCount = "Child count must be a positive number";
-    }
-
-    if (
-      !childFormData.taxThresholdAmount ||
-      childFormData.taxThresholdAmount <= 0
-    ) {
-      errors.taxThresholdAmount = "Amount must be a positive number";
-    }
-
-    if (!childFormData.financialYearFrom) {
-      errors.financialYearFrom = "Effective Date is required";
-    }
-
-    setChildFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const checkEmptyDataInObject = (obj) => {
-    return Object.values(obj).some((value) => !value && value !== 0);
-  };
-
-  const handleChildSubmit = async (e) => {
+  const saveSlab = async (e) => {
     e.preventDefault();
-    if (checkEmptyDataInObject(childFormData)) {
-      setChildValidated(true);
-      return;
-    } else if (!validateChildForm()) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setChildError(null);
-
+    if (!selectedConfig || !validateSlab()) return;
     const payload = {
-      idChildTaxThreshold: childFormData.idChildTaxThreshold,
-      childrenCount: parseInt(childFormData.childrenCount),
-      taxThresholdAmount: parseFloat(childFormData.taxThresholdAmount),
-      financialYearFrom: moment(childFormData.financialYearFrom).format(),
+      idTaxSlab: slabForm.idTaxSlab,
+      idTaxYearConfig: selectedConfig.idTaxYearConfig,
+      ageCategory: slabForm.ageCategory,
+      incomeFrom: Number(slabForm.incomeFrom),
+      incomeTo: numberOrNull(slabForm.incomeTo),
+      taxRate: Number(slabForm.taxRate),
     };
-
-    const matchingYear = financialYears.find(
-      (year) =>
-        moment(year.financialYearFrom).year() ===
-        moment(childFormData.financialYearFrom).year(),
-    );
-
-    // If a matching financial year is found, add `idFinancialYear` and `financialYearTo` to the payload
-    if (matchingYear) {
-      payload["idFinancialYear"] = matchingYear.idFinancialYear;
-      payload["financialYearTo"] = matchingYear.financialYearTo;
+    showLoader();
+    const res = slabForm.idTaxSlab ? await TaxConfigService.updateTaxSlab(payload) : await TaxConfigService.addTaxSlab(payload);
+    hideLoader();
+    if (res.error) {
+      toast.error(res.error);
+      return;
     }
-
-    // return;
-    if (childFormData.idChildTaxThreshold !== 0) {
-      updateChildTaxThreshold(payload);
-    } else {
-      addChildTaxThreshold(payload);
-    }
+    toast.success(res.data?.message || "Tax slab saved.");
+    setShowSlabModal(false);
+    loadSlabs(selectedConfig.idTaxYearConfig);
   };
 
-  const updateChildTaxThreshold = (payload) => {
-    TaxConfigService.updateChildTaxThreshold(payload)
-      .then((res) => {
-        if (res.data.success) {
-          // toast.success('Child tax threshold updated successfully', {
-          //   position: 'top-right',
-          //   autoClose: 2000
-          // });
-          getChildTaxThresholds(selectedFinancialYear);
-          setLoading(false);
-          handleChildReset();
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        // toast.error('Something went wrong!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
-  };
+  const fieldError = (errors, name) => errors[name] && <div className="text-danger small">{errors[name]}</div>;
 
-  const addChildTaxThreshold = (payload) => {
-    TaxConfigService.createChildTaxThreshold(payload)
-      .then((res) => {
-        if (res.data.success) {
-          // toast.success('Child tax threshold added successfully', {
-          //   position: 'top-right',
-          //   autoClose: 2000
-          // });
-          getChildTaxThresholds(selectedFinancialYear);
-          setLoading(false);
-          handleChildReset();
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        // toast.error('Something went wrong!', {
-        //   position: 'top-right',
-        //   autoClose: 2000
-        // });
-      });
-  };
-
-  const handleEditChildThreshold = (threshold) => {
-    setChildFormData({
-      idChildTaxThreshold: threshold.idChildTaxThreshold,
-      childrenCount: threshold.childrenCount,
-      taxThresholdAmount: threshold.taxThresholdAmount,
-      financialYearFrom: moment(threshold.financialYearFrom).format(
-        "YYYY-MM-DD",
-      ),
-    });
-  };
-
-  const handleChildReset = () => {
-    setChildValidated(false);
-    setChildFormData({
-      idChildTaxThreshold: 0,
-      childrenCount: "",
-      taxThresholdAmount: "",
-      financialYearFrom: moment().format("YYYY-MM-DD"),
-      idFinancialYear: idFinancialYear,
-    });
-    setChildFormErrors({
-      childrenCount: "",
-      taxThresholdAmount: "",
-      financialYearFrom: "",
-    });
-  };
-
-  const handleFinancialYearChange = (e) => {
-    const selectedYear = financialYears.find(
-      (year) => year.idFinancialYear === parseInt(e.target.value),
-    );
-    setSelectedFinancialYear(e.target.value);
-
-    console.log("selectedYear", e.target.value);
-    getBaseTaxThresholds(e.target.value);
-    getChildTaxThresholds(e.target.value);
-  };
-
-  // Show all previous financial years, current financial year, and only next 1 financial year
-  const filteredFinancialYears = financialYears.filter((year) => {
-    const yearFrom = moment(year.financialYearFrom);
-    return yearFrom.year() <= nextYear;
-  });
+  const amountInput = (value, onChange, placeholder = "") => (
+    <NumericFormat
+      className="form-control"
+      value={value}
+      onValueChange={({ value: v }) => onChange(v)}
+      thousandSeparator={true}
+      thousandsGroupStyle="lakh"
+      decimalScale={2}
+      allowNegative={false}
+      placeholder={placeholder}
+    />
+  );
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
-      <div className="row mb-3">
-        <div className="col-12">
-          <div className="card custom-card">
-            <div className="card-body custom-card-body">
-              <div className="row align-items-center">
-                <div className="col-md-2">
-                  <label className="form-label mb-0 custom-label">
-                    Financial Year
-                  </label>
-                </div>
-                <div className="col-md-10">
-                  <select
-                    className="form-select w-25 custom-select"
-                    value={selectedFinancialYear}
-                    onChange={handleFinancialYearChange}
-                    required
+      {/* Financial year and regime */}
+      <div className="card mb-3">
+        <div className="card-body py-3">
+          <div className="row g-3 align-items-end">
+            <div className="col-md-3">
+              <label className="form-label mb-1">Financial Year</label>
+              <select className="form-select" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}>
+                <option value="">Select Financial Year</option>
+                {visibleYears.map((fy) => (
+                  <option key={fy.idFinancialYear} value={fy.idFinancialYear}>
+                    {yearLabel(fy)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-9">
+              <label className="form-label mb-1 d-block">Tax Regime</label>
+              <div className="d-flex flex-wrap gap-2">
+                {configs.map((c) => (
+                  <button
+                    key={c.idTaxYearConfig}
+                    type="button"
+                    className={`btn btn-sm ${String(c.idTaxYearConfig) === String(selectedConfigId) ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => setSelectedConfigId(String(c.idTaxYearConfig))}
                   >
-                    <option value="">Select Financial Year</option>
-                    {filteredFinancialYears.map((year) => (
-                      <option
-                        key={year.idFinancialYear}
-                        value={year.idFinancialYear}
-                      >
-                        {`${moment(year.financialYearFrom).format("DD-MM-YYYY")} - ${moment(year.financialYearTo).format("DD-MM-YYYY")}`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    {regimeLabel(c.idTaxRegime)} <span className="badge bg-white text-primary ms-1">{c.slabCount}</span>
+                  </button>
+                ))}
+                {selectedYearId && configs.length < TAX_REGIMES.length && (
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${selectedConfigId === "" ? "btn-secondary" : "btn-outline-secondary"}`}
+                    onClick={() => setSelectedConfigId("")}
+                  >
+                    <i className="bx bx-plus me-1"></i> Add Regime
+                  </button>
+                )}
+                {selectedYearId && configs.length === 0 && (
+                  <span className="text-muted small align-self-center">No regime is set up for this year yet.</span>
+                )}
               </div>
             </div>
           </div>
@@ -568,376 +339,207 @@ function TaxConfiguration() {
       </div>
 
       <div className="row">
-        <div className="col-lg-8 ">
-          <div className="card mb-2">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">Base Tax Threshold</h5>
-              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('basetax')}>Add</button> */}
+        {/* Tax year configuration */}
+        <div className="col-lg-4 mb-3">
+          <div className="card h-100">
+            <div className="card-header pb-2">
+              <h5 className="m-0">{selectedConfig ? `${regimeLabel(selectedConfig.idTaxRegime)} Settings` : "New Regime Configuration"}</h5>
             </div>
             <div className="card-body">
-              <div className="custom-table-wrapper-tax">
-                {loading && <div className="text-center p-3">Loading...</div>}
-                {/* {baseError && <div className="text-danger p-3">{baseError}</div>} */}
-                {!loading && (
+              <form onSubmit={saveConfig} noValidate>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Tax Regime</label>
+                  <select
+                    className="form-select"
+                    value={configForm.idTaxRegime}
+                    onChange={(e) => setConfigField("idTaxRegime", Number(e.target.value))}
+                    disabled={!!selectedConfig}
+                  >
+                    {TAX_REGIMES.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                  {fieldError(configErrors, "idTaxRegime")}
+                </div>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Standard Deduction (₹)</label>
+                  {amountInput(configForm.standardDeduction, (v) => setConfigField("standardDeduction", v))}
+                  {fieldError(configErrors, "standardDeduction")}
+                </div>
+                <div className="row">
+                  <div className="col-6 mb-2">
+                    <label className="form-label mb-1">Rebate Income Limit (₹)</label>
+                    {amountInput(configForm.rebateIncomeLimit, (v) => setConfigField("rebateIncomeLimit", v), "Section 87A")}
+                  </div>
+                  <div className="col-6 mb-2">
+                    <label className="form-label mb-1">Rebate Max Amount (₹)</label>
+                    {amountInput(configForm.rebateMaxAmount, (v) => setConfigField("rebateMaxAmount", v))}
+                  </div>
+                </div>
+                {fieldError(configErrors, "rebateMaxAmount")}
+                <div className="mb-2">
+                  <label className="form-label mb-1">Cess Rate (%)</label>
+                  <NumericFormat
+                    className="form-control"
+                    value={configForm.cessRate}
+                    onValueChange={({ value }) => setConfigField("cessRate", value)}
+                    decimalScale={2}
+                    allowNegative={false}
+                    isAllowed={({ floatValue }) => floatValue === undefined || floatValue <= 100}
+                  />
+                  {fieldError(configErrors, "cessRate")}
+                </div>
+                <div className="form-check form-switch mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="allowMarginalRelief"
+                    checked={configForm.allowMarginalRelief}
+                    onChange={(e) => setConfigField("allowMarginalRelief", e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="allowMarginalRelief">Allow Marginal Relief</label>
+                </div>
+                {fieldError(configErrors, "year")}
+                <div className="text-end">
+                  <button type="submit" className="btn btn-primary btn-sm px-4" disabled={!selectedYearId}>
+                    {selectedConfig ? "Update" : "Add"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* Tax slabs */}
+        <div className="col-lg-8 mb-3">
+          <div className="card h-100">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2">
+              <h5 className="m-0">
+                Tax Slabs
+                {selectedConfig && (
+                  <span className="text-muted fs-6 ms-2">
+                    {regimeLabel(selectedConfig.idTaxRegime)} · {yearLabel(financialYears.find((fy) => String(fy.idFinancialYear) === selectedYearId))}
+                  </span>
+                )}
+              </h5>
+              <div className="d-flex align-items-center gap-2">
+                <select className="form-select form-select-sm" style={{ width: "200px" }} value={ageFilter}
+                  onChange={(e) => setAgeFilter(e.target.value)} disabled={!selectedConfig}>
+                  <option value="">All Age Categories</option>
+                  {ageOptions.map((a) => (
+                    <option key={a.value} value={a.value}>{a.label}</option>
+                  ))}
+                </select>
+                <button type="button" className="btn btn-primary btn-sm px-3" onClick={openAddSlab} disabled={!selectedConfig}>
+                  <i className="bx bx-plus me-1"></i> Add Slab
+                </button>
+              </div>
+            </div>
+            <div className="card-body">
+              {!selectedConfig ? (
+                <div className="text-center text-muted py-4">Save the regime settings first, then add its tax slabs.</div>
+              ) : loadingSlabs ? (
+                <div className="text-center p-3">Loading...</div>
+              ) : (
+                <div className="table-responsive">
                   <table className="table table-sm">
                     <thead>
                       <tr>
-                        <th>Min Income</th>
-                        <th>Max Income</th>
-                        <th>Tax Rate (%)</th>
-                        <th>Effective From</th>
+                        <th>Age Category</th>
+                        <th className="text-end">Income From (₹)</th>
+                        <th className="text-end">Income To (₹)</th>
+                        <th className="text-end">Tax Rate</th>
                         <th></th>
                       </tr>
                     </thead>
-                    {!baseError && (
-                      <tbody className="table-border-bottom-0">
-                        {baseTaxThresholds &&
-                          baseTaxThresholds.map((threshold) => (
-                            <tr key={threshold.idTaxSlab}>
-                              <td className="text-end">
-                                {new Intl.NumberFormat("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }).format(threshold.minAmount)}
-                              </td>
-                              <td className="text-end">
-                                {new Intl.NumberFormat("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }).format(threshold.maxAmount)}
-                              </td>
-                              <td>{threshold.taxRate}%</td>
-                              <td>
-                                {moment(threshold.financialYearFrom).format(
-                                  "DD-MM-YYYY",
-                                )}
-                              </td>
-                              <td className="text-end">
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                                  onClick={() => handleEdit(threshold)}
-                                >
-                                  <span className="tf-icons bx bx-pencil"></span>
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    )}
-                    {baseError && (
-                      <tbody className="table-border-bottom-0">
+                    <tbody className="table-border-bottom-0">
+                      {visibleSlabs.length === 0 ? (
                         <tr>
                           <td colSpan="5" className="text-center">
                             <div className="Nodatafound_box">
-                              <h6>
-                                <i className="bx bx-search"></i> No data
-                                available!
-                              </h6>
+                              <h6><i className="bx bx-search"></i> No tax slabs yet.</h6>
                             </div>
                           </td>
                         </tr>
-                      </tbody>
-                    )}
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="card d-none">
-            <div className="card-header d-flex align-items-center justify-content-between pb-3">
-              <h5 className="m-0">Children Based Tax Threshold</h5>
-              {/* <button className="btn btn-primary btn-sm px-4" onClick={() => handleButtonClick('childtax')}>Add</button> */}
-            </div>
-            <div className="card-body">
-              <div className="custom-table-wrapper-tax">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Child Count</th>
-                      <th className="text-end">Amount</th>
-                      <th>Effective From</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  {!childError && (
-                    <tbody className="table-border-bottom-0">
-                      {childTaxThresholds &&
-                        childTaxThresholds.map((threshold) => (
-                          <tr key={threshold.idChildTaxThreshold}>
-                            <td>{threshold.childrenCount}</td>
+                      ) : (
+                        visibleSlabs.map((slab) => (
+                          <tr key={slab.idTaxSlab}>
+                            <td>{ageLabel(slab.ageCategory)}</td>
+                            <td className="text-end">{formatAmount(slab.incomeFrom)}</td>
+                            <td className="text-end">{slab.incomeTo === null ? <span className="text-muted">and above</span> : formatAmount(slab.incomeTo)}</td>
+                            <td className="text-end">{Number(slab.taxRate)}%</td>
                             <td className="text-end">
-                              {new Intl.NumberFormat("en-IN", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }).format(threshold.taxThresholdAmount)}
-                            </td>
-                            <td>
-                              {moment(threshold.financialYearFrom).format(
-                                "DD-MM-YYYY",
-                              )}
-                            </td>
-                            <td className="text-end">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                                onClick={() =>
-                                  handleEditChildThreshold(threshold)
-                                }
-                              >
+                              <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
+                                title="Edit" onClick={() => openEditSlab(slab)}>
                                 <span className="tf-icons bx bx-pencil"></span>
                               </button>
                             </td>
                           </tr>
-                        ))}
-                      {!loading && childTaxThresholds.length === 0 && (
-                        <tr>
-                          <td colSpan="4" className="text-center">
-                            <div className="Nodatafound_box">
-                              <h6>
-                                <i className="bx bx-search"></i> No data
-                                available!
-                              </h6>
-                            </div>
-                          </td>
-                        </tr>
+                        ))
                       )}
                     </tbody>
-                  )}
-                  {childError && (
-                    <tbody className="table-border-bottom-0">
-                      <tr>
-                        <td colSpan="4" className="text-center">
-                          <div className="Nodatafound_box">
-                            <h6>
-                              <i className="bx bx-search"></i> No data
-                              available!
-                            </h6>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  )}
-                </table>
-                {loading && <div className="text-center p-3">Loading...</div>}
-                {/* {childError && <div className="text-danger p-3">{childError}</div>} */}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-4">
-          <div className="card">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Add/Update Income Tax Threshold</h5>
-            </div>
-            <div className="card-body">
-              <Form onSubmit={handleSubmit} noValidate validated={validated}>
-                <div className="row mb-2">
-                  <div className="col-md-6">
-                    <label className="form-label mb-1">Min Income</label>
-                    <NumericFormat
-                      getInputRef={maxAmountRef}
-                      className="form-control"
-                      value={formData.minAmount}
-                      onValueChange={(values) =>
-                        handleInputChange(values, "minAmount")
-                      }
-                      decimalScale={2}
-                      allowNegative={false}
-                      thousandSeparator={true}
-                      allowLeadingZeros={false}
-                      placeholder="Add min income"
-                      maxLength={15}
-                      required
-                    />
-                    {formErrors.minAmount && (
-                      <div className="text-danger">{formErrors.minAmount}</div>
-                    )}
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label mb-1">Max Income</label>
-                    <NumericFormat
-                      className="form-control"
-                      value={formData.maxAmount}
-                      onValueChange={(values) =>
-                        handleInputChange(values, "maxAmount")
-                      }
-                      decimalScale={2}
-                      allowNegative={false}
-                      thousandSeparator={true}
-                      allowLeadingZeros={false}
-                      placeholder="Add max income"
-                      maxLength={15}
-                      required
-                    />
-                    {formErrors.maxAmount && (
-                      <div className="text-danger">{formErrors.maxAmount}</div>
-                    )}
-                  </div>
+                  </table>
                 </div>
-
-                <div className="row mb-2">
-                  <div className="col-md-6">
-                    <label className="form-label mb-1">Tax Rate (%)</label>
-                    <NumericFormat
-                      className="form-control"
-                      value={formData.taxRate}
-                      onValueChange={(values) =>
-                        handleInputChange(values, "taxRate")
-                      }
-                      decimalScale={4}
-                      allowNegative={false}
-                      allowLeadingZeros={false}
-                      maxLength={5}
-                      required
-                    />
-                    {formErrors.taxRate && (
-                      <div className="text-danger">{formErrors.taxRate}</div>
-                    )}
-                  </div>
-
-                  <div className="col-md-6 date-picker-container">
-                    <label className="form-label mb-1">Effective From</label>
-                    <br />
-                    <DatePicker
-                      className="form-control w-100"
-                      dateFormat="dd-MM-yyyy"
-                      placeholderText="Start Date"
-                      selected={formData.financialYearFrom}
-                      onChange={(date) =>
-                        handleInputChange(date, "financialYearFrom")
-                      }
-                      showMonthDropdown
-                      showYearDropdown
-                      dropdownMode="select"
-                    />
-                    {formErrors.financialYearFrom && (
-                      <div className="text-danger">
-                        {formErrors.financialYearFrom}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <button type="submit" className="btn btn-primary px-4 me-2">
-                    Submit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary px-4"
-                    onClick={handleReset}
-                  >
-                    Reset
-                  </button>
-                </div>
-              </Form>
-            </div>
-          </div>
-
-          <div className="card mt-2 d-none">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Add/Update Children Tax Threshold</h5>
-            </div>
-            <div className="card-body">
-              <Form
-                onSubmit={handleChildSubmit}
-                noValidate
-                validated={childValidated}
-              >
-                {/* Flex container for Amount and Effective From fields */}
-                <div className="d-flex mb-2">
-                  <div className="flex-fill me-2">
-                    <label className="form-label mb-1">Child Count</label>
-                    <NumericFormat
-                      getInputRef={childAmountRef}
-                      className="form-control"
-                      value={childFormData.childrenCount}
-                      onValueChange={(values) =>
-                        handleChildInputChange(values, "childrenCount")
-                      }
-                      decimalScale={0}
-                      allowNegative={false}
-                      allowLeadingZeros={false}
-                      maxLength={2}
-                      maxAmount={20}
-                      placeholder="Enter number of children"
-                      required
-                    />
-                    {childFormErrors.childrenCount && (
-                      <div className="text-danger">
-                        {childFormErrors.childrenCount}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-fill me-2">
-                    <label className="form-label mb-1">Amount</label>
-                    <NumericFormat
-                      className="form-control"
-                      value={childFormData.taxThresholdAmount}
-                      onValueChange={(values) =>
-                        handleChildInputChange(values, "taxThresholdAmount")
-                      }
-                      decimalScale={2}
-                      maxLength={15}
-                      allowNegative={false}
-                      thousandSeparator={true}
-                      allowLeadingZeros={false}
-                      placeholder="Enter amount"
-                      required
-                    />
-                    {childFormErrors.taxThresholdAmount && (
-                      <div className="text-danger">
-                        {childFormErrors.taxThresholdAmount}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-2 date-picker-container">
-                  <label className="form-label mb-1">Effective From</label>
-                  <br />
-                  <DatePicker
-                    className="form-control w-100"
-                    dateFormat="dd-MM-yyyy"
-                    placeholderText="Select date"
-                    selected={moment(childFormData.financialYearFrom).toDate()}
-                    onChange={(date) =>
-                      handleChildInputChange(date, "financialYearFrom")
-                    }
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                    required
-                  />
-                  {childFormErrors.financialYearFrom && (
-                    <div className="text-danger">
-                      {childFormErrors.financialYearFrom}
-                    </div>
-                  )}
-                </div>
-                <div className="text-center">
-                  <button
-                    type="submit"
-                    className="btn btn-primary px-4 me-2"
-                    disabled={loading}
-                  >
-                    {loading ? "Saving..." : "Submit"}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary px-4"
-                    onClick={handleChildReset}
-                    disabled={loading}
-                  >
-                    Reset
-                  </button>
-                </div>
-              </Form>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add / Edit slab */}
+      <Modal show={showSlabModal} onHide={() => setShowSlabModal(false)} centered backdrop="static" keyboard={false}>
+        <form onSubmit={saveSlab} noValidate>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <h5 className="m-0">{slabForm.idTaxSlab ? "Edit Tax Slab" : "Add Tax Slab"}</h5>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-2">
+              <label className="form-label mb-1">Age Category</label>
+              <select className="form-select" value={slabForm.ageCategory} onChange={(e) => setSlabField("ageCategory", e.target.value)}>
+                {ageOptions.map((a) => (
+                  <option key={a.value} value={a.value}>{a.label}</option>
+                ))}
+              </select>
+              {fieldError(slabErrors, "ageCategory")}
+            </div>
+            <div className="row">
+              <div className="col-6 mb-2">
+                <label className="form-label mb-1">Income From (₹)</label>
+                {amountInput(slabForm.incomeFrom, (v) => setSlabField("incomeFrom", v))}
+                {fieldError(slabErrors, "incomeFrom")}
+              </div>
+              <div className="col-6 mb-2">
+                <label className="form-label mb-1">Income To (₹)</label>
+                {amountInput(slabForm.incomeTo, (v) => setSlabField("incomeTo", v), "Empty = and above")}
+                {fieldError(slabErrors, "incomeTo")}
+              </div>
+            </div>
+            <div className="mb-2">
+              <label className="form-label mb-1">Tax Rate (%)</label>
+              <NumericFormat
+                className="form-control"
+                value={slabForm.taxRate}
+                onValueChange={({ value }) => setSlabField("taxRate", value)}
+                decimalScale={2}
+                allowNegative={false}
+                isAllowed={({ floatValue }) => floatValue === undefined || floatValue <= 100}
+              />
+              {fieldError(slabErrors, "taxRate")}
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button type="submit" className="btn btn-primary btn-sm py-2 px-4 me-2">
+              {slabForm.idTaxSlab ? "Update" : "Submit"}
+            </button>
+            <button type="button" className="btn btn-outline-secondary btn-sm py-2 px-4" onClick={() => setShowSlabModal(false)}>
+              Cancel
+            </button>
+          </Modal.Footer>
+        </form>
+      </Modal>
     </div>
   );
 }

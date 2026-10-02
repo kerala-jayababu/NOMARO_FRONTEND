@@ -32,6 +32,7 @@ import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
+import SalaryDashboard from "./pages/PayrollManagement/SalaryDashboard";
 import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
 import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
@@ -46,6 +47,7 @@ import LeavePassagePayroll from "./pages/PayrollManagement/LeavePassagePayroll";
 import ShiftManagement from "./pages/AdminTools/ShiftManagement"
 import ShiftAssignment from "./pages/AdminTools/ShiftAssignment"
 import Assets from "./pages/AdminTools/assets"
+import SystemParameters from "./pages/AdminTools/systemParameters";
 import "../src/core/services/PreventMultipleClickButton"
 import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
 import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
@@ -123,6 +125,7 @@ function App() {
               <Route path='bank-branches' element={<BankAndBranches />} />
               <Route path='rent-free-quarters' element={<RentFreeAllowances />} />
               <Route path='salary-slips' element={<ViewPaySlips />} />
+              <Route path='salary-dashboard' element={<SalaryDashboard />} />
               <Route path='pay-slips' element={<SalarySlipsView />} />
               <Route path='salary-report' element={<SalaryReport />} />
               <Route path='overtime-details' element={<EmployeeOvertimeTransaction />} />
@@ -157,6 +160,7 @@ function App() {
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
               <Route path="org-hierarchy" element={<OrgHierarchy/>} />
               <Route path="assets" element={<Assets/>} />
+              <Route path="system-parameters" element={<SystemParameters />} />
               <Route path="missing-entry-approval" element={<MissingEntryApproval/>} />
               <Route path="forgot-card-approval" element={<ForgotCardApproval/>} />
               <Route path="annual-leave-dashboard" element={<AnnualLeaveDashboard/>} />

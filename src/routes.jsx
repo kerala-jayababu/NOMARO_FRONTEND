@@ -20,6 +20,8 @@ import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
 import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
 import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
 import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
+import SalaryDashboard from "./pages/PayrollManagement/SalaryDashboard";
+import SystemParameters from "./pages/AdminTools/systemParameters";
 import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
 import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
 import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
@@ -119,6 +121,14 @@ export const privateRoutes = [
   {
     path: "/dashboard/salary-slips",
     element: <ViewPaySlips />,
+  },
+  {
+    path: "/dashboard/salary-dashboard",
+    element: <SalaryDashboard />,
+  },
+  {
+    path: "/dashboard/system-parameters",
+    element: <SystemParameters />,
   },
   {
     path: "/dashboard/pay-slips",

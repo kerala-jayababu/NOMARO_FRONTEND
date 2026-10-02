@@ -51,6 +51,7 @@ const EmployeeProfile = () => {
   );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20); // employees per page: 10 | 20 | 50 | 100 | 200
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const { banks, bankBranches, budgetCode, overTimesTypes } = useSelector(
@@ -69,6 +70,7 @@ const EmployeeProfile = () => {
   const [bankData, setBankData] = useState("");
   const [overTimeData, setOverTimeData] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL | ACTIVE (Working) | INACTIVE (other statuses)
   const [branchesPerBank, setBranchesPerBank] = useState({});
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
@@ -428,9 +430,16 @@ const EmployeeProfile = () => {
     })) || [];
 
   const filteredEmployeeData = useMemo(() => {
-    if (!searchTerm) return employeeData;
+    const byStatus = employeeData.filter((employee) =>
+      statusFilter === "ACTIVE"
+        ? employee.status === "Working"
+        : statusFilter === "INACTIVE"
+          ? employee.status !== "Working"
+          : true
+    );
+    if (!searchTerm) return byStatus;
 
-    return employeeData.filter((employee) => {
+    return byStatus.filter((employee) => {
       return (
         employee.empCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -438,9 +447,8 @@ const EmployeeProfile = () => {
         employee.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     });
-  }, [employeeData, searchTerm]);
+  }, [employeeData, searchTerm, statusFilter]);
 
-  const rowsPerPage = 10; // Number of rows per page
 
   const totalPages = Math.ceil(filteredEmployeeData.length / rowsPerPage);
 
@@ -449,6 +457,18 @@ const EmployeeProfile = () => {
     const endIndex = startIndex + rowsPerPage;
     return filteredEmployeeData.slice(startIndex, endIndex);
   }, [filteredEmployeeData, currentPage, rowsPerPage]);
+
+  // Stay on a page that exists when the list gets shorter (search / filter / page size)
+  useEffect(() => {
+    if (currentPage > 1 && currentPage > totalPages) {
+      setCurrentPage(Math.max(totalPages, 1));
+    }
+  }, [currentPage, totalPages]);
+
+  const handleRowsPerPageChange = (size) => {
+    setRowsPerPage(size);
+    setCurrentPage(1);
+  };
 
   const getFilteredBranches = async (bankId) => {
     // Ensure bankId is an integer
@@ -1549,10 +1569,26 @@ const EmployeeProfile = () => {
                   </button>
                 )}
                 <div className="list_searchbox">
+                  <select
+                    className="form-select"
+                    style={{ width: "130px" }}
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    aria-label="Filter by status"
+                  >
+                    <option value="ALL">All</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                </div>
+                <div className="list_searchbox">
                   <input
                     type="search"
                     className="form-control"
-                    placeholder="Search by Emp. Code or Name"
+                    placeholder="Search Employee"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -1585,7 +1621,25 @@ const EmployeeProfile = () => {
                   </div>
                 </>
               )}
-              <div className="text-end pt-2">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2">
+                {/* Employees per page */}
+                <div className="d-flex align-items-center gap-1 small">
+                  <span className="text-muted me-1">Show:</span>
+                  {[10, 20, 50, 100, 200].map((size, index) => (
+                    <React.Fragment key={size}>
+                      {index > 0 && <span className="text-muted">|</span>}
+                      <button
+                        type="button"
+                        className={`btn btn-link btn-sm p-0 px-1 text-decoration-none ${rowsPerPage === size ? "fw-bold" : "text-secondary"}`}
+                        style={rowsPerPage === size ? { pointerEvents: "none" } : undefined}
+                        onClick={() => handleRowsPerPageChange(size)}
+                      >
+                        {size}
+                      </button>
+                    </React.Fragment>
+                  ))}
+                  <span className="text-muted ms-1">per page</span>
+                </div>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -13,6 +13,9 @@ import {
 import { getAllEmployeeDetails } from "../../redux/reducers/getAllEmployeeDetails"; // Import the action
 import { fetchDesignations } from "../../redux/reducers/designation"; // Import the action
 
+// Both sections (employee / designation list and screen permissions) use this height
+const PERMISSION_PANEL_HEIGHT = "520px";
+
 function ScreenPermission() {
   const dispatch = useDispatch();
   const { payrollScreen } = useSelector((state) => state.screenPermission);
@@ -30,6 +33,9 @@ function ScreenPermission() {
   const [designationPermissionIds, setDesignationPermissionIds] = useState({});
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
 const [designationSearchTerm, setDesignationSearchTerm] = useState("");
+  // Filter of the Screen Permissions grid by top-level menu (PayrollScreens with IdParentPayrollScreen = 0)
+  const [employeeParentFilter, setEmployeeParentFilter] = useState("");
+  const [designationParentFilter, setDesignationParentFilter] = useState("");
 
   useEffect(() => {
     dispatch(screenPermission());
@@ -255,6 +261,31 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
     },
   ];
 
+  // Top-level menus for the filter dropdown
+  const parentScreenOptions = (employeePermissions || []).map((screen) => screen.screenName);
+
+  const filterByParent = (list, parentName) =>
+    parentName ? list.filter((screen) => screen.screenName === parentName) : list;
+
+  // The grid may show only some top-level menus: put its changes back into the full list
+  const mergeIntoAll = (allScreens, updatedScreens) =>
+    allScreens.map((screen) => updatedScreens.find((u) => u.screenName === screen.screenName) || screen);
+
+  const parentFilterSelect = (value, onChange) => (
+    <select
+      className="form-select form-select-sm"
+      style={{ width: "220px" }}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label="Filter by menu"
+    >
+      <option value="">All Menus</option>
+      {parentScreenOptions.map((name) => (
+        <option key={name} value={name}>{name}</option>
+      ))}
+    </select>
+  );
+
   const handleEmployeeSelectionChange = (updatedData) => {
     const transformedData = updatedData.map((screen) => {
       // Only update the parent screen's permissions
@@ -269,7 +300,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
       };
     });
 
-    setEmployeePermissions(transformedData);
+    setEmployeePermissions((prev) => mergeIntoAll(prev, transformedData));
   };
 
   const prepareDataForAPI = () => {
@@ -383,7 +414,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
       };
     });
 
-    setDesignationPermissions(transformedData);
+    setDesignationPermissions((prev) => mergeIntoAll(prev, transformedData));
   };
 
   const handleEmployeeSelect = (selectedRow) => {
@@ -553,7 +584,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                 role="tabpanel"
               >
                 <div className="row m-0">
-                  <div className="col-lg-6 p-1">
+                  <div className="col-lg-6 p-1" style={{ height: PERMISSION_PANEL_HEIGHT }}>
                     <SingleSelectTable
                       title="Employee Permissions"
                       headers={["Emp. Code", "Employee Name", "Designation"]}
@@ -566,19 +597,21 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                     />
                   </div>
 
-                  <div className="col-lg-6 p-1">
-                    <div className="card border">
+                  <div className="col-lg-6 p-1" style={{ height: PERMISSION_PANEL_HEIGHT }}>
+                    <div className="card border h-100 d-flex flex-column">
                       <div className="card-header d-flex align-items-center justify-content-between p-3 border-bottom">
                         <h5 className="m-0">Screen Permissions</h5>
+                        {parentFilterSelect(employeeParentFilter, setEmployeeParentFilter)}
                       </div>
-                      <div className="card-body p-0">
+                      <div className="card-body p-0 d-flex flex-column" style={{ flex: 1, minHeight: 0 }}>
                         <div className="table-responsive" style={{
-                            maxHeight: "330px", // Adjust the height as needed
+                            flex: 1, // fills the card, so both sections end at the same height
+                            minHeight: 0,
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
                           <MultiSelectTable
-                            data={employeePermissions}
+                            data={filterByParent(employeePermissions, employeeParentFilter)}
                             columns={columns}
                             onSelectionChange={handleEmployeeSelectionChange}
                           />
@@ -602,7 +635,7 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
               </div>
               <div className="tab-pane fade" id="navs-top-Role" role="tabpanel">
                 <div className="row m-0">
-                  <div className="col-lg-6 p-1" >
+                  <div className="col-lg-6 p-1" style={{ height: PERMISSION_PANEL_HEIGHT }}>
                     <SingleSelectTable
                       title="Designation Permissions"
                       headers={designationHeaders}
@@ -614,19 +647,21 @@ const [designationSearchTerm, setDesignationSearchTerm] = useState("");
                     />
                   </div>
 
-                  <div className="col-lg-6 p-1">
-                    <div className="card border">
+                  <div className="col-lg-6 p-1" style={{ height: PERMISSION_PANEL_HEIGHT }}>
+                    <div className="card border h-100 d-flex flex-column">
                       <div className="card-header d-flex align-items-center justify-content-between p-3">
                         <h5 className="m-0">Screen Permissions</h5>
+                        {parentFilterSelect(designationParentFilter, setDesignationParentFilter)}
                       </div>
-                      <div className="card-body p-0">
+                      <div className="card-body p-0 d-flex flex-column" style={{ flex: 1, minHeight: 0 }}>
                         <div className="table-responsive" style={{
-                            maxHeight: "330px", // Adjust the height as needed
+                            flex: 1, // fills the card, so both sections end at the same height
+                            minHeight: 0,
                             overflowY: "auto", // Enable vertical scrolling
                             border: "1px solid #ddd", // Optional: Add a border for better visibility
                           }}>
                           <MultiSelectTable
-                            data={designationPermissions}
+                            data={filterByParent(designationPermissions, designationParentFilter)}
                             columns={columns}
                             onSelectionChange={handleDesignationSelectionChange}
                           />
