@@ -27,7 +27,7 @@ function Navbar({ view }) {
   useEffect(() => {
     const savedTheme = secureLocalStorage.getItem("ColorTheme");
     if (savedTheme) {
-      changeTheme(savedTheme === "green" ? "green" : "blue");
+      changeTheme(savedTheme); // any theme name from utils/themes.js or a hex colour
     }
   }, [changeTheme]);
 
@@ -71,10 +71,10 @@ function Navbar({ view }) {
             (item) => item.parameterName === "ColorTheme",
           );
           if (colorThemeParam && colorThemeParam.parameterValue) {
-            const themeValue = colorThemeParam.parameterValue.toLowerCase();
+            const themeValue = colorThemeParam.parameterValue.trim();
             secureLocalStorage.setItem("ColorTheme", themeValue);
-            // Apply theme based on ColorTheme parameter
-            changeTheme(themeValue === "green" ? "green" : "blue");
+            // ColorTheme: a theme name (BLUE, GREEN, PURPLE …, see utils/themes.js) or a hex colour like #7B1FA2
+            changeTheme(themeValue);
           }
 
           const addEmployeeAllowedParam = res.data.data.find(

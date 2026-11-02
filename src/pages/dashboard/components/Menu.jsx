@@ -74,6 +74,17 @@ function Menu({ viewType }) {
     };
   }, [dispatch, viewType]);
 
+  // A top-level screen without sub-menus (e.g. Holiday Calendar) is a page of its own
+  const isStandalonePage = (screen) => !(screen.subMenus && screen.subMenus.length);
+  const openStandalonePage = (screen) => {
+    if (!canView(screen.screenName)) return; // block if no view permission
+    setMenu(screen.screenName);
+    setSubMenu("");
+    dispatch(setIdPayrollScreen(screen.idPayrollScreen));
+    dispatch(setComponent(screen.screenName));
+    navigate(`/dashboard/${screen.screenName.replace(/\s+/g, "-").toLowerCase()}`);
+  };
+
   return (
     <aside
       id="layout-menu"
@@ -104,8 +115,12 @@ function Menu({ viewType }) {
               } cursor-pointer`}
           >
             <a
-              className="menu-link menu-toggle"
+              className={`menu-link ${isStandalonePage(screen) ? "" : "menu-toggle"}`}
               onClick={() => {
+                if (isStandalonePage(screen)) {
+                  openStandalonePage(screen);
+                  return;
+                }
                 setMenu(menu === screen.screenName ? "" : screen.screenName);
               }}
             >

@@ -41,25 +41,8 @@ html.theme-blue {
   --pagination-active-shadow: rgba(13, 56, 77, 0.4);
 }
 
-/* Green Theme */
-html.theme-green {
-  --primary-color: #0b5c1e;
-  --primary-light: rgba(11, 92, 30, 0.1);
-  --text-primary: #2d5a3d;
-  --text-secondary: #3d6b4f;
-  --text-muted: #5a7a66;
-  --link-color: #0b5c1e;
-  --link-hover-color: #094a18;
-  --heading-color: #0b5c1e;
-  --navbar-bg: #0b5c1e;
-  --navbar-text: #e0f5e6;
-  --navbar-text-hover: #ffffff;
-  --navbar-title-color: #ffffff;
-  --pagination-active-bg: #0b5c1e;
-  --pagination-active-border: #0b5c1e;
-  --pagination-active-shadow: rgba(11, 92, 30, 0.4);
-  --bs-table-hover-bg: rgba(76, 175, 80, 0.2);
-}
+/* Other themes (GREEN, PURPLE, custom hex …): CSS variables are set on <html> by src/utils/themes.js,
+   and the rules marked html.theme-custom-colors below use them. */
 
 /* Global Styles */
 body {
@@ -163,150 +146,150 @@ html.theme-blue .btn-primary:hover {
   filter: none;
 }
 
-/* Green theme specific hover */
-html.theme-green .btn-primary:hover {
-  background-color: #094a18 !important;
-  border-color: #094a18 !important;
+/* Coloured themes specific hover */
+html.theme-custom-colors .btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
   opacity: 1;
   filter: none;
 }
 
-/* Green theme table text */
-html.theme-green .table tbody td {
+/* Coloured themes table text */
+html.theme-custom-colors .table tbody td {
   color: #131313 !important;
 }
 
-html.theme-green .table tbody td a {
-  color: #0b5c1e !important;
+html.theme-custom-colors .table tbody td a {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green .table tbody td a:hover,
-html.theme-green .table tbody td a:focus {
-  color: #094a18 !important;
+html.theme-custom-colors .table tbody td a:hover,
+html.theme-custom-colors .table tbody td a:focus {
+  color: var(--primary-hover) !important;
 }
 
-/* Green theme table headers */
-html.theme-green .table th,
-html.theme-green thead th,
-html.theme-green .table thead th,
-html.theme-green .deduct-table-container thead th {
+/* Coloured themes table headers */
+html.theme-custom-colors .table th,
+html.theme-custom-colors thead th,
+html.theme-custom-colors .table thead th,
+html.theme-custom-colors .deduct-table-container thead th {
   color: #131313 !important;
 }
 
-/* Green theme all hyperlinks */
-html.theme-green a {
-  color: #0b5c1e !important;
+/* Coloured themes all hyperlinks */
+html.theme-custom-colors a {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green a:hover,
-html.theme-green a:focus {
-  color: #094a18 !important;
+html.theme-custom-colors a:hover,
+html.theme-custom-colors a:focus {
+  color: var(--primary-hover) !important;
 }
 
-html.theme-green a:visited {
-  color: #0b5c1e !important;
+html.theme-custom-colors a:visited {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green a.text-primary {
-  color: #0b5c1e !important;
+html.theme-custom-colors a.text-primary {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green a.text-primary:hover,
-html.theme-green a.text-primary:focus {
-  color: #094a18 !important;
+html.theme-custom-colors a.text-primary:hover,
+html.theme-custom-colors a.text-primary:focus {
+  color: var(--primary-hover) !important;
 }
 
-/* Green theme action button hover */
-html.theme-green .btn-outline-secondary:hover,
-html.theme-green .btn-outline-secondary:focus,
-html.theme-green .btn-outline-primary:hover,
-html.theme-green .btn-outline-primary:focus {
-  background-color: #0b5c1e !important;
-  border-color: #0b5c1e !important;
+/* Coloured themes action button hover */
+html.theme-custom-colors .btn-outline-secondary:hover,
+html.theme-custom-colors .btn-outline-secondary:focus,
+html.theme-custom-colors .btn-outline-primary:hover,
+html.theme-custom-colors .btn-outline-primary:focus {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
   color: #fff !important;
 }
 
-/* Green theme table row hover */
-html.theme-green .table-hover > tbody > tr:hover,
-html.theme-green .table-hover > tbody > tr:hover > td,
-html.theme-green .table-hover > tbody > tr:hover > th,
-html.theme-green .table tbody tr:hover,
-html.theme-green .table tbody tr:hover > td,
-html.theme-green .table tbody tr:hover > th,
-html.theme-green .table-hover > tbody > tr:hover > * {
-  background-color: rgba(76, 175, 80, 0.2) !important;
+/* Coloured themes table row hover */
+html.theme-custom-colors .table-hover > tbody > tr:hover,
+html.theme-custom-colors .table-hover > tbody > tr:hover > td,
+html.theme-custom-colors .table-hover > tbody > tr:hover > th,
+html.theme-custom-colors .table tbody tr:hover,
+html.theme-custom-colors .table tbody tr:hover > td,
+html.theme-custom-colors .table tbody tr:hover > th,
+html.theme-custom-colors .table-hover > tbody > tr:hover > * {
+  background-color: var(--primary-hover-bg) !important;
 }
 
-html.theme-green .table > :not(caption) > * > * {
+html.theme-custom-colors .table > :not(caption) > * > * {
   box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
 }
 
-html.theme-green .table-hover > tbody > tr:hover > * {
-  --bs-table-accent-bg: rgba(76, 175, 80, 0.2) !important;
-  box-shadow: inset 0 0 0 9999px rgba(76, 175, 80, 0.2) !important;
+html.theme-custom-colors .table-hover > tbody > tr:hover > * {
+  --bs-table-accent-bg: var(--primary-hover-bg) !important;
+  box-shadow: inset 0 0 0 9999px var(--primary-hover-bg) !important;
 }
 
-html.theme-green .deduct-table-container tbody tr:hover,
-html.theme-green .deduct-table-container tbody tr:hover > td,
-html.theme-green .deduct-table-container tbody tr:hover > th {
-  background-color: rgba(76, 175, 80, 0.2) !important;
+html.theme-custom-colors .deduct-table-container tbody tr:hover,
+html.theme-custom-colors .deduct-table-container tbody tr:hover > td,
+html.theme-custom-colors .deduct-table-container tbody tr:hover > th {
+  background-color: var(--primary-hover-bg) !important;
 }
 
-/* Green theme menu and sub-menu text color */
-html.theme-green .bg-menu-theme .menu-link {
+/* Coloured themes menu and sub-menu text color */
+html.theme-custom-colors .bg-menu-theme .menu-link {
   color: #131313 !important;
 }
 
-html.theme-green .bg-menu-theme .menu-sub > .menu-item > .menu-link {
+html.theme-custom-colors .bg-menu-theme .menu-sub > .menu-item > .menu-link {
   color: #131313 !important;
 }
 
-html.theme-green .bg-menu-theme .menu-item > .menu-link {
+html.theme-custom-colors .bg-menu-theme .menu-item > .menu-link {
   color: #131313 !important;
 }
 
-html.theme-green .bg-menu-theme .menu-item.active > .menu-link {
-  color: #0b5c1e !important;
+html.theme-custom-colors .bg-menu-theme .menu-item.active > .menu-link {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link {
-  color: #0b5c1e !important;
+html.theme-custom-colors .bg-menu-theme .menu-sub > .menu-item.active > .menu-link {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green .bg-menu-theme .menu-item.active > .menu-link:hover,
-html.theme-green .bg-menu-theme .menu-item.active > .menu-link:focus {
-  color: #0b5c1e !important;
+html.theme-custom-colors .bg-menu-theme .menu-item.active > .menu-link:hover,
+html.theme-custom-colors .bg-menu-theme .menu-item.active > .menu-link:focus {
+  color: var(--primary-color) !important;
 }
 
-html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:hover,
-html.theme-green .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:focus {
-  color: #0b5c1e !important;
+html.theme-custom-colors .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:hover,
+html.theme-custom-colors .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:focus {
+  color: var(--primary-color) !important;
 }
 
-/* Green theme menu hover */
-html.theme-green .bg-menu-theme .menu-link:hover,
-html.theme-green .bg-menu-theme .menu-link:focus,
-html.theme-green .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
-  background-color: rgba(76, 175, 80, 0.2) !important;
+/* Coloured themes menu hover */
+html.theme-custom-colors .bg-menu-theme .menu-link:hover,
+html.theme-custom-colors .bg-menu-theme .menu-link:focus,
+html.theme-custom-colors .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
+  background-color: var(--primary-hover-bg) !important;
   color: #131313 !important;
 }
 
-html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.open > .menu-link,
-html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.open > .menu-link {
-  background-color: rgba(76, 175, 80, 0.2) !important;
-  color: #0b5c1e !important;
+html.theme-custom-colors:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.open > .menu-link,
+html.theme-custom-colors .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.open > .menu-link {
+  background-color: var(--primary-hover-bg) !important;
+  color: var(--primary-color) !important;
 }
 
-html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover,
-html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
-  background-color: rgba(76, 175, 80, 0.2) !important;
+html.theme-custom-colors:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover,
+html.theme-custom-colors .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item .menu-link:not(.active):hover {
+  background-color: var(--primary-hover-bg) !important;
   color: #131313 !important;
 }
 
-html.theme-green:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link,
-html.theme-green .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link {
-  background-color: rgba(76, 175, 80, 0.2) !important;
-  color: #0b5c1e !important;
+html.theme-custom-colors:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link,
+html.theme-custom-colors .layout-menu-hover.layout-menu-collapsed .bg-menu-theme .menu-inner .menu-item.active.open > .menu-link {
+  background-color: var(--primary-hover-bg) !important;
+  color: var(--primary-color) !important;
 }
 
 .list_searchbox .form-control {
@@ -368,9 +351,9 @@ html.theme-blue .form-switch .form-check-input:focus {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230d384d'/%3e%3c/svg%3e") !important;
 }
 
-/* Green theme toggle switch focus */
-html.theme-green .form-switch .form-check-input:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230b5c1e'/%3e%3c/svg%3e") !important;
+/* Coloured themes toggle switch focus */
+html.theme-custom-colors .form-switch .form-check-input:focus {
+  background-image: var(--switch-focus-image) !important;
 }
 
 .form-switch .form-check-input:checked {
@@ -718,20 +701,20 @@ a.text-primary:focus {
   background-color: var(--primary-color) !important;
 }
 
-/* Green theme - ensure bg-primary uses green */
-html.theme-green .bg-primary,
-html.theme-green thead.bg-primary,
-html.theme-green .table thead.bg-primary,
-html.theme-green .table thead.bg-primary th {
-  background-color: #0b5c1e !important;
+/* Coloured themes - ensure bg-primary uses green */
+html.theme-custom-colors .bg-primary,
+html.theme-custom-colors thead.bg-primary,
+html.theme-custom-colors .table thead.bg-primary,
+html.theme-custom-colors .table thead.bg-primary th {
+  background-color: var(--primary-color) !important;
 }
 
-/* Green theme - ensure text inside bg-primary headers is white */
-html.theme-green .bg-primary,
-html.theme-green thead.bg-primary,
-html.theme-green .table thead.bg-primary th,
-html.theme-green .bg-primary th,
-html.theme-green .bg-primary td {
+/* Coloured themes - ensure text inside bg-primary headers is white */
+html.theme-custom-colors .bg-primary,
+html.theme-custom-colors thead.bg-primary,
+html.theme-custom-colors .table thead.bg-primary th,
+html.theme-custom-colors .bg-primary th,
+html.theme-custom-colors .bg-primary td {
   color: #ffffff !important;
 }
 

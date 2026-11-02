@@ -1,34 +1,41 @@
 import { createContext, useContext, useState, useEffect, useLayoutEffect } from 'react';
+import { applyTheme, DEFAULT_THEME } from '../utils/themes';
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    // Get theme from localStorage or default to 'blue'
-    const savedTheme = localStorage.getItem('appTheme');
-    return savedTheme || 'blue';
-  });
+// Last applied theme, so the colours are right on the first paint (before System Parameters load)
+const STORAGE_KEY = 'appTheme';
 
-  // Apply theme immediately on mount to prevent flash
+const readSavedTheme = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+  } catch {
+    return DEFAULT_THEME;
+  }
+};
+
+/**
+ * theme = a ColorTheme value: a theme name from utils/themes.js (BLUE, GREEN, PURPLE …) or a hex colour (#7B1FA2).
+ */
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(readSavedTheme);
+
+  // Apply immediately on mount to prevent a flash of the default colours
   useLayoutEffect(() => {
-    const html = document.documentElement;
-    const savedTheme = localStorage.getItem('appTheme') || 'blue';
-    html.classList.remove('theme-blue', 'theme-green');
-    html.classList.add(`theme-${savedTheme}`);
+    applyTheme(readSavedTheme());
   }, []);
 
   useEffect(() => {
-    // Apply theme class to html element
-    const html = document.documentElement;
-    html.classList.remove('theme-blue', 'theme-green');
-    html.classList.add(`theme-${theme}`);
-    
-    // Save theme to localStorage
-    localStorage.setItem('appTheme', theme);
+    applyTheme(theme);
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      /* storage not available */
+    }
   }, [theme]);
 
   const changeTheme = (newTheme) => {
-    setTheme(newTheme);
+    setTheme(newTheme || DEFAULT_THEME);
   };
 
   return (
@@ -45,4 +52,3 @@ export const useTheme = () => {
   }
   return context;
 };
-

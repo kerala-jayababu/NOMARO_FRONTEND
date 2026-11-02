@@ -80,6 +80,7 @@ function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
         { label: "Phone Number", value: office.phoneNumber },
         { label: "Email ID", value: office.emailId },
         { label: "GSTIN", value: office.gstin },
+        { label: "Geo Coordinate", value: office.geoCoordinate },
         { label: "Opened Date", value: Utils.formatDisplayDate(office.openedDate) },
         { label: "Closed Date", value: Utils.formatDisplayDate(office.closedDate) },
       ]

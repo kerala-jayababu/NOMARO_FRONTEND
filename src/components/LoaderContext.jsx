@@ -30,7 +30,7 @@ export const LoaderProvider = ({ children }) => {
             height="80" 
             width="80" 
             radius="9"
-            color="#0d384d" 
+            color={getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim() || "#0d384d"} 
             ariaLabel="three-dots-loading"
             visible={true}
           />

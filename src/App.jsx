@@ -48,6 +48,9 @@ import ShiftManagement from "./pages/AdminTools/ShiftManagement"
 import ShiftAssignment from "./pages/AdminTools/ShiftAssignment"
 import Assets from "./pages/AdminTools/assets"
 import SystemParameters from "./pages/AdminTools/systemParameters";
+import Home from "./pages/dashboard/Home";
+import BirthdaysAnniversaries from "./pages/PayrollManagement/BirthdaysAnniversaries";
+import HolidayCalendar from "./pages/EmployeeSelfPortal/HolidayCalendar";
 import "../src/core/services/PreventMultipleClickButton"
 import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
 import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
@@ -98,7 +101,7 @@ function App() {
         <Routes>
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />}>
-              <Route index element={<ComingSoon />} /> {/* Default route inside Dashboard */}
+              <Route index element={<Home />} /> {/* Default page: Self Portal dashboard / Payroll welcome page */}
               <Route path="vacation-mode" element={<VacationMode />} />
               <Route path="salary-templates" element={<SalaryTemplateNew />} />
               <Route path="budget-codes" element={<BudgetCode />} />
@@ -163,6 +166,8 @@ function App() {
               <Route path="org-hierarchy" element={<OrgHierarchy/>} />
               <Route path="assets" element={<Assets/>} />
               <Route path="system-parameters" element={<SystemParameters />} />
+              <Route path="celebrations" element={<BirthdaysAnniversaries />} />
+              <Route path="holiday-calendar" element={<HolidayCalendar />} />
               <Route path="missing-entry-approval" element={<MissingEntryApproval/>} />
               <Route path="forgot-card-approval" element={<ForgotCardApproval/>} />
               <Route path="annual-leave-dashboard" element={<AnnualLeaveDashboard/>} />

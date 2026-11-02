@@ -44,6 +44,14 @@ const parseStoredTime = (timeValue) => {
 const formatWorkingDays = (days) =>
   days.map((day) => day.charAt(0) + day.slice(1).toLowerCase()).join(", ");
 
+// "latitude,longitude" – latitude -90..90, longitude -180..180
+const parseGeoCoordinate = (value) => {
+  const parts = (value || "").split(",").map((p) => p.trim());
+  if (parts.length !== 2 || parts.some((p) => !/^-?\d+(\.\d+)?$/.test(p))) return null;
+  const [lat, lng] = parts.map(Number);
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 ? { lat, lng } : null;
+};
+
 const getInitialFormData = (office) => ({
   officeCode: office?.officeCode || "",
   officeName: office?.officeName || "",
@@ -60,6 +68,7 @@ const getInitialFormData = (office) => ({
   phoneNumber: office?.phoneNumber || "",
   emailId: office?.emailId || "",
   gstin: office?.gstin || "",
+  geoCoordinate: office?.geoCoordinate || "",
   openedDate: office?.openedDate ? new Date(office.openedDate) : null,
   closedDate: office?.closedDate ? new Date(office.closedDate) : null,
   isActive: office ? office.isActive : true,
@@ -234,6 +243,9 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
     if (formData.emailId.trim() && !EMAIL_REGEX.test(formData.emailId.trim())) {
       newErrors.emailId = "Invalid Email ID";
     }
+    if (formData.geoCoordinate.trim() && !parseGeoCoordinate(formData.geoCoordinate)) {
+      newErrors.geoCoordinate = "Enter latitude,longitude (e.g. 9.931233,76.267304)";
+    }
     if (formData.openedDate && formData.closedDate && formData.closedDate < formData.openedDate) {
       newErrors.closedDate = "Closed Date cannot be earlier than Opened Date";
     }
@@ -269,6 +281,9 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
         phoneNumber: toNullIfEmpty(formData.phoneNumber),
         emailId: toNullIfEmpty(formData.emailId),
         gstin: toNullIfEmpty(formData.gstin),
+        geoCoordinate: parseGeoCoordinate(formData.geoCoordinate)
+          ? (({ lat, lng }) => `${lat},${lng}`)(parseGeoCoordinate(formData.geoCoordinate))
+          : null,
         idOfficeHead: formData.idOfficeHead || null,
         // Shift schedule is not edited on this screen; keep the existing value on update
         idShiftSchedule: office?.idShiftSchedule || null,
@@ -305,6 +320,30 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
       setIsSubmitting(false);
     }
   };
+
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Fill the coordinate from the browser's location (asks the user for permission)
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showToast("Location is not available in this browser", "error");
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocating(false);
+        handleInputChange("geoCoordinate", `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`);
+      },
+      () => {
+        setIsLocating(false);
+        showToast("Could not get your location. Allow location access or enter it manually.", "error");
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const geo = parseGeoCoordinate(formData.geoCoordinate);
 
   const renderTextField = (field, label, maxLength, colClass = "col-md-4") => (
     <div className={`${colClass} p-2`}>
@@ -413,6 +452,32 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
               {renderTextField("phoneNumber", "Phone Number", 20)}
               {renderTextField("emailId", "Email ID", 150)}
               {renderTextField("gstin", "GSTIN", 15)}
+
+              <div className="col-md-4 p-2">
+                <label className="form-label mb-1">Geo Coordinate</label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className={`form-control ${errors.geoCoordinate ? "is-invalid" : ""}`}
+                    value={formData.geoCoordinate}
+                    maxLength={40}
+                    placeholder="Latitude, Longitude"
+                    onChange={(e) => handleInputChange("geoCoordinate", e.target.value)}
+                  />
+                  <button type="button" className="btn btn-outline-secondary px-2" title="Use my current location"
+                    onClick={useCurrentLocation} disabled={isLocating}>
+                    <i className={`bx ${isLocating ? "bx-loader-alt bx-spin" : "bx-current-location"}`}></i>
+                  </button>
+                  <a className={`btn btn-outline-secondary px-2 ${geo ? "" : "disabled"}`} title="View on map"
+                    href={geo ? `https://www.google.com/maps?q=${geo.lat},${geo.lng}` : undefined}
+                    target="_blank" rel="noopener noreferrer">
+                    <i className="bx bx-map"></i>
+                  </a>
+                </div>
+                {errors.geoCoordinate
+                  ? <div className="text-danger">{errors.geoCoordinate}</div>
+                  : <small className="text-muted">e.g. 9.931233, 76.267304</small>}
+              </div>
 
               <div className="col-md-4 p-2">
                 <label className="form-label mb-1">Opened Date</label>
