@@ -4,6 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import { toast } from "react-toastify";
 import CommonService from "../../../../core/services/CommonService";
+import GradeService from "../../../../core/services/GradeService";
 import EmployeeStatutoryDetailsService from "../../../../core/services/EmployeeStatutoryDetailsService";
 import { EmployeeContext } from "../EmployeeManagement";
 import { useLoader } from "../../../../components/LoaderContext";
@@ -50,6 +51,7 @@ const BasicDetails = () => {
     nationalIDNumber: "",
     idDepartment: "",
     idDesignation: "",
+    idGrade: "",
     emailID: "",
     phoneNumber1: "",
     phoneNumber2: "",
@@ -89,6 +91,7 @@ const BasicDetails = () => {
   const applyDefaultPtStateRef = useRef(true);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
+  const [grades, setGrades] = useState([]);
   const [reportingToOptions, setReportingToOptions] = useState([]);
   const [budgetCodeOptions, setBudgetCodeOptions] = useState([]);
   const [workTypeOptions, setWorkTypeOptions] = useState([]);
@@ -136,6 +139,7 @@ const BasicDetails = () => {
 
   useEffect(() => {
     loadDepartmentsAndDesignations();
+    loadGrades();
     loadReportingToOptions();
     loadBudgetCodes();
     loadEmployeeWorkTypes();
@@ -267,6 +271,11 @@ const BasicDetails = () => {
         { idDesignation: 3, designationName: "Analyst" },
       ]);
     }
+  };
+
+  const loadGrades = async () => {
+    const res = await GradeService.getGrades();
+    setGrades(!res.error && Array.isArray(res.data?.data) ? res.data.data : []);
   };
 
   const loadReportingToOptions = async () => {
@@ -473,6 +482,7 @@ const BasicDetails = () => {
         idDesignation: detailedData.idDesignation
           ? detailedData.idDesignation.toString()
           : "",
+        idGrade: detailedData.idGrade ? detailedData.idGrade.toString() : "",
         emailID: detailedData.emailID ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
@@ -561,6 +571,7 @@ const BasicDetails = () => {
         nationalIDNumber: detailedData.nationalIDNumber ?? detailedData.nationalIdNumber ?? "",
         idDepartment: detailedData.idDepartment ? detailedData.idDepartment.toString() : "",
         idDesignation: detailedData.idDesignation ? detailedData.idDesignation.toString() : "",
+        idGrade: detailedData.idGrade ? detailedData.idGrade.toString() : "",
         emailID: detailedData.emailId ?? "",
         phoneNumber1: detailedData.phoneNumber1 ?? "",
         phoneNumber2: detailedData.phoneNumber2 ?? "",
@@ -785,6 +796,7 @@ const BasicDetails = () => {
         emailID: formEmailID || "",
         idDepartment: employeeFormData.idDepartment ? parseInt(employeeFormData.idDepartment) : null,
         idDesignation: employeeFormData.idDesignation ? parseInt(employeeFormData.idDesignation) : null,
+        idGrade: employeeFormData.idGrade ? parseInt(employeeFormData.idGrade) : null,
         reportingTo: employeeFormData.reportingTo ? parseInt(employeeFormData.reportingTo) : 0,
         idBudgetCode: employeeFormData.idBudgetCode ? parseInt(employeeFormData.idBudgetCode) : null,
         childrenCount: parseInt(employeeFormData.childrenCount) || 0,
@@ -888,6 +900,7 @@ const BasicDetails = () => {
             nationalIDNumber: employeeFormData.nationalIDNumber,
             idDepartment: employeeFormData.idDepartment,
             idDesignation: employeeFormData.idDesignation,
+            idGrade: employeeFormData.idGrade,
             emailID: employeeFormData.emailID,
             phoneNumber1: employeeFormData.phoneNumber1,
             phoneNumber2: employeeFormData.phoneNumber2,
@@ -968,6 +981,7 @@ const BasicDetails = () => {
       nationalIDNumber: "",
       idDepartment: "",
       idDesignation: "",
+      idGrade: "",
       emailID: "",
       phoneNumber1: "",
       phoneNumber2: "",
@@ -1021,7 +1035,7 @@ const BasicDetails = () => {
               <h6 className="mb-0 text-white">Employment Details</h6>
             </div>
             <div className="row">
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <label className="form-label mb-1" htmlFor="employeeCode">
                   Employee Code *
                 </label>
@@ -1038,7 +1052,7 @@ const BasicDetails = () => {
                   <div className="invalid-feedback d-block">{employeeFormErrors.employeeCode}</div>
                 )}
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <label className="form-label mb-1">Department *</label>
                 <select
                   className={`form-select${employeeFormErrors.idDepartment ? " is-invalid" : ""}`}
@@ -1057,7 +1071,7 @@ const BasicDetails = () => {
                   <div className="text-danger">{employeeFormErrors.idDepartment}</div>
                 )}
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <label className="form-label mb-1">Designation *</label>
                 <select
                   className={`form-select${employeeFormErrors.idDesignation ? " is-invalid" : ""}`}
@@ -1074,6 +1088,27 @@ const BasicDetails = () => {
                 </select>
                 {employeeFormErrors.idDesignation && (
                   <div className="text-danger">{employeeFormErrors.idDesignation}</div>
+                )}
+              </div>
+              <div className="col-md-3">
+                <label className="form-label mb-1">Grade / Level</label>
+                <select
+                  className={`form-select${employeeFormErrors.idGrade ? " is-invalid" : ""}`}
+                  name="idGrade"
+                  value={employeeFormData.idGrade}
+                  onChange={(e) => handleEmployeeInputChange("idGrade", e.target.value)}
+                >
+                  <option value="">Select Grade</option>
+                  {grades
+                    .filter((g) => g.isActive || String(g.idGrade) === String(employeeFormData.idGrade))
+                    .map((g) => (
+                      <option key={g.idGrade} value={g.idGrade}>
+                        {`${g.gradeCode} - ${g.gradeName}${g.isActive ? "" : " (Inactive)"}`}
+                      </option>
+                    ))}
+                </select>
+                {employeeFormErrors.idGrade && (
+                  <div className="text-danger">{employeeFormErrors.idGrade}</div>
                 )}
               </div>
             </div>

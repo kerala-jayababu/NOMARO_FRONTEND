@@ -30,7 +30,7 @@ const STATUS_BADGE = {
 };
 
 const TH_STYLE = {
-  backgroundColor: "#0f3c54",
+  backgroundColor: "var(--primary-color, #0f3c54)",
   color: "#fff",
   fontSize: 13,
   fontWeight: 700,
@@ -217,7 +217,7 @@ function LeaveDashboard() {
         {`
           .leave-dashboard-table thead th {
             color: #fff !important;
-            background-color: #0f3c54 !important;
+            background-color: var(--primary-color, #0f3c54) !important;
             font-weight: 700 !important;
             font-size: 13px;
             position: sticky;

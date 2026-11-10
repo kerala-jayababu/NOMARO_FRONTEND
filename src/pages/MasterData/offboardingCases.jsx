@@ -15,7 +15,7 @@ import {
 } from "../../redux/reducers/offboardingCases";
 
 // Helper to get user role type from logged in user
-const getUserRoleType = () => {
+export const getUserRoleType = () => {
   const storedUser = secureLocalStorage.getItem("user");
   if (storedUser) {
     const userData = JSON.parse(storedUser);
@@ -366,7 +366,7 @@ const OffboardingCases = () => {
 };
 
 // ============= VIEW EXIT CASE MODAL =============
-const ViewExitCaseModal = ({
+export const ViewExitCaseModal = ({
   exitCase,
   roleType,
   onClose,

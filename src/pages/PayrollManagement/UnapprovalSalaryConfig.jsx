@@ -154,7 +154,7 @@ const UnapprovalSalaryConfig = () => {
           {/* Employee Summary Card */}
           <div
             className="card mb-4"
-            style={{ backgroundColor: "#0f3c54", color: "#fff" }}
+            style={{ backgroundColor: "var(--primary-color, #0f3c54)", color: "#fff" }}
           >
             <div className="card-body d-flex align-items-center gap-3">
               <div

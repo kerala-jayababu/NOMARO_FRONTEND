@@ -145,7 +145,7 @@
 }
 
 .live-dashboard .table thead {
-  background: #0f3c54;
+  background: var(--primary-color, #0f3c54);
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;

@@ -448,7 +448,7 @@ const ShiftAssignment = () => {
         <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 480 }}>
             <div className="modal-content">
-              <div className="modal-header" style={{ backgroundColor: '#0f3c54', color: '#fff', borderRadius: '8px 8px 0 0' }}>
+              <div className="modal-header" style={{ backgroundColor: 'var(--primary-color, #0f3c54)', color: '#fff', borderRadius: '8px 8px 0 0' }}>
                 <div>
                   <h5 className="modal-title mb-0" style={{ color: '#fff' }}>Copy shift assignments</h5>
                   <span style={{ color: '#fff', fontSize: 15, fontWeight: 500 }}>{selectedShift?.label}</span>
@@ -459,7 +459,7 @@ const ShiftAssignment = () => {
                 {/* Copying From */}
                 <p className="fw-semibold mb-2" style={{ fontSize: 11, letterSpacing: 1 }}>COPYING FROM</p>
                 <div className="d-flex align-items-center gap-3 p-3 mb-4 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0' }}>
-                  <div className="text-center rounded p-2" style={{ backgroundColor: '#0f3c54', color: '#fff', minWidth: 48 }}>
+                  <div className="text-center rounded p-2" style={{ backgroundColor: 'var(--primary-color, #0f3c54)', color: '#fff', minWidth: 48 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase' }}>{copyModalInfo.sourceDate.format('MMM')}</div>
                     <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>{copyModalInfo.sourceDate.format('DD')}</div>
                   </div>
@@ -486,7 +486,7 @@ const ShiftAssignment = () => {
                           border: isSource ? '1px solid #ccc' : isSelected ? 'none' : '1px solid #ccc',
                           borderRadius: 8,
                           padding: '6px 4px',
-                          backgroundColor: isSource ? '#e9ecef' : isSelected ? '#0f3c54' : '#fff',
+                          backgroundColor: isSource ? '#e9ecef' : isSelected ? 'var(--primary-color, #0f3c54)' : '#fff',
                           color: isSource ? '#aaa' : isSelected ? '#fff' : '#333',
                           cursor: isSource ? 'default' : 'pointer',
                           fontSize: 13,
@@ -511,7 +511,7 @@ const ShiftAssignment = () => {
                 <button className="btn btn-outline-secondary" onClick={() => setCopyModalInfo(null)}>Cancel</button>
                 <button
                   className="btn btn-primary"
-                  style={{ backgroundColor: '#0f3c54', borderColor: '#0f3c54' }}
+                  style={{ backgroundColor: 'var(--primary-color, #0f3c54)', borderColor: 'var(--primary-color, #0f3c54)' }}
                   disabled={copyTargetDates.length === 0}
                   onClick={() => setShowCopyConfirm(true)}
                 >

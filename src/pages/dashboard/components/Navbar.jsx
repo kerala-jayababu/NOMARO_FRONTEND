@@ -456,8 +456,7 @@ function Navbar({ view }) {
                   >
                     <i className="bx bx-power-off me-2"></i>
                     <span className="align-middle">
-                      Switch to{" "}
-                      {currentAuth == "PAYROLL" ? "Self Portal" : "Payroll"}
+                      {currentAuth == "PAYROLL" ? "Switch to Self Portal" : "Switch to Main Workspace"}
                     </span>
                   </a>
                 </li>
@@ -488,7 +487,7 @@ function Navbar({ view }) {
           messageText={
             currentAuth == "PAYROLL"
               ? "Are you sure to switch to Self Portal?"
-              : "Are you sure to switch to Payroll Portal?"
+              : "Are you sure to switch to Main Workspace?"
           }
           callbackModal={confirmFinalize}
           confirmBtn={"Confirm"}

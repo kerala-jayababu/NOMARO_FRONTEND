@@ -556,7 +556,7 @@ function LiveDashboard() {
           <table className="table table-sm table-bordered">
             <thead
               style={{
-                backgroundColor: "#0f3c54",
+                backgroundColor: "var(--primary-color, #0f3c54)",
                 color: "#ffffff",
                 fontSize: "14px",
                 fontWeight: 700,

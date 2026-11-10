@@ -31,6 +31,23 @@ import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
 import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
 import Banks from "./pages/MasterData/banks";
 import OfficeTypes from "./pages/MasterData/officeTypes";
+import Grades from "./pages/MasterData/grades";
+import MyProfile from "./pages/EmployeeSelfPortal/MyProfile";
+import MyChangeRequests from "./pages/EmployeeSelfPortal/MyChangeRequests";
+import ProfileChangeRequests from "./pages/PayrollManagement/ProfileChangeRequests";
+import ProfileChangeSettings from "./pages/PayrollManagement/ProfileChangeSettings";
+import ViewEmployeeDocuments from "./pages/MasterData/viewEmployeeDocuments";
+import EmployeeAgreements from "./pages/MasterData/employeeAgreements";
+import ResignationRequests from "./pages/MasterData/resignationRequests";
+import DocumentRegister from "./pages/DocumentManagement/documentRegister";
+import DocumentUpload from "./pages/DocumentManagement/documentUpload";
+import DocumentHistory from "./pages/DocumentManagement/documentHistory";
+import ExpiryMonitoring from "./pages/DocumentManagement/expiryMonitoring";
+import GeneralDocumentTypes from "./pages/DocumentManagement/documentTypes";
+import GeneralDocumentSubtypes from "./pages/DocumentManagement/documentSubtypes";
+import DocumentReports from "./pages/DocumentManagement/documentReports";
+import DocumentAckDashboard from "./pages/DocumentManagement/documentAckDashboard";
+import MyDocuments from "./pages/EmployeeSelfPortal/MyDocuments";
 import Offices from "./pages/MasterData/OfficeManagement/Offices";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
@@ -170,6 +187,74 @@ export const privateRoutes = [
   {
     path: "/dashboard/office-types",
     element: <OfficeTypes />,
+  },
+  {
+    path: "/dashboard/employee-grades",
+    element: <Grades />,
+  },
+  {
+    path: "/dashboard/my-profile",
+    element: <MyProfile />,
+  },
+  {
+    path: "/dashboard/my-change-requests",
+    element: <MyChangeRequests />,
+  },
+  {
+    path: "/dashboard/profile-change-requests",
+    element: <ProfileChangeRequests />,
+  },
+  {
+    path: "/dashboard/profile-change-settings",
+    element: <ProfileChangeSettings />,
+  },
+  {
+    path: "/dashboard/view-documents",
+    element: <ViewEmployeeDocuments />,
+  },
+  {
+    path: "/dashboard/employee-agreements",
+    element: <EmployeeAgreements />,
+  },
+  {
+    path: "/dashboard/resignation-requests",
+    element: <ResignationRequests />,
+  },
+  {
+    path: "/dashboard/document-register",
+    element: <DocumentRegister />,
+  },
+  {
+    path: "/dashboard/document-upload",
+    element: <DocumentUpload />,
+  },
+  {
+    path: "/dashboard/document-history/:id",
+    element: <DocumentHistory />,
+  },
+  {
+    path: "/dashboard/expiry-monitoring",
+    element: <ExpiryMonitoring />,
+  },
+  {
+    path: "/dashboard/document-types",
+    element: <GeneralDocumentTypes />,
+  },
+  {
+    path: "/dashboard/document-subtypes",
+    element: <GeneralDocumentSubtypes />,
+  },
+  {
+    path: "/dashboard/document-reports",
+    element: <DocumentReports />,
+  },
+  {
+    path: "/dashboard/document-ack-dashboard",
+    element: <DocumentAckDashboard />,
+  },
+  {
+    path: "/dashboard/documents",
+    element: <MyDocuments />,
   },
   {
     path: "/dashboard/office-management",

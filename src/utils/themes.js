@@ -30,6 +30,7 @@ export const THEMES = {
   PINK: { label: "Pink", primary: "#be185d" },
   RED: { label: "Red", primary: "#b91c1c" },
   MAROON: { label: "Maroon", primary: "#7f1d1d" },
+  AMBER: { label: "Amber", primary: "#a66400" }, // dark amber (same as the payslip AMBER pattern)
   ORANGE: { label: "Orange", primary: "#c2410c" },
   BROWN: { label: "Brown", primary: "#78350f" },
   OLIVE: { label: "Olive", primary: "#4d5d1f" },

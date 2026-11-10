@@ -61,6 +61,24 @@ import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
 import LeavePassageAmount from "./pages/PayrollManagement/LeavePassageAmount";
 import Banks from "./pages/MasterData/banks";
 import OfficeTypes from "./pages/MasterData/officeTypes";
+import Grades from "./pages/MasterData/grades";
+import MyProfile from "./pages/EmployeeSelfPortal/MyProfile";
+import MyChangeRequests from "./pages/EmployeeSelfPortal/MyChangeRequests";
+import ProfileChangeRequests from "./pages/PayrollManagement/ProfileChangeRequests";
+import ProfileChangeSettings from "./pages/PayrollManagement/ProfileChangeSettings";
+import ViewEmployeeDocuments from "./pages/MasterData/viewEmployeeDocuments";
+import EmployeeAgreements from "./pages/MasterData/employeeAgreements";
+import ResignationRequests from "./pages/MasterData/resignationRequests";
+import DocumentRegister from "./pages/DocumentManagement/documentRegister";
+import DocumentUpload from "./pages/DocumentManagement/documentUpload";
+import DocumentHistory from "./pages/DocumentManagement/documentHistory";
+import ExpiryMonitoring from "./pages/DocumentManagement/expiryMonitoring";
+import GeneralDocumentTypes from "./pages/DocumentManagement/documentTypes";
+import GeneralDocumentSubtypes from "./pages/DocumentManagement/documentSubtypes";
+import DocumentReports from "./pages/DocumentManagement/documentReports";
+import DocumentAckDashboard from "./pages/DocumentManagement/documentAckDashboard";
+import MyDocuments from "./pages/EmployeeSelfPortal/MyDocuments";
+import AgreementReview from "./pages/Public/AgreementReview";
 import Offices from "./pages/MasterData/OfficeManagement/Offices";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
@@ -150,6 +168,13 @@ function App() {
               <Route path="leave-passage-amount" element={<LeavePassageAmount/>} />
               <Route path="banks" element={<Banks/>} />
               <Route path="office-types" element={<OfficeTypes />} />
+              <Route path="employee-grades" element={<Grades />} />
+              <Route path="my-profile" element={<MyProfile />} />
+              <Route path="my-change-requests" element={<MyChangeRequests />} />
+              <Route path="profile-change-requests" element={<ProfileChangeRequests />} />
+              <Route path="profile-change-settings" element={<ProfileChangeSettings />} />
+              <Route path="view-documents" element={<ViewEmployeeDocuments />} />
+              <Route path="employee-agreements" element={<EmployeeAgreements />} />
               <Route path="office-management" element={<Offices />} />
               {/* "office-mangement" matches the current (misspelt) PayrollScreens.ScreenName; remove once the menu name is corrected */}
               <Route path="office-mangement" element={<Offices />} />
@@ -162,6 +187,16 @@ function App() {
               <Route path="overtime-approval" element={<OvertimeApproval/>} />
               <Route path="offboarding-setup" element={<OffboardingSetup/>} />
               <Route path="offboarding-cases" element={<OffboardingCases/>} />
+              <Route path="resignation-requests" element={<ResignationRequests />} />
+              <Route path="document-register" element={<DocumentRegister />} />
+              <Route path="document-upload" element={<DocumentUpload />} />
+              <Route path="document-history/:id" element={<DocumentHistory />} />
+              <Route path="expiry-monitoring" element={<ExpiryMonitoring />} />
+              <Route path="document-types" element={<GeneralDocumentTypes />} />
+              <Route path="document-subtypes" element={<GeneralDocumentSubtypes />} />
+              <Route path="document-reports" element={<DocumentReports />} />
+              <Route path="document-ack-dashboard" element={<DocumentAckDashboard />} />
+              <Route path="documents" element={<MyDocuments />} />
               <Route path="offboarding-clearance" element={<OffboardingClearances/>} />
               <Route path="org-hierarchy" element={<OrgHierarchy/>} />
               <Route path="assets" element={<Assets/>} />
@@ -180,6 +215,8 @@ function App() {
           </Route>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<LoginWithOtp />} />
+          {/* public: opened from the agreement email, no login */}
+          <Route path="/agreement/:token" element={<AgreementReview />} />
           <Route path="/auth/:route" element={<Authenticate />} />
           <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
         </Routes>

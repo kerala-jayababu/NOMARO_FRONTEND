@@ -6,6 +6,37 @@ import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScre
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 import CommonService from "../../../core/services/CommonService";
 
+// Sub menu items in display order. When a menu uses sections (PayrollScreens.MenuSection), items are grouped
+// under their section heading, sections ordered by their first item, items by OrderNumber; otherwise A-Z as before.
+const orderSubMenus = (subMenus) => {
+  const items = (subMenus || []).slice();
+  if (!items.some((i) => i.menuSection)) {
+    return items.sort((a, b) => a.screenName.localeCompare(b.screenName));
+  }
+  const order = (i) => (i.orderNumber ?? 9999);
+  const sectionOf = (i) => i.menuSection || "Other";
+  const firstOrder = {};
+  items.forEach((i) => {
+    const sec = sectionOf(i);
+    firstOrder[sec] = Math.min(firstOrder[sec] ?? 9999, i.menuSection ? order(i) : 99999);
+  });
+  items.sort((a, b) =>
+    firstOrder[sectionOf(a)] - firstOrder[sectionOf(b)] ||
+    sectionOf(a).localeCompare(sectionOf(b)) ||
+    order(a) - order(b) ||
+    a.screenName.localeCompare(b.screenName));
+  const result = [];
+  let current = null;
+  items.forEach((i) => {
+    if (sectionOf(i) !== current) {
+      current = sectionOf(i);
+      result.push({ __header: current });
+    }
+    result.push(i);
+  });
+  return result;
+};
+
 function Menu({ viewType }) {
   const dispatch = useDispatch();
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
@@ -128,10 +159,10 @@ function Menu({ viewType }) {
               <div data-i18n="Account Settings">{screen.screenName}</div>
             </a>
             <ul className="menu-sub">
-              {(screen.subMenus || [])
-                .slice()
-                .sort((a, b) => a.screenName.localeCompare(b.screenName))
-                .map((menuItem) => (
+              {orderSubMenus(screen.subMenus)
+                .map((menuItem) => menuItem.__header ? (
+                  <li key={`section-${menuItem.__header}`} className="menu-section-title">{menuItem.__header}</li>
+                ) : (
                   <li
                     key={menuItem.screenName}
                     className={`menu-item ${subMenu === menuItem.screenName ? "active" : ""}`}

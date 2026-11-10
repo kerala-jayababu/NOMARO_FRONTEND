@@ -1585,3 +1585,40 @@ body::-webkit-scrollbar {
   background-color: var(--bs-card-bg, #fff);
   box-shadow: inset 0 -1px 0 rgba(67, 89, 113, 0.2);
 }
+
+/* Sidebar: sub menu items one point smaller than the main menu items */
+.bg-menu-theme .menu-sub > .menu-item > .menu-link {
+  font-size: calc(var(--bs-body-font-size, 0.9375rem) - 1pt);
+}
+
+/* Sidebar: section headings inside a sub menu (PayrollScreens.MenuSection) */
+.bg-menu-theme .menu-sub > .menu-section-title {
+  list-style: none;
+  padding: 0.65rem 1rem 0.25rem 2.6rem;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted, #a1acb8);
+  cursor: default;
+  pointer-events: none;
+}
+.bg-menu-theme .menu-sub > .menu-section-title:first-child {
+  padding-top: 0.35rem;
+}
+
+/* Sidebar: tighter sub menu rows (theme default is 0.625rem top and bottom).
+   !important because the theme's own rule has the same weight and can load later. */
+.layout-menu.menu-vertical .menu-inner .menu-sub > .menu-item > .menu-link {
+  padding-top: 0.42rem !important;
+  padding-bottom: 0.42rem !important;
+  line-height: 1.4;
+}
+.layout-menu.menu-vertical .menu-inner .menu-sub {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.layout-menu.menu-vertical .menu-inner .menu-sub > .menu-item {
+  margin-top: 0;
+  margin-bottom: 0;
+}
