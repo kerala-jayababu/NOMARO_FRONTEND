@@ -387,7 +387,7 @@ function SalaryAdjustments() {
               <div className="list_menu">
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
-                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'Start Date'}
+                  <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                     showYearDropdown dropdownMode="select" />
 
@@ -437,7 +437,7 @@ function SalaryAdjustments() {
                           <td>{item?.employeeName}</td>
                           <td>{item?.departmentName}</td>
                           {/* <td>{item?.designationName}</td> */}
-                          <td>{moment(item?.payAdjustmentDate).format("DD-MM-YYYY")}</td>
+                          <td>{Utils.formatDisplayDate(item?.payAdjustmentDate)}</td>
                           <td>{item.earningOrDeduction === 'E' ? 'Earnings' : 'Deductions'}</td>
                           <td>{item?.isTaxable ? 'Yes' : 'No'}</td>
                           <td>{item?.allocatingSalaryMonthText}</td>
@@ -523,7 +523,7 @@ function SalaryAdjustments() {
                         <DatePicker className="form-control" selected={newData.payAdjustmentDate}
                           onChange={(date) => setNewData({ ...newData, payAdjustmentDate: date })}
                           required wrapperClassName="datePicker"
-                          dateFormat="dd-MM-yyyy"
+                          dateFormat={Utils.DATE_PICKER_FORMAT}
                           placeholderText='Select Date' showMonthDropdown
                           showYearDropdown dropdownMode="select" />
 

@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { EmployeeContext } from "../EmployeeManagement";
 import { API } from "../../../../redux/api/utils";
 import { useLoader } from "../../../../components/LoaderContext";
+import Utils from "../../../../utils/Utils";
 
 // Employee Management -> Family Members: spouse, children, parents and others (EmployeeFamilyMembers)
 const BASE = "/api/v1/EmployeeFamily";
@@ -182,7 +183,7 @@ const FamilyMembers = () => {
     }
   };
 
-  const fmt = (d) => (d ? moment(d).format("DD-MM-YYYY") : "-");
+  const fmt = (d) => (d ? Utils.formatDisplayDate(d) : "-");
   const age = (d) => (d ? moment().diff(moment(d), "years") : "-");
   const label = (code) => RELATIONSHIPS.find((r) => r.value === code)?.label || code;
   const isChild = CHILD.includes(form.relationship);

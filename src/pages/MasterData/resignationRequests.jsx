@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { API } from "../../redux/api/utils";
 import Utils from "../../utils/Utils";
+import CompanyDateInput from "../../components/CompanyDateInput";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { ViewExitCaseModal, getUserRoleType } from "./offboardingCases";
 import "../EmployeeSelfPortal/ProfileChange/profileChange.css";
@@ -144,7 +145,7 @@ const ResignationRequests = () => {
           </div>
           <div className="col-md-2">
             <label className="form-label mb-1">Submitted from</label>
-            <input type="date" className="form-control form-control-sm" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+            <CompanyDateInput className="form-control form-control-sm" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
           </div>
           <div className="col-md-2 d-flex gap-1">
             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setSearch(""); setStatus(""); setFromDate(""); setView("MINE"); }}>Reset</button>

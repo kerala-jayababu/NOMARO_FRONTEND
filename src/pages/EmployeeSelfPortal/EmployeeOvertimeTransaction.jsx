@@ -368,7 +368,7 @@ function EmployeeOvertimeTransaction() {
               <div className="list_searchbox">
                 <DatePicker
                   className="form-control"
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   placeholderText={"Start Date"}
                   selected={startDate}
                   onChange={(date) => setStartDate(date)}
@@ -401,7 +401,7 @@ function EmployeeOvertimeTransaction() {
                     <div className="col-4 px-0 py-1">
                       <label>Date</label>
                       <p className="m-0">
-                        {moment(item?.startDate).format("DD-MM-YYYY")}
+                        {Utils.formatDisplayDate(item?.startDate)}
                       </p>
                     </div>
 
@@ -506,7 +506,7 @@ function EmployeeOvertimeTransaction() {
                     <label className="p-2">From Date</label>
                     <DatePicker
                       className="form-control"
-                      dateFormat="dd-MM-yyyy"
+                      dateFormat={Utils.DATE_PICKER_FORMAT}
                       placeholderText={"Start Date"}
                       selected={startDate}
                       onChange={(date) => setStartDate(date)}
@@ -568,7 +568,7 @@ function EmployeeOvertimeTransaction() {
                             </td>
                             {/* <td>{item?.overtimeTypeName}</td> */}
                             <td>
-                              {moment(item?.startDate).format("DD-MM-YYYY")}
+                              {Utils.formatDisplayDate(item?.startDate)}
                             </td>
                             <td>
                               {moment(item?.startTime, "HH:mm:ss").format(
@@ -699,7 +699,7 @@ function EmployeeOvertimeTransaction() {
                             setNewData({ ...newData, startDate: date })
                           }
                           required
-                          dateFormat="dd-MM-yyyy"
+                          dateFormat={Utils.DATE_PICKER_FORMAT}
                           placeholderText="Select Date"
                           showMonthDropdown
                           showYearDropdown
@@ -734,7 +734,7 @@ function EmployeeOvertimeTransaction() {
                             setNewData({ ...newData, endDate: date })
                           }
                           required
-                          dateFormat="dd-MM-yyyy"
+                          dateFormat={Utils.DATE_PICKER_FORMAT}
                           placeholderText="Select Date"
                           minDate={newData.startDate}
                           showMonthDropdown

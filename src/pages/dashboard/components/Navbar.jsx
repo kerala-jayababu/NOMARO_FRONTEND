@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../../utils/useAppNavigate";
 import secureLocalStorage from "react-secure-storage";
 import CommonService from "../../../core/services/CommonService";
 import Utils from "../../../utils/Utils";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import ChangePasswordModal from "../../../components/ChangePasswordModal";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { getCompanyCode, getCompanyConfig, setCompanyCode, setCompanyConfig } from "../../../utils/companyContext";
 
 function Navbar({ view }) {
   const [profilePic, setProfilePic] = useState("/assets/img/avatars/1.png");
   const userData = JSON.parse(secureLocalStorage.getItem("user"));
   const [notification, setNotification] = useState([]);
   const [clicked, setClicked] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const currentAuth = secureLocalStorage.getItem("currentAuth");
   const authorizedModules = secureLocalStorage.getItem("authorizedModules");
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -133,7 +134,12 @@ function Navbar({ view }) {
   }, []);
 
   const logout = () => {
+    // keep the company (tenant) context so the user returns to the same company login
+    const companyCode = getCompanyCode();
+    const companyConfig = getCompanyConfig();
     secureLocalStorage.clear();
+    if (companyCode) setCompanyCode(companyCode);
+    if (companyConfig) setCompanyConfig(companyConfig);
     navigate("/login");
   };
 

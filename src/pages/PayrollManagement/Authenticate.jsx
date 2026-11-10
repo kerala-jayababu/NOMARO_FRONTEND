@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import SalaryGenerationService from "../../core/services/SalaryGenerationService";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-hot-toast";
 
 function Authenticate() {
   const { search } = useLocation();
   const param = useParams();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const params = new URLSearchParams(search);

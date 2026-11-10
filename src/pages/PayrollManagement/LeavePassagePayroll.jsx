@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import moment from 'moment';
+import Utils from '../../utils/Utils';
 import CommonService from '../../core/services/CommonService';
 import LeavePassageService from '../../core/services/LeavePassageService';
 import { Form, Modal } from 'react-bootstrap';
@@ -257,7 +258,7 @@ function LeavePassagePayroll() {
                                             <td className="text-primary">{item.employeeCode}</td>
                                             <td>{item.employeeName}</td>
                                             <td>{item.departmentName}</td>
-                                            <td>{item.joiningDate ? moment(item.joiningDate).format('DD-MM-YYYY') : '—'}</td>
+                                            <td>{item.joiningDate ? Utils.formatDisplayDate(item.joiningDate) : '—'}</td>
                                             <td>
                                                 {item.salaryMonthText
                                                     ? <span className="badge bg-label-primary">{item.salaryMonthText}</span>

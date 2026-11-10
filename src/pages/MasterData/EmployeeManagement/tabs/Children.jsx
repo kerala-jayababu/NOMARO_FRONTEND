@@ -7,6 +7,7 @@ import { EmployeeContext } from "../EmployeeManagement";
 import EmployeeManagementService from "../../../../core/services/EmployeeManagementService";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
+import Utils from "../../../../utils/Utils";
 
 const Children = () => {
   const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
@@ -203,7 +204,7 @@ const Children = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return moment(dateString).format("DD-MM-YYYY");
+    return Utils.formatDisplayDate(dateString);
   };
 
   const calculateAge = (dateOfBirth) => {
@@ -295,7 +296,7 @@ const Children = () => {
               <DatePicker
                 selected={formData.dateOfBirth}
                 onChange={(date) => handleInputChange("dateOfBirth", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 showYearDropdown
                 showMonthDropdown

@@ -4,6 +4,7 @@ import { Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import Pagination from "../../components/pagination";
+import CompanyDateInput from "../../components/CompanyDateInput";
 import CommonService from "../../core/services/CommonService";
 import SickLeaveSalDeductionService from "../../core/services/SickLeaveSalDeductionService";
 import Utils from "../../utils/Utils";
@@ -362,8 +363,7 @@ function SickLeaveSalDeduction() {
                   <div>
                     <label>Leave From</label>
                   </div>
-                  <input
-                    type="date"
+                  <CompanyDateInput
                     className="form-control"
                     value={filterFromDate}
                     onChange={(e) => setFilterFromDate(e.target.value)}
@@ -374,8 +374,7 @@ function SickLeaveSalDeduction() {
                   <div>
                     <label>Leave To</label>
                   </div>
-                  <input
-                    type="date"
+                  <CompanyDateInput
                     className="form-control"
                     value={filterToDate}
                     min={filterFromDate}
@@ -476,12 +475,12 @@ function SickLeaveSalDeduction() {
                               <small className="text-muted">{row.designationName}</small>
                             </td>
                             <td className="text-center">
-                              {moment(row.fromDate).format("DD-MM-YYYY") === moment(row.toDate).format("DD-MM-YYYY") ? (
-                                <div>{moment(row.fromDate).format("DD-MM-YYYY")}</div>
+                              {moment(row.fromDate).isSame(moment(row.toDate), "day") ? (
+                              <div>{Utils.formatDisplayDate(row.fromDate)}</div>
                               ) : (
                                 <>
-                                  <div>{moment(row.fromDate).format("DD-MM-YYYY")}</div>
-                                  <div>{moment(row.toDate).format("DD-MM-YYYY")}</div>
+                                <div>{Utils.formatDisplayDate(row.fromDate)}</div>
+                                <div>{Utils.formatDisplayDate(row.toDate)}</div>
                                 </>
                               )}
                             </td>
@@ -679,8 +678,7 @@ function SickLeaveSalDeduction() {
                   <label className="form-label mb-1">
                     From Date <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <CompanyDateInput
                     className={`form-control ${
                       validated && !newRecord.fromDate ? "is-invalid" : ""
                     }`}
@@ -700,8 +698,7 @@ function SickLeaveSalDeduction() {
                   <label className="form-label mb-1">
                     To Date <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <CompanyDateInput
                     className={`form-control ${
                       validated && !newRecord.toDate ? "is-invalid" : ""
                     }`}

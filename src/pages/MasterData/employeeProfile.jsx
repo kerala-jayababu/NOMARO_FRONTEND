@@ -27,12 +27,12 @@ import CommonService from "../../core/services/CommonService";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLoader } from "../../components/LoaderContext";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import Utils from "../../utils/Utils";
 
 const EmployeeProfile = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { showLoader, hideLoader } = useLoader();
   const {
     options: employees,
@@ -1704,7 +1704,7 @@ const EmployeeProfile = () => {
                       </label>
                       <p className="m-0">
                         {profileData?.dateOfBirth
-                          ? moment(profileData.dateOfBirth).format("DD-MM-YYYY")
+                          ? Utils.formatDisplayDate(profileData.dateOfBirth)
                           : "N/A"}{" "}
                         - {profileData?.gender ? profileData?.gender : "N/A"}
                       </p>
@@ -2091,7 +2091,7 @@ const EmployeeProfile = () => {
               onChange={(date) =>
                 handleEmployeeInputChange("dateOfBirth", date)
               }
-              dateFormat="dd-MM-yyyy"
+              dateFormat={Utils.DATE_PICKER_FORMAT}
               className="form-control"
               maxDate={new Date()}
               showYearDropdown
@@ -2111,7 +2111,7 @@ const EmployeeProfile = () => {
               onChange={(date) =>
                 handleEmployeeInputChange("joiningDate", date)
               }
-              dateFormat="dd-MM-yyyy"
+              dateFormat={Utils.DATE_PICKER_FORMAT}
               className="form-control"
               showYearDropdown
               showMonthDropdown
@@ -2361,7 +2361,7 @@ const EmployeeProfile = () => {
                 onChange={(date) =>
                   handleEmployeeInputChange("lastWorkingDay", date)
                 }
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 maxDate={new Date()}
                 showYearDropdown

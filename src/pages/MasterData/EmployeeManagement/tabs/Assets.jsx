@@ -8,6 +8,7 @@ import EmployeeManagementService from "../../../../core/services/EmployeeManagem
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
+import Utils from "../../../../utils/Utils";
 
 const Assets = () => {
   const { employeeId, setHasUnsavedChanges } =
@@ -401,7 +402,7 @@ const Assets = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return moment(dateString).format("DD-MMM-YYYY");
+    return Utils.formatDisplayDate(dateString);
   };
 
   return (
@@ -587,7 +588,7 @@ const Assets = () => {
               <DatePicker
                 selected={formData.assignedFrom}
                 onChange={(date) => handleInputChange("assignedFrom", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="dd-mm-yyyy"
                 showYearDropdown
@@ -603,7 +604,7 @@ const Assets = () => {
               <DatePicker
                 selected={formData.assignedTill}
                 onChange={(date) => handleInputChange("assignedTill", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="dd-mm-yyyy"
                 showYearDropdown

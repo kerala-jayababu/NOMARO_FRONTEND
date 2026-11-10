@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../utils/useAppNavigate";
 import secureLocalStorage from "react-secure-storage";
 import LoginService from "../core/services/LoginService";
 import { toast } from "react-toastify";
@@ -7,6 +7,7 @@ import { useLoader } from "../components/LoaderContext";
 import CommonService from "../core/services/CommonService";
 import { PasswordInput, PasswordRules } from "../components/PasswordInput";
 import { isStrongPassword } from "../utils/passwordRules";
+import { fetchCompanyConfig, getCompanyCode, getCompanyConfig, setCompanyCode, setCompanyConfig } from "../utils/companyContext";
 
 const LOGIN_MODE_KEY = "nomaroLoginMode"; // remembers the user's last choice (OTP / PASSWORD)
 const MODE_OTP = "OTP";
@@ -29,7 +30,7 @@ const getSavedMode = () => {
 
 function LoginWithOtp() {
   const { showLoader, hideLoader } = useLoader();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [mode, setMode] = useState(getSavedMode);
   const [emailId, setEmailId] = useState('');
   const [otp, setOtp] = useState('');
@@ -39,6 +40,7 @@ function LoginWithOtp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [logo, setLogo] = useState("");
   const [logoWidth, setLogoWidth] = useState(0);
+  const [company, setCompany] = useState(getCompanyConfig());
 
   const changeMode = (newMode) => {
     setMode(newMode);
@@ -140,7 +142,25 @@ function LoginWithOtp() {
     if (secureLocalStorage.getItem("user")) {
       navigate("/dashboard");
     } else {
+      // clear the session but keep the company (tenant) context
+      const companyCode = getCompanyCode();
+      const companyConfig = getCompanyConfig();
       secureLocalStorage.clear();
+      if (companyCode) setCompanyCode(companyCode);
+      if (companyConfig) setCompanyConfig(companyConfig);
+    }
+
+    // Show the company name on the login card; fetch it if CompanyScope hasn't stored it yet
+    if (!getCompanyConfig()) {
+      const code = getCompanyCode();
+      if (code) {
+        fetchCompanyConfig(code).then((cfg) => {
+          if (cfg) {
+            setCompanyConfig(cfg);
+            setCompany(cfg);
+          }
+        });
+      }
     }
 
     // Fetch logo from system parameters
@@ -155,6 +175,11 @@ function LoginWithOtp() {
       // Keep logo blank if API fails
       console.error("Failed to fetch logo:", err);
     });
+
+    // CompanyScope may store the config after this page's first render - stay in sync
+    const onCompanyConfig = () => setCompany(getCompanyConfig());
+    window.addEventListener("companyConfigChanged", onCompanyConfig);
+    return () => window.removeEventListener("companyConfigChanged", onCompanyConfig);
   }, [])
 
   const otpField = (
@@ -208,6 +233,12 @@ function LoginWithOtp() {
                   </span>
                 </a>
               </div>
+
+              {company?.companyName && (
+                <p className="text-center mb-3">
+                  <span className="badge bg-label-primary">{company.companyName}</span>
+                </p>
+              )}
 
               {mode !== MODE_RESET ? (
                 <div className="nav nav-pills nav-fill mb-4 p-1 rounded" style={{ backgroundColor: "var(--primary-light)" }} role="tablist">

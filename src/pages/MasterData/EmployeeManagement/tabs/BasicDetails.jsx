@@ -10,6 +10,7 @@ import { EmployeeContext } from "../EmployeeManagement";
 import { useLoader } from "../../../../components/LoaderContext";
 import { useDispatch } from "react-redux";
 import { getEmployeeProfileByID } from "../../../../redux/reducers/getAllEmployeeProfiles";
+import Utils from "../../../../utils/Utils";
 
 // Defaults for Nationality and Citizenship (matched to the dropdown values without case)
 const DEFAULT_NATIONALITY = "Indian";
@@ -1216,8 +1217,8 @@ const BasicDetails = () => {
                       alignItems: 'center'
                     }}
                   >
-                    {employeeFormData.lastWorkingDay 
-                      ? moment(employeeFormData.lastWorkingDay).format("DD.MM.YYYY")
+                    {employeeFormData.lastWorkingDay
+                      ? Utils.formatDisplayDate(employeeFormData.lastWorkingDay)
                       : "-"}
                   </div>
                 </div>
@@ -1235,7 +1236,7 @@ const BasicDetails = () => {
                 <DatePicker
                   selected={employeeFormData.joiningDate}
                   onChange={(date) => handleEmployeeInputChange("joiningDate", date)}
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   className={`form-control${employeeFormErrors.joiningDate ? " is-invalid" : ""}`}
                   minDate={employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).toDate() : undefined}
                   maxDate={moment().add(3, 'months').toDate()}
@@ -1429,7 +1430,7 @@ const BasicDetails = () => {
                 <DatePicker
                   selected={employeeFormData.dateOfBirth}
                   onChange={(date) => handleEmployeeInputChange("dateOfBirth", date)}
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   className={`form-control${employeeFormErrors.dateOfBirth ? " is-invalid" : ""}`}
                   minDate={new Date(1950, 0, 1)}
                   maxDate={new Date(2010, 11, 31)}
@@ -1809,4 +1810,3 @@ const BasicDetails = () => {
 };
 
 export default BasicDetails;
-

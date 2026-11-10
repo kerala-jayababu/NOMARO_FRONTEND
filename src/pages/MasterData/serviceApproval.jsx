@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useLoader } from "../../components/LoaderContext";
 import { toast } from "react-toastify";
 import moment from "moment";
+import Utils from "../../utils/Utils";
 
 const ServiceApproval = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -276,7 +277,7 @@ const ServiceApproval = () => {
               <DatePicker
                 selected={dateFrom}
                 onChange={(date) => setDateFrom(date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="DD-MM-YYYY"
                 showYearDropdown
@@ -398,7 +399,7 @@ const ServiceApproval = () => {
                         <td>{item.toValue || "-"}</td>
                         <td width="12%">
                           {item.changeValidFrom
-                            ? moment(item.changeValidFrom).format("DD-MMM-YYYY")
+                            ? Utils.formatDisplayDate(item.changeValidFrom)
                             : "-"}
                         </td>
                         {/* <td>{item.createdBy || "-"}</td> */}

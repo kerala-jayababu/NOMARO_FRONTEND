@@ -13,7 +13,7 @@ import ClockInOutService from '../../core/services/ClockInOutService';
 import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
-import { useNavigate } from 'react-router-dom';
+import { useAppNavigate } from '../../utils/useAppNavigate';
 
 function EmployeeAttendance() {
     const [attendanceDetails, setAttendanceDetails] = useState([]);
@@ -26,14 +26,14 @@ function EmployeeAttendance() {
         const yesterday = moment().subtract(1, 'days');
         // If today is the 1st of the month, endDate should be the same as startDate
         if (moment().date() === 1) {
-            return startOfMonth.format('YYYY-MM-DD');
+            return startOfMonth.toDate();
         }
-        return yesterday.format('YYYY-MM-DD');
+        return yesterday.toDate();
     };
 
-    const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
+    const [startDate, setStartDate] = useState(() => moment().startOf('month').toDate());
     const [endDate, setEndDate] = useState(getInitialEndDate());
-    const today = moment().format('DD-MM-YYYY');
+    const today = moment().startOf('day').toDate();
     const [loading, setLoading] = useState(false);
     const { showLoader, hideLoader } = useLoader();
     const userData = JSON.parse(secureLocalStorage.getItem("user"));
@@ -44,7 +44,7 @@ function EmployeeAttendance() {
     const [reason, setReason] = useState('');
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [clockInOutDetails, setClockInOutDetails] = useState([]);
-    const navigate = useNavigate();
+    const navigate = useAppNavigate();
 
     useEffect(() => {
         if (startDate != '' && endDate != '') {
@@ -233,12 +233,12 @@ function EmployeeAttendance() {
                                 <h5 className="m-0">List of Attendance details</h5>
                                 <div className="list_menu">
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
+                                        <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'From Date'}
                                             selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                             showYearDropdown dropdownMode="select" maxDate={today} />
                                     </div>
                                     <div className="list_searchbox">
-                                        <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
+                                        <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'To Date'}
                                             selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                             maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                                     </div>
@@ -263,7 +263,7 @@ function EmployeeAttendance() {
                                                     <tr key={index}>
                                                         <td>{moment(item.attendanceDate).format('dddd')}</td>
                                                         <td>
-                                                            <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.attendanceDate).format('DD-MM-YYYY')}</a>
+                                                            <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{Utils.formatDisplayDate(item.attendanceDate)}</a>
                                                         </td>
                                                         {
                                                             item.statusType == 'INOUTMISS' &&
@@ -321,12 +321,12 @@ function EmployeeAttendance() {
                         <h5 className='pt-2 pb-1'>List of Attendance details</h5>
                         <div className="list_menu">
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
+                                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'From Date'}
                                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                                     showYearDropdown dropdownMode="select" maxDate={today} />
                             </div>
                             <div className="list_searchbox">
-                                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
+                                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'To Date'}
                                     selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                                     maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                             </div>
@@ -345,7 +345,7 @@ function EmployeeAttendance() {
                                             </div>
                                             <div className='col-8 px-0 py-1'>
                                                 <label>Date</label>
-                                                <p><a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{moment(item.clockDate).format('DD-MM-YYYY')}</a></p>
+                                                <p><a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{Utils.formatDisplayDate(item.clockDate)}</a></p>
                                             </div>
 
                                             {
@@ -413,7 +413,7 @@ function EmployeeAttendance() {
                     <div className="accountDetail_card">
                         <div className="row m-0">
                             <div className="col-md-12 p-2">
-                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                                <label className="form-label mb-1">Date: <b>{Utils.formatDisplayDate(selectedData?.clockDate)}</b></label>
                                 {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
 
@@ -457,7 +457,7 @@ function EmployeeAttendance() {
                                 </tr>
                                 <tr>
                                     <td><b>Attendance Date</b></td>
-                                    <td colSpan={2}>{(selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid()) ? moment(selectedData?.attendanceDate).format('DD-MM-YYYY') : (selectedData?.clockDate && moment(selectedData?.clockDate).isValid() ? moment(selectedData?.clockDate).format('DD-MM-YYYY') : 'NA')}</td>
+                                    <td colSpan={2}>{(selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid()) ? Utils.formatDisplayDate(selectedData?.attendanceDate) : (selectedData?.clockDate && moment(selectedData?.clockDate).isValid() ? Utils.formatDisplayDate(selectedData?.clockDate) : 'NA')}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>

@@ -193,9 +193,9 @@ function OvertimeTransaction() {
       idEmployee: item.idEmployee,
       // idOvertimeType: item.idOvertimeType,
       overtimeTypeName: '',
-      startDate: moment(item.firstInDateTime).format('DD-MM-YYYY'),
+      startDate: moment(item.firstInDateTime).toDate(),
       startTime: null,
-      endDate: moment(item.lastOutDateTime).format('DD-MM-YYYY'),
+      endDate: moment(item.lastOutDateTime).toDate(),
       endTime: null,
       durationInHours: 0,
       reasonForOvertime: '',
@@ -408,7 +408,7 @@ function OvertimeTransaction() {
                 </div>
                 <div className="list_searchbox">
                   <label className='p-2'>From Date</label>
-                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'Start Date'}
+                  <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'Start Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                     showYearDropdown dropdownMode="select" />
                 </div>
@@ -463,7 +463,7 @@ function OvertimeTransaction() {
                           <td>{item?.employeeCode}</td>
                           <td>{item?.employeeName}</td>
                           {/* <td>{item?.overtimeTypeName}</td> */}
-                          <td>{moment(item?.startDate).format("DD-MM-YYYY")}</td>
+                          <td>{Utils.formatDisplayDate(item?.startDate)}</td>
                           <td>{moment(item?.startTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td>{moment(item?.endTime, 'HH:mm:ss').format("h:mm A")}</td>
                           <td className="text-center">{item.durationInHours} Hr</td>
@@ -565,7 +565,7 @@ function OvertimeTransaction() {
                             <DatePicker className="form-control" selected={newData.startDate}
                               onChange={(date) => setNewData({ ...newData, startDate: date })}
                               required
-                              dateFormat="dd-MM-yyyy"
+                              dateFormat={Utils.DATE_PICKER_FORMAT}
                               placeholderText='Select Date' showMonthDropdown
                               showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>
@@ -583,7 +583,7 @@ function OvertimeTransaction() {
                             <DatePicker className="form-control" selected={newData.endDate}
                               onChange={(date) => setNewData({ ...newData, endDate: date })}
                               required
-                              dateFormat="dd-MM-yyyy"
+                              dateFormat={Utils.DATE_PICKER_FORMAT}
                               placeholderText='Select Date' minDate={newData.startDate} showMonthDropdown
                               showYearDropdown maxDate={today} dropdownMode="select" />
                           </div>

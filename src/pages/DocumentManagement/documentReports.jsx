@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import DatePicker from "react-datepicker";
 import moment from "moment";
 import GeneralDocumentService, { saveBlob } from "../../core/services/GeneralDocumentService";
@@ -56,7 +56,7 @@ const formatCell = (col, value, row, reportCode) => {
 };
 
 const DocumentReports = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { lookups, error: lookupError } = useDocumentLookups();
   const [code, setCode] = useState("EXPIRY");
   const [filter, setFilter] = useState({

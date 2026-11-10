@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import ProfileChangeService from "../../core/services/ProfileChangeService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { useLoader } from "../../components/LoaderContext";
@@ -65,7 +65,7 @@ const SECTIONS = {
 const initials = (name) => (name || "?").split(" ").filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
 
 const MyProfile = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [tab, setTab] = useState("personal");
   const [profile, setProfile] = useState(null);

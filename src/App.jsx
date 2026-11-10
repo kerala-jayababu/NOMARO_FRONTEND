@@ -1,6 +1,8 @@
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom"; // Import HashRouter
+import { HashRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom"; // Import HashRouter
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import secureLocalStorage from "react-secure-storage";
+import { fetchCompanyConfig, getCompanyCode, getCompanyConfig, setCompanyCode, setCompanyConfig } from "./utils/companyContext";
 import "./App.css";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/privateRoute";
@@ -110,6 +112,98 @@ function LeavePassageRoute() {
   return currentAuth === 'PAYROLL' ? <LeavePassagePayroll /> : <LeavePassage />;
 }
 
+// Full-screen message shown when the URL has no valid company code.
+// eslint-disable-next-line react/prop-types
+function InvalidCompanyUrl({ message }) {
+  return (
+    <div className="container-xxl">
+      <div className="authentication-wrapper authentication-basic container-p-y">
+        <div className="authentication-inner">
+          <div className="card">
+            <div className="card-body text-center">
+              <i className="bx bx-error-circle text-danger" style={{ fontSize: "3rem" }}></i>
+              <h4 className="mt-3 mb-2">Invalid URL</h4>
+              <p className="text-muted mb-0">{message}</p>
+              <p className="text-muted small mt-2 mb-0">
+                Use your company link, e.g. <code>/#/&lt;company-code&gt;/login</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Layout route that owns the company (tenant) context. The company code is MANDATORY:
+// - missing company code in the URL  -> invalid URL screen
+// - company code not in NOMARO_GLOBAL -> invalid URL screen
+// - valid company code                -> stored, then child routes render
+function CompanyScope() {
+  const { companyCode } = useParams();
+  const [status, setStatus] = useState("checking"); // checking | valid | invalid
+
+  useEffect(() => {
+    if (!companyCode) {
+      setStatus("invalid");
+      return;
+    }
+
+    const stored = getCompanyCode();
+    const companyChanged = stored && stored.toLowerCase() !== companyCode.toLowerCase();
+
+    // Same company already resolved -> reuse it
+    if (!companyChanged && stored && getCompanyConfig()) {
+      setStatus("valid");
+      return;
+    }
+
+    let cancelled = false;
+    setStatus("checking");
+    fetchCompanyConfig(companyCode).then((config) => {
+      if (cancelled) return;
+      if (config) {
+        // Switching to a different company must drop the previous company's session/token
+        if (companyChanged) {
+          secureLocalStorage.clear();
+        }
+        setCompanyCode(config.companyCode || companyCode);
+        setCompanyConfig(config);
+        setStatus("valid");
+      } else {
+        setCompanyCode(null);
+        setCompanyConfig(null);
+        setStatus("invalid");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [companyCode]);
+
+  if (status === "checking") {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
+    return (
+      <InvalidCompanyUrl
+        message={
+          companyCode
+            ? `The company code "${companyCode}" is not valid.`
+            : "The URL is missing a company code."
+        }
+      />
+    );
+  }
+
+  return <Outlet />;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -117,8 +211,9 @@ function App() {
         <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
         <Toaster position="top-center"></Toaster>
         <Routes>
+          <Route element={<CompanyScope />}>
           <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<Dashboard />}>
+            <Route path="/:companyCode/dashboard" element={<Dashboard />}>
               <Route index element={<Home />} /> {/* Default page: Self Portal dashboard / Payroll welcome page */}
               <Route path="vacation-mode" element={<VacationMode />} />
               <Route path="salary-templates" element={<SalaryTemplateNew />} />
@@ -210,15 +305,17 @@ function App() {
               <Route path="sick-leave-sal-deduction" element={<SickLeaveSalDeduction/>} />
             </Route>
             <Route element={<PermissionGate />}>
-              <Route path="/reports" element={<Reports />} />
+              <Route path="/:companyCode/reports" element={<Reports />} />
             </Route>
           </Route>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/login" element={<LoginWithOtp />} />
+          <Route path="/:companyCode" element={<Navigate to="login" replace />} />
+          <Route path="/:companyCode/login" element={<LoginWithOtp />} />
           {/* public: opened from the agreement email, no login */}
-          <Route path="/agreement/:token" element={<AgreementReview />} />
-          <Route path="/auth/:route" element={<Authenticate />} />
-          <Route path="*" element={<div>Error 404 - Page Not Found</div>} />
+          <Route path="/:companyCode/agreement/:token" element={<AgreementReview />} />
+          <Route path="/:companyCode/auth/:route" element={<Authenticate />} />
+          {/* any URL without a valid company code is invalid */}
+          <Route path="*" element={<InvalidCompanyUrl message="The URL is missing a valid company code." />} />
+          </Route>
         </Routes>
       </HashRouter>
       </LoaderProvider>

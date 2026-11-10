@@ -8,6 +8,7 @@ import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 import moment from "moment";
+import Utils from "../../../../utils/Utils";
 
 const EmployeeDocuments = () => {
   const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
@@ -398,7 +399,7 @@ const EmployeeDocuments = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return moment(dateString).format("DD-MMM-YYYY");
+    return Utils.formatDisplayDate(dateString);
   };
 
   return (
@@ -505,7 +506,7 @@ const EmployeeDocuments = () => {
               <DatePicker
                 selected={formData.dateValidTill}
                 onChange={(date) => handleInputChange("dateValidTill", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 showYearDropdown
                 showMonthDropdown

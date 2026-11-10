@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import ProfileChangeService from "../../core/services/ProfileChangeService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { useLoader } from "../../components/LoaderContext";
@@ -16,7 +16,7 @@ const STAT_CARDS = [
 ];
 
 const MyChangeRequests = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [requests, setRequests] = useState([]);
   const [filter, setFilter] = useState("");

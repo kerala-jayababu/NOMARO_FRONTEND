@@ -4,6 +4,7 @@ import moment from "moment";
 import DatePicker from "react-datepicker";
 import LeaveReportService from "../../core/services/LeaveReportService";
 import secureLocalStorage from 'react-secure-storage';
+import Utils from "../../utils/Utils";
 
 function LeaveDetailReport() {
 
@@ -60,14 +61,14 @@ function LeaveDetailReport() {
                 <div className="list_menu">
                   <div><label>From</label></div>
                   <div className="list_searchbox">
-                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"From Date"}
+                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"From Date"}
                       selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                       showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
                     />
                   </div>
                   <div><label>To</label></div>
                   <div className="list_searchbox">
-                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"To Date"}
+                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"To Date"}
                       selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                       maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
                     />
@@ -91,8 +92,8 @@ function LeaveDetailReport() {
                         <>
                           {leaveReports.map((report) => (
                             <tr key={report.idEmployeeLeave}>
-                              <td>{moment(report.leaveFromDate).format("DD-MM-YYYY")}</td>
-                              <td>{moment(report.leaveToDate).format("DD-MM-YYYY")}</td>
+                              <td>{Utils.formatDisplayDate(report.leaveFromDate)}</td>
+                              <td>{Utils.formatDisplayDate(report.leaveToDate)}</td>
                               <td>{report.leaveTypeName}</td>
                               <td>{report.noDays}</td>
                             </tr>
@@ -139,14 +140,14 @@ function LeaveDetailReport() {
             <div className="list_menu">
               {/* <div><label>From</label></div> */}
               <div className="list_searchbox">
-                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"From Date"}
+                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"From Date"}
                   selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                   showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
                 />
               </div>
               {/* <div><label>To</label></div> */}
               <div className="list_searchbox">
-                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"To Date"}
+                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"To Date"}
                   selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                   maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
                 />
@@ -167,11 +168,11 @@ function LeaveDetailReport() {
                       </div>
                       <div className="col-4 px-0 py-1">
                         <label>From</label>
-                        <p>{moment(report.leaveFromDate).format("DD-MM-YYYY")}</p>
+                        <p>{Utils.formatDisplayDate(report.leaveFromDate)}</p>
                       </div>
                       <div className="col-4 px-0 py-1">
                         <label>To</label>
-                        <p>{moment(report.leaveToDate).format("DD-MM-YYYY")}</p>
+                        <p>{Utils.formatDisplayDate(report.leaveToDate)}</p>
                       </div>
                       <div className="col-4 px-0 py-1">
                         <label>No: of Days</label>

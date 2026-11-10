@@ -15,6 +15,7 @@ import { updateVacationMode } from "../../redux/reducers/vacationMode";
 import secureLocalStorage from 'react-secure-storage';
 import CommonService from "../../core/services/CommonService";
 import { getEmployeeDetailsByID } from "../../redux/reducers/getEmployeeDetails";
+import Utils from "../../utils/Utils";
 
 const VacationMode = () => {
   const dispatch = useDispatch();
@@ -273,12 +274,7 @@ const VacationMode = () => {
           const substitute = vacation ? vacation.substituteEmployeeName : "N/A";
           const formatDate = (date) => {
             if (!date) return "N/A";
-            const newDate = new Date(date);
-            const month = String(newDate.getMonth() + 1).padStart(2, "0"); // Get month, ensure 2 digits
-            const day = String(newDate.getDate()).padStart(2, "0"); // Get day, ensure 2 digits
-            const year = newDate.getFullYear(); // Get year
-
-            return `${day}-${month}-${year}`;
+            return Utils.formatDisplayDate(date);
           };
 
           return {

@@ -6,6 +6,7 @@ import { getReportDataAction } from "../../../redux/actions/reportsAction";
 import DatePicker from "react-datepicker";
 import dayjs from "dayjs";
 import { API } from "../../../redux/api/utils";
+import Utils from "../../../utils/Utils";
 
 const ReportFilterItem = ({ field, report, handleInputChange }) => {
   const {
@@ -101,7 +102,7 @@ const ReportFilterItem = ({ field, report, handleInputChange }) => {
           </label>
           <DatePicker
             className="form-control"
-            dateFormat="dd-MM-yyyy"
+            dateFormat={Utils.DATE_PICKER_FORMAT}
             selected={selectedDate}
             placeholderText="Date"
             onChange={(date) => {

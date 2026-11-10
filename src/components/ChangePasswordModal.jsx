@@ -6,6 +6,7 @@ import LoginService from "../core/services/LoginService";
 import { useLoader } from "./LoaderContext";
 import { PasswordInput, PasswordRules } from "./PasswordInput";
 import { isStrongPassword } from "../utils/passwordRules";
+import Utils from "../utils/Utils";
 
 const ChangePasswordModal = ({ show, onClose }) => {
   const { showLoader, hideLoader } = useLoader();
@@ -67,7 +68,7 @@ const ChangePasswordModal = ({ show, onClose }) => {
           )}
           {hasPassword && lastChanged && (
             <div className="small text-muted mb-3">
-              Last changed on {new Date(lastChanged).toLocaleDateString("en-GB")}
+              Last changed on {Utils.formatDisplayDate(lastChanged)}
             </div>
           )}
           {hasPassword && (

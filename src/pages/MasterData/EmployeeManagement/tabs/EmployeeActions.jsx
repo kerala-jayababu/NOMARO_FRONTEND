@@ -8,6 +8,7 @@ import EmployeeManagementService from "../../../../core/services/EmployeeManagem
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
+import Utils from "../../../../utils/Utils";
 
 const EmployeeActions = () => {
   const { employeeId } = useContext(EmployeeContext) || {};
@@ -299,7 +300,7 @@ const EmployeeActions = () => {
               <DatePicker
                 selected={formData.effectiveFromDate}
                 onChange={(date) => handleInputChange("effectiveFromDate", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="dd-mm-yyyy"
                 showYearDropdown
@@ -314,7 +315,7 @@ const EmployeeActions = () => {
               <DatePicker
                 selected={formData.effectiveToDate}
                 onChange={(date) => handleInputChange("effectiveToDate", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="dd-mm-yyyy"
                 showYearDropdown

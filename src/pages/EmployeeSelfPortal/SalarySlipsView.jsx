@@ -489,7 +489,7 @@ function SalarySlipsView() {
                 <div className="Payslip_geneBox">
                   <p>
                     Payslip generated on :{" "}
-                    {moment(salarySlipData?.approvedDate).format("DD-MM-YYYY")}
+                    {Utils.formatDisplayDate(salarySlipData?.approvedDate)}
                   </p>
                   <button
                     className="btn btn-primary"

@@ -9,6 +9,7 @@ import EmployeeManagementService from "../../../../core/services/EmployeeManagem
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
+import Utils from "../../../../utils/Utils";
 
 const Experience = () => {
   const { employeeId, setHasUnsavedChanges } =
@@ -530,7 +531,7 @@ const Experience = () => {
                 <DatePicker
                   selected={formData.fromDate}
                   onChange={(date) => handleInputChange("fromDate", date)}
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   className="form-control"
                   showYearDropdown
                   showMonthDropdown
@@ -544,7 +545,7 @@ const Experience = () => {
                 <DatePicker
                   selected={formData.toDate}
                   onChange={(date) => handleInputChange("toDate", date)}
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   className={`form-control${!formData.toDate && formData.fromDate ? " is-invalid" : ""}`}
                   showYearDropdown
                   showMonthDropdown

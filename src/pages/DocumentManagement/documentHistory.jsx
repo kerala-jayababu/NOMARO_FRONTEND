@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import GeneralDocumentService from "../../core/services/GeneralDocumentService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { DocumentPreview } from "../EmployeeSelfPortal/ProfileChange/shared";
@@ -52,7 +53,7 @@ const KV = ({ label, children }) => (
 const DocumentHistory = () => {
   const { id } = useParams();
   const [search, setSearch] = useSearchParams();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { lookups } = useDocumentLookups();
   const { preview, setPreview, busy, open } = useFileOpener();
   const [detail, setDetail] = useState(null);

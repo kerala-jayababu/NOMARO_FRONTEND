@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { useLoader } from "../../components/LoaderContext";
 import SalaryDashboardService from "../../core/services/SalaryDashboardService";
+import Utils from "../../utils/Utils";
 
 // ── Formatting ───────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ const inrShort = (v) => {
 
 const pctChange = (cur, prev) => (prev ? ((cur - prev) / Math.abs(prev)) * 100 : null);
 const signedPct = (v) => (v === null || v === undefined ? "" : `${v > 0 ? "+" : ""}${v.toFixed(1)}%`);
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-") : "");
+const fmtDate = (d) => (d ? Utils.formatDisplayDate(d) : "");
 
 // ── Colours (series colours follow the entity, in a fixed order) ─────────────
 

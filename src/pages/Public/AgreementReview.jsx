@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { API } from "../../redux/api/utils";
+import Utils from "../../utils/Utils";
 
 // Public page opened from the agreement email: no login. The link token identifies the agreement
 // and a one-time code emailed to the employee confirms who is responding.
@@ -10,7 +11,9 @@ export const fmtUtc = (value) => {
   if (!value) return "";
   const s = /Z$|[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`;
   const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return Number.isNaN(d.getTime())
+    ? value
+    : `${Utils.formatDisplayDate(d)} ${d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
 };
 
 const box = { maxWidth: 980, margin: "0 auto", padding: "24px 16px" };

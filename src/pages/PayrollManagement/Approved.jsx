@@ -1,4 +1,5 @@
 import React from "react";
+import CompanyDateInput from "../../components/CompanyDateInput";
 
 function Approved() {
   return (
@@ -21,7 +22,7 @@ function Approved() {
                   </select>
                 </div>
                 <div className="col-md-4 p-2">
-                  <input type="date" className="form-control form-control-sm" />
+                  <CompanyDateInput className="form-control form-control-sm" />
                 </div>
               </div>
 

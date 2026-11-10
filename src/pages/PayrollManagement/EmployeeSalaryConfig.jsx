@@ -281,7 +281,7 @@ const EmployeeSalaryConfig = () => {
     if (!validFrom || validFrom.getDate() !== 1) return "Valid From must be the first day of a month.";
     const currentValidFrom = toDate(structureInfo?.currentValidFrom);
     if (currentValidFrom && validFrom <= currentValidFrom) {
-      return `Valid From must be after ${moment(currentValidFrom).format("DD-MM-YYYY")}, the start of the current salary structure.`;
+      return `Valid From must be after ${Utils.formatDisplayDate(currentValidFrom)}, the start of the current salary structure.`;
     }
     if (!isEdit && structureInfo?.hasPendingStructure) {
       return "This employee already has a salary structure waiting for approval.";
@@ -476,8 +476,8 @@ const EmployeeSalaryConfig = () => {
                           </td>
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName != null ? (item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)) : 'NA'}</td>
-                          <td>{item?.joiningDate != null ? moment(item?.joiningDate).format("DD-MM-YYYY") : 'NA'}</td>
-                          <td>{item?.validFrom != null ? moment(item?.validFrom).format("DD-MM-YYYY") : 'NA'}</td>
+                          <td>{item?.joiningDate != null ? Utils.formatDisplayDate(item?.joiningDate) : 'NA'}</td>
+                          <td>{item?.validFrom != null ? Utils.formatDisplayDate(item?.validFrom) : 'NA'}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalEarnings)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.totalDeductions)}</td>
                           <td className="text-end">{Utils.formattedNumber(item?.netSalary)}</td>
@@ -614,7 +614,7 @@ const EmployeeSalaryConfig = () => {
                     <DatePicker className="form-control" selected={validFrom}
                       onChange={(date) => setValidFrom(date ? new Date(date.getFullYear(), date.getMonth(), 1) : null)}
                       wrapperClassName="datePicker"
-                      dateFormat="dd-MM-yyyy"
+                      dateFormat={Utils.DATE_PICKER_FORMAT}
                       showMonthYearPicker
                       placeholderText='Select Month' />
                   </div>
@@ -633,7 +633,7 @@ const EmployeeSalaryConfig = () => {
                     <div className="col-md-12 px-2 pb-2">
                       <div className="small text-muted">
                         {structureInfo?.currentValidFrom
-                          ? <>Current structure: Valid From <b>{moment(structureInfo.currentValidFrom).format("DD-MM-YYYY")}</b> · Net <b>{Utils.formattedNumber(structureInfo.currentNetSalary)}</b></>
+                          ? <>Current structure: Valid From <b>{Utils.formatDisplayDate(structureInfo.currentValidFrom)}</b> · Net <b>{Utils.formattedNumber(structureInfo.currentNetSalary)}</b></>
                           : "No approved salary structure yet."}
                       </div>
                       {(structureInfo?.warnings || []).map((w, i) => (
@@ -709,7 +709,7 @@ const EmployeeSalaryConfig = () => {
 
             <Modal.Body>
               <h6>
-                {employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode}) &nbsp; | &nbsp; Valid from: {moment(employeeSalaryDetails?.validFrom).format("DD-MM-YYYY")}
+                {employeeSalaryDetails?.employeeName} ({employeeSalaryDetails?.employeeCode}) &nbsp; | &nbsp; Valid from: {Utils.formatDisplayDate(employeeSalaryDetails?.validFrom)}
                 {employeeSalaryDetails?.revisionReason && <> &nbsp; | &nbsp; {Utils.toTitleCase(employeeSalaryDetails.revisionReason)}</>}
               </h6>
               <div className="px-2">
@@ -754,7 +754,7 @@ const EmployeeSalaryConfig = () => {
                           <td>{item?.employeeName}</td>
                           <td>{item?.designationName.length < 25 ? item?.designationName : (`${item?.designationName.substring(0, 25)}...`)}</td>
                           <td>{item?.departmentName.length < 25 ? item?.departmentName : (`${item?.departmentName.substring(0, 25)}...`)}</td>
-                          <td>{item?.joiningDate ? moment(item?.joiningDate).format("DD-MM-YYYY") : ''}</td>
+                          <td>{item?.joiningDate ? Utils.formatDisplayDate(item?.joiningDate) : ''}</td>
                           <td>{item?.status}</td>
                         </tr>
                       ))

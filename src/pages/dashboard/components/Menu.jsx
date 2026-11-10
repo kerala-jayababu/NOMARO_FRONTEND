@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../../utils/useAppNavigate";
 import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
@@ -40,7 +40,7 @@ const orderSubMenus = (subMenus) => {
 function Menu({ viewType }) {
   const dispatch = useDispatch();
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [menu, setMenu] = useState("");
   const [subMenu, setSubMenu] = useState("");
   const [logo, setLogo] = useState("");

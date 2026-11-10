@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import secureLocalStorage from "react-secure-storage";
 import Utils from "../../utils/Utils";
+import CompanyDateInput from "../../components/CompanyDateInput";
 import {
   fetchExitCasesForListing,
   fetchResignationRequests,
@@ -1154,8 +1155,7 @@ export const ViewExitCaseModal = ({
                         <label className="form-label">
                           Approved LWD <span className="text-danger">*</span>
                         </label>
-                        <input
-                          type="date"
+                        <CompanyDateInput
                           className="form-control"
                           value={approvedLWD}
                           onChange={(e) => setApprovedLWD(e.target.value)}
@@ -1167,8 +1167,7 @@ export const ViewExitCaseModal = ({
                           <label className="form-label">
                             Exit Interview Date
                           </label>
-                          <input
-                            type="date"
+                          <CompanyDateInput
                             className="form-control"
                             value={exitInterviewDate}
                             onChange={(e) =>
@@ -1228,8 +1227,7 @@ export const ViewExitCaseModal = ({
                           Exit Interview Date{" "}
                           <span className="text-danger">*</span>
                         </label>
-                        <input
-                          type="date"
+                        <CompanyDateInput
                           className="form-control"
                           value={exitInterviewDate}
                           onChange={(e) => setExitInterviewDate(e.target.value)}

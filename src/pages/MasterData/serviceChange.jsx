@@ -7,6 +7,7 @@ import { useLoader } from "../../components/LoaderContext";
 import { toast } from "react-toastify";
 import moment from "moment";
 import secureLocalStorage from "react-secure-storage";
+import Utils from "../../utils/Utils";
 
 const ServiceChange = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -458,7 +459,7 @@ const ServiceChange = () => {
               <DatePicker
                 selected={section.effectiveFrom}
                 onChange={(date) => handleInputChange(sectionKey, "effectiveFrom", date)}
-                dateFormat="dd-MM-yyyy"
+                dateFormat={Utils.DATE_PICKER_FORMAT}
                 className="form-control"
                 placeholderText="dd-mm-yyyy"
                 showYearDropdown
@@ -720,4 +721,3 @@ const ServiceChange = () => {
 };
 
 export default ServiceChange;
-

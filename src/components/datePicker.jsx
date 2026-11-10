@@ -1,17 +1,17 @@
 import PropTypes from "prop-types";
+import CompanyDateInput from "./CompanyDateInput";
 
 const DatePicker = ({ label, name, value, onChange, min, max }) => {
   return (
     <div className="mb-2">
       <label className="form-label mb-1">{label}</label>
-      <input
-        type="date"
+      <CompanyDateInput
         className="form-control"
         name={name}
         value={value}
         onChange={onChange}
-        min={min || ""} // Apply min if provided, otherwise allow all past dates
-        max={max || ""} // Apply max if provided, otherwise allow all future dates
+        min={min || ""}
+        max={max || ""}
       />
     </div>
   );

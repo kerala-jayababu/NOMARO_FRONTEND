@@ -12,6 +12,7 @@ import { getEmployeeDetailsByID } from "../../../../redux/reducers/getEmployeeDe
 import { DeleteIcon, AddIcon, UpIcon, DownIcon } from "../../../../components/icons";
 import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
+import { injectCompanyCodeIntoUrl } from "../../../../utils/companyContext";
 import secureLocalStorage from "react-secure-storage";
 
 // Bank accounts are always in Indian Rupees (the currency is no longer asked on the screen)
@@ -109,7 +110,7 @@ const BankDetails = () => {
       const storedUser = secureLocalStorage.getItem("user");
       const token = storedUser ? JSON.parse(storedUser)?.token : null;
 
-      const response = await fetch(`${BASE_URL}/api/v1/Common/GetHolidayTypes`, {
+      const response = await fetch(injectCompanyCodeIntoUrl(`${BASE_URL}/api/v1/Common/GetHolidayTypes`), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

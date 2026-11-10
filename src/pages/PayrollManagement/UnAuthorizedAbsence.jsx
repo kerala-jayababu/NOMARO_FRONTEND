@@ -6,6 +6,7 @@ import UnAuthorizedAbsenceService from "../../core/services/UnAuthorizedAbsenceS
 import secureLocalStorage from 'react-secure-storage';
 import CommonService from "../../core/services/CommonService";
 import Select from 'react-select';
+import Utils from "../../utils/Utils";
 
 function UnAuthorizedAbsence() {
 
@@ -106,14 +107,14 @@ function UnAuthorizedAbsence() {
                 <div className="list_menu">
                   <div className="list_searchbox">
                     <div><label>Date From</label></div>
-                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"From Date"}
+                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"From Date"}
                       selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                       showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
                     />
                   </div>
                   <div className="list_searchbox">
                     <div><label>Date To</label></div>
-                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"To Date"}
+                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"To Date"}
                       selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                       maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
                     />
@@ -206,7 +207,7 @@ function UnAuthorizedAbsence() {
                             <>
                               {absences.map((absence) => (
                                 <tr key={absence.idEmployeeLeave + '_' + absence.absentDate}>
-                                  <td>{moment(absence.absentDate).format("DD-MM-YYYY")}</td>
+                                  <td>{Utils.formatDisplayDate(absence.absentDate)}</td>
                                   <td>{moment(absence.absentDate).format("dddd")}</td>
                                 </tr>
                               ))}
@@ -221,7 +222,7 @@ function UnAuthorizedAbsence() {
                                   <td>{absence.idEmployee}</td>
                                   <td>{absence.employeeName}</td>
                                   <td></td>
-                                  <td>{moment(absence.absentDate).format("DD-MM-YYYY")}</td>
+                                  <td>{Utils.formatDisplayDate(absence.absentDate)}</td>
                                   <td>{moment().diff(moment(absence.absentDate), 'days')}</td>
                                 </tr>
                               ))}
@@ -273,14 +274,14 @@ function UnAuthorizedAbsence() {
             <div className="list_menu">
               <div className="list_searchbox">
                 {/* <div><label>Date From</label></div> */}
-                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"From Date"}
+                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"From Date"}
                   selected={startDate} onChange={(date) => setStartDate(date)} showMonthDropdown
                   showYearDropdown dropdownMode="select" maxDate={today} shouldCloseOnSelect
                 />
               </div>
               <div className="list_searchbox">
                 {/* <div><label>Date To</label></div> */}
-                <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={"To Date"}
+                <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={"To Date"}
                   selected={endDate} onChange={(date) => setEndDate(date)} showMonthDropdown minDate={startDate}
                   maxDate={today} showYearDropdown dropdownMode="select" shouldCloseOnSelect
                 />
@@ -376,7 +377,7 @@ function UnAuthorizedAbsence() {
                           <>
                             {absences.map((absence) => (
                               <tr key={absence.idEmployeeLeave + '_' + absence.absentDate}>
-                                <td>{moment(absence.absentDate).format("DD-MM-YYYY")}</td>
+                                <td>{Utils.formatDisplayDate(absence.absentDate)}</td>
                                 <td>{moment(absence.absentDate).format("dddd")}</td>
                               </tr>
                             ))}
@@ -391,7 +392,7 @@ function UnAuthorizedAbsence() {
                                 <td>{absence.idEmployee}</td>
                                 <td>{absence.employeeName}</td>
                                 <td></td>
-                                <td>{moment(absence.absentDate).format("DD-MM-YYYY")}</td>
+                                <td>{Utils.formatDisplayDate(absence.absentDate)}</td>
                                 <td>{moment().diff(moment(absence.absentDate), 'days')}</td>
                               </tr>
                             ))}

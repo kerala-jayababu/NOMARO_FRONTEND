@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import GeneralDocumentService from "../../core/services/GeneralDocumentService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import {
@@ -24,7 +24,7 @@ export const toServerFilter = (f) => ({
 });
 
 const DocumentRegister = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { lookups, error: lookupError } = useDocumentLookups();
   const [filter, setFilter] = useState(emptyFilter);
   const [validity, setValidity] = useState("");

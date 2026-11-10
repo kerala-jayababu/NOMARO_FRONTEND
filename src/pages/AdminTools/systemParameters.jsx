@@ -3,6 +3,7 @@ import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useLoader } from "../../components/LoaderContext";
 import SystemParameterService from "../../core/services/SystemParameterService";
+import CompanyDateInput from "../../components/CompanyDateInput";
 
 const MAX_IMAGE_BYTES = 1048576; // 1 MB (same as the API)
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"];
@@ -234,7 +235,7 @@ function SystemParameters() {
     }
     if (type === "DATE") {
       return (
-        <input type="date" className={`form-control ${invalid}`} value={toIsoDate(value)}
+        <CompanyDateInput className={`form-control ${invalid}`} value={toIsoDate(value)}
           onChange={(e) => setValue(fromIsoDate(e.target.value, param.parameterValue))} />
       );
     }

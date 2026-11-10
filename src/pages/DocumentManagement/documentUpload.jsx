@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import GeneralDocumentService from "../../core/services/GeneralDocumentService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { DocumentFormModal, UploadModal, ValidityBadge, MAINTENANCE_TYPES, labelOf, formatDate, useDocumentLookups } from "./shared";
@@ -7,7 +7,7 @@ import { canManageDoc } from "./documentRegister";
 
 /** Pick a registered document (or register a new one) and upload its file. */
 const DocumentUpload = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { lookups, error: lookupError } = useDocumentLookups();
   const [search, setSearch] = useState("");
   const [idType, setIdType] = useState("");

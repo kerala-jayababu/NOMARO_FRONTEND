@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import ProfileChangeService from "../../core/services/ProfileChangeService";
 import CommonService from "../../core/services/CommonService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
+import CompanyDateInput from "../../components/CompanyDateInput";
 import { useLoader } from "../../components/LoaderContext";
 import {
   CATEGORY_LABELS, DocumentPreview, ModalShell, RequestDetailView, StatusBadge, formatDate,
@@ -225,11 +226,11 @@ const ProfileChangeRequests = () => {
                     </div>
                     <div className="col-md-1">
                       <label className="form-label mb-1">From</label>
-                      <input type="date" className="form-control form-control-sm" value={filter.fromDate} onChange={(e) => setFilter({ ...filter, fromDate: e.target.value })} />
+                      <CompanyDateInput className="form-control form-control-sm" value={filter.fromDate} onChange={(e) => setFilter({ ...filter, fromDate: e.target.value })} />
                     </div>
                     <div className="col-md-1">
                       <label className="form-label mb-1">To</label>
-                      <input type="date" className="form-control form-control-sm" value={filter.toDate} onChange={(e) => setFilter({ ...filter, toDate: e.target.value })} />
+                      <CompanyDateInput className="form-control form-control-sm" value={filter.toDate} onChange={(e) => setFilter({ ...filter, toDate: e.target.value })} />
                     </div>
                   </>
                 )}

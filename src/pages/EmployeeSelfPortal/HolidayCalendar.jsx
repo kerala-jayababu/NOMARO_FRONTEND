@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import moment from "moment";
+import Utils from "../../utils/Utils";
 import { toast } from "react-toastify";
 import EmployeeCalendarService from "../../core/services/EmployeeCalendarService";
 import "./HolidayCalendar.css";
@@ -155,7 +156,7 @@ function HolidayCalendar() {
                     const isPublic = (h.holidayType || "").toUpperCase() === PUBLIC_TYPE;
                     return (
                       <tr key={h.idHoliday}>
-                        <td>{moment(h.holidayDate).format("DD-MMM-YYYY")}</td>
+                        <td>{Utils.formatDisplayDate(h.holidayDate)}</td>
                         <td>{moment(h.holidayDate).format("dddd")}</td>
                         <td>{h.holidayDescription || "—"}</td>
                         <td><span className={`badge ${isPublic ? "bg-label-danger" : "bg-label-warning"}`}>{typeLabel(h)}</span></td>

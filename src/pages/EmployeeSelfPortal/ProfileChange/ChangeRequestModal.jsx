@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import ProfileChangeService from "../../../core/services/ProfileChangeService";
 import { showToast } from "../../../components/ToastNotifications/toastUtils";
 import { CATEGORY_LABELS, ModalShell, formatDate, formatSize } from "./shared";
+import CompanyDateInput from "../../../components/CompanyDateInput";
 
 const MAX_FILE_MB = 2;
 const ALLOWED = [".pdf", ".jpg", ".jpeg", ".png"];
@@ -204,7 +205,7 @@ const ChangeRequestModal = ({ lookups, profile, start = {}, existing = null, onC
     const placeholderOption = <option value="">{type.operation === "ADD" ? "Select" : "(no change)"}</option>;
     switch (f.dataType) {
       case "date":
-        return <input type="date" {...common} />;
+        return <CompanyDateInput {...common} />;
       case "gender":
       case "marital":
       case "relationship":

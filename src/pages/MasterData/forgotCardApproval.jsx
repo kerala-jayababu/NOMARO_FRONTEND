@@ -233,7 +233,7 @@ const ForgotCardApproval = () => {
                   <label className="form-label d-block mb-1">Date From</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="dd-MM-yyyy"
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
                     placeholderText="Date"
                     selected={dateFrom}
                     onChange={(date) => {

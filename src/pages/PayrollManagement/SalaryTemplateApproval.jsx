@@ -1,4 +1,5 @@
 import React from "react";
+import CompanyDateInput from "../../components/CompanyDateInput";
 
 function SalaryTemplateApproval() {
   return (
@@ -34,7 +35,7 @@ function SalaryTemplateApproval() {
               </div>
               <div className="col-md-3 p-2">
                 <label>From</label>
-                <input type="date" className="form-control form-control-sm" />
+                <CompanyDateInput className="form-control form-control-sm" />
               </div>
             </div>
             <div className="table-responsive ">

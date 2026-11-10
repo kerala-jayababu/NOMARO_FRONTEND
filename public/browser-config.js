@@ -16,7 +16,24 @@
       
       const resolvedBase = apiUrl || window.location.origin;
       const normalizedBase = resolvedBase.endsWith('/') ? resolvedBase.slice(0, -1) : resolvedBase;
-      const apiEndpoint = `${normalizedBase}/api/v1/MasterData/GetSystemParameters`;
+
+      // Resolve the company code (tenant) so title/favicon come from the right database.
+      // Prefer the stored code; otherwise parse the first hash segment (e.g. #/GIA/login).
+      let companyCode = null;
+      try {
+        companyCode = localStorage.getItem('nomaroCompanyCode');
+        if (!companyCode) {
+          const firstSegment = (window.location.hash || '').replace(/^#\/?/, '').split('/')[0];
+          const appRoutes = ['', 'login', 'dashboard', 'agreement', 'auth', 'reports'];
+          if (firstSegment && appRoutes.indexOf(firstSegment.toLowerCase()) === -1) {
+            companyCode = firstSegment;
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      const apiEndpoint = companyCode
+        ? `${normalizedBase}/api/v1/${encodeURIComponent(companyCode)}/MasterData/GetSystemParameters`
+        : `${normalizedBase}/api/v1/MasterData/GetSystemParameters`;
       console.log('Fetching BrowserConfig from:', apiEndpoint);
       
       // Wait for the API response

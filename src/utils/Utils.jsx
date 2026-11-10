@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { getCompanyConfig } from "./companyContext";
 
 export default class Utils {
   static encodeBase64(string) {
@@ -46,9 +47,20 @@ export default class Utils {
 
   static NUMBER_LOCALE = "en-IN";
   static DATE_LOCALE = "en-IN";
-  static DATE_DISPLAY_FORMAT = "DD-MM-YYYY";
-  static DATE_PICKER_FORMAT = "dd-MM-yyyy";
-  static CURRENCY_SYMBOL = "₹";
+  static get DATE_PICKER_FORMAT() {
+    return getCompanyConfig()?.dateFormat || "dd-MM-yyyy";
+  }
+
+  // Currency symbol from the company config (NOMARO_GLOBAL), defaulting to INR.
+  static get CURRENCY_SYMBOL() {
+    return getCompanyConfig()?.currencySymbol || "₹";
+  }
+
+  // Date display format from the company config (e.g. "dd/MM/yyyy"), defaulting to DD-MM-YYYY.
+  static get DATE_DISPLAY_FORMAT() {
+    const fmt = getCompanyConfig()?.dateFormat;
+    return fmt ? fmt.toUpperCase().replace(/YYYY/g, "YYYY").replace(/DD/g, "DD") : "DD-MM-YYYY";
+  }
 
   static formattedNumber = (val) => {
     if (val !== undefined && val !== null && val !== "") {
@@ -64,9 +76,10 @@ export default class Utils {
 
   static formatINR = (val) => {
     const formatted = Utils.formattedNumber(val);
-    return formatted ? `₹ ${formatted}` : "";
+    return formatted ? `${Utils.CURRENCY_SYMBOL} ${formatted}` : "";
   };
 
+  // Formats a date using the company's date format (from NOMARO_GLOBAL config).
   static formatDisplayDate = (date) => {
     if (!date) return "";
     const dateOnly =
@@ -84,7 +97,14 @@ export default class Utils {
     if (Number.isNaN(d.getTime())) return "";
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
-    return `${day}-${month}-${d.getFullYear()}`;
+    const year = String(d.getFullYear());
+
+    // Apply the company's date format (default dd-MM-yyyy)
+    const fmt = (getCompanyConfig()?.dateFormat || "dd-MM-yyyy").toLowerCase();
+    return fmt
+      .replace("dd", day)
+      .replace("mm", month)
+      .replace("yyyy", year);
   };
 
   // Function to convert an image to a base64 string

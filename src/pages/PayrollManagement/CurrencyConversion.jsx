@@ -5,6 +5,7 @@ import moment from "moment";
 import DatePicker from "react-datepicker";
 import { NumericFormat } from "react-number-format";
 import { Form } from "react-bootstrap";
+import Utils from "../../utils/Utils";
 
 function CurrencyConversion() {
   const currencies = ["GYD", "USD"];
@@ -208,7 +209,7 @@ function CurrencyConversion() {
                   <label className="p-2">From Date</label>
                   <DatePicker
                     className="form-control"
-                    dateFormat="dd-MM-yyyy"
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
                     placeholderText="From Date"
                     selected={fromDate}
                     onChange={(date) => filterByDate(date)}
@@ -239,7 +240,7 @@ function CurrencyConversion() {
                       currencyConversions.map((conversion) => (
                         <tr key={conversion.idCurrencyConversion}>
                           <td>
-                            {moment(conversion.rateDate).format("DD-MM-YYYY")}
+                            {Utils.formatDisplayDate(conversion.rateDate)}
                           </td>
                           <td>{displayCurrency(conversion.fromCurrency)}</td>
                           <td>{displayCurrency(conversion.toCurrency)}</td>
@@ -289,7 +290,7 @@ function CurrencyConversion() {
                   <DatePicker
                     ref={datePickerRef}
                     className="form-control w-100"
-                    dateFormat="dd-MM-yyyy"
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
                     placeholderText="Date"
                     selected={formData.rateDate}
                     onChange={(date) => handleInputChange(date, "rateDate")}

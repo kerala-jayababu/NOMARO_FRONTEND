@@ -1,6 +1,7 @@
 import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
+import { getCompanyCode } from "../utils/companyContext";
 
 function PrivateRoute() {
   const isAuthenticated = () => {
@@ -8,7 +9,11 @@ function PrivateRoute() {
     return !!user; // Returns true if user exists, false otherwise
   };
 
-  return isAuthenticated() ? <Outlet /> : <Navigate to="/login" replace />;
+  // Redirect to the company-specific login so the company code stays in the URL
+  const code = getCompanyCode();
+  const loginPath = code ? `/${code}/login` : "/";
+
+  return isAuthenticated() ? <Outlet /> : <Navigate to={loginPath} replace />;
 }
 
 export default PrivateRoute;

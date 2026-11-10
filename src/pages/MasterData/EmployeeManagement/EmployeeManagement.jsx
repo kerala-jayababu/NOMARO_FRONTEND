@@ -1,5 +1,6 @@
 import React, { useState, createContext, useMemo, Suspense, lazy, useRef, useEffect, useLayoutEffect } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { useAppNavigate } from "../../../utils/useAppNavigate";
 import { toast } from "react-toastify";
 import { Modal } from "react-bootstrap";
 import Qualifications from "./tabs/Qualifications";
@@ -17,7 +18,7 @@ const BankDetails = lazy(() => import("./tabs/BankDetails"));
 export const EmployeeContext = createContext(null);
 
 const EmployeeManagement = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const employeeIdFromUrl = searchParams.get("id");

@@ -6,6 +6,7 @@ import CommonService from "../../core/services/CommonService";
 import EmployeeSalaryConfigService from "../../core/services/EmployeeSalaryConfigService";
 import { useLoader } from "../../components/LoaderContext";
 import moment from "moment";
+import Utils from "../../utils/Utils";
 
 const formatAmount = (val) =>
   Number(val || 0).toLocaleString("en-IN", {
@@ -190,7 +191,7 @@ const UnapprovalSalaryConfig = () => {
                     configData.designationName,
                     configData.departmentName,
                     configData.joiningDate
-                      ? `Joined ${moment(configData.joiningDate).format("DD-MM-YYYY")}`
+                      ? `Joined ${Utils.formatDisplayDate(configData.joiningDate)}`
                       : null,
                   ]
                     .filter(Boolean)
@@ -207,7 +208,7 @@ const UnapprovalSalaryConfig = () => {
               {
                 label: "Valid from",
                 value: configData.validFrom
-                  ? moment(configData.validFrom).format("DD-MM-YYYY")
+                  ? Utils.formatDisplayDate(configData.validFrom)
                   : "--",
               },
               {

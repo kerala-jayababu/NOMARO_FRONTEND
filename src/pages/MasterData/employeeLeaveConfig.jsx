@@ -207,11 +207,7 @@ const EmployeeLeaveConfig = () => {
   // Helper function to format date as DD-MM-YYYY with leading zeros
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return Utils.formatDisplayDate(dateString);
   };
 
   // Get employee leave setup data from API response
@@ -1378,7 +1374,7 @@ const EmployeeLeaveSetupModal = ({
                 <br />
                 <DatePicker
                   className="form-control"
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   placeholderText="Valid From"
                   selected={validFrom}
                   onChange={handleValidFromChange}
@@ -1393,7 +1389,7 @@ const EmployeeLeaveSetupModal = ({
                 <br />
                 <DatePicker
                   className="form-control"
-                  dateFormat="dd-MM-yyyy"
+                  dateFormat={Utils.DATE_PICKER_FORMAT}
                   placeholderText="Valid To"
                   selected={validTo}
                   onChange={(date) => setValidTo(date)}
@@ -1649,11 +1645,7 @@ const BulkConfigureModal = ({
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return Utils.formatDisplayDate(dateString);
   };
 
   const handleSubmitForApproval = async () => {

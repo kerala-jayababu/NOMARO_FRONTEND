@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Utils from "../../../utils/Utils";
 import "./profileChange.css";
 
 export const CATEGORY_LABELS = {
@@ -29,13 +30,11 @@ export const StatusBadge = ({ status }) => {
   return <span className={`badge ${s.cls}`}>{s.label}</span>;
 };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 export const formatDate = (value, withTime = false) => {
   if (!value) return "—";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
-  const base = `${String(d.getDate()).padStart(2, "0")}-${MONTHS[d.getMonth()]}-${d.getFullYear()}`;
+  const base = Utils.formatDisplayDate(value);
   if (!withTime) return base;
   return `${base} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };

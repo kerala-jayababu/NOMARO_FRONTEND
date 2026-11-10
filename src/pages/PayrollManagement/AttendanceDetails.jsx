@@ -14,7 +14,7 @@ import secureLocalStorage from 'react-secure-storage';
 import AttendanceService from '../../core/services/AttendanceService';
 import { useLoader } from "../../components/LoaderContext";
 import ConfirmationModal from '../../components/ConfirmationModal';
-import { useNavigate } from 'react-router-dom';
+import { useAppNavigate } from '../../utils/useAppNavigate';
 import * as XLSX from "xlsx";
 
 function AttendanceDetails() {
@@ -61,7 +61,7 @@ function AttendanceDetails() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [clockInOutDetails, setClockInOutDetails] = useState([]);
-    const navigate = useNavigate();
+    const navigate = useAppNavigate();
 
     useEffect(() => {
         getEmployeesData();
@@ -351,7 +351,7 @@ function AttendanceDetails() {
                 "Emp Code": item.employeeCode || '',
                 "Emp Name": item.employeeName || '',
                 "Date": item.attendanceDate && moment(item.attendanceDate).isValid() 
-                    ? moment(item.attendanceDate).format('DD-MM-YYYY') 
+                    ? Utils.formatDisplayDate(item.attendanceDate)
                     : '',
                 "First In": (!isSpecialStatus && item.firstInDateTime && moment(item.firstInDateTime).isValid()) 
                     ? moment(item.firstInDateTime).format('hh:mm A') 
@@ -429,12 +429,12 @@ function AttendanceDetails() {
                             </div>
                             <div className="list_menu">
                                 <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
+                                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'From Date'}
                                         selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
                                         showYearDropdown dropdownMode="select" maxDate={today} />
                                 </div>
                                 <div className="list_searchbox">
-                                    <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
+                                    <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'To Date'}
                                         selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
                                         maxDate={moment().subtract(1, 'days').toDate()} showYearDropdown dropdownMode="select" />
                                 </div>
@@ -540,7 +540,7 @@ function AttendanceDetails() {
                                                     <td>{item.employeeCode}</td>
                                                     <td>{item.employeeName}</td>
                                                     <td>
-                                                        <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{item.attendanceDate && moment(item.attendanceDate).isValid() ? moment(item.attendanceDate).format('DD-MM-YYYY') : ''}</a>
+                                                        <a href='javascript:void(0)' style={{ color: 'navy' }} onClick={() => { getClockInOutDetailsForDate(item) }}>{item.attendanceDate && moment(item.attendanceDate).isValid() ? Utils.formatDisplayDate(item.attendanceDate) : ''}</a>
                                                     </td>
                                                     {
                                                         item.statusType == 'INOUTMISS' &&
@@ -638,7 +638,7 @@ function AttendanceDetails() {
                                 {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
                             <div className="col-md-12 p-2">
-                                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                                <label className="form-label mb-1">Date: <b>{Utils.formatDisplayDate(selectedData?.clockDate)}</b></label>
                                 {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
                             </div>
 
@@ -682,7 +682,7 @@ function AttendanceDetails() {
                                 </tr>
                                 <tr>
                                     <td><b>Attendance Date</b></td>
-                                    <td colSpan={2}>{selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid() ? moment(selectedData?.attendanceDate).format('DD-MM-YYYY') : 'NA'}</td>
+                                    <td colSpan={2}>{selectedData?.attendanceDate && moment(selectedData?.attendanceDate).isValid() ? Utils.formatDisplayDate(selectedData?.attendanceDate) : 'NA'}</td>
                                 </tr>
                                 <tr>
                                     <td><b>Expected Clock-in</b></td>

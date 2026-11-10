@@ -3,12 +3,26 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import EmployeeCalendarService from "../core/services/EmployeeCalendarService";
 import ConfirmationModal from "./ConfirmationModal";
+import Utils from "../utils/Utils";
 
 const UPCOMING_DAYS = 7;
 
-const fmtDayMonth = (d) => new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-const fmtDate = (d) => new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-");
-const fmtTime = (d) => new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+const fmtDayMonth = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-GB", { month: "short" });
+  const format = Utils.DATE_PICKER_FORMAT.toLowerCase();
+  return format.indexOf("mm") < format.indexOf("dd")
+    ? `${month} ${day}`
+    : `${day} ${month}`;
+};
+const fmtDate = (d) => Utils.formatDisplayDate(d);
+const fmtTime = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${Utils.formatDisplayDate(date)} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+};
 const initials = (name) => (name || "").split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
 const yearsText = (y) => `${y} ${y === 1 ? "Year" : "Years"}`;
 

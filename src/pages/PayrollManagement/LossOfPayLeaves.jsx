@@ -1,4 +1,5 @@
 import React from "react";
+import CompanyDateInput from "../../components/CompanyDateInput";
 
 function LossOfPayLeaves() {
   return (
@@ -106,7 +107,7 @@ function LossOfPayLeaves() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label mb-1">Loss Of Pay Date</label>
-                  <input type="date" className="form-control" maxlength="50" />
+                  <CompanyDateInput className="form-control" />
                 </div>
                 <div className="mb-2">
                   <div className="form-check form-check-inline ">

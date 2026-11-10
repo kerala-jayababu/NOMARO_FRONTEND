@@ -1,4 +1,5 @@
 import React from "react";
+import CompanyDateInput from "../../components/CompanyDateInput";
 
 function MyTeams() {
   return (
@@ -213,7 +214,7 @@ function MyTeams() {
                             <label className="form-label mb-1">Start Date and Time</label>
                             <div className="row m-0">
                               <div className="col-md-6 ps-0 pe-2">
-                                <input type="date" className="form-control" maxlength="50" />
+                                <CompanyDateInput className="form-control" />
                               </div>
                               <div className="col-md-6 p-0 pe-2">
                                 <input type="time" className="form-control ms-2" maxlength="50" />
@@ -224,7 +225,7 @@ function MyTeams() {
                             <label className="form-label mb-1">End Date and Time</label>
                             <div className="row m-0">
                               <div className="col-md-6 ps-0 pe-2">
-                                <input type="date" className="form-control" maxlength="50" />
+                                <CompanyDateInput className="form-control" />
                               </div>
                               <div className="col-md-6 p-0 pe-2">
                                 <input type="time" className="form-control ms-2" maxlength="50" />

@@ -22,11 +22,11 @@ function ClockInClockOut() {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filteredData, setFilteredData] = useState(clockInDetails);
   const totalPages = Math.ceil(clockInDetails.length / rowsPerPage);
-  const [startDate, setStartDate] = useState(moment(new Date()).format('01-MM-YYYY'));
+  const [startDate, setStartDate] = useState(() => moment().startOf('month').toDate());
   // let endingDay = Utils.getLastDayFor(moment(startDate).format('YYYY-MM-DD'));
   // const [endDate, setEndDate] = useState(moment(new Date()).format(`DD-${endingDay}-YYYY`));
-  const [endDate, setEndDate] = useState(moment(new Date()).format('DD-MM-YYYY'));
-  const today = moment(new Date()).format('DD-MM-YYYY');
+  const [endDate, setEndDate] = useState(() => moment().toDate());
+  const today = moment().startOf('day').toDate();
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const filteredEmployees = [
@@ -299,7 +299,7 @@ function ClockInClockOut() {
           ? moment(item.clockDate).format('dddd') 
           : '',
         "Date": item.clockDate && moment(item.clockDate).isValid() 
-          ? moment(item.clockDate).format('DD-MM-YYYY') 
+          ? Utils.formatDisplayDate(item.clockDate)
           : '',
         "IN": inTime,
         "OUT": outTime,
@@ -371,12 +371,12 @@ function ClockInClockOut() {
               </div>
               <div className="list_menu">
                 <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'From Date'}
+                  <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'From Date'}
                     selected={startDate} onChange={(date) => setStartDate(date)} shouldCloseOnSelect={true} showMonthDropdown
                     showYearDropdown dropdownMode="select" maxDate={today} />
                 </div>
                 <div className="list_searchbox">
-                  <DatePicker className="form-control" dateFormat="dd-MM-yyyy" placeholderText={'To Date'}
+                  <DatePicker className="form-control" dateFormat={Utils.DATE_PICKER_FORMAT} placeholderText={'To Date'}
                     selected={endDate} onChange={(date) => setEndDate(date)} shouldCloseOnSelect={true} showMonthDropdown minDate={startDate}
                     maxDate={today} showYearDropdown dropdownMode="select" />
                 </div>
@@ -443,7 +443,7 @@ function ClockInClockOut() {
                           <td>{item.employeeCode}</td>
                           <td>{item.employeeName}</td>
                           <td>{moment(item.clockDate).format('dddd')}</td>
-                          <td>{moment(item.clockDate).format('DD-MM-YYYY')}</td>
+                          <td>{Utils.formatDisplayDate(item.clockDate)}</td>
                           {
                             (item.clockType == 'LEAVE' || item.clockType == 'UNAUTH') &&
                             <td colSpan={3} className='text-center' style={{ backgroundColor: 'lightcyan' }}>{item.statusDetails}</td>
@@ -527,7 +527,7 @@ function ClockInClockOut() {
           <div className="accountDetail_card">
             <div className="row m-0">
               <div className="col-md-12 p-2">
-                <label className="form-label mb-1">Date: <b>{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</b></label>
+                <label className="form-label mb-1">Date: <b>{Utils.formatDisplayDate(selectedData?.clockDate)}</b></label>
                 {/* <label className="form-label mb-1">{moment(selectedData?.clockDate).format('DD-MM-YYYY')}</label> */}
               </div>
 

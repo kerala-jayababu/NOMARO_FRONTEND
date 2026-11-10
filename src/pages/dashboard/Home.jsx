@@ -2,6 +2,7 @@ import React from "react";
 import secureLocalStorage from "react-secure-storage";
 import Content from "./components/Content";
 import Celebrations from "../../components/Celebrations";
+import Utils from "../../utils/Utils";
 
 /**
  * Default page under /dashboard.
@@ -11,7 +12,7 @@ function Home() {
   const currentAuth = secureLocalStorage.getItem("currentAuth");
   if (currentAuth !== "SELFPORTAL") return <Content />;
 
-  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  const today = `${new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(new Date())}, ${Utils.formatDisplayDate(new Date())}`;
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">

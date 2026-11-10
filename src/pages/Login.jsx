@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../utils/useAppNavigate";
 import { signIn } from "../redux/api/authAPI";
 import secureLocalStorage from "react-secure-storage";
 import CommonService from "../core/services/CommonService";
- 
+
 function Login() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [logo, setLogo] = useState("");
 
    

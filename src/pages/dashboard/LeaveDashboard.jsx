@@ -4,6 +4,8 @@ import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import { API } from "../../redux/api/utils";
 import CommonService from "../../core/services/CommonService";
+import Utils from "../../utils/Utils";
+import CompanyDateInput from "../../components/CompanyDateInput";
 <style>
 {`
 thead th, .table thead th, .deduct-table-container thead th {
@@ -16,8 +18,8 @@ const today = moment().format("YYYY-MM-DD");
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "--";
-  const m = moment(dateStr);
-  return m.isValid() ? m.format("DD-MM-YYYY") : dateStr;
+  const formatted = Utils.formatDisplayDate(dateStr);
+  return formatted || dateStr;
 };
 
 const STATUS_OPTIONS = ["ALL", "SUBMITTED", "APPROVED", "REJECTED", "CANCELLED"];
@@ -316,8 +318,7 @@ function LeaveDashboard() {
             <div className="row align-items-end g-2 mb-3">
               <div className="col-auto">
                 <label className="form-label mb-1" style={LABEL_STYLE}>Period From</label>
-                <input
-                  type="date"
+                <CompanyDateInput
                   className="form-control form-control-sm"
                   value={filters.from}
                   onChange={(e) => {
@@ -329,8 +330,7 @@ function LeaveDashboard() {
               </div>
               <div className="col-auto">
                 <label className="form-label mb-1" style={LABEL_STYLE}>Period To</label>
-                <input
-                  type="date"
+                <CompanyDateInput
                   className="form-control form-control-sm"
                   value={filters.to}
                   onChange={(e) => {

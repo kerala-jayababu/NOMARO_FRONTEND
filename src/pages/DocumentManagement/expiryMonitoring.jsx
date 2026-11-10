@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../utils/useAppNavigate";
 import GeneralDocumentService from "../../core/services/GeneralDocumentService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
 import { UploadModal, ValidityBadge, MAINTENANCE_TYPES, VALIDITY, labelOf, formatDate, useDocumentLookups } from "./shared";
@@ -10,7 +10,7 @@ const ATTENTION = ["EXPIRED", "EXPIRING", "NO_RECORD"];
 const OK = ["VALID", "NO_EXPIRY"];
 
 const ExpiryMonitoring = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { lookups, error: lookupError } = useDocumentLookups();
   const [filter, setFilter] = useState({ withinDays: "", idGeneralDocumentType: "", idOffice: "", scope: "" });
   const [show, setShow] = useState("ATTENTION");
