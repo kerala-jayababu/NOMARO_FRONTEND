@@ -5,6 +5,8 @@ import { setComponent } from "../../../redux/reducers/component";
 import { getAllPayrollScreensAction } from "../../../redux/actions/roleBasedScreensActions";
 import { setIdPayrollScreen } from "../../../redux/reducers/auth";
 import CommonService from "../../../core/services/CommonService";
+import { useParams } from "react-router-dom";
+import secureLocalStorage from "react-secure-storage";
 
 // Sub menu items in display order. When a menu uses sections (PayrollScreens.MenuSection), items are grouped
 // under their section heading, sections ordered by their first item, items by OrderNumber; otherwise A-Z as before.
@@ -39,6 +41,8 @@ const orderSubMenus = (subMenus) => {
 
 function Menu({ viewType }) {
   const dispatch = useDispatch();
+  const { companyCode } = useParams();
+  const isPayrollApp = secureLocalStorage.getItem("currentAuth") === "PAYROLL";
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
   const navigate = useAppNavigate();
   const [menu, setMenu] = useState("");
@@ -61,7 +65,6 @@ function Menu({ viewType }) {
   useEffect(() => {
     dispatch(getAllPayrollScreensAction(viewType));
 
-    navigate("/dashboard");
     window.history.pushState(null, '', window.location.href);
     window.onpopstate = function () {
       window.history.pushState(null, '', window.location.href);
@@ -113,7 +116,10 @@ function Menu({ viewType }) {
     setSubMenu("");
     dispatch(setIdPayrollScreen(screen.idPayrollScreen));
     dispatch(setComponent(screen.screenName));
-    navigate(`/dashboard/${screen.screenName.replace(/\s+/g, "-").toLowerCase()}`);
+    const routeSegment = isPayrollApp && screen.screenCode
+      ? screen.screenCode
+      : screen.screenName.replace(/\s+/g, "-").toLowerCase();
+    navigate(`/dashboard/${encodeURIComponent(routeSegment)}`);
   };
 
   return (
@@ -195,17 +201,16 @@ function Menu({ viewType }) {
                           if (
                             screen.screenName.trim().toLowerCase() === "reports"
                           ) {
-                            const url =
-                              window.location.origin +
-                              window.location.pathname +
-                              "#/reports";
+                            const reportRoute = isPayrollApp && menuItem.screenCode
+                              ? `/${companyCode}/reports/${encodeURIComponent(menuItem.screenCode)}`
+                              : `/${companyCode}/reports`;
+                            const url = new URL(reportRoute, window.location.origin).toString();
                             window.open(url, "_blank");
                           } else {
-                            navigate(
-                              `/dashboard/${menuItem.screenName
-                                .replace(/\s+/g, "-")
-                                .toLowerCase()}`
-                            );
+                            const routeSegment = isPayrollApp && menuItem.screenCode
+                              ? menuItem.screenCode
+                              : menuItem.screenName.replace(/\s+/g, "-").toLowerCase();
+                            navigate(`/dashboard/${encodeURIComponent(routeSegment)}`);
                           }
                         }}
                       >

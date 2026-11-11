@@ -1,281 +1,133 @@
-import Dashboard from "./pages/dashboard/Dashboard";
 import BudgetCode from "./pages/MasterData/budgetCode";
 import Departments from "./pages/MasterData/departments";
 import Designations from "./pages/MasterData/designation";
 import SalaryHeads from "./pages/MasterData/salaryHeads";
-import VacationMode from "./pages/PayrollManagement/VacationMode";
-import EmployeeProfile from "./pages/EmployeeProfile/EmployeeProfile";
-import SalaryTemplate from "./pages/PayrollManagement/SalaryTemplates";
-import SalaryConfiguration from "./pages/PayrollManagement/SalaryConfiguration";
+import EmployeeProfile from "./pages/MasterData/employeeProfile";
 import ScreenPermission from "./pages/AdminTools/screenPermission";
-import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
-import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
-import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
-import MaternityLeaveSalaries from "./pages/PayrollManagement/MaternityLeaveSalaries";
 import TaxConfiguration from "./pages/AdminTools/taxConfiguration";
-import CurrencyConversion from "./pages/PayrollManagement/CurrencyConversion";
 import NotificationConfig from "./pages/AdminTools/notificationConfig";
-import BankAndBranches from "./pages/MasterData/bankAndBranches";
-import RentFreeQuarters from "./pages/PayrollManagement/RentFreeQuarters";
-import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
-import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
-import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
-import SalaryDashboard from "./pages/PayrollManagement/SalaryDashboard";
 import SystemParameters from "./pages/AdminTools/systemParameters";
-import SalarySlipsView from "./pages/EmployeeSelfPortal/SalarySlipsView";
-import SalaryReport from "./pages/EmployeeSelfPortal/SalaryReport";
-import EmployeeOvertimeTransaction from "./pages/EmployeeSelfPortal/EmployeeOvertimeTransaction";
-import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
-import EmployeeClockInOut from "./pages/EmployeeSelfPortal/EmployeeClockInOut";
-import EmployeeAttendance from "./pages/EmployeeSelfPortal/EmployeeAttendance";
-import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
+import Holidays from "./pages/AdminTools/holidays";
+import Assets from "./pages/AdminTools/assets";
+import ShiftManagement from "./pages/AdminTools/ShiftManagement";
+import ShiftAssignment from "./pages/AdminTools/ShiftAssignment";
+import OfficeShiftManagement from "./pages/AdminTools/OfficeShiftManagement";
+import BankAndBranches from "./pages/MasterData/bankAndBranches";
 import Banks from "./pages/MasterData/banks";
 import OfficeTypes from "./pages/MasterData/officeTypes";
 import Grades from "./pages/MasterData/grades";
-import MyProfile from "./pages/EmployeeSelfPortal/MyProfile";
-import MyChangeRequests from "./pages/EmployeeSelfPortal/MyChangeRequests";
-import ProfileChangeRequests from "./pages/PayrollManagement/ProfileChangeRequests";
-import ProfileChangeSettings from "./pages/PayrollManagement/ProfileChangeSettings";
 import ViewEmployeeDocuments from "./pages/MasterData/viewEmployeeDocuments";
 import EmployeeAgreements from "./pages/MasterData/employeeAgreements";
 import ResignationRequests from "./pages/MasterData/resignationRequests";
+import Offices from "./pages/MasterData/OfficeManagement/Offices";
+import LeaveTypes from "./pages/MasterData/leaveTypes";
+import LeaveTemplates from "./pages/MasterData/leaveTemplates";
+import LeaveTemplateApproval from "./pages/MasterData/leaveTemplateApproval";
+import EmployeeLeaveConfig from "./pages/MasterData/employeeLeaveConfig";
+import LeaveApproval from "./pages/MasterData/leaveApproval";
+import OvertimeApproval from "./pages/MasterData/overtimeApproval";
+import EmpLeaveConfigApproval from "./pages/MasterData/empLeaveConfigApproval";
+import OffboardingSetup from "./pages/MasterData/offboardingSetup";
+import OffboardingCases from "./pages/MasterData/offboardingCases";
+import OffboardingClearances from "./pages/MasterData/offboardingClearances";
+import OrgHierarchy from "./pages/MasterData/OrgHierarchy";
+import MissingEntryApproval from "./pages/MasterData/missingEntryApproval";
+import SalaryAdjustments from "./pages/PayrollManagement/SalaryAdjustments";
+import OvertimeTransaction from "./pages/PayrollManagement/OvertimeTransaction";
+import ScheduledDeductions from "./pages/PayrollManagement/ScheduledDeductions";
+import SalaryGeneration from "./pages/PayrollManagement/SalaryGeneration";
+import SalaryApproved from "./pages/PayrollManagement/SalaryApproved";
+import ViewPaySlips from "./pages/PayrollManagement/ViewPaySlips";
+import SalaryDashboard from "./pages/PayrollManagement/SalaryDashboard";
+import ConfigApproval from "./pages/PayrollManagement/ConfigApproval";
+import SalaryTemplateNew from "./pages/PayrollManagement/SalaryTemplatesNew";
+import EmployeeSalaryConfig from "./pages/PayrollManagement/EmployeeSalaryConfig";
+import ProfileChangeRequests from "./pages/PayrollManagement/ProfileChangeRequests";
+import ProfileChangeSettings from "./pages/PayrollManagement/ProfileChangeSettings";
+import ClockInClockOut from "./pages/PayrollManagement/ClockInClockOut";
+import AttendanceDetails from "./pages/PayrollManagement/AttendanceDetails";
+import LeaveDetailReport from "./pages/PayrollManagement/LeaveDetailReport";
+import UnAuthorizedAbsence from "./pages/PayrollManagement/UnAuthorizedAbsence";
+import ServiceChange from "./pages/MasterData/serviceChange";
+import ServiceApproval from "./pages/MasterData/serviceApproval";
 import DocumentRegister from "./pages/DocumentManagement/documentRegister";
-import DocumentUpload from "./pages/DocumentManagement/documentUpload";
-import DocumentHistory from "./pages/DocumentManagement/documentHistory";
 import ExpiryMonitoring from "./pages/DocumentManagement/expiryMonitoring";
 import GeneralDocumentTypes from "./pages/DocumentManagement/documentTypes";
 import GeneralDocumentSubtypes from "./pages/DocumentManagement/documentSubtypes";
 import DocumentReports from "./pages/DocumentManagement/documentReports";
 import DocumentAckDashboard from "./pages/DocumentManagement/documentAckDashboard";
-import MyDocuments from "./pages/EmployeeSelfPortal/MyDocuments";
-import Offices from "./pages/MasterData/OfficeManagement/Offices";
-import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
-import ServiceChange from "./pages/MasterData/serviceChange";
-import ServiceApproval from "./pages/MasterData/serviceApproval";
-import OfficeShiftManagement from "./pages/AdminTools/OfficeShiftManagement";
+import LeaveDashboard from "./pages/dashboard/LeaveDashboard";
+import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
+import BirthdaysAnniversaries from "./pages/PayrollManagement/BirthdaysAnniversaries";
+import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
+import SickLeaveSalDeduction from "./pages/PayrollManagement/SickLeaveSalDeduction";
+import SalaryTemplateApproval from "./pages/PayrollManagement/SalaryTemplateApproval";
 
-export const privateRoutes = [
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
-  },
-  {
-    path: "/dashboard/live-dashboard",
-    element: <LiveDashboard />,
-  },
-  {
-    path: "/dashboard/budget-codes",
-    element: <BudgetCode />,
-  },
-  {
-    path: "/dashboard/departments",
-    element: <Departments />,
-  },
-  {
-    path: "/dashboard/designations",
-    element: <Designations />,
-  },
-  {
-    path: "/dashboard/salary-heads", 
-    element: <SalaryHeads />,
-  },
-  {
-    path:"/dashboard/vacation-mode",
-    element:<VacationMode/>
-  },
-  {
-    path: "/dashboard/employee-profile",
-    element: <EmployeeProfile />,
-  }, 
-  {
-    path: "/dashboard/salary-templates",
-    element: <SalaryTemplateNew />,
-  },
-  {
-    path: "/dashboard/employee-salary-config",
-    element: <EmployeeSalaryConfig />,
-  },
-  {
-    path: "/dashboard/screen-permissions",
-    element: <ScreenPermission />,
-  },
-  {
-    path: "/dashboard/salary-adjustments",
-    element: <SalaryAdjustments />,
-  },
-  {
-    path: "/dashboard/maternity-leave-salaries",
-    element: <MaternityLeaveSalaries />,
-  },
-  {
-    path: "/dashboard/scheduled-deductions",
-    element: <ScheduledDeductions />,
-  },
-  {
-    path: "/dashboard/overtime-transactions",
-    element: <OvertimeTransaction />,
-  }, 
-  {
-    path: "/dashboard/income-tax-config",
-    element: <TaxConfiguration />,
-  }, 
-  {
-    path: "/dashboard/currency-conversion",
-    element: <CurrencyConversion />,
-  },
-  {
-    path: "/dashboard/notification-types",
-    element: <NotificationConfig />,
-  },
-  {
-    path: "/dashboard/bank-branches",
-    element: <BankAndBranches />,
-  },
-  {
-    path: "/dashboard/rent-free-quarters",
-    element: <RentFreeAllowances />,
-  },
-  {
-    path: "/dashboard/salary-slips",
-    element: <ViewPaySlips />,
-  },
-  {
-    path: "/dashboard/salary-dashboard",
-    element: <SalaryDashboard />,
-  },
-  {
-    path: "/dashboard/system-parameters",
-    element: <SystemParameters />,
-  },
-  {
-    path: "/dashboard/pay-slips",
-    element: <SalarySlipsView />,
-  },
-  {
-    path: "/dashboard/salary-report",
-    element: <SalaryReport />,
-  },
-  {
-    path: "/dashboard/overtime-details",
-    element: <EmployeeOvertimeTransaction />,
-  },
-  {
-    path: "/dashboard/clock-inout",
-    element: <ClockInClockOut />,
-  },
-  {
-    path: "/dashboard/clock-in-out-details",
-    element: <EmployeeClockInOut />,
-  },
-  {
-    path: "/dashboard/attendance-report",
-    element: <EmployeeAttendance/>,
-  },
-  {
-    path: "/dashboard/attendance",
-    element: <AttendanceDetails />,
-  },
-  {
-    path: "/dashboard/leave-passage-amount",
-    element: <AttendanceDetails />,
-  },
-  {
-    path: "/dashboard/banks",
-    element: <Banks />,
-  },
-  {
-    path: "/dashboard/office-types",
-    element: <OfficeTypes />,
-  },
-  {
-    path: "/dashboard/employee-grades",
-    element: <Grades />,
-  },
-  {
-    path: "/dashboard/my-profile",
-    element: <MyProfile />,
-  },
-  {
-    path: "/dashboard/my-change-requests",
-    element: <MyChangeRequests />,
-  },
-  {
-    path: "/dashboard/profile-change-requests",
-    element: <ProfileChangeRequests />,
-  },
-  {
-    path: "/dashboard/profile-change-settings",
-    element: <ProfileChangeSettings />,
-  },
-  {
-    path: "/dashboard/view-documents",
-    element: <ViewEmployeeDocuments />,
-  },
-  {
-    path: "/dashboard/employee-agreements",
-    element: <EmployeeAgreements />,
-  },
-  {
-    path: "/dashboard/resignation-requests",
-    element: <ResignationRequests />,
-  },
-  {
-    path: "/dashboard/document-register",
-    element: <DocumentRegister />,
-  },
-  {
-    path: "/dashboard/document-upload",
-    element: <DocumentUpload />,
-  },
-  {
-    path: "/dashboard/document-history/:id",
-    element: <DocumentHistory />,
-  },
-  {
-    path: "/dashboard/expiry-monitoring",
-    element: <ExpiryMonitoring />,
-  },
-  {
-    path: "/dashboard/document-types",
-    element: <GeneralDocumentTypes />,
-  },
-  {
-    path: "/dashboard/document-subtypes",
-    element: <GeneralDocumentSubtypes />,
-  },
-  {
-    path: "/dashboard/document-reports",
-    element: <DocumentReports />,
-  },
-  {
-    path: "/dashboard/document-ack-dashboard",
-    element: <DocumentAckDashboard />,
-  },
-  {
-    path: "/dashboard/documents",
-    element: <MyDocuments />,
-  },
-  {
-    path: "/dashboard/office-management",
-    element: <Offices />,
-  },
-  {
-    path: "/dashboard/shift-manager-setup",
-    element: <OfficeShiftManagement />,
-  },
-  {
-    path: "/dashboard/office-mangement",
-    element: <Offices />,
-  },
-  {
-    path: "/dashboard/service-management",
-    element: <ServiceChange />,
-  },
-  {
-    path: "/dashboard/service-approval",
-    element: <ServiceApproval />,
-  },
+export const payrollScreenRoutes = [
+  { path: "SALADJ", element: <SalaryAdjustments /> },
+  { path: "OVRTIME", element: <OvertimeTransaction /> },
+  { path: "OTAPPROVAL", element: <OvertimeApproval /> },
+  { path: "SCHDED", element: <ScheduledDeductions /> },
+  { path: "SALGEN", element: <SalaryGeneration /> },
+  { path: "SALAPP", element: <SalaryApproved /> },
+  { path: "SALSLIP", element: <ViewPaySlips /> },
+  { path: "SKLVSALDEDUCT", element: <SickLeaveSalDeduction /> },
+  { path: "SALARYDASHBOARD", element: <SalaryDashboard /> },
+  { path: "BUDCOD", element: <BudgetCode /> },
+  { path: "BANKS", element: <Banks /> },
+  { path: "BNKBNC", element: <BankAndBranches /> },
+  { path: "DESNS", element: <Designations /> },
+  { path: "DEPTS", element: <Departments /> },
+  { path: "GRADES", element: <Grades /> },
+  { path: "NOTTYPE", element: <NotificationConfig /> },
+  { path: "SYSTPAR", element: <SystemParameters /> },
+  { path: "SCRENPER", element: <ScreenPermission /> },
+  { path: "PCLOCKDATA", element: <ClockInClockOut /> },
+  { path: "PATTENDANC", element: <AttendanceDetails /> },
+  { path: "PLVREPORT", element: <LeaveDetailReport /> },
+  { path: "UNAUTHABS", element: <UnAuthorizedAbsence /> },
+  { path: "LVDASHBOARD", element: <LiveDashboard /> },
+  { path: "MISSINGENTRYAPPROVAL", element: <MissingEntryApproval /> },
+  { path: "SHIFTCONFIG", element: <ShiftManagement /> },
+  { path: "SHIFTASSIGN", element: <ShiftAssignment /> },
+  { path: "LVTYPES", element: <LeaveTypes /> },
+  { path: "LVTMPLT", element: <LeaveTemplates /> },
+  { path: "LVTMPAPPRL", element: <LeaveTemplateApproval /> },
+  { path: "EMPLVTMPLT", element: <EmployeeLeaveConfig /> },
+  { path: "EMPLVCONFIGAPPRL", element: <EmpLeaveConfigApproval /> },
+  { path: "LVAPPRL", element: <LeaveApproval /> },
+  { path: "LEAVEDASHB", element: <LeaveDashboard /> },
+  { path: "ANNLVDASHBOARD", element: <AnnualLeaveDashboard /> },
+  { path: "EMPPROF", element: <EmployeeProfile /> },
+  { path: "EMPDOCVIEW", element: <ViewEmployeeDocuments /> },
+  { path: "EMPAGREE", element: <EmployeeAgreements /> },
+  { path: "PROFCHGREQ", element: <ProfileChangeRequests /> },
+  { path: "PROFCHGSET", element: <ProfileChangeSettings /> },
+  { path: "CELEBRATIONS", element: <BirthdaysAnniversaries /> },
+  { path: "SERVICEMGMNT", element: <ServiceChange /> },
+  { path: "SERVICEMGMNTAPP", element: <ServiceApproval /> },
+  { path: "RESIGNREQUEST", element: <ResignationRequests /> },
+  { path: "OFFBOARDCASES", element: <OffboardingCases /> },
+  { path: "OFFBOARDCLEAR", element: <OffboardingClearances /> },
+  { path: "SALHDS", element: <SalaryHeads /> },
+  { path: "INCOMETAXCO", element: <TaxConfiguration /> },
+  { path: "SALTEMP", element: <SalaryTemplateNew /> },
+  { path: "EMPSALCON", element: <EmployeeSalaryConfig /> },
+  { path: "SALCONFIGUNAPPROVAL", element: <UnapprovalSalaryConfig /> },
+  { path: "SALTEMAPP", element: <SalaryTemplateApproval /> },
+  { path: "CONFAPP", element: <ConfigApproval /> },
+  { path: "OFFICETYPES", element: <OfficeTypes /> },
+  { path: "OFFICEMGMT", element: <Offices /> },
+  { path: "SHIFTMANAGERSETUP", element: <OfficeShiftManagement /> },
+  { path: "ORGHIERARCHY", element: <OrgHierarchy /> },
+  { path: "OFFBOARDSETUP", element: <OffboardingSetup /> },
+  { path: "HOLIDAYCONFIG", element: <Holidays /> },
+  { path: "ASSETS", element: <Assets /> },
+  { path: "GENDOCREG", element: <DocumentRegister /> },
+  { path: "GENDOCEXPIRY", element: <ExpiryMonitoring /> },
+  { path: "GENDOCREPORT", element: <DocumentReports /> },
+  { path: "GENDOCACK", element: <DocumentAckDashboard /> },
+  { path: "GENDOCTYPE", element: <GeneralDocumentTypes /> },
+  { path: "GENDOCSUBTYPE", element: <GeneralDocumentSubtypes /> },
 ];
-
-export default privateRoutes

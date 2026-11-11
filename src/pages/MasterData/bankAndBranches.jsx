@@ -6,16 +6,42 @@ import { NumericFormat } from 'react-number-format';
 import BankAndBranchService from '../../core/services/BankAndBranchService';
 import { Form } from 'react-bootstrap';
 
+const BANK_BRANCHES_SCREEN_CODE = 'BNKBNC';
+const IFSC_ATTRIBUTE_ID = 'IFSCCode';
+
 function BankAndBranches() {
     const [banks, setBanks] = useState([]);
     const [branches, setBranches] = useState([]);
+    const [ifscField, setIfscField] = useState({
+        label: 'IFSC Code',
+        visible: true,
+        maxLength: 25,
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [choosedBankId, setChoosedBankId] = useState(0);
     const [validated, setValidated] = useState(false);
     useEffect(() => {
         getBanks();
+        getIfscFieldConfig();
     }, []);
+
+    const getIfscFieldConfig = async () => {
+        const response = await BankAndBranchService.getScreenAttributeConfig(BANK_BRANCHES_SCREEN_CODE);
+        if (response?.error) {
+            toast.error('Unable to load Bank Branches field settings.');
+            return;
+        }
+
+        const config = response?.data?.data?.find(
+            (field) => field.attributeId?.toLowerCase() === IFSC_ATTRIBUTE_ID.toLowerCase()
+        );
+        setIfscField({
+            label: config?.displayLabel?.trim() || 'IFSC Code',
+            visible: config?.fieldVisibility ?? true,
+            maxLength: config?.maxLength ?? 25,
+        });
+    };
 
     const getBanks = async () => {
         setLoading(true);
@@ -146,7 +172,7 @@ function BankAndBranches() {
                                                 <th>Branch Name</th>
                                                 <th>Bank Address</th>
                                                 <th>Phone Number</th>
-                                                <th className='w-25'>IFSC Code</th>
+                                                {ifscField.visible && <th className='w-25'>{ifscField.label}</th>}
                                                 <th className='w-auto'></th>
                                             </tr>
                                         </thead>
@@ -186,15 +212,17 @@ function BankAndBranches() {
                                                             }}
                                                         />
                                                     </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            maxLength="25"
-                                                            className="form-control"
-                                                            value={data.abaRoutingNumber}
-                                                            onChange={(e) => handleInputChange(data.idBankBranches, 'abaRoutingNumber', e.target.value)}
-                                                        />
-                                                    </td>
+                                                    {ifscField.visible && (
+                                                        <td>
+                                                            <input
+                                                                type="text"
+                                                                maxLength={ifscField.maxLength}
+                                                                className="form-control"
+                                                                value={data.abaRoutingNumber}
+                                                                onChange={(e) => handleInputChange(data.idBankBranches, 'abaRoutingNumber', e.target.value)}
+                                                            />
+                                                        </td>
+                                                    )}
                                                     <td className="text-end">
                                                         <div className="d-flex">
                                                             {(index === branches.length - 1) && (
@@ -221,7 +249,7 @@ function BankAndBranches() {
                                             ))}
                                             {branches.length === 0 && (
                                                 <tr>
-                                                    <td colSpan="5" className="text-center">
+                                                    <td colSpan={ifscField.visible ? 5 : 4} className="text-center">
                                                         <div className="Nodatafound_box">
                                                             <h6><i className="bx bx-search"></i> No data available!</h6>
                                                         </div>

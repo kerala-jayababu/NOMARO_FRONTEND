@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom"; // Import HashRouter
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import secureLocalStorage from "react-secure-storage";
@@ -105,6 +105,7 @@ import AnnualLeaveDashboard from "./pages/dashboard/AnnualLeaveDashboard";
 import UnapprovalSalaryConfig from "./pages/PayrollManagement/UnapprovalSalaryConfig";
 import SickLeaveSalDeduction from "./pages/PayrollManagement/SickLeaveSalDeduction";
 import OfficeShiftManagement from "./pages/AdminTools/OfficeShiftManagement";
+import { payrollScreenRoutes } from "./routes";
 
 function LeavePassageRoute() {
   const { payrollScreen } = useSelector((state) => state.roleBasedScreen);
@@ -125,7 +126,7 @@ function InvalidCompanyUrl({ message }) {
               <h4 className="mt-3 mb-2">Invalid URL</h4>
               <p className="text-muted mb-0">{message}</p>
               <p className="text-muted small mt-2 mb-0">
-                Use your company link, e.g. <code>/#/&lt;company-code&gt;/login</code>
+                Use your company link, e.g. <code>/&lt;company-code&gt;/login</code>
               </p>
             </div>
           </div>
@@ -208,7 +209,7 @@ function App() {
   return (
     <ThemeProvider>
       <LoaderProvider>
-        <HashRouter> {/* Use HashRouter instead of BrowserRouter */}
+        <BrowserRouter>
         <Toaster position="top-center"></Toaster>
         <Routes>
           <Route element={<CompanyScope />}>
@@ -303,8 +304,14 @@ function App() {
               <Route path="annual-leave-dashboard" element={<AnnualLeaveDashboard/>} />
               <Route path="unapproval-salary-config" element={<UnapprovalSalaryConfig/>} />
               <Route path="sick-leave-sal-deduction" element={<SickLeaveSalDeduction/>} />
+              <Route element={<PermissionGate />}>
+                {payrollScreenRoutes.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
+              </Route>
             </Route>
             <Route element={<PermissionGate />}>
+              <Route path="/:companyCode/reports/:screenCode" element={<Reports />} />
               <Route path="/:companyCode/reports" element={<Reports />} />
             </Route>
           </Route>
@@ -317,7 +324,7 @@ function App() {
           <Route path="*" element={<InvalidCompanyUrl message="The URL is missing a valid company code." />} />
           </Route>
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
       </LoaderProvider>
     </ThemeProvider>
   );

@@ -61,16 +61,12 @@ const EmployeeManagement = () => {
     const originalPushState = window.history.pushState.bind(window.history);
     const originalReplaceState = window.history.replaceState.bind(window.history);
 
-    // Helper to extract path from URL (handles both hash and regular URLs)
+    // Helper to extract the destination path for BrowserRouter navigation
     const getPathFromUrl = (url) => {
       if (!url) return '';
       if (typeof url === 'string') {
-        // For HashRouter, URL might be like "/#/dashboard/employee-profile"
-        if (url.includes('#')) {
-          const hashPart = url.split('#')[1];
-          return hashPart.split('?')[0];
-        }
-        return url.split('?')[0];
+        const destination = new URL(url, window.location.origin);
+        return `${destination.pathname}${destination.search}`;
       }
       return '';
     };
@@ -83,15 +79,13 @@ const EmployeeManagement = () => {
       }
 
       // Get current and new paths
-      const currentHash = window.location.hash;
-      const currentPath = currentHash ? currentHash.substring(1).split('?')[0] : window.location.pathname;
+      const currentPath = window.location.pathname;
       const newPath = getPathFromUrl(url);
 
       // Check if leaving employee-management page
       if (currentPath.includes('/employee-management') && newPath && !newPath.includes('/employee-management')) {
         // Block navigation - show modal
-        const fullNewPath = newPath + (url && url.includes('?') ? '?' + url.split('?')[1] : '');
-        setPendingNavigation(fullNewPath);
+        setPendingNavigation(newPath);
         setShowConfirmModal(true);
         return; // Don't call original pushState
       }
@@ -108,15 +102,13 @@ const EmployeeManagement = () => {
       }
 
       // Get current and new paths
-      const currentHash = window.location.hash;
-      const currentPath = currentHash ? currentHash.substring(1).split('?')[0] : window.location.pathname;
+      const currentPath = window.location.pathname;
       const newPath = getPathFromUrl(url);
 
       // Check if leaving employee-management page
       if (currentPath.includes('/employee-management') && newPath && !newPath.includes('/employee-management')) {
         // Block navigation - show modal
-        const fullNewPath = newPath + (url && url.includes('?') ? '?' + url.split('?')[1] : '');
-        setPendingNavigation(fullNewPath);
+        setPendingNavigation(newPath);
         setShowConfirmModal(true);
         return; // Don't call original replaceState
       }
@@ -131,37 +123,6 @@ const EmployeeManagement = () => {
       window.history.replaceState = originalReplaceState;
     };
   }, [hasUnsavedChanges]);
-
-  // Also listen to hashchange as backup
-  useEffect(() => {
-    if (!hasUnsavedChanges) {
-      return;
-    }
-
-    const handleHashChange = () => {
-      if (isNavigatingAwayRef.current) {
-        return; // Allow if user confirmed
-      }
-
-      const hash = window.location.hash;
-      const hashPath = hash.substring(1);
-      const [path] = hashPath.split('?');
-      
-      // Check if we're leaving employee-management
-      if (!path.includes('/employee-management') && previousLocationRef.current.pathname.includes('/employee-management')) {
-        // Block and revert
-        const previousFullPath = previousLocationRef.current.pathname + previousLocationRef.current.search;
-        const previousHash = '#' + previousFullPath;
-        window.history.replaceState(null, '', window.location.pathname + previousHash);
-        navigate(previousFullPath, { replace: true });
-        setPendingNavigation(path);
-        setShowConfirmModal(true);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [hasUnsavedChanges, navigate]);
 
   // Detect route changes and block navigation if there are unsaved changes
   // Use useLayoutEffect to run synchronously before browser paint
@@ -190,18 +151,7 @@ const EmployeeManagement = () => {
       const targetPath = location.pathname + location.search;
       const previousFullPath = previousLocationRef.current.pathname + previousLocationRef.current.search;
       
-      // Immediately revert navigation using both methods
-      // Method 1: Direct hash manipulation for HashRouter
-      const currentHash = window.location.hash;
-      if (currentHash) {
-        const newHash = '#' + previousFullPath;
-        // Use requestAnimationFrame to ensure this happens after React Router's update
-        requestAnimationFrame(() => {
-          window.history.replaceState(null, '', window.location.pathname + newHash);
-        });
-      }
-      
-      // Method 2: React Router navigate
+      // Revert through React Router so the browser URL and rendered route stay in sync.
       navigate(previousFullPath, { replace: true });
       
       // Set pending navigation and show modal
@@ -527,4 +477,3 @@ const EmployeeManagement = () => {
 };
 
 export default EmployeeManagement;
-

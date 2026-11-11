@@ -1,7 +1,7 @@
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 
-// Company (tenant) context resolved from the URL company code, e.g. /#/GIA/dashboard.
+// Company (tenant) context resolved from the URL company code, e.g. /GIA/dashboard.
 // The company code drives which database the backend connects to: every API call to
 // /api/v1/... is rewritten to /api/v1/{companyCode}/... (see injectCompanyCodeIntoUrl).
 

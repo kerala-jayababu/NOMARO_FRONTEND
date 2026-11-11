@@ -21,6 +21,17 @@ export default class BankAndBranchService {
         }
     }
 
+    static getScreenAttributeConfig = async (screenCode) => {
+        try {
+            const response = await API.get("/api/v1/ScreenAttributeConfig/GetByScreenCode", {
+                params: { screenCode }
+            });
+            return { error: null, data: response.data };
+        } catch (error) {
+            return handleApiSuccessOrError(error, true);
+        }
+    }
+
     static saveBankAndBranch = async (data) => {
         try {
             const response = await API.post("/api/v1/Bank/AddOrUpdateBranchesOfBank", data);
