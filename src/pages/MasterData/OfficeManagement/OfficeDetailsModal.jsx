@@ -4,11 +4,13 @@ import Grid from "../../../components/grid";
 import OfficeManagementService from "../../../core/services/OfficeManagementService";
 import { showToast } from "../../../components/ToastNotifications/toastUtils";
 import Utils from "../../../utils/Utils";
+import useScreenFields from "../../../utils/useScreenFields";
 import EmployeePostingModal from "./EmployeePostingModal";
 import PostingHistoryModal from "./PostingHistoryModal";
 
 function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
   const [office, setOffice] = useState(null);
+  const field = useScreenFields("OFFICEMGMT");
   const [loadingOffice, setLoadingOffice] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
@@ -80,6 +82,18 @@ function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
         { label: "Phone Number", value: office.phoneNumber },
         { label: "Email ID", value: office.emailId },
         { label: "GSTIN", value: office.gstin },
+        ...[
+          ["TradeLicenceNumber", "Trade Licence No.", office.tradeLicenceNumber],
+          ["TradeLicenceExpiry", "Trade Licence Expiry", Utils.formatDisplayDate(office.tradeLicenceExpiry)],
+          ["EstablishmentId", "MOHRE Establishment ID (WPS Employer ID)", office.establishmentId],
+          ["PFEstablishmentCode", "PF Establishment Code", office.pfEstablishmentCode],
+          ["ESIEmployerCode", "ESI Employer Code", office.esiEmployerCode],
+          ["TAN", "TAN (for TDS)", office.tan],
+          ["PTRegistrationNumber", "PT Registration No.", office.ptRegistrationNumber],
+        ]
+          .map(([id, defaultLabel, value]) => ({ ...field(id, defaultLabel), value }))
+          .filter((f) => f.visible)
+          .map(({ label, value }) => ({ label, value })),
         { label: "Geo Coordinate", value: office.geoCoordinate },
         { label: "Opened Date", value: Utils.formatDisplayDate(office.openedDate) },
         { label: "Closed Date", value: Utils.formatDisplayDate(office.closedDate) },

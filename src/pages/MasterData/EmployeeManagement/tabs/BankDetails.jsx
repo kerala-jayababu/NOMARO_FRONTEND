@@ -14,9 +14,17 @@ import { toast } from "react-toastify";
 import { useLoader } from "../../../../components/LoaderContext";
 import { injectCompanyCodeIntoUrl } from "../../../../utils/companyContext";
 import secureLocalStorage from "react-secure-storage";
+import useScreenFields from "../../../../utils/useScreenFields";
 
 // Bank accounts are always in Indian Rupees (the currency is no longer asked on the screen)
 const DEFAULT_CURRENCY_CODE = "INR";
+// Employee Profile screen code (field labels / visibility per company)
+const EMPLOYEE_SCREEN_CODE = "EMPPROF";
+// WPS: employees without a bank account are paid on an exchange-house salary card
+const PAYMENT_MODE_OPTIONS = [
+  { value: "BANK", label: "Bank Account" },
+  { value: "SALARYCARD", label: "Exchange House Salary Card" },
+];
 // The first bank account gets 100% of the salary by default
 const DEFAULT_SALARY_PERCENTAGE = "100";
 export const BASE_URL = import.meta.env.VITE_API_URL;
@@ -52,6 +60,9 @@ const BankDetails = () => {
   ]);
   const [overtimeOptions, setOvertimeOptions] = useState([]);
   const [disbursementType, setDisbursementType] = useState("PERCENTAGE");
+  const [paymentMode, setPaymentMode] = useState("");
+  const field = useScreenFields(EMPLOYEE_SCREEN_CODE);
+  const fPaymentMode = field("PaymentMode", "Payment Mode");
   const [selectedBudgetCode, setSelectedBudgetCode] = useState("");
   const [childCount, setChildCount] = useState(-1);
   const [phoneNumber2, setPhoneNumber2] = useState("");
@@ -155,6 +166,7 @@ const BankDetails = () => {
           setSelectedBudgetCode(detailsResult.payload.data.idBudgetCode.toString());
         }
         setPhoneNumber2(detailsResult.payload.data.phoneNumber2 || "");
+        setPaymentMode(detailsResult.payload.data.paymentMode || "");
       }
 
       // Fetch bank accounts and overtime configs
@@ -268,6 +280,7 @@ const BankDetails = () => {
         selectedBudgetCode: detailsResult.payload?.data?.idBudgetCode?.toString() || "",
         childCount: -1, // Always -1
         phoneNumber2: detailsResult.payload?.data?.phoneNumber2 || "",
+        paymentMode: detailsResult.payload?.data?.paymentMode || "",
       };
       setInitialData(initial);
       if (setHasUnsavedChanges) {
@@ -328,6 +341,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -347,6 +361,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -372,6 +387,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -458,6 +474,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -489,6 +506,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -515,6 +533,7 @@ const BankDetails = () => {
       if (setHasUnsavedChanges && initialData) {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount ||
           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails);
@@ -589,6 +608,7 @@ const BankDetails = () => {
       const hasChanges = JSON.stringify(newOvertimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
         JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
         disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
         selectedBudgetCode !== initialData.selectedBudgetCode ||
         childCount !== initialData.childCount;
       setHasUnsavedChanges(hasChanges);
@@ -616,6 +636,7 @@ const BankDetails = () => {
         const hasChanges = JSON.stringify(newState) !== JSON.stringify(initialData.overtimeDetails) ||
           JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
           selectedBudgetCode !== initialData.selectedBudgetCode ||
           childCount !== initialData.childCount;
         setHasUnsavedChanges(hasChanges);
@@ -758,6 +779,7 @@ const BankDetails = () => {
     formData.append("BudgetCodeId", parseInt(selectedBudgetCode, 10) || 0);
     formData.append("ChildCount", -1); // Always -1
     formData.append("PhoneNumber2", phoneNumber2 || "");
+    if (fPaymentMode.visible) formData.append("PaymentMode", paymentMode || "");
     if (attachmentFile) {
       formData.append("File", attachmentFile);
     }
@@ -900,6 +922,28 @@ const BankDetails = () => {
         <h6>
           Bank Account Details
         </h6>
+
+        {fPaymentMode.visible && (
+          <div className="row mb-3">
+            <div className="col-md-4">
+              <label className="form-label mb-1" htmlFor="paymentMode">{fPaymentMode.label}</label>
+              <select
+                id="paymentMode"
+                className="form-select"
+                value={paymentMode}
+                onChange={(e) => {
+                  setPaymentMode(e.target.value);
+                  if (setHasUnsavedChanges && initialData) {
+                    setHasUnsavedChanges(true);
+                  }
+                }}
+              >
+                <option value="">Select Payment Mode</option>
+                {PAYMENT_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className="mb-3">
           <div className="form-check form-check-inline">
@@ -1254,6 +1298,7 @@ const BankDetails = () => {
                     JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
                     JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
                     disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
                     childCount !== initialData.childCount;
                   setHasUnsavedChanges(hasChanges);
                 }
@@ -1287,6 +1332,7 @@ const BankDetails = () => {
                           JSON.stringify(bankAccountsState) !== JSON.stringify(initialData.bankAccounts) ||
                           JSON.stringify(overtimeDetails) !== JSON.stringify(initialData.overtimeDetails) ||
                           disbursementType !== initialData.disbursementType ||
+          paymentMode !== initialData.paymentMode ||
                           selectedBudgetCode !== initialData.selectedBudgetCode;
                         setHasUnsavedChanges(hasChanges);
                       }

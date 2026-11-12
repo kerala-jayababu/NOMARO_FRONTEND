@@ -81,6 +81,7 @@ import DocumentReports from "./pages/DocumentManagement/documentReports";
 import DocumentAckDashboard from "./pages/DocumentManagement/documentAckDashboard";
 import MyDocuments from "./pages/EmployeeSelfPortal/MyDocuments";
 import AgreementReview from "./pages/Public/AgreementReview";
+import CompanyRegistration from "./pages/Public/CompanyRegistration";
 import Offices from "./pages/MasterData/OfficeManagement/Offices";
 import RentFreeAllowances from "./pages/PayrollManagement/RentFreeQuartersNew";
 import LiveDashboard from "./pages/dashboard/LiveDashboard";
@@ -212,6 +213,8 @@ function App() {
         <BrowserRouter>
         <Toaster position="top-center"></Toaster>
         <Routes>
+          {/* public: company self-registration, no company code in the URL */}
+          <Route path="/register" element={<CompanyRegistration />} />
           <Route element={<CompanyScope />}>
           <Route element={<PrivateRoute />}>
             <Route path="/:companyCode/dashboard" element={<Dashboard />}>

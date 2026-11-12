@@ -11,12 +11,18 @@ import { useLoader } from "../../../../components/LoaderContext";
 import { useDispatch } from "react-redux";
 import { getEmployeeProfileByID } from "../../../../redux/reducers/getAllEmployeeProfiles";
 import Utils from "../../../../utils/Utils";
+import useScreenFields from "../../../../utils/useScreenFields";
 
 // Defaults for Nationality and Citizenship (matched to the dropdown values without case)
 const DEFAULT_NATIONALITY = "Indian";
 const DEFAULT_CITIZENSHIP = "India";
 // Default PT State (States.StateCode) when the employee has no statutory details yet
 const DEFAULT_PT_STATE_CODE = "KL";
+
+// Screen code of Employee Profile in PayrollScreens / CompanyScreenAttributeConfig (field labels and visibility per company)
+const EMPLOYEE_SCREEN_CODE = "EMPPROF";
+const VISA_SPONSOR_OPTIONS = ["Company", "Free Zone", "Family"];
+const PENSION_SCHEME_OPTIONS = ["GPSSA", "ADPF", "GCC home country"];
 
 // EmployeeStatutoryDetails (one row per employee). Gender and Date of Birth are taken from the employee by the API.
 const initialStatutoryData = {
@@ -33,6 +39,10 @@ const initialStatutoryData = {
   idPTState: "",
   isPTApplicable: false,
   isLWFApplicable: false,
+  isPensionApplicable: false,
+  pensionScheme: "",
+  pensionRegistrationNumber: "",
+  unemploymentInsuranceNo: "",
 };
 
 const BasicDetails = () => {
@@ -76,6 +86,12 @@ const BasicDetails = () => {
     citizenShip: DEFAULT_CITIZENSHIP,
     maritalStatus: "",
     passportNumber: "",
+    passportExpiry: null,
+    emiratesIdExpiry: null,
+    visaNumber: "",
+    visaSponsor: "",
+    labourCardNumber: "",
+    labourCardExpiry: null,
     workPhone: "",
     workEmail: "",
     homeEmail: "",
@@ -118,6 +134,21 @@ const BasicDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sample hardcoded data
+  // New country fields: label / visibility per company from CompanyScreenAttributeConfig (shown by default)
+  const field = useScreenFields(EMPLOYEE_SCREEN_CODE);
+  const fPassportExpiry = field("PassportExpiry", "Passport Expiry");
+  const fEmiratesIdExpiry = field("EmiratesIdExpiry", "Emirates ID Expiry");
+  const fVisaNumber = field("VisaNumber", "Residence Visa File No. / UID", 50);
+  const fVisaSponsor = field("VisaSponsor", "Visa Sponsor");
+  const fLabourCardNumber = field("LabourCardNumber", "Labour Card / MOHRE Person ID", 30);
+  const fLabourCardExpiry = field("LabourCardExpiry", "Labour Card Expiry");
+  const fPensionApplicable = field("PensionApplicable", "Pension Applicable (GPSSA / ADPF)");
+  const fPensionScheme = field("PensionScheme", "Pension Authority");
+  const fPensionRegistrationNumber = field("PensionRegistrationNumber", "Pension Registration No.", 50);
+  const fUnemploymentInsuranceNo = field("UnemploymentInsuranceNo", "Unemployment Insurance (ILOE) Policy No.", 50);
+  const identityFields = [fPassportExpiry, fEmiratesIdExpiry, fVisaNumber, fVisaSponsor, fLabourCardNumber, fLabourCardExpiry];
+  const pensionFields = [fPensionApplicable, fPensionScheme, fPensionRegistrationNumber, fUnemploymentInsuranceNo];
+
   const genderOptions = [
     { value: "MALE", label: "Male" },
     { value: "FEMALE", label: "Female" },
@@ -202,6 +233,10 @@ const BasicDetails = () => {
           idPTState: d.idPTState != null ? String(d.idPTState) : "",
           isPTApplicable: !!d.isPTApplicable,
           isLWFApplicable: !!d.isLWFApplicable,
+          isPensionApplicable: !!d.isPensionApplicable,
+          pensionScheme: d.pensionScheme ?? "",
+          pensionRegistrationNumber: d.pensionRegistrationNumber ?? "",
+          unemploymentInsuranceNo: d.unemploymentInsuranceNo ?? "",
         }
       : initialStatutoryData;
     applyDefaultPtStateRef.current = !d;
@@ -216,6 +251,7 @@ const BasicDetails = () => {
       if (field === "uan") sanitized = sanitized.replace(/\D/g, "").slice(0, 12);
       if (field === "esiNumber") sanitized = sanitized.replace(/\D/g, "").slice(0, 17);
       if (field === "vpfRate" && !/^\d{0,3}(\.\d{0,2})?$/.test(sanitized)) return;
+      if (field === "pensionRegistrationNumber" || field === "unemploymentInsuranceNo") sanitized = sanitized.trimStart().slice(0, 50);
     }
     setStatutoryData((prev) => ({ ...prev, [field]: sanitized }));
     if (setHasUnsavedChanges) setHasUnsavedChanges(true);
@@ -244,6 +280,10 @@ const BasicDetails = () => {
       idPTState: statutoryData.idPTState === "" ? null : parseInt(statutoryData.idPTState),
       isPTApplicable: statutoryData.isPTApplicable,
       isLWFApplicable: statutoryData.isLWFApplicable,
+      isPensionApplicable: statutoryData.isPensionApplicable,
+      pensionScheme: statutoryData.pensionScheme || null,
+      pensionRegistrationNumber: statutoryData.pensionRegistrationNumber.trim() || null,
+      unemploymentInsuranceNo: statutoryData.unemploymentInsuranceNo.trim() || null,
     });
 
   const loadDepartmentsAndDesignations = async () => {
@@ -515,6 +555,12 @@ const BasicDetails = () => {
         citizenShip: detailedData.citizenShip || DEFAULT_CITIZENSHIP,
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
+        passportExpiry: formatDateForForm(detailedData.passportExpiry),
+        emiratesIdExpiry: formatDateForForm(detailedData.emiratesIdExpiry),
+        visaNumber: detailedData.visaNumber ?? "",
+        visaSponsor: detailedData.visaSponsor ?? "",
+        labourCardNumber: detailedData.labourCardNumber ?? "",
+        labourCardExpiry: formatDateForForm(detailedData.labourCardExpiry),
         workPhone: "",
         workEmail: "",
         homeEmail: detailedData.homeEmail ?? "",
@@ -595,6 +641,12 @@ const BasicDetails = () => {
         citizenShip: detailedData.citizenShip || DEFAULT_CITIZENSHIP,
         maritalStatus: detailedData.maritalStatus ?? "",
         passportNumber: detailedData.passportNumber ?? "",
+        passportExpiry: detailedData.passportExpiry ? moment(detailedData.passportExpiry).format("YYYY-MM-DD") : null,
+        emiratesIdExpiry: detailedData.emiratesIdExpiry ? moment(detailedData.emiratesIdExpiry).format("YYYY-MM-DD") : null,
+        visaNumber: detailedData.visaNumber ?? "",
+        visaSponsor: detailedData.visaSponsor ?? "",
+        labourCardNumber: detailedData.labourCardNumber ?? "",
+        labourCardExpiry: detailedData.labourCardExpiry ? moment(detailedData.labourCardExpiry).format("YYYY-MM-DD") : null,
         workPhone: "",
         workEmail: "",
         homeEmail: detailedData.homeEmail ?? "",
@@ -626,6 +678,11 @@ const BasicDetails = () => {
       sanitizedValue = sanitizedValue.replace(/[^\d-]/g, "").slice(0, 20);
     }
 
+    // Labour Card / MOHRE Person ID is numeric
+    if (field === "labourCardNumber") {
+      sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 30);
+    }
+
     // ZIP Code limited to 6 digits
     if (field === "zipCode") {
       sanitizedValue = sanitizedValue.replace(/\D/g, "").slice(0, 6);
@@ -654,6 +711,9 @@ const BasicDetails = () => {
           dateOfBirth: newData.dateOfBirth ? moment(newData.dateOfBirth).format("YYYY-MM-DD") : null,
           joiningDate: newData.joiningDate ? moment(newData.joiningDate).format("YYYY-MM-DD") : null,
           lastWorkingDay: newData.lastWorkingDay ? moment(newData.lastWorkingDay).format("YYYY-MM-DD") : null,
+          passportExpiry: newData.passportExpiry ? moment(newData.passportExpiry).format("YYYY-MM-DD") : null,
+          emiratesIdExpiry: newData.emiratesIdExpiry ? moment(newData.emiratesIdExpiry).format("YYYY-MM-DD") : null,
+          labourCardExpiry: newData.labourCardExpiry ? moment(newData.labourCardExpiry).format("YYYY-MM-DD") : null,
           employeePhoto: newData.employeePhoto ? (typeof newData.employeePhoto === 'string' ? newData.employeePhoto : 'changed') : null
         };
         const initialDataForComparison = {
@@ -804,6 +864,9 @@ const BasicDetails = () => {
         dateOfBirth: employeeFormData.dateOfBirth ? moment(employeeFormData.dateOfBirth).format("YYYY-MM-DD") : null,
         joiningDate: employeeFormData.joiningDate ? moment(employeeFormData.joiningDate).format("YYYY-MM-DD") : null,
         lastWorkingDay: employeeFormData.lastWorkingDay ? moment(employeeFormData.lastWorkingDay).format("YYYY-MM-DD") : null,
+        passportExpiry: employeeFormData.passportExpiry ? moment(employeeFormData.passportExpiry).format("YYYY-MM-DD") : null,
+        emiratesIdExpiry: employeeFormData.emiratesIdExpiry ? moment(employeeFormData.emiratesIdExpiry).format("YYYY-MM-DD") : null,
+        labourCardExpiry: employeeFormData.labourCardExpiry ? moment(employeeFormData.labourCardExpiry).format("YYYY-MM-DD") : null,
       };
 
       if (editingEmployeeId) {
@@ -924,6 +987,12 @@ const BasicDetails = () => {
             citizenShip: employeeFormData.citizenShip,
             maritalStatus: employeeFormData.maritalStatus,
             passportNumber: employeeFormData.passportNumber,
+            passportExpiry: employeeFormData.passportExpiry ? moment(employeeFormData.passportExpiry).format("YYYY-MM-DD") : null,
+            emiratesIdExpiry: employeeFormData.emiratesIdExpiry ? moment(employeeFormData.emiratesIdExpiry).format("YYYY-MM-DD") : null,
+            visaNumber: employeeFormData.visaNumber,
+            visaSponsor: employeeFormData.visaSponsor,
+            labourCardNumber: employeeFormData.labourCardNumber,
+            labourCardExpiry: employeeFormData.labourCardExpiry ? moment(employeeFormData.labourCardExpiry).format("YYYY-MM-DD") : null,
             workPhone: "",
             workEmail: "",
             homeEmail: employeeFormData.homeEmail,
@@ -1006,6 +1075,12 @@ const BasicDetails = () => {
       citizenShip: DEFAULT_CITIZENSHIP,
       maritalStatus: "",
       passportNumber: "",
+      passportExpiry: null,
+      emiratesIdExpiry: null,
+      visaNumber: "",
+      visaSponsor: "",
+      labourCardNumber: "",
+      labourCardExpiry: null,
       workPhone: "",
       workEmail: "",
       homeEmail: "",
@@ -1393,6 +1468,46 @@ const BasicDetails = () => {
                 </div>
               </div>
             </div>
+            {pensionFields.some((f) => f.visible) && (
+            <div className="row mt-3">
+              {fPensionApplicable.visible && (
+                <div className="col-md-4">
+                  <label className="form-label mb-1 d-block">Pension</label>
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="isPensionApplicable" checked={statutoryData.isPensionApplicable}
+                      onChange={(e) => handleStatutoryChange("isPensionApplicable", e.target.checked)} />
+                    <label className="form-check-label" htmlFor="isPensionApplicable">{fPensionApplicable.label}</label>
+                  </div>
+                </div>
+              )}
+              {fPensionScheme.visible && (
+                <div className="col-md-4">
+                  <label className="form-label mb-1" htmlFor="pensionScheme">{fPensionScheme.label}</label>
+                  <select id="pensionScheme" className="form-select" value={statutoryData.pensionScheme}
+                    onChange={(e) => handleStatutoryChange("pensionScheme", e.target.value)}>
+                    <option value="">Select Pension Authority</option>
+                    {PENSION_SCHEME_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              )}
+              {fPensionRegistrationNumber.visible && (
+                <div className="col-md-4">
+                  <label className="form-label mb-1" htmlFor="pensionRegistrationNumber">{fPensionRegistrationNumber.label}</label>
+                  <input id="pensionRegistrationNumber" type="text" className="form-control" value={statutoryData.pensionRegistrationNumber}
+                    maxLength={fPensionRegistrationNumber.maxLength}
+                    onChange={(e) => handleStatutoryChange("pensionRegistrationNumber", e.target.value)} />
+                </div>
+              )}
+              {fUnemploymentInsuranceNo.visible && (
+                <div className="col-md-4 mt-3">
+                  <label className="form-label mb-1" htmlFor="unemploymentInsuranceNo">{fUnemploymentInsuranceNo.label}</label>
+                  <input id="unemploymentInsuranceNo" type="text" className="form-control" value={statutoryData.unemploymentInsuranceNo}
+                    maxLength={fUnemploymentInsuranceNo.maxLength}
+                    onChange={(e) => handleStatutoryChange("unemploymentInsuranceNo", e.target.value)} />
+                </div>
+              )}
+            </div>
+            )}
           </div>
 
           {/* Personal Details Section */}
@@ -1520,6 +1635,109 @@ const BasicDetails = () => {
               </div>
             </div>
           </div>
+
+          {/* Passport, Visa & Labour Card Section (new country fields) */}
+          {identityFields.some((f) => f.visible) && (
+          <div className="mb-4">
+            <div className="bg-secondary p-2 mb-3">
+              <h6 className="mb-0 text-white">Passport, Visa &amp; Labour Card</h6>
+            </div>
+            <div className="row">
+              {fPassportExpiry.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1">{fPassportExpiry.label}</label>
+                  <DatePicker
+                    selected={employeeFormData.passportExpiry}
+                    onChange={(date) => handleEmployeeInputChange("passportExpiry", date)}
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
+                    className="form-control"
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    wrapperClassName="d-block"
+                    isClearable
+                  />
+                </div>
+              )}
+              {fEmiratesIdExpiry.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1">{fEmiratesIdExpiry.label}</label>
+                  <DatePicker
+                    selected={employeeFormData.emiratesIdExpiry}
+                    onChange={(date) => handleEmployeeInputChange("emiratesIdExpiry", date)}
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
+                    className="form-control"
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    wrapperClassName="d-block"
+                    isClearable
+                  />
+                </div>
+              )}
+              {fVisaNumber.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="visaNumber">{fVisaNumber.label}</label>
+                  <input
+                    id="visaNumber"
+                    name="visaNumber"
+                    type="text"
+                    className="form-control"
+                    value={employeeFormData.visaNumber}
+                    onChange={(e) => handleEmployeeInputChange("visaNumber", e.target.value)}
+                    maxLength={fVisaNumber.maxLength}
+                  />
+                </div>
+              )}
+              {fVisaSponsor.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="visaSponsor">{fVisaSponsor.label}</label>
+                  <select
+                    id="visaSponsor"
+                    name="visaSponsor"
+                    className="form-select"
+                    value={employeeFormData.visaSponsor}
+                    onChange={(e) => handleEmployeeInputChange("visaSponsor", e.target.value)}
+                  >
+                    <option value="">Select Visa Sponsor</option>
+                    {VISA_SPONSOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              )}
+              {fLabourCardNumber.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="labourCardNumber">{fLabourCardNumber.label}</label>
+                  <input
+                    id="labourCardNumber"
+                    name="labourCardNumber"
+                    type="text"
+                    className="form-control"
+                    value={employeeFormData.labourCardNumber}
+                    onChange={(e) => handleEmployeeInputChange("labourCardNumber", e.target.value)}
+                    maxLength={fLabourCardNumber.maxLength}
+                    inputMode="numeric"
+                  />
+                </div>
+              )}
+              {fLabourCardExpiry.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1">{fLabourCardExpiry.label}</label>
+                  <DatePicker
+                    selected={employeeFormData.labourCardExpiry}
+                    onChange={(date) => handleEmployeeInputChange("labourCardExpiry", date)}
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
+                    className="form-control"
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    wrapperClassName="d-block"
+                    isClearable
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          )}
 
           {/* Contact Details Section */}
           <div className="mb-4">

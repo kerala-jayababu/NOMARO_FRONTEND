@@ -8,6 +8,7 @@ import { EmployeeContext } from "../EmployeeManagement";
 import { API } from "../../../../redux/api/utils";
 import { useLoader } from "../../../../components/LoaderContext";
 import Utils from "../../../../utils/Utils";
+import useScreenFields from "../../../../utils/useScreenFields";
 
 // Employee Management -> Family Members: spouse, children, parents and others (EmployeeFamilyMembers)
 const BASE = "/api/v1/EmployeeFamily";
@@ -31,8 +32,12 @@ const MIN_ADULT_AGE = 16;
 
 const emptyForm = {
   relationship: "", memberName: "", gender: "", dateOfBirth: null, contactNumber: "", occupation: "",
-  isDependent: false, isNominee: false, nomineePercentage: "", marriageDate: null, certificateNumber: "", divisionNumber: "", remarks: "",
+  isDependent: false, isNominee: false, nomineePercentage: "", marriageDate: null, certificateNumber: "", divisionNumber: "", dependentEmiratesId: "", remarks: "",
 };
+
+// Employee Profile screen code (field labels / visibility per company)
+const EMPLOYEE_SCREEN_CODE = "EMPPROF";
+const EMIRATES_ID_RE = /^784-?\d{4}-?\d{7}-?\d$/;
 
 const errorOf = (e, fallback) => e?.response?.data?.message || fallback;
 
@@ -40,6 +45,8 @@ const FamilyMembers = () => {
   const { employeeId, setHasUnsavedChanges } = useContext(EmployeeContext) || {};
   const { showLoader, hideLoader } = useLoader();
   const [members, setMembers] = useState([]);
+  const field = useScreenFields(EMPLOYEE_SCREEN_CODE);
+  const fEmiratesId = field("DependentEmiratesId", "Emirates ID (dependent)", 18);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -110,6 +117,7 @@ const FamilyMembers = () => {
       marriageDate: m.marriageDate ? new Date(m.marriageDate) : null,
       certificateNumber: m.certificateNumber || "",
       divisionNumber: m.divisionNumber || "",
+      dependentEmiratesId: m.dependentEmiratesId || "",
       remarks: m.remarks || "",
     });
     setShowForm(true);
@@ -134,6 +142,9 @@ const FamilyMembers = () => {
     if (form.isNominee && form.nomineePercentage !== "" && (Number(form.nomineePercentage) < 0 || Number(form.nomineePercentage) > 100)) {
       toast.error("Nominee % must be between 0 and 100"); return;
     }
+    if (fEmiratesId.visible && form.dependentEmiratesId.trim() && !EMIRATES_ID_RE.test(form.dependentEmiratesId.trim())) {
+      toast.error("Emirates ID must be 15 digits, like 784-YYYY-NNNNNNN-N"); return;
+    }
     if (nomineeTotal > 100) { toast.error(`Nominee shares would add up to ${nomineeTotal}%. The total cannot be more than 100%.`); return; }
 
     const payload = {
@@ -151,6 +162,7 @@ const FamilyMembers = () => {
       marriageDate: form.relationship === "SPOUSE" && form.marriageDate ? moment(form.marriageDate).format("YYYY-MM-DD") : null,
       certificateNumber: form.certificateNumber.trim() || null,
       divisionNumber: form.divisionNumber.trim() || null,
+      dependentEmiratesId: form.dependentEmiratesId.trim() || null,
       remarks: form.remarks.trim() || null,
     };
     setSaving(true);
@@ -311,6 +323,13 @@ const FamilyMembers = () => {
                     <input className="form-control" maxLength={20} value={form.divisionNumber} onChange={(e) => set("divisionNumber", e.target.value)} />
                   </div>
                 </>
+              )}
+              {fEmiratesId.visible && (
+                <div className="col-md-4">
+                  <label className="form-label mb-1">{fEmiratesId.label}</label>
+                  <input className="form-control" maxLength={fEmiratesId.maxLength} placeholder="784-YYYY-NNNNNNN-N" value={form.dependentEmiratesId}
+                    onChange={(e) => set("dependentEmiratesId", e.target.value.replace(/[^\d-]/g, ""))} />
+                </div>
               )}
               <div className="col-md-2 d-flex align-items-center gap-2 mt-4">
                 <input type="checkbox" className="form-check-input m-0" id="fm-dependent" checked={form.isDependent} onChange={(e) => set("isDependent", e.target.checked)} />

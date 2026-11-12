@@ -12,8 +12,12 @@ import OfficeManagementService from "../../../core/services/OfficeManagementServ
 import CommonService from "../../../core/services/CommonService";
 import { showToast } from "../../../components/ToastNotifications/toastUtils";
 import Utils from "../../../utils/Utils";
+import useScreenFields from "../../../utils/useScreenFields";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Office Management screen code (field labels / visibility per company)
+const OFFICE_SCREEN_CODE = "OFFICEMGMT";
+const TAN_REGEX = /^[A-Z]{4}[0-9]{5}[A-Z]$/;
 const WEEK_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 const DEFAULT_WORKING_DAYS = WEEK_DAYS.slice(0, 6);
 
@@ -68,6 +72,13 @@ const getInitialFormData = (office) => ({
   phoneNumber: office?.phoneNumber || "",
   emailId: office?.emailId || "",
   gstin: office?.gstin || "",
+  tradeLicenceNumber: office?.tradeLicenceNumber || "",
+  tradeLicenceExpiry: office?.tradeLicenceExpiry ? new Date(office.tradeLicenceExpiry) : null,
+  establishmentId: office?.establishmentId || "",
+  pfEstablishmentCode: office?.pfEstablishmentCode || "",
+  esiEmployerCode: office?.esiEmployerCode || "",
+  tan: office?.tan || "",
+  ptRegistrationNumber: office?.ptRegistrationNumber || "",
   geoCoordinate: office?.geoCoordinate || "",
   openedDate: office?.openedDate ? new Date(office.openedDate) : null,
   closedDate: office?.closedDate ? new Date(office.closedDate) : null,
@@ -78,6 +89,16 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
   const isEditing = !!office;
   const [formData, setFormData] = useState(getInitialFormData(office));
   const [errors, setErrors] = useState({});
+  const field = useScreenFields(OFFICE_SCREEN_CODE);
+  const regFields = {
+    tradeLicenceNumber: field("TradeLicenceNumber", "Trade Licence No.", 50),
+    tradeLicenceExpiry: field("TradeLicenceExpiry", "Trade Licence Expiry"),
+    establishmentId: field("EstablishmentId", "MOHRE Establishment ID (WPS Employer ID)", 20),
+    pfEstablishmentCode: field("PFEstablishmentCode", "PF Establishment Code", 30),
+    esiEmployerCode: field("ESIEmployerCode", "ESI Employer Code", 17),
+    tan: field("TAN", "TAN (for TDS)", 10),
+    ptRegistrationNumber: field("PTRegistrationNumber", "PT Registration No.", 50),
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [regularShiftSchedules, setRegularShiftSchedules] = useState([]);
   const [isLoadingShiftSchedules, setIsLoadingShiftSchedules] = useState(false);
@@ -246,6 +267,15 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
     if (formData.geoCoordinate.trim() && !parseGeoCoordinate(formData.geoCoordinate)) {
       newErrors.geoCoordinate = "Enter latitude,longitude (e.g. 9.931233,76.267304)";
     }
+    if (regFields.establishmentId.visible && formData.establishmentId.trim() && !/^\d+$/.test(formData.establishmentId.trim())) {
+      newErrors.establishmentId = "Establishment ID must contain digits only";
+    }
+    if (regFields.esiEmployerCode.visible && formData.esiEmployerCode.trim() && !/^\d{17}$/.test(formData.esiEmployerCode.trim())) {
+      newErrors.esiEmployerCode = "ESI Employer Code must be 17 digits";
+    }
+    if (regFields.tan.visible && formData.tan.trim() && !TAN_REGEX.test(formData.tan.trim().toUpperCase())) {
+      newErrors.tan = "TAN must be 10 characters, like ABCD12345E";
+    }
     if (formData.openedDate && formData.closedDate && formData.closedDate < formData.openedDate) {
       newErrors.closedDate = "Closed Date cannot be earlier than Opened Date";
     }
@@ -281,6 +311,13 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
         phoneNumber: toNullIfEmpty(formData.phoneNumber),
         emailId: toNullIfEmpty(formData.emailId),
         gstin: toNullIfEmpty(formData.gstin),
+        tradeLicenceNumber: toNullIfEmpty(formData.tradeLicenceNumber),
+        tradeLicenceExpiry: formData.tradeLicenceExpiry ? moment(formData.tradeLicenceExpiry).format("YYYY-MM-DD") : null,
+        establishmentId: toNullIfEmpty(formData.establishmentId),
+        pfEstablishmentCode: toNullIfEmpty(formData.pfEstablishmentCode),
+        esiEmployerCode: toNullIfEmpty(formData.esiEmployerCode),
+        tan: toNullIfEmpty(formData.tan)?.toUpperCase() || null,
+        ptRegistrationNumber: toNullIfEmpty(formData.ptRegistrationNumber),
         geoCoordinate: parseGeoCoordinate(formData.geoCoordinate)
           ? (({ lat, lng }) => `${lat},${lng}`)(parseGeoCoordinate(formData.geoCoordinate))
           : null,
@@ -358,6 +395,12 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
       {errors[field] && <div className="text-danger">{errors[field]}</div>}
     </div>
   );
+
+  // New registration fields: hidden or relabelled per company through CompanyScreenAttributeConfig
+  const renderRegField = (key) => {
+    const f = regFields[key];
+    return f.visible ? renderTextField(key, f.label, f.maxLength) : null;
+  };
 
   return (
     <>
@@ -452,6 +495,28 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
               {renderTextField("phoneNumber", "Phone Number", 20)}
               {renderTextField("emailId", "Email ID", 150)}
               {renderTextField("gstin", "GSTIN", 15)}
+              {renderRegField("tradeLicenceNumber")}
+              {regFields.tradeLicenceExpiry.visible && (
+                <div className="col-md-4 p-2">
+                  <label className="form-label mb-1">{regFields.tradeLicenceExpiry.label}</label>
+                  <DatePicker
+                    className="form-control"
+                    dateFormat={Utils.DATE_PICKER_FORMAT}
+                    placeholderText="Select Date"
+                    selected={formData.tradeLicenceExpiry}
+                    onChange={(date) => handleInputChange("tradeLicenceExpiry", date)}
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    isClearable
+                  />
+                </div>
+              )}
+              {renderRegField("establishmentId")}
+              {renderRegField("pfEstablishmentCode")}
+              {renderRegField("esiEmployerCode")}
+              {renderRegField("tan")}
+              {renderRegField("ptRegistrationNumber")}
 
               <div className="col-md-4 p-2">
                 <label className="form-label mb-1">Geo Coordinate</label>

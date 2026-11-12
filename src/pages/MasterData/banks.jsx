@@ -4,9 +4,16 @@ import BankAndBranchService from '../../core/services/BankAndBranchService';
 import { Form, Modal } from 'react-bootstrap';
 import { useLoader } from '../../components/LoaderContext';
 import Utils from '../../utils/Utils';
+import useScreenFields from '../../utils/useScreenFields';
+
+// Bank & Branches screen code (field labels / visibility per company)
+const BANK_SCREEN_CODE = 'BNKBNC';
+const ROUTING_CODE_RE = /^\d{9}$/;
 
 function Banks() {
     const [banks, setBanks] = useState([]);
+    const field = useScreenFields(BANK_SCREEN_CODE);
+    const fRoutingCode = field('RoutingCode', 'Bank Routing Code (WPS)', 9);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [validated, setValidated] = useState(false);
@@ -55,7 +62,8 @@ function Banks() {
             idBank: null,
             id: Utils.generateRandomId(),
             bankName: "",
-            swiftCode: ""
+            swiftCode: "",
+            routingCode: ""
         };
         setBanks(prevBanks => [...prevBanks, newBank]);
     };
@@ -81,10 +89,17 @@ function Banks() {
             return;
         }
 
+        if (fRoutingCode.visible && banks.some(bank => bank.routingCode && !ROUTING_CODE_RE.test(bank.routingCode))) {
+            setValidated(true);
+            toast.error("Bank Routing Code must be 9 digits");
+            return;
+        }
+
         let passData = banks.map(bank => ({
             idBank: bank.idBank && bank.idBank > 0 ? bank.idBank : 0,
             bankName: bank.bankName.trim(),
-            swiftCode: bank.swiftCode != '' ? bank.swiftCode : 'NA'
+            swiftCode: bank.swiftCode != '' ? bank.swiftCode : 'NA',
+            routingCode: bank.routingCode ? bank.routingCode.trim() : null
         }));
         showLoader();
         BankAndBranchService.saveAllBanks(passData)
@@ -127,6 +142,7 @@ function Banks() {
                                                 <th>#</th>
                                                 <th>Bank Name *</th>
                                                 <th>Swift Code</th>
+                                                {fRoutingCode.visible && <th>{fRoutingCode.label}</th>}
                                                 <th className="text-end">Actions</th>
                                             </tr>
                                         </thead>
@@ -154,6 +170,19 @@ function Banks() {
                                                             onChange={(e) => handleInputChange(data.id, 'swiftCode', e.target.value)}
                                                         />
                                                     </td>
+                                                    {fRoutingCode.visible && (
+                                                        <td>
+                                                            <Form.Control
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                maxLength={fRoutingCode.maxLength}
+                                                                className="form-control"
+                                                                value={data.routingCode || ""}
+                                                                onChange={(e) => handleInputChange(data.id, 'routingCode', e.target.value.replace(/\D/g, ''))}
+                                                                isInvalid={validated && !!data.routingCode && !ROUTING_CODE_RE.test(data.routingCode)}
+                                                            />
+                                                        </td>
+                                                    )}
                                                     <td className="text-end">
                                                         <div className="d-flex justify-content-end">
                                                             {(index === banks.length - 1) && (
