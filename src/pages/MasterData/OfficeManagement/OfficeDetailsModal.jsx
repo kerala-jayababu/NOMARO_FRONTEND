@@ -65,12 +65,6 @@ function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
     }
   };
 
-  const address = office
-    ? [office.addressLine1, office.addressLine2, office.city, office.district, office.state, office.country, office.pinCode]
-        .filter(Boolean)
-        .join(", ")
-    : "";
-
   const detailItems = office
     ? [
         { label: "Office Code", value: office.officeCode },
@@ -81,8 +75,15 @@ function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
         { label: "Status", value: office.isActive ? "Active" : "Inactive" },
         { label: "Phone Number", value: office.phoneNumber },
         { label: "Email ID", value: office.emailId },
-        { label: "GSTIN", value: office.gstin },
         ...[
+          ["AddressLine1", "Address Line 1", office.addressLine1],
+          ["AddressLine2", "Address Line 2", office.addressLine2],
+          ["City", "City", office.city],
+          ["District", "District", office.district],
+          ["State", "State", office.state],
+          ["Country", "Country", office.country],
+          ["PinCode", "Pin Code", office.pinCode],
+          ["GSTIN", "GSTIN", office.gstin],
           ["TradeLicenceNumber", "Trade Licence No.", office.tradeLicenceNumber],
           ["TradeLicenceExpiry", "Trade Licence Expiry", Utils.formatDisplayDate(office.tradeLicenceExpiry)],
           ["EstablishmentId", "MOHRE Establishment ID (WPS Employer ID)", office.establishmentId],
@@ -179,10 +180,6 @@ function OfficeDetailsModal({ show, idOffice, employeeOptions, onHide }) {
                     <p className="m-0">{item.value || "-"}</p>
                   </div>
                 ))}
-                <div className="col-lg-12 p-2">
-                  <label className="form-label mb-1">Address</label>
-                  <p className="m-0">{address || "-"}</p>
-                </div>
               </div>
             )}
           </div>

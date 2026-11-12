@@ -6,6 +6,7 @@ import Grid from "../../components/Grid";
 import StatusBadge from "../../components/statusBadge";
 import CommonService from "../../core/services/CommonService";
 import { showToast } from "../../components/ToastNotifications/toastUtils";
+import useScreenFields from "../../utils/useScreenFields";
 import {
   fetchSalaryHead,
   getSalaryHeadById,
@@ -61,6 +62,7 @@ const initialFormData = {
   isActive: true,
 };
 
+const SALARY_HEADS_SCREEN_CODE = "SALHDS";
 const numberOrNull = (value) => (value === "" || value === null || value === undefined ? null : Number(value));
 const toText = (value) => (value === null || value === undefined ? "" : String(value));
 
@@ -80,6 +82,9 @@ const SalaryHeads = () => {
   const [usage, setUsage] = useState([]); // where the head being edited is used
   const [deactivateWarning, setDeactivateWarning] = useState("");
   const formulaRef = useRef(null);
+  const field = useScreenFields(SALARY_HEADS_SCREEN_CODE);
+  const fTaxability = field("Taxability", "Taxability");
+  const fWageCeiling = field("WageCeiling", "Wage Ceiling (optional)", 12);
 
   const heads = Array.isArray(salaryHeadList) ? salaryHeadList : [];
   const isEdit = !!currentSalaryHead?.idSalaryHead;
@@ -88,6 +93,7 @@ const SalaryHeads = () => {
   const isStatutory = method === "STATUTORY";
   const isManual = method === "MANUAL";
   const showWageInclusion = formData.headType === "EARNINGS" && !isStatutory;
+  const showTaxability = !isStatutory && fTaxability.visible;
 
   const otherHeads = useMemo(
     () => heads.filter((h) => h.idSalaryHead !== currentSalaryHead?.idSalaryHead),
@@ -572,7 +578,7 @@ const SalaryHeads = () => {
 
                 {/* 2. Head type and 3. Tax */}
                 <div className="row">
-                  <div className={isStatutory ? "col-md-12 mb-2" : "col-md-6 mb-2"}>
+                  <div className={showTaxability ? "col-md-6 mb-2" : "col-md-12 mb-2"}>
                     <label className="form-label mb-1">Head Type</label>
                     <select className="form-select" name="headType" value={formData.headType}
                       onChange={(e) => handleHeadTypeChange(e.target.value)} disabled={isStatutory}>
@@ -583,9 +589,9 @@ const SalaryHeads = () => {
                     {isStatutory && <div className="text-muted small">Set from the Statutory Type.</div>}
                     {fieldError("headType")}
                   </div>
-                  {!isStatutory && (
+                  {showTaxability && (
                     <div className="col-md-6 mb-2">
-                      <label className="form-label mb-1">Taxability</label>
+                      <label className="form-label mb-1">{fTaxability.label}</label>
                       <select className="form-select" name="isTaxable" value={formData.isTaxable ? "TAXABLE" : "NON_TAXABLE"}
                         onChange={(e) => setField("isTaxable", e.target.value === "TAXABLE")}>
                         <option value="TAXABLE">Taxable</option>
@@ -638,11 +644,11 @@ const SalaryHeads = () => {
                       </select>
                       {fieldError("idPercentageSalaryHead")}
                     </div>
-                    <div className="col-md-6 mb-2">
-                      <label className="form-label mb-1">Wage Ceiling (optional)</label>
-                      <input className="form-control" name="wageCeiling" maxLength={12}
+                    {fWageCeiling.visible && <div className="col-md-6 mb-2">
+                      <label className="form-label mb-1">{fWageCeiling.label}</label>
+                      <input className="form-control" name="wageCeiling" maxLength={fWageCeiling.maxLength}
                         value={formData.wageCeiling} onChange={handleDecimalChange} />
-                    </div>
+                    </div>}
                   </div>
                 )}
 

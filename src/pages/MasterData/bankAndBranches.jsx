@@ -1,47 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 import { NumericFormat } from 'react-number-format';
 import BankAndBranchService from '../../core/services/BankAndBranchService';
 import { Form } from 'react-bootstrap';
+import useScreenFields from '../../utils/useScreenFields';
 
 const BANK_BRANCHES_SCREEN_CODE = 'BNKBNC';
-const IFSC_ATTRIBUTE_ID = 'IFSCCode';
 
 function BankAndBranches() {
     const [banks, setBanks] = useState([]);
     const [branches, setBranches] = useState([]);
-    const [ifscField, setIfscField] = useState({
-        label: 'IFSC Code',
-        visible: true,
-        maxLength: 25,
-    });
+    const field = useScreenFields(BANK_BRANCHES_SCREEN_CODE);
+    const branchNameField = field('BranchName', 'Branch Name', 50);
+    const bankAddressField = field('BankAddress', 'Bank Address', 100);
+    const phoneNumberField = field('PhoneNumber', 'Phone Number', 20);
+    const ifscField = field('IFSCCode', 'IFSC Code', 25);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [choosedBankId, setChoosedBankId] = useState(0);
     const [validated, setValidated] = useState(false);
     useEffect(() => {
         getBanks();
-        getIfscFieldConfig();
     }, []);
-
-    const getIfscFieldConfig = async () => {
-        const response = await BankAndBranchService.getScreenAttributeConfig(BANK_BRANCHES_SCREEN_CODE);
-        if (response?.error) {
-            toast.error('Unable to load Bank Branches field settings.');
-            return;
-        }
-
-        const config = response?.data?.data?.find(
-            (field) => field.attributeId?.toLowerCase() === IFSC_ATTRIBUTE_ID.toLowerCase()
-        );
-        setIfscField({
-            label: config?.displayLabel?.trim() || 'IFSC Code',
-            visible: config?.fieldVisibility ?? true,
-            maxLength: config?.maxLength ?? 25,
-        });
-    };
 
     const getBanks = async () => {
         setLoading(true);
@@ -125,7 +106,7 @@ function BankAndBranches() {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log('branches', branches);
-        const hasEmptyBranchName = branches.some(branch => !branch.branchName);
+        const hasEmptyBranchName = branchNameField.visible && branches.some(branch => !branch.branchName);
         if (hasEmptyBranchName) {
             setValidated(true);
             return;
@@ -169,9 +150,9 @@ function BankAndBranches() {
                                     <table className="table table-sm">
                                         <thead>
                                             <tr>
-                                                <th>Branch Name</th>
-                                                <th>Bank Address</th>
-                                                <th>Phone Number</th>
+                                                {branchNameField.visible && <th>{branchNameField.label}</th>}
+                                                {bankAddressField.visible && <th>{bankAddressField.label}</th>}
+                                                {phoneNumberField.visible && <th>{phoneNumberField.label}</th>}
                                                 {ifscField.visible && <th className='w-25'>{ifscField.label}</th>}
                                                 <th className='w-auto'></th>
                                             </tr>
@@ -179,39 +160,39 @@ function BankAndBranches() {
                                         <tbody className="table-border-bottom-0">
                                             {branches && branches.map((data, index) => (
                                                 <tr key={data.idBankBranches}>
-                                                    <td>
+                                                    {branchNameField.visible && <td>
                                                         <input
                                                             type="text"
                                                             className="form-control"
-                                                            maxLength="50"
+                                                            maxLength={branchNameField.maxLength}
                                                             value={data.branchName}
                                                             required
                                                             onChange={(e) => handleInputChange(data.idBankBranches, 'branchName', e.target.value)}
                                                         />
-                                                    </td>
-                                                    <td>
+                                                    </td>}
+                                                    {bankAddressField.visible && <td>
                                                         <input
                                                             type="text"
-                                                            maxLength="100"
+                                                            maxLength={bankAddressField.maxLength}
                                                             className="form-control"
                                                             value={data.bankAddress}
                                                             onChange={(e) => handleInputChange(data.idBankBranches, 'bankAddress', e.target.value)}
                                                         />
-                                                    </td>
-                                                    <td>
+                                                    </td>}
+                                                    {phoneNumberField.visible && <td>
                                                         <input
                                                             type="number"
-                                                            maxLength="20"
+                                                            maxLength={phoneNumberField.maxLength}
                                                             className="form-control"
                                                             value={data.phoneNumber}
                                                             onChange={(e) => {
                                                                 const newValue = e.target.value;
-                                                                if (newValue.length <= 20) {
+                                                                if (newValue.length <= phoneNumberField.maxLength) {
                                                                     handleInputChange(data.idBankBranches, 'phoneNumber', newValue);
                                                                 }
                                                             }}
                                                         />
-                                                    </td>
+                                                    </td>}
                                                     {ifscField.visible && (
                                                         <td>
                                                             <input
@@ -249,7 +230,7 @@ function BankAndBranches() {
                                             ))}
                                             {branches.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={ifscField.visible ? 5 : 4} className="text-center">
+                                                    <td colSpan={[branchNameField, bankAddressField, phoneNumberField, ifscField].filter((f) => f.visible).length + 1} className="text-center">
                                                         <div className="Nodatafound_box">
                                                             <h6><i className="bx bx-search"></i> No data available!</h6>
                                                         </div>

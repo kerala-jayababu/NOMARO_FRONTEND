@@ -21,9 +21,15 @@ export default class BankAndBranchService {
         }
     }
 
-    static getScreenAttributeConfig = async (screenCode) => {
+    static getScreenAttributeConfig = async (companyCode, screenCode) => {
+        if (!companyCode?.trim() || !screenCode?.trim()) {
+            const message = "Company code and screen code are required to load screen field configuration.";
+            console.error(message);
+            return { error: message, data: null };
+        }
+
         try {
-            const response = await API.get("/api/v1/ScreenAttributeConfig/GetByScreenCode", {
+            const response = await API.get(`/api/v1/${encodeURIComponent(companyCode)}/ScreenAttributeConfig/GetByScreenCode`, {
                 params: { screenCode }
             });
             return { error: null, data: response.data };

@@ -91,6 +91,10 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
   const [errors, setErrors] = useState({});
   const field = useScreenFields(OFFICE_SCREEN_CODE);
   const regFields = {
+    district: field("District", "District", 100),
+    state: field("State", "State", 100),
+    pinCode: field("PinCode", "Pin Code", 10),
+    gstin: field("GSTIN", "GSTIN", 15),
     tradeLicenceNumber: field("TradeLicenceNumber", "Trade Licence No.", 50),
     tradeLicenceExpiry: field("TradeLicenceExpiry", "Trade Licence Expiry"),
     establishmentId: field("EstablishmentId", "MOHRE Establishment ID (WPS Employer ID)", 20),
@@ -488,13 +492,13 @@ function OfficeFormModal({ show, office, officeTypes, allOffices, employeeOption
               {renderTextField("addressLine1", "Address Line 1", 200, "col-md-6")}
               {renderTextField("addressLine2", "Address Line 2", 200, "col-md-6")}
               {renderTextField("city", "City", 100)}
-              {renderTextField("district", "District", 100)}
-              {renderTextField("state", "State", 100)}
+              {renderRegField("district")}
+              {renderRegField("state")}
               {renderTextField("country", "Country", 100)}
-              {renderTextField("pinCode", "Pin Code", 10)}
+              {renderRegField("pinCode")}
               {renderTextField("phoneNumber", "Phone Number", 20)}
               {renderTextField("emailId", "Email ID", 150)}
-              {renderTextField("gstin", "GSTIN", 15)}
+              {renderRegField("gstin")}
               {renderRegField("tradeLicenceNumber")}
               {regFields.tradeLicenceExpiry.visible && (
                 <div className="col-md-4 p-2">

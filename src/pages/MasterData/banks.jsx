@@ -13,6 +13,7 @@ const ROUTING_CODE_RE = /^\d{9}$/;
 function Banks() {
     const [banks, setBanks] = useState([]);
     const field = useScreenFields(BANK_SCREEN_CODE);
+    const fSwiftCode = field('SwiftCode', 'Swift Code', 100);
     const fRoutingCode = field('RoutingCode', 'Bank Routing Code (WPS)', 9);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -141,7 +142,7 @@ function Banks() {
                                             <tr>
                                                 <th>#</th>
                                                 <th>Bank Name *</th>
-                                                <th>Swift Code</th>
+                                                {fSwiftCode.visible && <th>{fSwiftCode.label}</th>}
                                                 {fRoutingCode.visible && <th>{fRoutingCode.label}</th>}
                                                 <th className="text-end">Actions</th>
                                             </tr>
@@ -161,15 +162,15 @@ function Banks() {
                                                             isInvalid={validated && !data.bankName?.trim()}
                                                         />
                                                     </td>
-                                                    <td>
+                                                    {fSwiftCode.visible && <td>
                                                         <Form.Control
                                                             type="text"
-                                                            maxLength="100"
+                                                            maxLength={fSwiftCode.maxLength}
                                                             className="form-control"
                                                             value={data.swiftCode || ""}
                                                             onChange={(e) => handleInputChange(data.id, 'swiftCode', e.target.value)}
                                                         />
-                                                    </td>
+                                                    </td>}
                                                     {fRoutingCode.visible && (
                                                         <td>
                                                             <Form.Control
