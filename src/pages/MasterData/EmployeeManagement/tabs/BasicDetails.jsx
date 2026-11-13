@@ -43,6 +43,7 @@ const initialStatutoryData = {
   pensionScheme: "",
   pensionRegistrationNumber: "",
   unemploymentInsuranceNo: "",
+  idTaxRegime: "",
 };
 
 const BasicDetails = () => {
@@ -147,6 +148,7 @@ const BasicDetails = () => {
   const fPensionRegistrationNumber = field("PensionRegistrationNumber", "Pension Registration No.", 50);
   const fUnemploymentInsuranceNo = field("UnemploymentInsuranceNo", "Unemployment Insurance (ILOE) Policy No.", 50);
   const identityFields = [fPassportExpiry, fEmiratesIdExpiry, fVisaNumber, fVisaSponsor, fLabourCardNumber, fLabourCardExpiry];
+  const fTaxRegime = field("IdTaxRegime", "Tax Regime");
   const pensionFields = [fPensionApplicable, fPensionScheme, fPensionRegistrationNumber, fUnemploymentInsuranceNo];
 
   const genderOptions = [
@@ -237,6 +239,7 @@ const BasicDetails = () => {
           pensionScheme: d.pensionScheme ?? "",
           pensionRegistrationNumber: d.pensionRegistrationNumber ?? "",
           unemploymentInsuranceNo: d.unemploymentInsuranceNo ?? "",
+          idTaxRegime: d.idTaxRegime != null ? String(d.idTaxRegime) : "",
         }
       : initialStatutoryData;
     applyDefaultPtStateRef.current = !d;
@@ -284,6 +287,7 @@ const BasicDetails = () => {
       pensionScheme: statutoryData.pensionScheme || null,
       pensionRegistrationNumber: statutoryData.pensionRegistrationNumber.trim() || null,
       unemploymentInsuranceNo: statutoryData.unemploymentInsuranceNo.trim() || null,
+      idTaxRegime: statutoryData.idTaxRegime === "" ? null : parseInt(statutoryData.idTaxRegime),
     });
 
   const loadDepartmentsAndDesignations = async () => {
@@ -1467,6 +1471,17 @@ const BasicDetails = () => {
                   <label className="form-check-label" htmlFor="isLWFApplicable">LWF Applicable</label>
                 </div>
               </div>
+              {fTaxRegime.visible && (
+                <div className="col-md-4 mt-3">
+                  <label className="form-label mb-1" htmlFor="idTaxRegime">{fTaxRegime.label}</label>
+                  <select id="idTaxRegime" className="form-select" value={statutoryData.idTaxRegime}
+                    onChange={(e) => handleStatutoryChange("idTaxRegime", e.target.value)}>
+                    <option value="">Company default</option>
+                    <option value="1">New Regime</option>
+                    <option value="2">Old Regime</option>
+                  </select>
+                </div>
+              )}
             </div>
             {pensionFields.some((f) => f.visible) && (
             <div className="row mt-3">

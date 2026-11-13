@@ -31,6 +31,8 @@ export const STATUTORY_TYPES = [
   { value: "LWF_EE", label: "LWF Employee", headType: "DEDUCTION" },
   { value: "LWF_ER", label: "LWF Employer", headType: "EMPLOYER_CONTRIBUTION" },
   { value: "TDS", label: "TDS", headType: "DEDUCTION" },
+  { value: "PENSION_EE", label: "Pension Employee (GPSSA / ADPF)", headType: "DEDUCTION" },
+  { value: "PENSION_ER", label: "Pension Employer (GPSSA / ADPF)", headType: "EMPLOYER_CONTRIBUTION" },
 ];
 
 export const PAY_FREQUENCIES = [
