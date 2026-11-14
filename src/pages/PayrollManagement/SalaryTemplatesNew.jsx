@@ -10,6 +10,8 @@ import { useLoader } from "../../components/LoaderContext";
 import SalaryStructureGrid, { SalaryStructureTotals, SalaryStructureView } from "../../components/SalaryStructureGrid";
 import {
   calculateStructure,
+  isApprovedStatus,
+  isFinalApprovedStatus,
   newStructureRow,
   rowInputsForSave,
   toHeadsById,
@@ -17,7 +19,7 @@ import {
 } from "../../utils/salaryStructure";
 
 const statusBadgeClass = (status) =>
-  status === "APPROVED" ? "bg-label-success" : status === "SUBMITTED" ? "bg-label-warning" : status === "REJECTED" ? "bg-label-danger" : "bg-label-secondary";
+  isApprovedStatus(status) ? "bg-label-success" : status === "SUBMITTED" ? "bg-label-warning" : status === "REJECTED" ? "bg-label-danger" : "bg-label-secondary";
 
 const SalaryTemplateNew = () => {
   const [templateName, setTemplateName] = useState("");
@@ -54,7 +56,7 @@ const SalaryTemplateNew = () => {
   const copyableTemplates = useMemo(
     () =>
       templatesList.filter(
-        (t) => t.approvalStatus === "APPROVED" && t.activeStatus && t.idSalaryTemplate !== editingTemplate?.idSalaryTemplate
+        (t) => isApprovedStatus(t.approvalStatus) && t.activeStatus && t.idSalaryTemplate !== editingTemplate?.idSalaryTemplate
       ),
     [templatesList, editingTemplate]
   );
@@ -106,6 +108,10 @@ const SalaryTemplateNew = () => {
         setSalaryHeadList(salaryHeadsRes?.data?.data || []);
         const template = templateRes?.data?.data;
         if (!template) return;
+        if (mode === "edit" && isFinalApprovedStatus(template.approvalStatus)) {
+          showToast("Final approved salary templates cannot be edited.", "error");
+          return;
+        }
         const templateRows = rowsFromTemplate(template, mode === "edit");
         setRows(templateRows.length ? templateRows : [newStructureRow()]);
         if (mode === "edit") {
@@ -150,6 +156,10 @@ const SalaryTemplateNew = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSaving) return;
+    if (isEdit && isFinalApprovedStatus(editingTemplate?.approvalStatus)) {
+      showToast("Final approved salary templates cannot be edited.", "error");
+      return;
+    }
     setValidated(true);
     const error = validateBeforeSubmit();
     setFormError(error || "");
@@ -297,7 +307,9 @@ const SalaryTemplateNew = () => {
                           </td>
                           <td className="text-end">
                             <button type="button" className="btn btn-sm btn-icon btn-outline-secondary px-3 border-0"
-                              title="Edit" onClick={() => { resetForm(); loadTemplate(item.idSalaryTemplate, "edit"); }}>
+                              title={isFinalApprovedStatus(item.approvalStatus) ? "Final approved templates cannot be edited" : "Edit"}
+                              disabled={isFinalApprovedStatus(item.approvalStatus)}
+                              onClick={() => { resetForm(); loadTemplate(item.idSalaryTemplate, "edit"); }}>
                               <span className="tf-icons bx bx-pencil"></span>
                             </button>
                           </td>
@@ -377,7 +389,7 @@ const SalaryTemplateNew = () => {
                         </div>
                       </div>
                     )}
-                    {isEdit && editingTemplate?.approvalStatus === "APPROVED" && (
+                    {isEdit && isApprovedStatus(editingTemplate?.approvalStatus) && (
                       <div className="text-muted small mt-1">Saving sends this template for approval again.</div>
                     )}
                   </div>
@@ -389,6 +401,7 @@ const SalaryTemplateNew = () => {
                   salaryHeadList={salaryHeadList}
                   headsById={headsById}
                   calculation={calculation}
+                  allowManualHeads
                 />
                 <SalaryStructureTotals totals={calculation.totals} />
                 {formError && <div className="text-danger mt-2">{formError}</div>}

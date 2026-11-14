@@ -14,6 +14,7 @@ import SalaryStructureGrid, { SalaryStructureTotals, SalaryStructureView } from 
 import {
   REVISION_REASONS,
   calculateStructure,
+  isApprovedStatus,
   newStructureRow,
   rowInputsForSave,
   toHeadsById,
@@ -108,7 +109,7 @@ const EmployeeSalaryConfig = () => {
   // Templates: only approved and active ones
   const getSalaryTemplates = () => {
     EmployeeSalaryConfigService.getAllSalaryTemplates().then(res => {
-      const data = (res?.data?.data || []).filter(x => x.approvalStatus == 'APPROVED' && x.activeStatus);
+      const data = (res?.data?.data || []).filter(x => isApprovedStatus(x.approvalStatus) && x.activeStatus);
       setTemplatesList(data);
     }).catch(err => {
       console.error("Failed to fetch salary templates:", err);
@@ -649,6 +650,7 @@ const EmployeeSalaryConfig = () => {
                   salaryHeadList={salaryHeadList}
                   headsById={headsById}
                   calculation={calculation}
+                  allowManualHeads
                 />
                 <SalaryStructureTotals totals={calculation.totals} showStatutoryNote />
                 {formError && <div className="text-danger mt-2">{formError}</div>}

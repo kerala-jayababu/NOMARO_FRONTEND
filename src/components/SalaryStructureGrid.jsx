@@ -17,7 +17,7 @@ import {
  * The calculation method, base head and formula always come from Salary Heads; a row only carries
  * the amount (Fixed Amount heads) or the percentage (Percentage heads).
  */
-function SalaryStructureGrid({ rows, onRowsChange, salaryHeadList, headsById, calculation }) {
+function SalaryStructureGrid({ rows, onRowsChange, salaryHeadList, headsById, calculation, allowManualHeads = false }) {
   const displayRows = useMemo(() => sortStructureRows(rows, headsById), [rows, headsById]);
 
   const updateRow = (key, changes) => {
@@ -37,11 +37,11 @@ function SalaryStructureGrid({ rows, onRowsChange, salaryHeadList, headsById, ca
 
   const removeRow = (key) => onRowsChange(rows.filter((row) => row.key !== key));
 
-  // Heads that are active, not statutory, not Manual and not arrears; a head already in the grid isn't offered again
+  // Heads that are active, not statutory or arrears; manual heads are opt-in per screen.
   const headOptionsFor = (row) => {
     const usedIds = rows.filter((r) => r.key !== row.key && r.idSalaryHead).map((r) => r.idSalaryHead);
     const available = salaryHeadList.filter(
-      (head) => (isGridHead(head) && !usedIds.includes(head.idSalaryHead)) || head.idSalaryHead === row.idSalaryHead
+      (head) => (isGridHead(head, allowManualHeads) && !usedIds.includes(head.idSalaryHead)) || head.idSalaryHead === row.idSalaryHead
     );
     return HEAD_TYPES.map((type) => ({
       ...type,
@@ -54,7 +54,7 @@ function SalaryStructureGrid({ rows, onRowsChange, salaryHeadList, headsById, ca
   const renderValueCell = (row, head) => {
     const method = (head?.calculationMethod || "").toUpperCase();
     if (!head) return "-";
-    if (method === "FIXEDAMOUNT") {
+    if (method === "FIXEDAMOUNT" || method === "MANUAL") {
       return (
         <NumericFormat
           className="form-control form-control-sm"
@@ -64,7 +64,7 @@ function SalaryStructureGrid({ rows, onRowsChange, salaryHeadList, headsById, ca
           allowNegative={false}
           thousandSeparator={true}
           allowLeadingZeros={false}
-          placeholder="Amount"
+          placeholder={method === "MANUAL" ? "Manual amount" : "Amount"}
           maxLength={15}
         />
       );

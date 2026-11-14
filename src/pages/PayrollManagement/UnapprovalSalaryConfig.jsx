@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 import { toast } from "react-toastify";
 import { Modal } from "react-bootstrap";
@@ -87,11 +87,24 @@ const UnapprovalSalaryConfig = () => {
   };
 
   const allDetails = configData?.employeeSalaryConfigDetails || [];
-  const earnings = allDetails.filter((d) => d.headType === "EARNING");
-  const deductions = allDetails.filter((d) => d.headType === "DEDUCTION");
+  const normalizeHeadType = (headType) => String(headType || "").trim().toUpperCase();
+  const earnings = allDetails.filter((d) =>
+    ["EARNING", "EARNINGS"].includes(normalizeHeadType(d.headType))
+  );
+  const deductions = allDetails.filter((d) =>
+    ["DEDUCTION", "DEDUCTIONS"].includes(normalizeHeadType(d.headType))
+  );
 
   const employeeName = configData?.employeeName || selectedEmployee?.fullName || "";
   const initials = getInitials(employeeName);
+  const approvalStatus = configData?.approvalStatus?.trim() || "Unknown";
+  const isApproved = ["APPROVED", "FINAL APPROVED"].includes(
+    approvalStatus.toUpperCase()
+  );
+  const approvalStatusLabel =
+    approvalStatus.toUpperCase() === "FINAL APPROVED"
+      ? "Final approved"
+      : approvalStatus;
 
   return (
     <div className="container-xxl flex-grow-1 container-p-y">
@@ -198,7 +211,9 @@ const UnapprovalSalaryConfig = () => {
                     .join(" · ")}
                 </div>
               </div>
-              <span className="badge bg-success">Approved</span>
+              <span className={`badge ${isApproved ? "bg-success" : "bg-secondary"}`}>
+                {approvalStatusLabel}
+              </span>
             </div>
           </div>
 

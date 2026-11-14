@@ -81,11 +81,19 @@ export const MONTHS = [
 const findLabel = (list, value, fallback = "–") =>
   list.find((x) => x.value === value)?.label || (value ? value : fallback);
 
-/** Older data used "EARNING"; the API uses "EARNINGS". */
+/** Normalize legacy/plural values to the canonical salary-head types. */
 export const normalizeHeadType = (headType) => {
-  const value = (headType || "").toUpperCase();
-  return value === "EARNING" ? "EARNINGS" : value;
+  const value = (headType || "").trim().toUpperCase();
+  if (value === "EARNING") return "EARNINGS";
+  if (value === "DEDUCTIONS") return "DEDUCTION";
+  return value;
 };
+
+export const isApprovedStatus = (status) =>
+  ["APPROVED", "FINAL APPROVED"].includes(String(status || "").trim().toUpperCase());
+
+export const isFinalApprovedStatus = (status) =>
+  String(status || "").trim().toUpperCase() === "FINAL APPROVED";
 
 export const headTypeLabel = (headType) => findLabel(HEAD_TYPES, normalizeHeadType(headType));
 export const headTypeInfo = (headType) => HEAD_TYPES.find((t) => t.value === normalizeHeadType(headType));
@@ -147,9 +155,10 @@ export const evaluateExpression = (expression) => {
 // ---------- Heads ----------
 
 /** Heads that can be picked on the template / employee salary config grid. */
-export const isGridHead = (head) => {
+export const isGridHead = (head, allowManualHeads = false) => {
   const method = (head?.calculationMethod || "").toUpperCase();
-  return !!head && head.isActive && method !== "STATUTORY" && method !== "MANUAL" && !head.isArrearHead;
+  return !!head && head.isActive && method !== "STATUTORY" &&
+    (allowManualHeads || method !== "MANUAL") && !head.isArrearHead;
 };
 
 /** A head paid only in certain months, or not monthly, is left out of the monthly totals. */
@@ -202,7 +211,7 @@ export const rowForHead = (row, head) => {
   return {
     ...row,
     idSalaryHead: head.idSalaryHead,
-    fixedAmount: method === "FIXEDAMOUNT" ? head.fixedValue ?? 0 : null,
+    fixedAmount: method === "FIXEDAMOUNT" || method === "MANUAL" ? head.fixedValue ?? 0 : null,
     percentageValue: method === "PERCENTAGE" ? head.percentageValue ?? null : null,
   };
 };
@@ -245,7 +254,7 @@ export const calculateStructure = (rows, headsById) => {
     const method = (head.calculationMethod || "").toUpperCase();
     let value = 0;
 
-    if (method === "FIXEDAMOUNT") {
+    if (method === "FIXEDAMOUNT" || method === "MANUAL") {
       const amount = toNumber(row.fixedAmount) ?? toNumber(head.fixedValue) ?? 0;
       if (amount < 0) rowErrors[row.key] = "Enter an amount of 0 or more.";
       value = amount;
@@ -325,7 +334,9 @@ export const validateStructureRows = (rows, headsById) => {
   for (const row of picked) {
     const head = headsById[row.idSalaryHead];
     const method = (head?.calculationMethod || "").toUpperCase();
-    if (method === "FIXEDAMOUNT" && (toNumber(row.fixedAmount) ?? 0) < 0) return "Enter an amount of 0 or more.";
+    if ((method === "FIXEDAMOUNT" || method === "MANUAL") && (toNumber(row.fixedAmount) ?? 0) < 0) {
+      return "Enter an amount of 0 or more.";
+    }
     if (method === "PERCENTAGE") {
       const percentage = toNumber(row.percentageValue) ?? toNumber(head.percentageValue);
       if (percentage === null || percentage < 0.01 || percentage > 100) return "Enter a percentage between 0.01 and 100.";
@@ -338,11 +349,13 @@ export const validateStructureRows = (rows, headsById) => {
   return null;
 };
 
-/** Values saved per row: amount only for Fixed Amount heads, % only for Percentage heads, otherwise null. */
+/** Values saved per row: amount for Fixed Amount / Manual heads, % for Percentage heads, otherwise null. */
 export const rowInputsForSave = (row, head) => {
   const method = (head?.calculationMethod || "").toUpperCase();
   return {
-    fixedAmount: method === "FIXEDAMOUNT" ? toNumber(row.fixedAmount) ?? toNumber(head.fixedValue) ?? 0 : null,
+    fixedAmount: method === "FIXEDAMOUNT" || method === "MANUAL"
+      ? toNumber(row.fixedAmount) ?? toNumber(head.fixedValue) ?? 0
+      : null,
     percentageValue: method === "PERCENTAGE" ? toNumber(row.percentageValue) ?? toNumber(head.percentageValue) : null,
   };
 };
