@@ -61,9 +61,9 @@ function Login() {
           <div className="card">
             <div className="card-body">
               <div className="app-brand justify-content-center">
-                <a href="index.html" className="app-brand-link gap-2">
+                <a href="index.html" className="app-brand-link gap-2" style={{ width: "100%", justifyContent: "center" }}>
                   <span className="app-brand-logo demo">
-                    {logo && <img src={logo} alt="Logo" />}
+                    {logo && <img src={logo} alt="Logo" onLoad={(e) => { e.currentTarget.style.width = `${e.currentTarget.naturalWidth * 0.8}px`; e.currentTarget.style.height = "auto"; e.currentTarget.style.maxWidth = "75%"; e.currentTarget.style.margin = "0 auto"; }} />}
                   </span>
                 </a>
               </div>

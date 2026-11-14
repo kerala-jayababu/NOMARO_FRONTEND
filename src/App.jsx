@@ -152,7 +152,9 @@ function CompanyScope() {
     }
 
     const stored = getCompanyCode();
-    const companyChanged = stored && stored.toLowerCase() !== companyCode.toLowerCase();
+    // Any session that is not this company's (another company, or no company recorded) must not be reused:
+    // its login belongs to another database, so the menu and data would not load.
+    const companyChanged = !stored || stored.toLowerCase() !== companyCode.toLowerCase();
 
     // Same company already resolved -> reuse it
     if (!companyChanged && stored && getCompanyConfig()) {
@@ -167,12 +169,13 @@ function CompanyScope() {
       if (config) {
         // Switching to a different company must drop the previous company's session/token
         if (companyChanged) {
-          secureLocalStorage.clear();
+          secureLocalStorage.clear();   // logs out: the user signs in to this company
         }
         setCompanyCode(config.companyCode || companyCode);
         setCompanyConfig(config);
         setStatus("valid");
       } else {
+        secureLocalStorage.clear();   // no session survives an invalid company address
         setCompanyCode(null);
         setCompanyConfig(null);
         setStatus("invalid");

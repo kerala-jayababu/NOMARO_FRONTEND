@@ -19,7 +19,7 @@ import {
   HEAD_TYPES,
   MONTHS,
   PAY_FREQUENCIES,
-  ROUNDING_RULES,
+  roundingRules,
   STATUTORY_TYPES,
   formulaCodes,
   headTypeInfo,
@@ -722,7 +722,7 @@ const SalaryHeads = () => {
                   <div className="col-md-4 mb-2">
                     <label className="form-label mb-1">Rounding</label>
                     <select className="form-select" name="roundingRule" value={formData.roundingRule} onChange={handleTextChange}>
-                      {ROUNDING_RULES.map((r) => (
+                      {roundingRules().map((r) => (
                         <option key={r.value} value={r.value}>{r.label}</option>
                       ))}
                     </select>

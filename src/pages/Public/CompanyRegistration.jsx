@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import secureLocalStorage from "react-secure-storage";
 import "./companyRegistration.css";
 
 // Public company self-registration (NOMARO_GLOBAL). Calls the API WITHOUT a company code. A separate axios
@@ -198,6 +199,11 @@ const CompanyRegistration = () => {
     if (logo) fd.append("Logo", logo);
     try {
       const res = await http.post(`${API_BASE}/Register`, fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 20 * 60 * 1000 });
+      // end any session of another company in this browser, so the new site opens at its login page
+      try {
+        secureLocalStorage.clear();
+        localStorage.removeItem("nomaroCompanyCode");
+      } catch { /* storage blocked */ }
       setResult(res.data.data);
     } catch (e) {
       setMessage({ type: "error", text: errorText(e, "The company could not be registered. Please try again.") });
@@ -206,12 +212,31 @@ const CompanyRegistration = () => {
     }
   };
 
+  // Clipboard API when the browser allows it; otherwise the older select-and-copy way
   const copyUrl = async () => {
+    const text = result.companyUrl;
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(result.companyUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* clipboard blocked */ }
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch { /* fall back below */ }
+    if (!ok) {
+      try {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.top = "-1000px";
+        document.body.appendChild(area);
+        area.select();
+        ok = document.execCommand("copy");
+        document.body.removeChild(area);
+      } catch { ok = false; }
+    }
+    setCopied(ok ? "ok" : "fail");
+    setTimeout(() => setCopied(false), 2500);
   };
 
   if (result) {
@@ -223,7 +248,7 @@ const CompanyRegistration = () => {
           <p className="cr-sub">Your NOMARO site has been created. Bookmark this address:</p>
           <div className="cr-url">
             <a href={result.companyUrl}>{result.companyUrl}</a>
-            <button type="button" className="cr-btn cr-btn-light" onClick={copyUrl}>{copied ? "Copied" : "Copy"}</button>
+            <button type="button" className="cr-btn cr-btn-light" onClick={copyUrl}>{copied === "ok" ? "✓ Copied" : "Copy"}</button>
           </div>
           <p>
             Log in with <b>{result.adminEmail}</b> using <b>Login with OTP</b>. You are the administrator, with access to every screen.
@@ -233,7 +258,8 @@ const CompanyRegistration = () => {
               ? `A confirmation with this address was sent to ${result.adminEmail}.`
               : "The confirmation email could not be sent, so please keep this address."}
           </p>
-          <a className="cr-btn cr-btn-primary" href={result.companyUrl}>Go to login</a>
+          {copied === "fail" && <p className="cr-sub bad">Copy is blocked in this browser - select the address above and press Ctrl+C.</p>}
+          <a className="cr-btn cr-btn-primary cr-btn-lg cr-go" href={result.companyUrl}>Go to login</a>
         </div>
       </div>
     );

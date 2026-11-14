@@ -149,7 +149,23 @@ const BasicDetails = () => {
   const fUnemploymentInsuranceNo = field("UnemploymentInsuranceNo", "Unemployment Insurance (ILOE) Policy No.", 50);
   const identityFields = [fPassportExpiry, fEmiratesIdExpiry, fVisaNumber, fVisaSponsor, fLabourCardNumber, fLabourCardExpiry];
   const fTaxRegime = field("IdTaxRegime", "Tax Regime");
+  // existing India statutory fields: hidden / relabelled per company like the new ones
+  const fPan = field("PAN", "PAN", 10);
+  const fUan = field("UAN", "UAN", 12);
+  const fPfNumber = field("PFNumber", "PF Number", 30);
+  const fPfApplicable = field("IsPFApplicable", "PF Applicable");
+  const fEpsApplicable = field("IsEPSApplicable", "EPS Applicable");
+  const fPfActualWage = field("PFOnActualWage", "PF on Actual Wage");
+  const fVpfRate = field("VPFRate", "VPF Rate (%)");
+  const fEsiNumber = field("ESINumber", "ESI Number", 17);
+  const fEsiApplicable = field("IsESIApplicable", "ESI Applicable");
+  const fDisabled = field("IsDisabled", "Person with Disability");
+  const fPtState = field("IdPTState", "PT State");
+  const fPtApplicable = field("IsPTApplicable", "PT Applicable");
+  const fLwfApplicable = field("IsLWFApplicable", "LWF Applicable");
   const pensionFields = [fPensionApplicable, fPensionScheme, fPensionRegistrationNumber, fUnemploymentInsuranceNo];
+  const statutoryFields = [fPan, fUan, fPfNumber, fPfApplicable, fEpsApplicable, fPfActualWage, fVpfRate, fEsiNumber, fEsiApplicable,
+    fDisabled, fPtState, fPtApplicable, fLwfApplicable, fTaxRegime, ...pensionFields];
 
   const genderOptions = [
     { value: "MALE", label: "Male" },
@@ -194,7 +210,7 @@ const BasicDetails = () => {
 
   // Default PT State: Kerala (KL) for an employee without saved statutory details; applied once, so it can be changed
   useEffect(() => {
-    if (!applyDefaultPtStateRef.current || statutoryData.idPTState || ptStates.length === 0) return;
+    if (!applyDefaultPtStateRef.current || !fPtState.visible || statutoryData.idPTState || ptStates.length === 0) return;
     const defaultState = ptStates.find((s) => s.isActive && (s.stateCode || "").toUpperCase() === DEFAULT_PT_STATE_CODE);
     applyDefaultPtStateRef.current = false;
     if (defaultState) {
@@ -202,7 +218,7 @@ const BasicDetails = () => {
       setStatutoryData((prev) => ({ ...prev, idPTState }));
       setLoadedStatutoryData((prev) => ({ ...prev, idPTState }));
     }
-  }, [ptStates, statutoryData.idPTState]);
+  }, [ptStates, statutoryData.idPTState, fPtState.visible]);
 
   // PT State dropdown: states that have Professional Tax
   useEffect(() => {
@@ -1366,113 +1382,140 @@ const BasicDetails = () => {
 
           </div>
 
-          {/* Statutory Details Section (EmployeeStatutoryDetails) */}
+          {/* Statutory Details Section (EmployeeStatutoryDetails) - each field shown / labelled per company (CompanyScreenAttributeConfig) */}
+          {statutoryFields.some((f) => f.visible) && (
           <div className="mb-4">
             <div className="bg-secondary p-2 mb-3">
               <h6 className="mb-0 text-white">Statutory Details</h6>
             </div>
             <div className="row">
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="pan">PAN</label>
-                <input id="pan" type="text" className={`form-control${employeeFormErrors.pan ? " is-invalid" : ""}`}
-                  value={statutoryData.pan} maxLength={10} placeholder="ABCDE1234F"
-                  onChange={(e) => handleStatutoryChange("pan", e.target.value)} />
-                {employeeFormErrors.pan && <div className="invalid-feedback d-block">{employeeFormErrors.pan}</div>}
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="uan">UAN</label>
-                <input id="uan" type="text" className={`form-control${employeeFormErrors.uan ? " is-invalid" : ""}`}
-                  value={statutoryData.uan} maxLength={12} placeholder="12 digits"
-                  onChange={(e) => handleStatutoryChange("uan", e.target.value)} />
-                {employeeFormErrors.uan && <div className="invalid-feedback d-block">{employeeFormErrors.uan}</div>}
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="pfNumber">PF Number</label>
-                <input id="pfNumber" type="text" className="form-control"
-                  value={statutoryData.pfNumber} maxLength={30} placeholder="KA/BNG/0001/1001"
-                  onChange={(e) => handleStatutoryChange("pfNumber", e.target.value)} />
-              </div>
-            </div>
-
-            <div className="row mt-3">
-              <div className="col-md-4">
-                <label className="form-label mb-1 d-block">Provident Fund</label>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isPFApplicable" checked={statutoryData.isPFApplicable}
-                    onChange={(e) => handleStatutoryChange("isPFApplicable", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isPFApplicable">PF Applicable</label>
+              {fPan.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="pan">{fPan.label}</label>
+                  <input id="pan" type="text" className={`form-control${employeeFormErrors.pan ? " is-invalid" : ""}`}
+                    value={statutoryData.pan} maxLength={fPan.maxLength} placeholder="ABCDE1234F"
+                    onChange={(e) => handleStatutoryChange("pan", e.target.value)} />
+                  {employeeFormErrors.pan && <div className="invalid-feedback d-block">{employeeFormErrors.pan}</div>}
                 </div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isEPSApplicable" checked={statutoryData.isEPSApplicable}
-                    onChange={(e) => handleStatutoryChange("isEPSApplicable", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isEPSApplicable">EPS Applicable</label>
+              )}
+              {fUan.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="uan">{fUan.label}</label>
+                  <input id="uan" type="text" className={`form-control${employeeFormErrors.uan ? " is-invalid" : ""}`}
+                    value={statutoryData.uan} maxLength={fUan.maxLength} placeholder="12 digits"
+                    onChange={(e) => handleStatutoryChange("uan", e.target.value)} />
+                  {employeeFormErrors.uan && <div className="invalid-feedback d-block">{employeeFormErrors.uan}</div>}
                 </div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="pfOnActualWage" checked={statutoryData.pfOnActualWage}
-                    onChange={(e) => handleStatutoryChange("pfOnActualWage", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="pfOnActualWage">PF on Actual Wage</label>
+              )}
+              {fPfNumber.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="pfNumber">{fPfNumber.label}</label>
+                  <input id="pfNumber" type="text" className="form-control"
+                    value={statutoryData.pfNumber} maxLength={fPfNumber.maxLength} placeholder="KA/BNG/0001/1001"
+                    onChange={(e) => handleStatutoryChange("pfNumber", e.target.value)} />
                 </div>
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="vpfRate">VPF Rate (%)</label>
-                <input id="vpfRate" type="text" className={`form-control${employeeFormErrors.vpfRate ? " is-invalid" : ""}`}
-                  value={statutoryData.vpfRate} placeholder="e.g. 5.00"
-                  onChange={(e) => handleStatutoryChange("vpfRate", e.target.value)} />
-                {employeeFormErrors.vpfRate && <div className="invalid-feedback d-block">{employeeFormErrors.vpfRate}</div>}
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="esiNumber">ESI Number</label>
-                <input id="esiNumber" type="text" className={`form-control${employeeFormErrors.esiNumber ? " is-invalid" : ""}`}
-                  value={statutoryData.esiNumber} maxLength={17} placeholder="10 or 17 digits"
-                  onChange={(e) => handleStatutoryChange("esiNumber", e.target.value)} />
-                {employeeFormErrors.esiNumber && <div className="invalid-feedback d-block">{employeeFormErrors.esiNumber}</div>}
-              </div>
-            </div>
-
-            <div className="row mt-3">
-              <div className="col-md-4">
-                <label className="form-label mb-1 d-block">ESI</label>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isESIApplicable" checked={statutoryData.isESIApplicable}
-                    onChange={(e) => handleStatutoryChange("isESIApplicable", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isESIApplicable">ESI Applicable</label>
+              )}
+              {[fPfApplicable, fEpsApplicable, fPfActualWage].some((f) => f.visible) && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1 d-block">Provident Fund</label>
+                    {fPfApplicable.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isPFApplicable" checked={statutoryData.isPFApplicable}
+                          onChange={(e) => handleStatutoryChange("isPFApplicable", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isPFApplicable">{fPfApplicable.label}</label>
+                      </div>
+                    )}
+                    {fEpsApplicable.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isEPSApplicable" checked={statutoryData.isEPSApplicable}
+                          onChange={(e) => handleStatutoryChange("isEPSApplicable", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isEPSApplicable">{fEpsApplicable.label}</label>
+                      </div>
+                    )}
+                    {fPfActualWage.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="pfOnActualWage" checked={statutoryData.pfOnActualWage}
+                          onChange={(e) => handleStatutoryChange("pfOnActualWage", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="pfOnActualWage">{fPfActualWage.label}</label>
+                      </div>
+                    )}
                 </div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isDisabled" checked={statutoryData.isDisabled}
-                    onChange={(e) => handleStatutoryChange("isDisabled", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isDisabled">Person with Disability</label>
+              )}
+              {fVpfRate.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="vpfRate">{fVpfRate.label}</label>
+                  <input id="vpfRate" type="text" className={`form-control${employeeFormErrors.vpfRate ? " is-invalid" : ""}`}
+                    value={statutoryData.vpfRate} placeholder="e.g. 5.00"
+                    onChange={(e) => handleStatutoryChange("vpfRate", e.target.value)} />
+                  {employeeFormErrors.vpfRate && <div className="invalid-feedback d-block">{employeeFormErrors.vpfRate}</div>}
                 </div>
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1" htmlFor="idPTState">PT State</label>
-                <select id="idPTState" className="form-select"
-                  value={statutoryData.idPTState}
-                  onChange={(e) => handleStatutoryChange("idPTState", e.target.value)}>
-                  <option value="">Select PT State</option>
-                  {ptStates
-                    .filter((s) => s.isActive || String(s.idState) === String(statutoryData.idPTState))
-                    .map((s) => (
-                      <option key={s.idState} value={String(s.idState)}>
-                        {s.stateName} ({s.stateCode}){s.isActive ? "" : " - Inactive"}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="form-label mb-1 d-block">PT / LWF</label>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isPTApplicable" checked={statutoryData.isPTApplicable}
-                    onChange={(e) => handleStatutoryChange("isPTApplicable", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isPTApplicable">PT Applicable</label>
+              )}
+              {fEsiNumber.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="esiNumber">{fEsiNumber.label}</label>
+                  <input id="esiNumber" type="text" className={`form-control${employeeFormErrors.esiNumber ? " is-invalid" : ""}`}
+                    value={statutoryData.esiNumber} maxLength={fEsiNumber.maxLength} placeholder="10 or 17 digits"
+                    onChange={(e) => handleStatutoryChange("esiNumber", e.target.value)} />
+                  {employeeFormErrors.esiNumber && <div className="invalid-feedback d-block">{employeeFormErrors.esiNumber}</div>}
                 </div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="checkbox" id="isLWFApplicable" checked={statutoryData.isLWFApplicable}
-                    onChange={(e) => handleStatutoryChange("isLWFApplicable", e.target.checked)} />
-                  <label className="form-check-label" htmlFor="isLWFApplicable">LWF Applicable</label>
+              )}
+              {[fEsiApplicable, fDisabled].some((f) => f.visible) && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1 d-block">{fEsiApplicable.visible ? "ESI" : "Other"}</label>
+                    {fEsiApplicable.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isESIApplicable" checked={statutoryData.isESIApplicable}
+                          onChange={(e) => handleStatutoryChange("isESIApplicable", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isESIApplicable">{fEsiApplicable.label}</label>
+                      </div>
+                    )}
+                    {fDisabled.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isDisabled" checked={statutoryData.isDisabled}
+                          onChange={(e) => handleStatutoryChange("isDisabled", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isDisabled">{fDisabled.label}</label>
+                      </div>
+                    )}
                 </div>
-              </div>
+              )}
+              {fPtState.visible && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1" htmlFor="idPTState">{fPtState.label}</label>
+                  <select id="idPTState" className="form-select"
+                    value={statutoryData.idPTState}
+                    onChange={(e) => handleStatutoryChange("idPTState", e.target.value)}>
+                    <option value="">Select PT State</option>
+                    {ptStates
+                      .filter((s) => s.isActive || String(s.idState) === String(statutoryData.idPTState))
+                      .map((s) => (
+                        <option key={s.idState} value={String(s.idState)}>
+                          {s.stateName} ({s.stateCode}){s.isActive ? "" : " - Inactive"}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+              {[fPtApplicable, fLwfApplicable].some((f) => f.visible) && (
+                <div className="col-md-4 mb-3">
+                  <label className="form-label mb-1 d-block">PT / LWF</label>
+                    {fPtApplicable.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isPTApplicable" checked={statutoryData.isPTApplicable}
+                          onChange={(e) => handleStatutoryChange("isPTApplicable", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isPTApplicable">{fPtApplicable.label}</label>
+                      </div>
+                    )}
+                    {fLwfApplicable.visible && (
+                      <div className="form-check form-check-inline">
+                        <input className="form-check-input" type="checkbox" id="isLWFApplicable" checked={statutoryData.isLWFApplicable}
+                          onChange={(e) => handleStatutoryChange("isLWFApplicable", e.target.checked)} />
+                        <label className="form-check-label" htmlFor="isLWFApplicable">{fLwfApplicable.label}</label>
+                      </div>
+                    )}
+                </div>
+              )}
               {fTaxRegime.visible && (
-                <div className="col-md-4 mt-3">
+                <div className="col-md-4 mb-3">
                   <label className="form-label mb-1" htmlFor="idTaxRegime">{fTaxRegime.label}</label>
                   <select id="idTaxRegime" className="form-select" value={statutoryData.idTaxRegime}
                     onChange={(e) => handleStatutoryChange("idTaxRegime", e.target.value)}>
@@ -1482,11 +1525,8 @@ const BasicDetails = () => {
                   </select>
                 </div>
               )}
-            </div>
-            {pensionFields.some((f) => f.visible) && (
-            <div className="row mt-3">
               {fPensionApplicable.visible && (
-                <div className="col-md-4">
+                <div className="col-md-4 mb-3">
                   <label className="form-label mb-1 d-block">Pension</label>
                   <div className="form-check">
                     <input className="form-check-input" type="checkbox" id="isPensionApplicable" checked={statutoryData.isPensionApplicable}
@@ -1496,7 +1536,7 @@ const BasicDetails = () => {
                 </div>
               )}
               {fPensionScheme.visible && (
-                <div className="col-md-4">
+                <div className="col-md-4 mb-3">
                   <label className="form-label mb-1" htmlFor="pensionScheme">{fPensionScheme.label}</label>
                   <select id="pensionScheme" className="form-select" value={statutoryData.pensionScheme}
                     onChange={(e) => handleStatutoryChange("pensionScheme", e.target.value)}>
@@ -1506,7 +1546,7 @@ const BasicDetails = () => {
                 </div>
               )}
               {fPensionRegistrationNumber.visible && (
-                <div className="col-md-4">
+                <div className="col-md-4 mb-3">
                   <label className="form-label mb-1" htmlFor="pensionRegistrationNumber">{fPensionRegistrationNumber.label}</label>
                   <input id="pensionRegistrationNumber" type="text" className="form-control" value={statutoryData.pensionRegistrationNumber}
                     maxLength={fPensionRegistrationNumber.maxLength}
@@ -1514,7 +1554,7 @@ const BasicDetails = () => {
                 </div>
               )}
               {fUnemploymentInsuranceNo.visible && (
-                <div className="col-md-4 mt-3">
+                <div className="col-md-4 mb-3">
                   <label className="form-label mb-1" htmlFor="unemploymentInsuranceNo">{fUnemploymentInsuranceNo.label}</label>
                   <input id="unemploymentInsuranceNo" type="text" className="form-control" value={statutoryData.unemploymentInsuranceNo}
                     maxLength={fUnemploymentInsuranceNo.maxLength}
@@ -1522,8 +1562,8 @@ const BasicDetails = () => {
                 </div>
               )}
             </div>
-            )}
           </div>
+          )}
 
           {/* Personal Details Section */}
           <div className="mb-4">

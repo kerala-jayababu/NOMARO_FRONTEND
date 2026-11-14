@@ -1,3 +1,4 @@
+import { getCompanyConfig } from "./companyContext";
 // Salary structure rules shared by Salary Heads, Salary Templates and Employee Salary Config.
 // The calculation mirrors the API (Helpers/SalaryStructureCalculator.cs) and the salary procedure;
 // the API recalculates and re-checks everything when a template or structure is saved.
@@ -43,8 +44,23 @@ export const PAY_FREQUENCIES = [
   { value: "ONE_TIME", label: "One-time" },
 ];
 
+// Whole currency unit of the company, for the "Nearest ..." rounding label
+const CURRENCY_UNITS = { INR: "rupee", AED: "dirham", SAR: "riyal", QAR: "riyal", OMR: "rial", KWD: "dinar", BHD: "dinar",
+  USD: "dollar", GYD: "dollar", EUR: "euro", GBP: "pound" };
+export const currencyUnitName = () => {
+  try {
+    const config = getCompanyConfig();
+    const code = (config?.currencyCode || "").trim().toUpperCase();
+    return CURRENCY_UNITS[code] || (code ? code : "whole amount");
+  } catch {
+    return "whole amount";
+  }
+};
+/** Rounding options with the company's currency in the first label (Nearest rupee / Nearest dirham ...). */
+export const roundingRules = () => ROUNDING_RULES.map((r) => (r.value === "NEAREST" ? { ...r, label: `Nearest ${currencyUnitName()}` } : r));
+
 export const ROUNDING_RULES = [
-  { value: "NEAREST", label: "Nearest rupee" },
+  { value: "NEAREST", label: "Nearest whole amount" },
   { value: "UP", label: "Round up" },
   { value: "DOWN", label: "Round down" },
   { value: "NONE", label: "No rounding" },

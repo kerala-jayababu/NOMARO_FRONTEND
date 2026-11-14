@@ -17,8 +17,12 @@ const MODE_RESET = "RESET";
 // Keeps the selected tab in the app theme colour (core.css pills default to purple)
 const activeTabStyle = { backgroundColor: "var(--primary-color)", color: "#fff" };
 
-// Logo is shown at 70% of its normal size on the Forgot Password screen (it has more fields)
+// Company logo is shown at 80% of its image size; on the Forgot Password screen at 70% of that (it has more fields)
+const LOGO_SCALE = 0.8;
 const RESET_LOGO_SCALE = 0.7;
+// A wide logo is limited to this share of the login box (75% of the earlier full width)
+const LOGO_MAX_WIDTH = "75%";
+const LOGO_MAX_WIDTH_RESET = "52%";
 
 const getSavedMode = () => {
   try {
@@ -223,12 +227,13 @@ function LoginWithOtp() {
           <div className="card">
             <div className="card-body">
               <div className="app-brand justify-content-center">
-                <a href="index.html" className="app-brand-link gap-2">
+                <a href="index.html" className="app-brand-link gap-2" style={{ width: "100%", justifyContent: "center" }}>
                   <span className="app-brand-logo demo">
                     {logo && (
                       <img src={logo} alt="Logo"
                         onLoad={(e) => setLogoWidth(e.currentTarget.naturalWidth)}
-                        style={mode === MODE_RESET && logoWidth ? { width: logoWidth * RESET_LOGO_SCALE, height: "auto" } : undefined} />
+                        style={{ width: logoWidth ? logoWidth * LOGO_SCALE * (mode === MODE_RESET ? RESET_LOGO_SCALE : 1) : "auto", height: "auto",
+                                 maxWidth: mode === MODE_RESET ? LOGO_MAX_WIDTH_RESET : LOGO_MAX_WIDTH, margin: "0 auto" }} />
                     )}
                   </span>
                 </a>

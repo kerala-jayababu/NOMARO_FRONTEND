@@ -58,3 +58,10 @@
 .cr-url { display: flex; gap: 10px; align-items: center; justify-content: center; background: #f4f6f8; border-radius: 8px; padding: 10px 14px; margin: 12px 0 16px; flex-wrap: wrap; }
 .cr-url a { font-weight: 600; word-break: break-all; color: var(--primary-color, #0d384d); }
 @media (max-width: 640px) { .cr-card { padding: 22px 18px; } .cr-grid, .cr-modules { grid-template-columns: 1fr; } }
+/* "Go to login" on the success screen: the app's global link colours must not hide the text */
+.cr-done a.cr-go, .cr-done a.cr-go:visited, .cr-done a.cr-go:hover, .cr-done a.cr-go:focus {
+  color: #fff !important; background: var(--primary-color, #0d384d); text-decoration: none;
+  min-width: 220px; padding: 14px 32px; font-size: 1.05rem; font-weight: 600; margin-top: 8px;
+}
+.cr-done a.cr-go:hover { filter: brightness(1.12); }
+.cr-sub.bad { color: #d93025; }
