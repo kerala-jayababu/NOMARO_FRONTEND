@@ -1381,7 +1381,21 @@ const EmployeeProfile = () => {
       if (result.error) {
         hideLoader();
         console.error("API Error:", result.error);
-        toast.error(result.error.message || "Failed to save employee");
+        const errorMessage = typeof result.error === "string"
+          ? result.error
+          : result.error?.message || "Failed to save employee";
+        const normalizedError = errorMessage.toLowerCase();
+        if (
+          normalizedError.includes("employee code") ||
+          normalizedError.includes("same code") ||
+          normalizedError.includes("duplicate")
+        ) {
+          setEmployeeFormErrors((previous) => ({
+            ...previous,
+            employeeCode: errorMessage,
+          }));
+        }
+        toast.error(errorMessage);
         return false;
       }
 

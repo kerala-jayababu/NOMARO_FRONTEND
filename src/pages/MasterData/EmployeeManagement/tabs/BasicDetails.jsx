@@ -920,12 +920,19 @@ const BasicDetails = () => {
       if (result.error) {
         hideLoader();
         console.error("API Error:", result.error);
-        const errorMessage = result.error.message || "Failed to save employee";
+        const errorMessage = typeof result.error === "string"
+          ? result.error
+          : result.error?.message || "Failed to save employee";
         // Check if it's a duplicate employee code error
         if (errorMessage.toLowerCase().includes("employee code") ||
+          errorMessage.toLowerCase().includes("same code") ||
           errorMessage.toLowerCase().includes("duplicate") ||
           errorMessage.toLowerCase().includes("already exists")) {
-          toast.error("Employee Code Already Exists");
+          setEmployeeFormErrors((previous) => ({
+            ...previous,
+            employeeCode: errorMessage,
+          }));
+          toast.error(errorMessage);
         } else {
           toast.error(errorMessage);
         }
@@ -935,17 +942,22 @@ const BasicDetails = () => {
       if (result.data?.success) {
         // Statutory details are saved against the employee (new employees get their id from the response)
         const savedEmployeeId = editingEmployeeId || result.data?.data?.idEmployee;
+        let statutorySaveError = null;
         if (savedEmployeeId) {
           const statutoryResult = await saveStatutoryDetails(savedEmployeeId);
           if (statutoryResult.error) {
-            toast.error(`Employee saved, but statutory details were not saved: ${statutoryResult.error}`);
+            statutorySaveError = statutoryResult.error;
           } else {
             setLoadedStatutoryData(statutoryData);
           }
         }
 
         const message = editingEmployeeId ? "Employee updated successfully" : "Employee added successfully";
-        toast.success(message);
+        if (statutorySaveError) {
+          toast.error(`Employee was saved, but statutory details were not saved: ${statutorySaveError}`);
+        } else {
+          toast.success(message);
+        }
 
         // Reset unsaved changes flag
         if (setHasUnsavedChanges) {
