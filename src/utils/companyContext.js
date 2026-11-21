@@ -84,12 +84,13 @@ export const injectCompanyCodeIntoUrl = (url) => {
     return url;
   }
 
-  const apiMatch = url.match(/\/api\/v[\d.]+\//i);
+  const apiMatch = url.match(/(^|\/)api\/v[\d.]+\//i);
   if (!apiMatch) {
     return url;
   }
 
-  const afterApi = url.slice(url.indexOf(apiMatch[0]) + apiMatch[0].length);
+  const apiPathEnd = apiMatch.index + apiMatch[0].length;
+  const afterApi = url.slice(apiPathEnd);
 
   // Never prefix the tenant resolution endpoint
   if (/^Tenant(\/|$)/i.test(afterApi)) {
@@ -101,7 +102,7 @@ export const injectCompanyCodeIntoUrl = (url) => {
     return url;
   }
 
-  return url.replace(apiMatch[0], `${apiMatch[0]}${code}/`);
+  return `${url.slice(0, apiPathEnd)}${code}/${url.slice(apiPathEnd)}`;
 };
 
 // Prefixes an app route path with the selected company code: "/dashboard" -> "/GIA/dashboard".
